@@ -57,30 +57,30 @@ You need to run the backend and frontend servers concurrently in seperate ***cmd
 **Important:** Make sure both terminals remain open for this to work.
 
 * Start the Backend Server:
-1. Navigate to the backend directory
-```
-cd backend
-```
-2. Run this command
-```
-node --env-file=.env server
-```
-3. The backend should now be running on the port specified in your `.env` file. Look for "MongoDB Connected" in the terminal.
+    1. Navigate to the backend directory
+    ```
+    cd backend
+    ```
+    2. Run this command
+    ```
+    node --env-file=.env server
+    ```
+    3. The backend should now be running on the port specified in your `.env` file. Look for "MongoDB Connected" in the terminal.
 
 * Start the Frontend Server:
-1. Navigate to the frontend directory in a seperate terminal:
-```
-cd frontend
-```
-2. Run this command:
-```
-npm run dev
-```
-3. Look for a localhost link in the terminal to access the site. Example: `http://localhost:5173/`
+    1. Navigate to the frontend directory in a seperate terminal:
+    ```
+    cd frontend
+    ```
+    2. Run this command:
+    ```
+    npm run dev
+    ```
+    3. Look for a localhost link in the terminal to access the site. Example: `http://localhost:5173/`
 
-4. Verify setup
-    * Open the link in your browser.
-    * You should see the title MERN Stack Test.
-    * The message "**Message from backend: Hello from the server!**" should appear.
+    4. Verify setup
+        * Open the link in your browser.
+        * You should see the title MERN Stack Test.
+        * The message "**Message from backend: Hello from the server!**" should appear.
 
 If you see this message, the setup is successful!
