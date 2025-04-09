@@ -1,6 +1,9 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/Homepage.jsx';
+import SearchOverlay from './pages/SearchOverlay.jsx';
+import SearchBar from './components/Searchbar.jsx';
 import './App.css';
 
 function App() {
@@ -30,17 +33,6 @@ function App() {
     <div>
       <HomePage />
     </div>
-    // <div className="App">
-    //   <header className="App-header">
-    //     <h1>MERN Stack Test</h1>
-    //     {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-    //     {message ? (
-    //       <p>Message from backend: <strong>{message}</strong></p>
-    //     ) : (
-    //       !error && <p>Loading message from backend...</p>
-    //     )}
-    //   </header>
-    // </div>
   );
 }
 
