@@ -6,6 +6,9 @@ import React, { useState, useEffect } from 'react';
 import logo from '../assets/MalaysiaLogo.png';
 import SearchBar from './Searchbar.jsx';
 import MapViewMenu from './MapViewMenu.jsx';
+import ProfileDropdown from './ProfileDropdown.jsx';
+import '../styles/Navbar.css'; 
+
 
 const API_KEY = '8be72b9eaf2d1c81e052f4fc2c58ad0c';
 
@@ -127,198 +130,44 @@ const NavigationBar = () => {
       default:
         return '🌤️';
     }
-  };
-
-  const styles = {
-    navbar: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '10px 20px',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1000,
-      flexWrap: 'wrap',
-      backgroundColor: '#fff', // Add background color if needed
-    },
-    leftSection: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    centerSection: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: 1,
-    },
-    topRightSection: {
-      display: 'flex',
-      alignItems: 'flex-end',
-      height: '100%', // Take full height of navbar
-    },  
-    rightContent: {
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '10px',
-    },
-    searchContainer: {
-      marginLeft: '0', // Remove left margin since we don't need it now
-    },
-    logo: {
-      height: '20px',
-      width: 'auto',
-    },
-    topRow: {
-      display: 'flex',
-      alignItems: 'flex-start', // Align items to top
-      gap: '10px',
-      height: '50%', // Take half of the navbar height
-    },
-    dateTimeWeatherContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '4px',
-    },
-    dateTime: {
-      display: 'flex',
-      alignItems: 'center',
-      fontSize: '12px',
-      color: '#007AFF ',
-      gap: '10px',
-      fontWeight: 'bold',
-      backgroundColor: '#ECE6F0',
-      padding: '5px 12px',
-      borderRadius: '25px',
-      height: '32px', // Fixed height
-      boxSizing: 'border-box',
-    },
-    weatherSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      fontSize: '12px',
-      color: '#333',
-      backgroundColor: '#ECE6F0',
-      padding: '5px 12px',
-      borderRadius: '25px',
-      fontWeight: 'bold',
-      height: '40px', // Same height as dateTime
-      boxSizing: 'border-box',
-      width: 'fit-content', // Only take needed width
-      marginLeft: 'auto', // Push to align with dateTime
-    },
-    profileIcon: {
-      width: '40px',
-      height: '40px',
-      borderRadius: '50%',
-      backgroundColor: '#ECE6F0',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer',
-      marginLeft: '10px',
-    },
-    weatherInfo: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px', // Space between icon and text
-    },
-    weatherIcon: {
-      fontSize: '18px', // Larger icon size
-    },
-    townSelector: {
-      border: 'none',
-      background: 'none',
-      fontSize: '12px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-    },
-    dropdown: {
-      position: 'absolute',
-      top: '100%',
-      right: 0,
-      backgroundColor: '#ECE6F0',
-      border: '1px solid #ccc',
-      borderRadius: '10px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      padding: '15px',
-      zIndex: 1001,
-      marginTop: '10px',
-      width: 'auto',
-      display: 'grid',
-      gridTemplateColumns: 'repeat(6, 1fr)',
-      gap: '10px',
-    },
-    dropdownItem: {
-      padding: '10px 8px',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      borderRadius: '4px',
-      color: '#007AFF',
-      textAlign: 'center',
-      '&:hover': {
-        backgroundColor: '#007AFF',
-      },
-    },
-    dropdownContainer: {
-      position: 'relative',
-      display: 'inline-block',
-    },
-    currentLocation: {
-      gridColumn: '1 / -1',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      marginBottom: '10px',
-      color: '#333',
-      paddingBottom: '10px',
-      borderBottom: '2px solid #ccc',
-    },
-  };
+  };  
 
   return (
-    <div style={styles.navbar}>
-      <div style={styles.leftSection}>
-        <div style={styles.searchContainer}>
+    <div className="navbar">
+      <div className="left-section">
+        <div className="search-container">
           <SearchBar onSearch={handleSearch} />
         </div>
       </div>
-
-      <div style={styles.centerSection}>
-        <MapViewMenu 
-          onSelect={handleMenuSelect} 
-          activeOption={activeMenuOption} 
-        />
+  
+      <div className="center-section">
+        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeMenuOption} />
       </div>
-
-      <div style={styles.topRightSection}>
-        <div style={styles.rightContent}>
-          <div style={styles.dateTimeWeatherContainer}>
-            <div style={styles.dateTime}>
-              <img src={logo} alt="Logo" style={styles.logo} />
+  
+      <div className="top-right-section">
+        <div className="right-content">
+          <div className="date-time-weather-container">
+            <div className="date-time">
+              <img src={logo} alt="Logo" className="logo" />
               <div>{formatDate(currentTime)}</div>
               <div>{formatTime(currentTime)}</div>
             </div>
-            <div style={styles.weatherSection}>
-              <div style={styles.dropdownContainer}>
+            <div className="weather-section">
+              <div className="dropdown-container">
                 <button 
-                  style={styles.townSelector}
+                  className="town-selector"
                   onClick={() => setShowTownDropdown(!showTownDropdown)}
                 >
                   {getTownCode(currentTown)} {showTownDropdown ? '▲' : '▼'}
                 </button>
-                
+  
                 {showTownDropdown && (
-                  <div style={styles.dropdown}>
-                    <div style={styles.currentLocation}>Current Location: {currentTown}</div>
+                  <div className="dropdown">
+                    <div className="current-location">Current Location: {currentTown}</div>
                     {towns.map((town) => (
                       <div 
                         key={town}
-                        style={styles.dropdownItem}
+                        className="dropdown-item"
                         onClick={() => handleTownSelect(town)}
                       >
                         {town}
@@ -327,18 +176,18 @@ const NavigationBar = () => {
                   </div>
                 )}
               </div>
-              <div style={styles.weatherInfo}>
+              <div className="weather-info">
                 <div>
                   {weatherData?.weather?.[0]?.main}<br />
                   {Math.round(weatherData?.main?.temp)}°C
                 </div>
-                <span style={styles.weatherIcon}>
+                <span className="weather-icon">
                   {getWeatherIcon(weatherData?.weather)}
                 </span>
               </div>
             </div>
           </div>
-          <div style={styles.profileIcon}>👤</div>
+          <ProfileDropdown />
         </div>
       </div>
     </div>

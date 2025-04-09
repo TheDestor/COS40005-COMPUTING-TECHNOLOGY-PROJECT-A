@@ -1,0 +1,145 @@
+.mapview-container {
+    position: relative;
+  }
+  
+  /* Default: Horizontal menu */
+  .menu-container {
+    display: flex;
+    flex-direction: row;
+    background-color: #ECE6F0;
+    border-radius: 12px;
+    padding: 4px;
+    margin: 0 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    height: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .menu-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Menu item style (default horizontal layout) */
+  .menu-item2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #555;
+    border: none;
+    background: none;
+    outline: none;
+    flex-shrink: 0;
+    min-width: 64px;
+  }
+  
+  .icon-container {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  
+  .active-icon-container {
+    background-color: #007AFF;
+  }
+  
+  .menu-icon {
+    font-size: 14px;
+  }
+  
+  .active-icon {
+    color: white;
+  }
+  
+  .menu-text2 {
+    font-size: 10px;
+    text-align: center;
+    font-weight: 400;
+    transition: color 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .active-text {
+    color: #007AFF;
+    font-weight: 500;
+  }
+  
+  /* Dropdown style for mobile view */
+  .dropdown-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .dropdown-wrapper {
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ECE6F0;
+    border-radius: 12px;
+    padding: 6px 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .menu-dropdown {
+    font-size: 14px;
+    color: #555;
+    width: 100%;
+  }
+  
+  .dropdown-arrow {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  /* Dropdown menu when opened */
+  .dropdown-menu {
+    display: flex;
+    flex-direction: column;
+    background-color: #ECE6F0;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 8px;
+    padding: 8px 0;
+    width: 100%;
+  }
+  
+  .menu-item-dropdown {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    border: none;
+    background: none;
+    outline: none;
+  }
+  
+  .menu-item-dropdown:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* ===== Mobile View (<=768px) ===== */
+  @media (max-width: 768px) {
+    .menu-container {
+      display: none;
+    }
+  }
+  

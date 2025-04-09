@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SearchBar from './SearchBar';
+import SearchBar from './Searchbar.jsx';
 import SearchOverlay from './SearchOverlay';
 
 const SearchContainer = () => {
