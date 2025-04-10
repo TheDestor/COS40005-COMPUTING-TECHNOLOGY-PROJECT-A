@@ -153,7 +153,7 @@ const NavigationBar = () => {
               <div>{formatTime(currentTime)}</div>
             </div>
             <div className="weather-section">
-              <div className="dropdown-container">
+              <div className="dropdown-container2">
                 <button 
                   className="town-selector"
                   onClick={() => setShowTownDropdown(!showTownDropdown)}

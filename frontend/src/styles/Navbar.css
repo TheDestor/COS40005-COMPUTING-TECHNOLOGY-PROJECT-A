@@ -108,12 +108,14 @@
     font-size: 12px;
     cursor: pointer;
     display: flex;
-    align-items: center;
+    align-items: center;;
   }
   
-  .dropdown-container {
+  .dropdown-container2 {
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    height: 100%;
   }
   
   .dropdown {

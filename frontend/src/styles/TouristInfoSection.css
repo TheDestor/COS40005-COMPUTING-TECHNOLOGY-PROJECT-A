@@ -1,209 +1,113 @@
 .tourist-info-container {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    width: 350px;
-    position: fixed;
-    right: 0;
-    top: var(--navbar-height, 60px);
-    bottom: 0; /* Stretch to bottom of viewport */
-    padding: 20px;
-    color: #333;
-    z-index: 90;
-    transition: transform 0.3s ease-in-out;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .tourist-info-container.collapsed {
-    transform: translateX(calc(100% - 50px));
-  }
-  
-  .collapse-toggle {
-    position: absolute;
-    left: 10px;
-    top: 20px;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #3498db;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 100; /* Higher than container */
-  }
-  
-  .info-content {
-    flex: 1;
-    overflow-y: auto; /* Enable vertical scrolling */
-    padding-top: 40px; /* Space for toggle button */
-    padding-right: 10px;
-    margin-top: -20px; /* Compensate for container padding */
-  }
-  
-  .collapse-toggle:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .tourist-info-container.collapsed .info-content {
-    opacity: 0;
-    pointer-events: none;
-  }
-  
-  .tourist-info-container h2 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
-    font-size: 28px;
-    padding-right: 30px;
-  }
-  
-  .category-selector {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  
-  .category-selector button {
-    padding: 10px 20px;
-    background-color: #f5f5f5;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.3s ease;
-  }
-  
-  .category-selector button:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .category-selector button.active {
-    background-color: #3498db;
-    color: white;
-  }
-  
-  .items-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .info-item {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-  
-  .item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    cursor: pointer;
-    background-color: #f9f9f9;
-    transition: background-color 0.3s ease;
-  }
-  
-  .item-header:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .item-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: #2c3e50;
-  }
-  
-  .toggle-icon {
-    font-size: 20px;
-    font-weight: bold;
-    color: #3498db;
-  }
-  
-  .item-details {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    animation: fadeIn 0.3s ease;
-  }
-  
-  .item-details p {
-    margin: 0 0 15px 0;
-    line-height: 1.6;
-  }
-  
-  .view-more-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .view-more-btn:hover {
-    background-color: #2980b9;
-  }
-  .info-content::-webkit-scrollbar {
-    width: 6px;
-  }
-  .info-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-  .info-content::-webkit-scrollbar-thumb {
-    background: #3498db;
-    border-radius: 3px;
-  }
-  .info-content::-webkit-scrollbar-thumb:hover {
-    background: #2980b9;
-  }
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 350px;
+  position: fixed;
+  right: 0;
+  top: var(--navbar-height, 60px);
+  bottom: 0;
+  padding: 20px;
+  color: #333;
+  background-color: white;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  z-index: 90;
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
 
-  .category-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 20px;
-    justify-content: center;
-  }
-  
-  .category-selector button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 20px;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-  }
-  
-  .category-selector button.active {
-    background-color: #3498db;
-    color: white;
-  }
-  
-  .category-selector button:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .items-list {
-    max-height: calc(100vh - 250px);
-    overflow-y: auto;
-    padding-right: 5px;
-  }
+.tourist-info-container.collapsed {
+  transform: translateX(calc(100% - 50px));
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+.collapse-toggle {
+  position: absolute;
+  left: 10px;
+  top: 20px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-more {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.show-more {
+  color: #007aff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.info-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #ccc;
+}
+
+.item-image {
+  width: 100%;
+  height: 150px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-text h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.item-text p {
+  margin: 0;
+  line-height: 1.6;
+  color: #666;
+}
+
+.view-more-container {
+  position: absolute;
+  right: 0;
+  bottom: 20px;
+}
+
+.view-more-btn {
+  background: none;
+  border: none;
+  color: #007aff;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.view-more-btn:hover {
+  text-decoration: underline;
+}
