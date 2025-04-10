@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import '../styles/TouristInfoSection.css';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import kuchingImage from '../assets/Kuching.png';
+import sibuImage from '../assets/Sibu.png'; // Add these image imports
+import miriImage from '../assets/Miri.png';
+import bintuluImage from '../assets/Bintulu.png';
 
 const TouristInfoSection = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -33,17 +36,20 @@ const TouristInfoSection = () => {
     { 
       id: 2, 
       name: 'Sibu', 
-      description: 'Bustling town along the Rajang River.' 
+      description: 'Bustling town along the Rajang River.',
+      image: sibuImage 
     },
     { 
       id: 3, 
       name: 'Miri', 
-      description: 'Birthplace of Malaysia\'s petroleum industry.' 
+      description: 'Birthplace of Malaysia\'s petroleum industry.',
+      image: miriImage 
     },
     { 
       id: 4, 
       name: 'Bintulu', 
-      description: 'Industrial town with beautiful beaches.' 
+      description: 'Industrial town with beautiful beaches.',
+      image: bintuluImage 
     }
   ];
 
@@ -61,18 +67,17 @@ const TouristInfoSection = () => {
       </div>
       
       <div className="info-content">
-        <div className="discover-more">
-          Discover more? <span className="show-more">Show more</span>
+        <div className="discover-more-container">
+          <span className="discover-more">Discover more?</span>
+          <span className="show-more">Show more</span>
         </div>
 
         <div className="items-list">
           {data.map(item => (
             <div key={item.id} className="info-item">
-              {item.image && (
-                <div className="item-image">
-                  <img src={item.image} alt={item.name} />
-                </div>
-              )}
+              <div className="item-image">
+                <img src={item.image} alt={item.name} />
+              </div>
               <div className="item-text">
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>

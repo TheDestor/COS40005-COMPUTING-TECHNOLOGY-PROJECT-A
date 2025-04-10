@@ -7,8 +7,9 @@
   bottom: 0;
   padding: 20px;
   color: #333;
-  background-color: white;
+  background-color: #ece6f0;
   box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  border-radius: 15px 0 0 0;
   z-index: 90;
   transition: transform 0.3s ease-in-out;
   display: flex;
@@ -22,7 +23,6 @@
 .collapse-toggle {
   position: absolute;
   left: 10px;
-  top: 20px;
   width: 30px;
   height: 30px;
   display: flex;
@@ -39,11 +39,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+}
+
+.discover-more-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin: 0 10px 20px 0;
+  align-items: center;
 }
 
 .discover-more {
   font-size: 16px;
-  margin-bottom: 20px;
   color: #333;
 }
 
@@ -54,16 +62,16 @@
 }
 
 .items-list {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding-right: 10px;
 }
 
 .info-item {
-  position: relative;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
   border-bottom: 2px solid #ccc;
+  padding-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .item-image {
@@ -80,6 +88,10 @@
   object-fit: cover;
 }
 
+.item-text {
+  margin-bottom: 8px;
+}
+
 .item-text h3 {
   margin: 0 0 10px 0;
   font-size: 18px;
@@ -93,9 +105,9 @@
 }
 
 .view-more-container {
-  position: absolute;
-  right: 0;
-  bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
 }
 
 .view-more-btn {
@@ -110,4 +122,24 @@
 
 .view-more-btn:hover {
   text-decoration: underline;
+}
+
+.tourist-info-container.collapsed {
+  transform: translateX(100%);
+  background-color: transparent;
+  box-shadow: none;
+  pointer-events: none; /* Prevent clicking on hidden area */
+}
+
+.tourist-info-container.collapsed .collapse-toggle {
+  transform: translateX(-100%);
+  pointer-events: auto; /* Ensure icon stays clickable */
+}
+
+.info-content::-webkit-scrollbar {
+  width: 8px;
+}
+.info-content::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
 }
