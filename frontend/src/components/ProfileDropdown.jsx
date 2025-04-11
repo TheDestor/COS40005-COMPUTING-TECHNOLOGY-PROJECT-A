@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark, FiUser } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import '../styles/ProfileDropdown.css';
 
 const ProfileDropdown = () => {
@@ -27,9 +28,11 @@ const ProfileDropdown = () => {
             <>
               <div className="login-section">
                 <span>Login to learn more</span>
-                <button className="login-button" onClick={() => setIsLoggedIn(true)}>
+                <Link to="/login" className="login-button2" onClick={() => {
+                    navigate('/login');
+                    setIsOpen(false);}}>
                   Login
-                </button>
+                </Link>
               </div>
               <div className="divider" />
               <div>

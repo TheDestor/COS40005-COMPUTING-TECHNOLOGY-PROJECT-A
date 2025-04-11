@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  FiMapPin, FiHome, FiBook, FiAnchor, FiNavigation,
-  FiUmbrella, FiPlusCircle, FiCalendar, FiChevronDown, FiChevronUp
-} from 'react-icons/fi';
+  FaBed, FaUniversity, FaMountain, FaPlaneDeparture,
+  FaUmbrellaBeach, FaHospital, FaCalendarAlt
+} from 'react-icons/fa'; // FontAwesome Icons
+import { FaLocationDot } from "react-icons/fa6";
+import { FiChevronDown, FiChevronUp } from 'react-icons/fi'; // FontAwesome Icons
 import '../styles/MapViewMenu.css';
 
 const MapViewMenu = ({ onSelect, activeOption = 'Major Town' }) => {
@@ -19,14 +21,14 @@ const MapViewMenu = ({ onSelect, activeOption = 'Major Town' }) => {
   }, []);
 
   const menuItems = [
-    { name: 'Major Town', icon: <FiMapPin /> },
-    { name: 'Homestay', icon: <FiHome /> },
-    { name: 'Museum', icon: <FiBook /> },
-    { name: 'National Park', icon: <FiAnchor /> },
-    { name: 'Airport', icon: <FiNavigation /> },
-    { name: 'Beach', icon: <FiUmbrella /> },
-    { name: 'Hospital', icon: <FiPlusCircle /> },
-    { name: 'Event', icon: <FiCalendar /> }
+    { name: 'Major Town', icon: <FaLocationDot /> }, // Location Pin
+    { name: 'Homestay', icon: <FaBed /> },     // Bed for homestay
+    { name: 'Museum', icon: <FaUniversity /> }, // University for Museum
+    { name: 'National Park', icon: <FaMountain /> }, // Mountain for National Park
+    { name: 'Airport', icon: <FaPlaneDeparture /> }, // Plane for Airport
+    { name: 'Beach', icon: <FaUmbrellaBeach /> }, // Umbrella for Beach
+    { name: 'Hospital', icon: <FaHospital /> },  // Hospital Icon
+    { name: 'Event', icon: <FaCalendarAlt /> }   // Calendar for Event
   ];
 
   const handleMenuItemClick = (name) => {
@@ -76,7 +78,7 @@ const MapViewMenu = ({ onSelect, activeOption = 'Major Town' }) => {
                   className="menu-item-dropdown"
                   onClick={() => handleMenuItemClick(item.name)}
                 >
-                  {item.name}
+                  {item.icon} {item.name}
                 </button>
               ))}
             </div>

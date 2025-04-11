@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/Homepage.jsx';
-import SearchOverlay from './pages/SearchOverlay.jsx';
-import SearchBar from './components/Searchbar.jsx';
+import UserRegistration from './pages/UserRegistration.jsx';
+import LoginPage from './pages/Loginpage.jsx';
+import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
+
 import './App.css';
 
 function App() {
@@ -30,9 +32,14 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <HomePage />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/register" element={<UserRegistration />} />
+        <Route path="/business-register" element={<BusinessRegistration />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </Router>
   );
 }
 

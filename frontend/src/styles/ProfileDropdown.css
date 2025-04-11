@@ -10,26 +10,34 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #ece6f0;
+  background: #ece6f0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   border: none;
   font-size: 18px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.profile-button:hover {
+  transform: scale(1.1);
+  background: linear-gradient(145deg, #d7c3e2, #f3ebf9);
 }
 
 .dropdown-menu {
   position: absolute;
   right: 0;
   top: 50px;
-  background-color: #ece6f0;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: #f6f0fa;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   width: 260px;
   z-index: 1000;
   padding: 10px 0;
   text-align: center;
+  animation: dropdownFade 0.3s ease-out;
 }
 
 .login-section,
@@ -37,44 +45,58 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 14px;
-  color: #666;
+  color: #555;
   font-weight: 600;
+  /* background-color: #ece6f0; */
+  border-radius: 10px;
+  margin: 8px;
 }
 
-.login-button,
+.login-button2,
 .logout-button {
   padding: 10px 25px;
   font-size: 14px;
-  background-color: #007bff; 
+  background: linear-gradient(to right, #007bff, #00bfff);
   color: white;
   border: none;
   border-radius: 25px;
   cursor: pointer;
   font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.login-button2:hover,
+.logout-button:hover {
+  background: linear-gradient(to right, #006ae1, #009ad6);
+  transform: scale(1.05);
+  color: white;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .user-avatar {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+  border: 2px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .divider {
-  border-top: 2px solid #ccc;
-  margin: 10px 16px;
+  border-top: 1.5px solid #ccc;
+  margin: 12px 20px;
 }
 
 .menu-item {
   width: 100%;
-  padding: 10px 16px;
+  padding: 12px 20px;
   text-align: left;
   background: none;
   border: none;
@@ -83,6 +105,25 @@
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #333;
+  gap: 12px;
+  color: #444;
+  transition: background 0.3s ease, color 0.2s ease;
+}
+
+
+.menu-item:hover {
+  background-color: #e0d4e8;
+  color: #007bff;
+  border-radius: 8px;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
