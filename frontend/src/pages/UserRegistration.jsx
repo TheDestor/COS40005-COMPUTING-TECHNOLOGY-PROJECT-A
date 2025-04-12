@@ -36,11 +36,11 @@ const UserRegistration = () => {
 
           <form className="registration-form">
             <div className="form-row">
-              <input type="text" placeholder="First Name" onKeyDown={handleKeyDown} />
-              <input type="text" placeholder="Last Name" onKeyDown={handleKeyDown} />
+              <input className='input-field' type="text" placeholder="First Name" onKeyDown={handleKeyDown} />
+              <input className='input-field' type="text" placeholder="Last Name" onKeyDown={handleKeyDown} />
             </div>
             <div className="form-row">
-              <input type="email" placeholder="Email" onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="email" placeholder="Email" onKeyDown={handleKeyDown} required/>
             </div>
             <div className="form-row">
                 <div className="phone-input-wrapper">
@@ -57,6 +57,7 @@ const UserRegistration = () => {
             <div className="form-row">
               <div className="password-input">
                 <input
+                  className='input-field'
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password" onKeyDown={handleKeyDown}
                 />
@@ -68,8 +69,9 @@ const UserRegistration = () => {
             <div className="form-row">
                 <div className="password-input">
                     <input
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Confirm password" onKeyDown={handleKeyDown}
+                      className='input-field'
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="Confirm password" onKeyDown={handleKeyDown}
                     />
                     <span onClick={() => setShowConfirm(!showConfirm)}>
                     {showConfirm ? <FaEyeSlash /> : <FaEye />}
