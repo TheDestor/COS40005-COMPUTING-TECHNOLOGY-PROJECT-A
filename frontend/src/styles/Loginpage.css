@@ -73,7 +73,7 @@
 
 .close-btn:hover {
   transform: rotate(90deg);
-  color: #000;
+  color: #007bff;
 }
 
 /* ============================
@@ -137,7 +137,17 @@
   max-width: 91%;
 }
 
+.input-with-icon2 {
+  position: relative;
+  width: 100%;
+  max-width: 91%;
+  margin-bottom: 1rem;
+}
+
 .input-with-icon .input-field {
+  padding-right: 45px;
+}
+.input-with-icon2 .input-field {
   padding-right: 45px;
 }
 
@@ -280,3 +290,170 @@
     transform: scale(1);
   }
 }
+
+/* ============================
+   11. FORGOT PASSWORD & OTP & RESET STYLES
+============================ */
+
+/* Reuse login-wrapper and login-image */
+
+.reset-container {
+  flex: 1;
+  padding: 2rem;
+  background-color: #fff;
+  /* display: flex; */
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+/* Title & subtitle */
+.reset-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.reset-container p {
+  margin-bottom: 6rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.reset-container2 p {
+  margin-bottom: 3rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.reset-container3 p {
+  margin-bottom: 2rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+/* Email input (same as input-field) */
+
+/* OTP Code Box */
+.otp-box-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.otp-box-wrapper input {
+  width: 40px;
+  height: 48px;
+  text-align: center;
+  font-size: 1.2rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border 0.3s, box-shadow 0.3s;
+}
+
+.otp-box-wrapper input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+}
+
+/* Resend link and timer */
+.resend-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.resend-section a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.resend-section a:hover {
+  text-decoration: underline;
+}
+
+/* Navigation buttons */
+.reset-buttons {
+  display: flex;
+  justify-content: flex-end ;
+  gap: 1.2rem; /* Space between Cancel and Continue */
+  margin-top: 1.5rem;
+}
+
+.reset-buttons .btn-back,
+.reset-buttons .btn-continue {
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #007bff;
+  transition: all 0.3s;
+}
+
+.btn-back {
+  background: white;
+  color: #007bff;
+  ;
+}
+
+.btn-back:hover {
+  background: #f1f8ff;
+}
+
+.btn-continue {
+  background: #007bff;
+  color: white;
+  border: none;
+}
+
+.btn-continue:hover {
+  background-color: #0056b3;
+}
+
+/* Confirm password match styles */
+.match-warning {
+  font-size: 0.85rem;
+  color: #d32f2f;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+.match-success {
+  font-size: 0.85rem;
+  color: #388e3c;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+.strength-meter {
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-bottom: 0.8rem;
+  text-align: left;
+  padding-left: 5px;
+}
+
+.strength-meter.weak {
+  color: #d32f2f;
+}
+
+.strength-meter.medium {
+  color: #f9a825;
+}
+
+.strength-meter.strong {
+  color: #388e3c;
+}
+
+
+

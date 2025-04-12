@@ -6,6 +6,8 @@ import UserRegistration from './pages/UserRegistration.jsx';
 import LoginPage from './pages/Loginpage.jsx';
 import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
 import Footer from './components/Footer.jsx';
+import ForgetPassword from './pages/ForgetPasswordpage.jsx';
+import SettingPage from './pages/Settingpage.jsx';
 
 import './App.css';
 
@@ -40,6 +42,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/footer" element={<Footer />} />
+        <Route path="/forgetpassword" element={<ForgetPassword />} />
+        <Route path="/settings" element={<SettingPage />} />
       </Routes>
     </Router>
   );

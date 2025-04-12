@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark, FiUser } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/ProfileDropdown.css';
 
 const ProfileDropdown = () => {
@@ -15,6 +15,8 @@ const ProfileDropdown = () => {
     firstName: 'John',
     profileImage: 'https://i.pravatar.cc/150?img=3'
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="profile-dropdown">
@@ -36,7 +38,7 @@ const ProfileDropdown = () => {
               </div>
               <div className="divider" />
               <div>
-                <button className="menu-item">
+              <button className="menu-item" onClick={() => navigate('/settings')}>
                   <FiSettings size={18} />
                   General
                 </button>

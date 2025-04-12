@@ -112,7 +112,7 @@ const LoginPage = () => {
                 Don’t have an account? <Link to="/register" className="signup-link">Sign up</Link>
               </span>
               <span className="forgot-password">
-                <a href="#">Forgot Password?</a>
+                <Link to="/forgetpassword">Forgot Password?</Link>
               </span>
             </div>
           )}

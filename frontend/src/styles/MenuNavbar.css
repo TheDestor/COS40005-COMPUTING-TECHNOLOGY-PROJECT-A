@@ -1,0 +1,155 @@
+/* ============================
+   0. Wrapper with Logo + Menu Centered
+============================ */
+.mapview-navbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Logo positioning to the left */
+  .nav-logo {
+    position: absolute;
+    left: 20px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-image {
+    height: 40px;
+    width: auto;
+  }
+  
+/* ============================
+   1. Base Container Styles
+============================ */
+.mapview-container2 {
+    position: relative;
+  }
+  
+  /* ============================
+     2. Horizontal Menu Styles (Desktop View)
+  ============================ */
+  .menu-container2 {
+    display: flex;
+    flex-direction: row;
+    background-color: #ECE6F0;
+    border-radius: 30px;
+    padding: 4px;
+    margin: 0 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    height: 55px;
+    max-width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    transition: all 0.3s ease;
+    align-items: center;
+  }
+  
+  .menu-container2::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* ============================
+     3. Menu Item Styles
+  ============================ */
+  .menu-item3 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    border: none;
+    background: none;
+    outline: none;
+    flex-shrink: 0;
+    min-width: 64px;
+    position: relative;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+  }
+  
+  .menu-item3:hover {
+    transform: translateY(-5px);
+    background-color: rgba(0, 122, 255, 0.1);
+  }
+  
+  /* ============================
+     4. Icon Container & Icon Effects
+  ============================ */
+  .icon-container2 {
+    width: 30px;
+    height: 30px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .menu-item3:hover .icon-container2 {
+    background-color: #007AFF;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  
+  .menu-icon2 {
+    font-size: 14px;
+    color: #555;
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+  
+  .menu-item3:hover .menu-icon2 {
+    transform: scale(1.2);
+    color: #007AFF;
+  }
+  
+  /* ============================
+     5. Menu Text Styles
+  ============================ */
+  .menu-text3 {
+    font-size: 0.8rem;
+    text-align: center;
+    font-weight: 400;
+    transition: color 0.3s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    color: #555;
+  }
+  
+  .menu-item3:hover .menu-text3 {
+    color: #007AFF;
+  }
+  
+  .menu-item3 button:focus,
+  .menu-item3 a:focus {
+    outline: none;
+    border: none;
+  }
+  
+  /* ============================
+     6. Active State Styles
+  ============================ */
+  .active-icon-container2 {
+    background-color: #007AFF;
+  }
+  
+  .active-icon2 {
+    color: white;
+  }
+  
+  .active-text2 {
+    color: #007AFF;
+    font-weight: 500;
+  }
