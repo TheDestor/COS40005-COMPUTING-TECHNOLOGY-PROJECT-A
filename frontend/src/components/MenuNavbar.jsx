@@ -7,7 +7,8 @@ import {
 import { FaLocationDot, FaMapLocationDot } from "react-icons/fa6";
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import '../styles/MenuNavbar.css';
-import logo from '../assets/SarawakTourismLogo.png'; // Make sure the logo is placed correctly
+import logo from '../assets/SarawakTourismLogo.png'; 
+import ProfileDropdown from '../components/ProfileDropdown.jsx';
 
 const MenuNavbar = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -39,58 +40,36 @@ const MenuNavbar = () => {
 
   return (
     <div className="mapview-navbar">
-      <Link to="/" className="nav-logo">
+    <Link to="/" className="nav-logo">
         <img src={logo} alt="Sarawak Tourism" className="logo-image" />
-      </Link>
+    </Link>
 
-      {!isMobile ? (
+    <div className="menu-wrapper">
         <div className="menu-container2">
-          {menuItems.map((item) => {
+        {menuItems.map((item) => {
             const isActive = currentPath === item.path;
             return (
-              <Link
+            <Link
                 key={item.name}
                 to={item.path}
                 className={`menu-item3 ${isActive ? 'active' : ''}`}
-              >
+            >
                 <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
-                  <span className={`menu-icon3 ${isActive ? 'active-icon2' : ''}`}>
+                <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
                     {item.icon}
-                  </span>
+                </span>
                 </div>
                 <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
-                  {item.name}
+                {item.name}
                 </span>
-              </Link>
+            </Link>
             );
-          })}
+        })}
         </div>
-      ) : (
-        <div className="dropdown-container">
-          <div
-            className="dropdown-wrapper"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <span className="menu-dropdown">Menu</span>
-            {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
-          </div>
-
-          {isDropdownOpen && (
-            <div className="dropdown-menu">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className="menu-item-dropdown"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  {item.icon} {item.name}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+    </div>
+    <div className="profile-container2">
+        <ProfileDropdown />
+    </div>
     </div>
   );
 };

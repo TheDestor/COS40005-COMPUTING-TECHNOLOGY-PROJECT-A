@@ -7,9 +7,17 @@
     justify-content: center;
     position: relative;
     padding: 10px 20px;
-    background-color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%);
+    width: 100%;
+    box-sizing: border-box;
   }
+
+  .menu-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  
   
   /* Logo positioning to the left */
   .nav-logo {
@@ -43,7 +51,7 @@
     margin: 0 6px;
     overflow-x: auto;
     white-space: nowrap;
-    height: 55px;
+    height: 60px;
     max-width: 100%;
     box-sizing: border-box;
     scrollbar-width: none;
@@ -152,4 +160,8 @@
   .active-text2 {
     color: #007AFF;
     font-weight: 500;
+  }
+
+  .profile-container2 {
+    padding:  0 20px;
   }

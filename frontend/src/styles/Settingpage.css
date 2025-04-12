@@ -2,7 +2,7 @@
 .settings-container {
     display: flex;
     min-height: 100vh;
-    width: 50vw;
+    width: 100vw;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f9f9f9;
   }
@@ -131,6 +131,7 @@
     margin-bottom: 15px;
     border-radius: 999px;
     transition: background 0.3s ease;
+    width: 40%;
   }
   
   .setting-item:hover {
@@ -228,6 +229,7 @@
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
+    width: 40%;
   }
   
   /* ------------------ Settings List ------------------ */
@@ -246,6 +248,7 @@
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
+    width: 40%;
   }
   
   .settings-list li:hover {
@@ -271,6 +274,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    width: 40%;
   }
   
   .help-list li:hover {
@@ -301,12 +305,13 @@
   
   .faq-list li {
     background-color: #f9f9f9;
-    border-radius: 15px;
+    border-radius: 999px;
     padding: 18px 22px;
     font-size: 16px;
     color: #333;
     transition: all 0.3s ease;
     cursor: pointer;
+    width: 40%;
   }
   
   .faq-list li:hover {
