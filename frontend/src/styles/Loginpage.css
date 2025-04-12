@@ -123,6 +123,7 @@
   border-radius: 999px;
   outline: none;
   transition: border-color 0.3s, box-shadow 0.2s;
+  background-color: white;
 }
 
 .input-field:focus {
@@ -181,6 +182,7 @@
   font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.2s;
+  background-color: white;
 }
 
 .send-button-inside:hover {
@@ -252,6 +254,7 @@
 .signup-text,
 .forgot-password {
   font-weight: 500;
+  color: black;
 }
 
 .signup-link,

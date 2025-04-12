@@ -36,15 +36,15 @@ const BusinessRegistrationpage = () => {
 
           <form className="registration-form">
             <div className="form-row2">
-              <input type="text" placeholder="First Name" onKeyDown={handleKeyDown} required/>
-              <input type="text" placeholder="Last Name" onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="text" placeholder="First Name" onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="text" placeholder="Last Name" onKeyDown={handleKeyDown} required/>
             </div>
             <div className="form-row2">
-                <input type="text" placeholder="Company Name" onKeyDown={handleKeyDown} required/>
-                <input type="text" placeholder="Company Registration No." onKeyDown={handleKeyDown} required/>
+                <input className='input-field' type="text" placeholder="Company Name" onKeyDown={handleKeyDown} required/>
+                <input className='input-field' type="text" placeholder="Company Registration No." onKeyDown={handleKeyDown} required/>
             </div>
             <div className="form-row2">
-              <input type="email" placeholder="Company Email" onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="email" placeholder="Company Email" onKeyDown={handleKeyDown} required/>
             </div>
             <div className="form-row2">
                 <div className="phone-input-wrapper">
@@ -55,16 +55,17 @@ const BusinessRegistrationpage = () => {
                     <option value="+44">🇬🇧 +44</option>
                     <option value="+91">🇮🇳 +91</option>
                     </select>
-                    <input type="tel" placeholder="Contact Number" onKeyDown={handleKeyDown} required/>
+                    <input className='input-field' type="tel" placeholder="Contact Number" onKeyDown={handleKeyDown} required/>
                 </div>
             </div>
             <div className="form-row2">
-                <input type="text" placeholder="Company Address" onKeyDown={handleKeyDown} required/>
+                <input className='input-field' type="text" placeholder="Company Address" onKeyDown={handleKeyDown} required/>
             </div>
 
             <div className="form-row2">
               <div className="password-input">
                 <input
+                  className='input-field'
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password" onKeyDown={handleKeyDown}
                 />
@@ -75,8 +76,9 @@ const BusinessRegistrationpage = () => {
 
               <div className="password-input">
                     <input
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Confirm password" onKeyDown={handleKeyDown}
+                      className='input-field'
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="Confirm password" onKeyDown={handleKeyDown}
                     />
                     <span onClick={() => setShowConfirm(!showConfirm)}>
                     {showConfirm ? <FaEyeSlash /> : <FaEye />}

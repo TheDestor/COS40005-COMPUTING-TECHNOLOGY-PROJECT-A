@@ -145,6 +145,7 @@
     padding: 0.75rem 1rem;
     font-size: 1rem;
     background-color: white;
+    color: black;
     outline: none;
     cursor: pointer;
     border-right: 1px solid #ccc;
@@ -171,10 +172,7 @@
   }
   
   /* ========== General Inputs ========== */
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="password"] {
+  .input-field {
     flex: 1;
     padding: 0.75rem 1rem;
     border: 1px solid #ccc;
@@ -237,6 +235,7 @@
     text-align: center;
     margin-top: 1rem;
     font-size: 0.95rem;
+    color: black;
   }
   
   .signin-link a {
