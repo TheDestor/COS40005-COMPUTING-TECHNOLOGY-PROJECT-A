@@ -8,7 +8,7 @@ const HomePage = () => {
       <Navbar />
       <div style={{ 
         padding: '1rem',
-        marginRight: '350px', /* Make space for the tourist info section */
+        marginRight: '350px',
         transition: 'margin-right 0.3s ease-in-out'
       }}>
         {/* Your main content goes here */}

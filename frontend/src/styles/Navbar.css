@@ -1,3 +1,6 @@
+/* ----------------------------------- */
+/*  GENERAL LAYOUT STYLES              */
+/* ----------------------------------- */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -16,153 +19,180 @@
   align-items: center;
   gap: 15px;
 }
-  
-  .center-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-  }
-  
-  .top-right-section {
-    display: flex;
-    align-items: flex-end;
-  }
-  
-  .right-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .search-container {
-    margin-left: 0;
-  }
-  
-  .logo {
-    height: 20px;
-    width: auto;
-  }
-  
-  .date-time {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-size: 0.95rem;
-    color: #333;
-    font-weight: 500;
-    white-space: nowrap;
-  }  
-  
-  .weather-section {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-  
-  .profile-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #ece6f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    margin-left: 10px;
-  }
-  
-  .weather-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #2c3e50;
-    text-align: right;
-  }
-  
-  .weather-icon {
-    font-size: 1.5rem;
-    transition: transform 0.3s;
-  }
-  
-  .weather-icon:hover {
-    transform: scale(1.2);
-  }
-  
-  .town-selector {
-    padding: 6px 10px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: bold;
-    transition: background 0.3s;
-  }
-  
-  .town-selector:hover {
-    background: #2980b9;
-  }
-  
-  .dropdown-container2 {
-    position: relative;
-  }
-  
-  .dropdown {
-    position: absolute;
-    top: 120%;
-    left: 0;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    padding: 10px;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-in-out;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-  
-  .dropdown-item {
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.2s;
-  }
-  
-  .dropdown-item:hover {
-    background-color: #f0f0f0;
-  }
 
-  .current-location {
-    font-weight: bold;
-    font-size: 0.85rem;
-    margin-bottom: 6px;
-    color: #444;
-  }
+.center-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
 
-  /* Weather, Date & Time Container */
+.top-right-section {
+  display: flex;
+  align-items: flex-end;
+}
+
+.right-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.search-container {
+  margin-left: 0;
+}
+
+/* ----------------------------------- */
+/*  LOGO STYLING                       */
+/* ----------------------------------- */
+.logo {
+  height: 20px;
+  width: auto;
+}
+
+/* ----------------------------------- */
+/*  PROFILE DROPDOWN & ICON            */
+/* ----------------------------------- */
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ece6f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+/* ----------------------------------- */
+/*  WEATHER, DATE & TIME CONTAINER     */
+/* ----------------------------------- */
 .date-time-weather-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 0.6rem 1rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease-in-out;
-  backdrop-filter: blur(10px);
+  gap: 0.5rem;
+  background: #ece6f0;
+  border-radius: 25px;
+  padding: 0.4rem 1rem;
 }
 
-.date-time-weather-container:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+.date-time {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.80rem;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
+.weather-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ----------------------------------- */
+/*  WEATHER INFO STYLES                */
+/* ----------------------------------- */
+.weather-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #2c3e50;
+  text-align: right;
+}
+
+.weather-icon {
+  font-size: 1.5rem;
+  transition: transform 0.3s;
+}
+
+.weather-icon:hover {
+  transform: scale(1.2);
+}
+
+/* ----------------------------------- */
+/*  TOWN SELECTOR + DROPDOWN MENU      */
+/* ----------------------------------- */
+.town-selector {
+  padding: 6px 10px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.3s;
+}
+
+.town-selector:hover {
+  background: #2980b9;
+}
+
+.dropdown-container2 {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: 120%;
+  margin-top: 10px;
+  right: 1%;
+  background: #f5edf9;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  min-width: 300px;
+  max-width: 90vw; /* Prevent it from overflowing the screen */
+  box-sizing: border-box;
+}
+
+
+
+.dropdown-item {
+  color: #0066cc;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.90rem;
+  transition: color 0.2s, text-decoration 0.2s;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  color: #004a99;
+  text-decoration: underline;
+}
+
+.dropdown-items-grid {
+  display: grid;
+  grid-template-columns: repeat(6, auto);
+  gap: 10px 16px;
+  justify-content: start;
+}
+
+.current-location {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #111;
+  margin-bottom: 12px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 6px;
+}
+
+/* ----------------------------------- */
+/*  ANIMATIONS                         */
+/* ----------------------------------- */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -174,7 +204,9 @@
   }
 }
 
-/* Responsive Enhancements */
+/* ----------------------------------- */
+/*  RESPONSIVE DESIGN                  */
+/* ----------------------------------- */
 @media (max-width: 768px) {
   .date-time-weather-container {
     flex-direction: column;

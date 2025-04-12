@@ -36,7 +36,7 @@ const LoginPage = () => {
             >
               Password Login
             </button>
-            <button className="close-btn">✕</button>
+            <Link to="/" className="close-btn">✕</Link>
           </div>
 
           <form onSubmit={handleLogin}>

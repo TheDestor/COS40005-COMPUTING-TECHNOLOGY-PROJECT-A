@@ -1,22 +1,33 @@
+/* ============================
+   1. Wrapper & Layout
+============================ */
 .searchbar-wrapper {
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
   position: relative;
   z-index: 1000;
-  font-family: sans-serif;
+  font-family: 'Segoe UI', sans-serif;
 }
 
+/* ============================
+   2. Search Bar Top (Input Row)
+============================ */
 .searchbar-top {
   display: flex;
   align-items: center;
   background-color: #ede9f0;
   border-radius: 20px;
   padding: 8px 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); */
+  transition: box-shadow 0.3s ease;
   width: 100%;
   position: relative;
-  z-index: 1001; /* Ensure search bar stays above any content below */
+  z-index: 1001;
+}
+
+.searchbar-top:hover {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
 .searchbar-top input[type="text"].searchbar-input {
@@ -25,17 +36,33 @@
   outline: none;
   font-size: 14px;
   background: transparent;
-  padding: 6px;
+  padding: 8px;
+  transition: all 0.3s ease;
+  color: #333;
+}
+
+.searchbar-top input::placeholder {
+  color: #777;
+  transition: color 0.3s;
+}
+
+.searchbar-top input:focus::placeholder {
+  color: transparent;
 }
 
 .icon-button {
-  font-size: 18px;
+  font-size: 16px;
   margin-left: 10px;
-  color: #444;
+  color: #555;
   cursor: pointer;
+  transition: transform 0.2s ease, color 0.3s ease;
 }
 
-/* Divider between X and other icons */
+.icon-button:hover {
+  transform: scale(1.2);
+  color: #333;
+}
+
 .divider2 {
   width: 2px;
   background-color: #ccc;
@@ -44,30 +71,42 @@
   border-radius: 10px;
 }
 
+/* ============================
+   3. Expanded Dropdown Content
+============================ */
 .searchbar-expanded {
   position: absolute;
-  top: 100%; /* Keeps it directly below the search bar */
+  top: 100%;
   left: 0;
   right: 0;
   background-color: #ede9f0;
   border-radius: 20px;
   margin-top: 8px;
   padding: 15px 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  z-index: 999; /* Ensure it's above other content */
-  width: 100%;
-  max-height: 300px; /* Limit the height to prevent it from overflowing */
-  overflow-y: auto; /* Allow scrolling if content is too long */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* Category row styling */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================
+   4. Category Section
+============================ */
 .category-row {
   display: flex;
   justify-content: space-between;
   flex-wrap: nowrap;
   margin-bottom: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.category-row::-webkit-scrollbar {
+  display: none;
 }
 
 .category-item {
@@ -76,59 +115,77 @@
   align-items: center;
   background: #d4d4d4;
   border-radius: 12px;
-  padding: 10px;
+  padding: 12px 10px;
   width: 70px;
   margin: 5px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  user-select: none;
+  text-align: center;
+}
+
+.category-item:hover {
+  background: #c0f1ff;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 172, 193, 0.4);
 }
 
 .category-item.active {
   background: #b2ebf2;
-  box-shadow: 0 0 4px #00acc1;
+  box-shadow: 0 0 6px #00acc1;
 }
 
 .category-icon {
-  font-size: 22px;
-  margin-bottom: 5px;
+  font-size: 24px;
+  margin-bottom: 6px;
+  color: #333;
 }
 
 .category-label {
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
 }
 
-/* History section */
+/* ============================
+   5. Search History Section
+============================ */
 .search-history {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .history-item {
   display: flex;
   align-items: center;
-  padding: 6px 0;
+  padding: 8px 6px;
+  border-radius: 10px;
   cursor: pointer;
-  color: #222;
-  font-size: 13px;
+  color: #333;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.history-item:hover {
+  background-color: #e0e0e0;
+  color: #007bff;
 }
 
 .history-icon {
-  margin-right: 8px;
-  color: #444;
+  margin-right: 10px;
+  font-size: 16px;
+  color: #666;
 }
 
 .more-history {
   text-align: center;
-  margin-top: 5px;
-  font-size: 13px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
   color: #007bff;
   cursor: pointer;
+  transition: color 0.3s;
 }
 
-.logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px; /* spacing from input */
-  height: 100%;
+.more-history:hover {
+  color: #0056b3;
 }

@@ -1,4 +1,4 @@
-/* Centering and overlay */
+/* ========== Overlay Styling ========== */
 .registration-overlay {
     position: fixed;
     inset: 0;
@@ -7,9 +7,10 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   
-  /* Container Styling */
+  /* ========== Main Container ========== */
   .registration-container {
     width: 1000px;
     height: 600px;
@@ -18,9 +19,10 @@
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
-  /* Left Side Image */
+  /* ========== Left Panel (Image) ========== */
   .registration-left {
     flex: 1;
   }
@@ -31,77 +33,96 @@
     object-fit: cover;
   }
   
-  /* Right Panel */
+  /* ========== Right Panel (Form) ========== */
   .registration-right {
     flex: 1;
     padding: 2rem;
     display: flex;
     flex-direction: column;
+    justify-content: center;
   }
   
-  /* Tabs */
+  /* ========== Tabs ========== */
   .tabs {
     display: flex;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     font-size: 1.1rem;
   }
-  
+
   .tabs2 {
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
     font-size: 1.1rem;
   }
-
+  
   .active-tab {
     color: #007bff;
-    border-bottom: 3px solid #007bff;
-    font-size: 20px;
+    border-bottom: 2px solid #007bff;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
+    transition: color 0.3s;
   }
   
   .inactive-tab {
-    color: black;
-    margin-left: 2rem;
-    font-size: 20px;
-    font-weight: 400;
+    color: #333;
+    margin: 0 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: color 0.3s;
   }
 
   .inactive-tab2 {
-    color: black;
-    margin-right: 2rem;
-    font-size: 20px;
-    font-weight: 400;
+    color: #333;
+    margin-right: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .inactive-tab:hover, .inactive-tab2:hover {
+    color: #007bff;
   }
   
   .close-btn2 {
     margin-left: auto;
+    background: none;
+    border: none;
     font-size: 2rem;
-    justify-content: center;
     cursor: pointer;
+    color: #999;
+    transition: transform 0.3s ease, color 0.3s ease;
   }
   
-  /* Form Styling */
+  .close-btn2:hover {
+    transform: rotate(90deg);
+    color: #007bff;
+  }
+  
+  
+  /* ========== Form Styling ========== */
   .registration-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
   }
   
+  /* Form Layouts */
   .form-row {
     display: flex;
     gap: 1rem;
   }
-
+  
   .form-row2 {
     display: flex;
     gap: 0.5rem;
   }
-
+  
+  /* Phone Input with Country Select */
   .phone-input-wrapper {
     display: flex;
     align-items: center;
@@ -113,8 +134,13 @@
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
   
+  .phone-input-wrapper:focus-within {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  }
+  
   .phone-input-wrapper select {
-    appearance: none; /* Remove native styling */
+    appearance: none;
     border: none;
     padding: 0.75rem 1rem;
     font-size: 1rem;
@@ -122,7 +148,6 @@
     outline: none;
     cursor: pointer;
     border-right: 1px solid #ccc;
-    height: 100%;
     font-weight: 500;
     background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
@@ -145,6 +170,7 @@
     background-color: white;
   }
   
+  /* ========== General Inputs ========== */
   input[type="text"],
   input[type="email"],
   input[type="tel"],
@@ -155,8 +181,14 @@
     border-radius: 999px;
     outline: none;
     font-size: 1rem;
+    transition: border-color 0.3s ease;
   }
   
+  input:focus {
+    border-color: #007bff;
+  }
+  
+  /* ========== Password Field with Eye Toggle ========== */
   .password-input {
     flex: 1;
     position: relative;
@@ -175,8 +207,14 @@
     cursor: pointer;
     color: #888;
     font-size: 1.1rem;
+    transition: color 0.3s;
   }
   
+  .password-input span:hover {
+    color: #007bff;
+  }
+  
+  /* ========== Register Button ========== */
   .register-btn {
     padding: 0.75rem;
     background-color: #007bff;
@@ -186,27 +224,29 @@
     border-radius: 999px;
     cursor: pointer;
     font-size: 1.1rem;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
   }
   
   .register-btn:hover {
     background-color: #0056b3;
+    transform: translateY(-2px);
   }
   
+  /* ========== Sign-in Link ========== */
   .signin-link {
     text-align: center;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
   
   .signin-link a {
     color: #007bff;
     text-decoration: none;
     font-weight: 500;
+    transition: text-decoration 0.3s;
   }
   
   .signin-link a:hover {
     text-decoration: underline;
   }
-  
   

@@ -5,6 +5,7 @@ import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
 import LoginPage from './pages/Loginpage.jsx';
 import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
+import Footer from './components/Footer.jsx';
 
 import './App.css';
 
@@ -38,6 +39,7 @@ function App() {
         <Route path="/business-register" element={<BusinessRegistration />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/footer" element={<Footer />} />
       </Routes>
     </Router>
   );

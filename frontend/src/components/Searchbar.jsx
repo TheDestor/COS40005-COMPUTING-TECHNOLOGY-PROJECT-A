@@ -39,7 +39,7 @@ const SearchBar = () => {
   }, []);
 
   return (
-    <div ref={ref} className="searchbar-wrapper">
+    <div ref={ref} className={`searchbar-wrapper ${isExpanded ? 'expanded' : ''}`}>
       <div className="searchbar-top" onClick={() => setIsExpanded(true)}>
         <Link to="/" className="logo-container">
           <img src={logo} alt="Logo" className="logo" />
@@ -52,13 +52,13 @@ const SearchBar = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchTerm)}
         />
-        {searchTerm && (
-          <>
-            <FiX className="icon-button" onClick={handleClear} />
-            <div className="divider2" />
-            <FiMic className="icon-button" />
-          </>
-        )}
+        {isExpanded && (
+            <>
+              {searchTerm && <FiX className="icon-button" onClick={handleClear} />}
+              {searchTerm && <div className="divider2" />}
+              <FiMic className="icon-button" />
+            </>
+          )}
         <FiSearch className="icon-button" onClick={() => handleSearch(searchTerm)} />
       </div>
 

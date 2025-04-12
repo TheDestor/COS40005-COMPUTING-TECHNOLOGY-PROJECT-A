@@ -108,11 +108,13 @@ const WeatherDateTime = ({ currentTown, setCurrentTown }) => {
           {showTownDropdown && (
             <div className="dropdown">
               <div className="current-location">Current Location: {currentTown}</div>
-              {towns.map((town) => (
-                <div key={town} className="dropdown-item" onClick={() => handleTownSelect(town)}>
-                  {town}
+                <div className="dropdown-items-grid">
+                {towns.map((town) => (
+                    <div key={town} className="dropdown-item" onClick={() => handleTownSelect(town)}>
+                    {town}
+                    </div>
+                ))}
                 </div>
-              ))}
             </div>
           )}
         </div>

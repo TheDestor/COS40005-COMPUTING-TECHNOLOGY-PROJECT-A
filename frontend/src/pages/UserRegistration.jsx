@@ -31,7 +31,7 @@ const UserRegistration = () => {
           <div className="tabs">
             <span className="active-tab">User registration</span>
             <Link to="/business-register" className="inactive-tab">Business registration</Link>
-            <span className="close-btn" onClick={() => navigate('/')}>&times;</span>
+            <span className="close-btn2" onClick={() => navigate('/')}>&times;</span>
           </div>
 
           <form className="registration-form">

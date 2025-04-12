@@ -1,0 +1,268 @@
+/* ================================
+   🌐 General Footer Styles
+=================================== */
+.footer {
+    background: #ece6f0;
+    color: #333;
+    padding: 10px 20px;
+    font-family: 'Segoe UI', sans-serif;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 40px;
+    width: 100vw;
+    box-sizing: border-box;
+  }
+  
+  
+  /* ================================
+     📬 Newsletter Section (Top Right)
+  =================================== */
+  .footer-main {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 30px;
+    border-bottom: 2px solid #ddd;
+  }
+  
+  .newsletter-heading {
+    flex: 1;
+    display: flex;
+  }
+  
+  .newsletter-heading h3 {
+    font-weight: 600;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #333;
+  }
+  
+  .newsletter {
+    width: 40%;
+    text-align: right;
+  }
+  
+  .email-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .email-icon-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    padding: 0 10px;
+    width: 70%;
+    margin-top: 25px;
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .email-icon-wrapper:hover {
+    box-shadow: 0 0 8px rgba(0,123,255,0.3);
+  }
+  
+  .email-icon {
+    color: #007bff;
+    margin-right: 8px;
+    font-size: 1.1rem;
+  }
+  
+  .email-icon-wrapper input {
+    border: none;
+    outline: none;
+    padding: 10px 0;
+    font-size: 1rem;
+    width: 100%;
+    border-radius: 25px;
+  }
+  
+  .email-input button {
+    background-color: #007bff;
+    margin-top: 25px;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .email-input button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+  }
+  
+  
+  /* ================================
+     🎯 Middle Section
+  =================================== */
+  .footer-middle {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+  
+  
+  /* 🐦 Hornbill + Social (Left Side) */
+  .hornbill-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .hornbill-img {
+    width: 100px;
+    height: auto;
+    object-fit: contain;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-size: 1.5rem;
+    margin-top: 20px;
+  }
+  
+  .icons svg {
+    cursor: pointer;
+    transition: transform 0.3s, color 0.3s;
+    color: #333;
+  }
+  
+  .icons svg:hover {
+    transform: scale(1.2);
+    color: #007bff;
+  }
+  
+  
+  /* 🔗 Footer Links (Right Side) */
+  .footer-links {
+    display: flex;
+    justify-content: flex-end;
+    gap: 80px;
+    flex-wrap: wrap;
+    flex: 3;
+  }
+  
+  .links-column {
+    min-width: 150px;
+  }
+  
+  .links-column h4 {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #000;
+  }
+  
+  .links-column ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .links-column li {
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #555;
+    transition: all 0.3s;
+  }
+  
+  .links-column li:hover {
+    text-decoration: underline;
+    color: #007bff;
+  }
+  
+  
+  /* ================================
+     📄 Footer Bottom
+  =================================== */
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    border-top: 2px solid #ddd;
+    padding-top: 20px;
+    font-size: 0.9rem;
+  }
+  
+  .footer-bottom .copyright {
+    margin-bottom: 10px;
+    color: #666;
+  }
+  
+  .legal-links {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .legal-links span {
+    cursor: pointer;
+    transition: color 0.3s;
+    color: #555;
+  }
+  
+  .legal-links span:hover {
+    color: #007bff;
+    text-decoration: underline;
+  }
+  
+  
+  /* ================================
+     📱 Responsive Styles
+  =================================== */
+  @media (max-width: 768px) {
+    .footer-main {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  
+    .footer-middle {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  
+    .footer-links {
+      justify-content: center;
+    }
+  
+    .hornbill-social {
+      align-items: center;
+    }
+  
+    .footer-bottom {
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+    }
+  
+    .newsletter {
+      text-align: center;
+      width: 100%;
+    }
+  
+    .email-icon-wrapper {
+      width: 100%;
+    }
+  }
+  
