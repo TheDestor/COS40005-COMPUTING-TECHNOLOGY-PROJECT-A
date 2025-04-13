@@ -1,29 +1,10 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import connectDB from "./config/mongodb.js";
 
 const app = express();
+const port = process.env.PORT || 5050
+connectDB(); // Establish connection to the database as soon as the backend is run
 
-app.use(cors())
+app.use(cors());
 app.use(express.json());
-
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB Connected");
-    } catch (err) {
-        console.error("MongoDB Connection Failed: ", err);
-        process.exit(1);
-    }
-};
-
-connectDB();
-
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Hello from the server!' });
-});
-  
-const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
