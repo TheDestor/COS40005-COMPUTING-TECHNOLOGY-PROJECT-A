@@ -131,9 +131,11 @@
 }
 
 .category-item.active {
-  background: #b2ebf2;
-  box-shadow: 0 0 6px #00acc1;
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid #ddd;
 }
+
 
 .category-icon {
   font-size: 24px;

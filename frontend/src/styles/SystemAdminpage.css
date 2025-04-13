@@ -1,0 +1,683 @@
+/* ==========================
+   Admin Container Styles
+============================= */
+.admin-container {
+    display: flex;  
+    height: 150vh;
+    width: 100vw;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f6f8;
+    flex-direction: row;
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* ==========================
+   Sidebar Styles
+============================= */
+.sidebar2 {
+    width: 240px;
+    background-color: #ffffff;
+    padding: 30px 20px;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.sidebar-item2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    color: #333;
+}
+
+.sidebar-item2:hover {
+    background-color: #f0f4ff;
+    color: #0056d2;
+}
+
+.sidebar-item2.active {
+    background-color: #e0edff;
+    color: #007bff;
+}
+
+.sidebar-item2:active {
+    transform: scale(0.97);
+}
+
+.sidebar-icon2 {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-item2:hover .sidebar-icon2 {
+    transform: rotate(-5deg) scale(1.1);
+}
+
+/* ==========================
+   Main Content Styles
+============================= */
+.main-content2 {
+    flex-grow: 1;
+    padding: 30px 40px;
+    box-sizing: border-box;
+    height: calc(100vh - 60px);
+}
+
+.main-content2::-webkit-scrollbar {
+    width: 8px;
+}
+.main-content2::-webkit-scrollbar-track {
+    background: transparent;
+}
+.main-content2::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+}
+
+/* ==========================
+   Content Section Styles
+============================= */
+.content-section2 {
+    background-color: transparent;
+}
+
+.content-section2 h2 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ==========================
+   Summary Box Styles
+============================= */
+.summary-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.summary-box {
+    flex: 1;
+    min-width: 220px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+}
+
+.summary-box:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.summary-box:active {
+    transform: scale(0.98);
+    background-color: #f8faff;
+}
+
+.summary-box h3 {
+    font-size: 16px;
+    color: #444;
+}
+
+.summary-box .value {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 10px 0 5px;
+}
+
+.summary-box .status {
+    font-size: 14px;
+    color: #888;
+}
+
+.status.positive {
+    color: green;
+}
+
+.status.neutral {
+    color: #999;
+}
+
+/* ==========================
+   Table Section Styles
+============================= */
+.table-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.table-header h3 {
+    font-size: 18px;
+    color: #333;
+}
+
+/* ==========================
+   View All Button Styles
+============================= */
+.view-all {
+    background-color: #007bff;
+    color: white;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-all:hover {
+    background-color: #0065d8;
+}
+
+.view-all:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.view-all:active {
+    transform: scale(0.97);
+}
+
+/* ==========================
+   Enhanced Table Styles
+============================= */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.data-table th {
+    background-color: #f4f7fc;
+    color: #555;
+    font-weight: 600;
+    padding: 14px;
+    text-align: left;
+    border-bottom: 2px solid #e6e6e6;
+}
+
+.data-table td {
+    background-color: #fff;
+    padding: 14px;
+    border-bottom: 1px solid #f1f1f1;
+    vertical-align: middle;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.data-table tbody tr:nth-child(even) td {
+    background-color: #f9fbff;
+}
+
+.data-table tbody tr:hover td {
+    background-color: #f1faff;
+    transform: scale(1.01);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.1);
+    cursor: pointer;
+}
+
+.data-table .status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.data-table .status.success {
+    background-color: #d4f8e8;
+    color: #28a745;
+}
+
+.data-table .status.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.data-table .status.danger {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.data-table .status.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* ==========================
+   Details Button Styles
+============================= */
+.details-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.details-button:hover {
+    background-color: #005ecb;
+}
+
+.details-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.details-button:active {
+    transform: scale(0.97);
+}
+
+/* ==========================
+   Responsiveness
+============================= */
+@media (max-width: 768px) {
+    .admin-container {
+        flex-direction: column;
+        padding-top: 70px;
+    }
+
+    .sidebar2 {
+        width: 100%;
+        height: auto;
+        padding: 20px;
+        position: relative;
+        border-right: none;
+    }
+
+    .main-content2 {
+        padding: 20px;
+    }
+
+    .summary-container {
+        flex-direction: column;
+    }
+}
+
+/* ==========================
+   Animations
+============================= */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ==========================
+   User Profile Styles
+============================= */
+.user-profile2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    padding: 12px 10px;
+    border-bottom: 2px solid #ccc;
+}
+
+.profile-icon2 {
+    background-color: #e0edff;
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.username {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* ==========================
+   Enhanced User Controls
+============================= */
+.user-management {
+    height: 100%;
+    width: 100%;
+}
+
+.user-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: #333;
+    margin-top: 20px;
+    border-spacing: 0;
+}
+
+.user-table th, .user-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.user-table th {
+    background-color: #e0edff;
+    font-weight: 600;
+}
+
+.user-table tr:hover {
+    background-color: #f9fbff;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #888;
+    font-size: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 10px 10px 36px; /* left padding for the icon */
+    border: 1px solid #ccc;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+}
+
+.add-user-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 999px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
+}
+
+.filter-button {
+    background-color: none;
+    color: #007bff;
+    padding: 10px 16px;
+    font-size: 14px;
+    border: 2px solid #007bff;
+    border-radius: 999px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.add-user-button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.filter-button:hover {
+    background-color: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    border: none;
+}
+
+.filter-button:active,
+.add-user-button:active {
+    transform: scale(0.96);
+}
+
+.add-user-icon {
+   font-size: 18px;
+}
+
+/* ==========================
+   Status Badges & Actions
+============================= */
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    color: #fff;
+}
+
+.status-badge.system-admin {
+    background-color: #6a1b9a; /* purple */
+    color: white;
+  }
+  
+  .status-badge.cbt-admin {
+    background-color: #1976d2; /* blue */
+    color: white;
+  }
+  
+  .status-badge.business-user {
+    background-color: #ef6c00; /* orange */
+    color: white;
+  }
+  
+  .status-badge.user {
+    background-color: #43a047; /* green */
+    color: white;
+  }
+  
+  .status-badge.active {
+    background-color: #4caf50; /* green */
+    color: white;
+  }
+  
+  .status-badge.inactive {
+    background-color: #f44336; /* red */
+    color: white;
+  }  
+
+.action-icons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.action-icons i {
+    font-size: 16px;
+    color: #555;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.action-icons i:hover {
+    color: #007bff;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* spacing between each button */
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.pagination button {
+    padding: 8px 14px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.pagination button:hover {
+    background-color: #f0f4ff;
+    color: #007bff;
+    transform: translateY(-2px);
+}
+
+.pagination button:active {
+    transform: scale(0.96);
+}
+
+.pagination button.active {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+}
+
+.filter-box {
+    display: flex;
+    gap: 4rem;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    background-color: #fff;
+    width: fit-content;
+    flex-wrap: wrap;
+  }
+  
+  .filter-column {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .filter-column h4 {
+    color: #007bff;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  .filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    font-size: 15px;
+    color: #333;
+  }
+  
+  .filter-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #007bff;
+  }
+  
+  @media (max-width: 600px) {
+    .filter-box {
+      flex-direction: column;
+      gap: 2rem;
+    }
+  }
+
+  .filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    z-index: 10;
+    display: flex;
+    gap: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 0.5rem;
+  }
+  
+  .filter-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .filter-option {
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    margin: 0.25rem 0;
+    transition: background-color 0.2s;
+  }
+  
+  .filter-option:hover,
+  .filter-option.selected {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  
+  

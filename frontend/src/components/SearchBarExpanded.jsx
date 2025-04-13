@@ -5,12 +5,31 @@ import { GiPalmTree } from 'react-icons/gi';
 import '../styles/Searchbar.css';
 
 const SearchBarExpanded = ({ category, setCategory, history }) => {
-  // Define categories and their respective icons
   const categories = [
-    { name: 'Food', icon: <FaPizzaSlice /> },
-    { name: 'Hotel', icon: <FaHotel /> },
-    { name: 'Places', icon: <GiPalmTree /> },
-    { name: 'Event', icon: <FaCalendarAlt /> },
+    {
+      name: 'Food',
+      icon: <FaPizzaSlice />,
+      bgColor: '#FFE0B2',
+      iconColor: '#FF7043',
+    },
+    {
+      name: 'Hotel',
+      icon: <FaHotel />,
+      bgColor: '#D1C4E9',
+      iconColor: '#7E57C2',
+    },
+    {
+      name: 'Places',
+      icon: <GiPalmTree />,
+      bgColor: '#C8E6C9',
+      iconColor: '#388E3C',
+    },
+    {
+      name: 'Event',
+      icon: <FaCalendarAlt />,
+      bgColor: '#FFCDD2',
+      iconColor: '#E53935',
+    },
   ];
 
   return (
@@ -20,9 +39,14 @@ const SearchBarExpanded = ({ category, setCategory, history }) => {
           <div
             key={cat.name}
             className={`category-item ${category === cat.name ? 'active' : ''}`}
+            style={{
+              backgroundColor: category === cat.name ? cat.bgColor : '#f0f0f0',
+            }}
             onClick={() => setCategory(cat.name)}
           >
-            <div className="category-icon">{cat.icon}</div>
+            <div className="category-icon" style={{ color: cat.iconColor }}>
+              {cat.icon}
+            </div>
             <div className="category-label">{cat.name}</div>
           </div>
         ))}
