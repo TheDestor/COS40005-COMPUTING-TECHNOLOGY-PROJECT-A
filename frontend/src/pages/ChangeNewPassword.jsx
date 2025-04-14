@@ -1,98 +1,128 @@
-// // ChangeNewPassword.jsx
-// import React, { useState } from "react";
-// import "../styles/ChangeNewPassword.css";
-// import { Switch } from "react-switch";
-// import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import React, { useState } from "react";
+import "../styles/ChangeNewPassword.css";
+import Switch from "react-switch";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { MdSecurity } from "react-icons/md";
 
-// const ChangeNewPassword = () => {
-//   const [currentPassword, setCurrentPassword] = useState("");
-//   const [newPassword, setNewPassword] = useState("");
-//   const [confirmPassword, setConfirmPassword] = useState("");
-//   const [enableMFA, setEnableMFA] = useState(false);
+const getPasswordStrength = (password) => {
+  if (password.length >= 10 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
+  if (password.length >= 6) return "medium";
+  return "weak";
+};
 
-//   const [showCurrent, setShowCurrent] = useState(false);
-//   const [showNew, setShowNew] = useState(false);
-//   const [showConfirm, setShowConfirm] = useState(false);
+const ChangeNewPassword = () => {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [enableMFA, setEnableMFA] = useState(false);
 
-//   const handleUpdate = () => {
-//     // TODO: Implement update logic (e.g., API call)
-//     console.log("Updated:", {
-//       currentPassword,
-//       newPassword,
-//       confirmPassword,
-//       enableMFA,
-//     });
-//   };
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-//   return (
-//     <div className="change-password-container">
-//       <h2><FaLock size={20} /> Sign in & security</h2>
+  const strength = getPasswordStrength(newPassword);
+  const confirmStrength = getPasswordStrength(confirmPassword);
 
-//       <div className="form-group">
-//         <label>Current password</label>
-//         <div className="input-with-icon">
-//           <input
-//             type={showCurrent ? "text" : "password"}
-//             value={currentPassword}
-//             onChange={(e) => setCurrentPassword(e.target.value)}
-//             placeholder="Enter current password"
-//           />
-//           <button onClick={() => setShowCurrent(!showCurrent)}>
-//             {showCurrent ? <EyeOff size={18} /> : <Eye size={18} />}
-//           </button>
-//         </div>
-//       </div>
+  const isFormFilled = currentPassword && newPassword && confirmPassword;
 
-//       <div className="form-row">
-//         <div className="form-group">
-//           <label>New password</label>
-//           <div className="input-with-icon">
-//             <input
-//               type={showNew ? "text" : "password"}
-//               value={newPassword}
-//               onChange={(e) => setNewPassword(e.target.value)}
-//               placeholder="New password"
-//             />
-//             <button onClick={() => setShowNew(!showNew)}>
-//               {showNew ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-//             </button>
-//           </div>
-//         </div>
+  const handleUpdate = () => {
+    console.log("Updated:", {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+      enableMFA,
+    });
+  };
 
-//         <div className="form-group">
-//           <label>Confirm new password</label>
-//           <div className="input-with-icon">
-//             <input
-//               type={showConfirm ? "text" : "password"}
-//               value={confirmPassword}
-//               onChange={(e) => setConfirmPassword(e.target.value)}
-//               placeholder="Confirm password"
-//             />
-//             <button onClick={() => setShowConfirm(!showConfirm)}>
-//               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-//             </button>
-//           </div>
-//         </div>
-//       </div>
+  return (
+    <div className="change-password-container">
+      <h2><MdSecurity size={20} /> Sign in & security</h2>
 
-//       <div className="mfa-toggle">
-//         <label>Enable MFA via Google Authenticator</label>
-//         <Switch
-//           checked={enableMFA}
-//           onChange={setEnableMFA}
-//           className={`${enableMFA ? "switch-on" : "switch-off"}`}
-//         >
-//           <span className="sr-only">Enable MFA</span>
-//           <span aria-hidden="true" className="switch-thumb" />
-//         </Switch>
-//       </div>
+      <div className="form-group2">
+        <label>Current password</label>
+        <div className="input-with-icon">
+          <input
+            type={showCurrent ? "text" : "password"}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Enter current password"
+          />
+          <button onClick={() => setShowCurrent(!showCurrent)}>
+            {showCurrent ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+          </button>
+        </div>
+      </div>
 
-//       <div className="action-buttons">
-//         <button className="cancel-btn">Cancel</button>
-//         <button className="update-btn" onClick={handleUpdate}>Update</button>
-//       </div>
-//     </div>
-//   );
-// };
+      <div className="form-group2">
+        <label>New password</label>
+        <div className="input-with-icon">
+          <input
+            type={showNew ? "text" : "password"}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New password"
+          />
+          <button onClick={() => setShowNew(!showNew)}>
+            {showNew ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+          </button>
+        </div>
+        {newPassword && (
+          <div className={`strength-meter ${strength}`}>Strength: {strength}</div>
+        )}
+      </div>
 
-// export default ChangeNewPassword;
+      <div className="form-group2">
+        <label>Confirm new password</label>
+        <div className="input-with-icon">
+            <input
+            type={showConfirm ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
+            />
+            <button onClick={() => setShowConfirm(!showConfirm)}>
+            {showConfirm ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+            </button>
+        </div>
+        {confirmPassword && (
+            confirmPassword === newPassword ? (
+            <div className="password-match">Passwords match</div>
+            ) : (
+            <div className="password-mismatch">Passwords do not match</div>
+            )
+        )}
+        </div>
+
+
+        <div className="mfa-toggle-wrapper">
+        <div className="mfa-toggle">
+            <label>Enable MFA via Google Authenticator</label>
+            <Switch
+            checked={enableMFA}
+            onChange={setEnableMFA}
+            onColor="#2563eb"
+            offColor="#ccc"
+            onHandleColor="#ffffff"
+            offHandleColor="#ffffff"
+            handleDiameter={22}
+            uncheckedIcon={false}
+            checkedIcon={false}
+            height={26}
+            width={48}
+            className="mfa-react-switch"
+            />
+        </div>
+        </div>
+
+
+      {isFormFilled && (
+        <div className="action-buttons3 left-align">
+          <button className="cancel-btn3">Cancel</button>
+          <button className="update-btn3" onClick={handleUpdate}>Update</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ChangeNewPassword;

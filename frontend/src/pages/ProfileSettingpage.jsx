@@ -4,7 +4,9 @@ import Navbar from '../components/MenuNavbar.jsx';
 import { MdPerson, MdSecurity, MdNotificationsNone, MdSubscriptions, MdOutlinePhoto, MdDelete } from 'react-icons/md';
 import UserImage from "../assets/Kuching.png";
 import Select from 'react-select';
-// import ChangeNewPassword from './ChangeNewPassword.jsx'
+import ChangeNewPassword from './ChangeNewPassword.jsx';
+import PushNotificationPage from './PushNotificationpage.jsx';
+import PushSubscriptionPage from './PushSuscriptionpage.jsx';
 
 const countries = [
     { name: 'Malaysia', code: 'MY', flag: 'https://flagcdn.com/w40/my.png' },
@@ -103,7 +105,7 @@ const countries = [
                     const file = e.target.files[0];
                     if (file) {
                     const imageUrl = URL.createObjectURL(file);
-                    setSelectedAvatar(imageUrl); // reusing selectedAvatar state to preview
+                    setSelectedAvatar(imageUrl);
                     }
                 }}
                 />
@@ -135,14 +137,22 @@ const ProfileSettingsPage = () => {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
 
   const renderContent = () => {
     switch (activeSection) {
       case 'account':
         return (
-          <div className="profile-section">
-            <h2><MdPerson /> Account Preferences</h2>
+            <div className="profile-section">
+            <div className="section-header">
+              <h2><MdPerson /> Account Preferences</h2>
+              {!isEditingProfile && (
+                <button className="edit-profile-btn" onClick={() => setIsEditingProfile(true)}>
+                  Edit
+                </button>
+              )}
+            </div>          
             <div className="profile-row">
             <div className="profile-picture">
                 <img src={UserImage} alt="Profile" />
@@ -185,11 +195,11 @@ const ProfileSettingsPage = () => {
             <div className="profile-fields">
               <div className="field-group">
                 <label>First name</label>
-                <input type="text" defaultValue="Alvin" />
+                <input type="text" defaultValue="Alvin" readOnly={!isEditingProfile} />
               </div>
               <div className="field-group">
                 <label>Last name</label>
-                <input type="text" defaultValue="Tan" />
+                <input type="text" defaultValue="Tan" readOnly={!isEditingProfile} />
               </div>
               <div className="field-group email-group">
                 <label>Email</label>
@@ -222,19 +232,28 @@ const ProfileSettingsPage = () => {
                     </div>
             </div>
 
+            {isEditingProfile && (
             <div className="profile-buttons">
-              <button className="cancel-btn">Cancel</button>
-              <button className="update-btn">Update</button>
+                <button className="cancel-btn2" onClick={() => {
+                setIsEditingProfile(false);
+                setIsEditingEmail(false);
+                setIsEditingPhone(false);
+                }}>Cancel</button>
+                <button className="update-btn" onClick={() => {
+                // Save logic here
+                setIsEditingProfile(false);
+                }}>Update</button>
             </div>
+            )}
           </div>
         );
 
       case 'security':
-        return <div className="profile-section"><h2>Sign in & Security</h2><p>Security settings go here.</p></div>;
+        return <ChangeNewPassword />;
       case 'notifications':
-        return <div className="profile-section"><h2>Notifications</h2><p>Notification preferences go here.</p></div>;
+        return <PushNotificationPage />;
       case 'subscriptions':
-        return <div className="profile-section"><h2>Subscriptions</h2><p>Subscription settings go here.</p></div>;
+        return <PushSubscriptionPage />;
       default:
         return null;
     }
