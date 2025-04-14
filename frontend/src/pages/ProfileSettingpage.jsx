@@ -208,11 +208,7 @@ const ProfileSettingsPage = () => {
                     type="email"
                     defaultValue="aylt@outlook.com"
                     readOnly={!isEditingEmail}
-                    className={isEditingEmail ? "editable" : ""}
                     />
-                    <span className="input-change" onClick={() => setIsEditingEmail(prev => !prev)}>
-                    {isEditingEmail ? "Cancel" : "Change"}
-                    </span>
                 </div>
                 </div>
 
@@ -223,11 +219,7 @@ const ProfileSettingsPage = () => {
                         type="tel"
                         defaultValue="+6010-123-5678"
                         readOnly={!isEditingPhone}
-                        className={isEditingPhone ? "editable" : ""}
                         />
-                        <span className="input-change" onClick={() => setIsEditingPhone(prev => !prev)}>
-                        {isEditingPhone ? "Cancel" : "Change"}
-                        </span>
                     </div>
                     </div>
             </div>

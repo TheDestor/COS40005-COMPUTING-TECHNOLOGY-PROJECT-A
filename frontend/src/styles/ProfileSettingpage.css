@@ -174,21 +174,6 @@
     padding-right: 0px;
   }
   
-  .input-change {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #007bff;
-    font-size: 0.9rem;
-    cursor: pointer;
-    user-select: none;
-  }
-  
-  .input-change:hover {
-    text-decoration: underline;
-  }
-  
   input.editable {
     border: 1px solid #ccc;
     background-color: #fff;

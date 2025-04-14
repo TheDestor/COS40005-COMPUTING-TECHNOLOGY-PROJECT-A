@@ -5,7 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
 
 const getPasswordStrength = (password) => {
-  if (password.length >= 10 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
+  if (password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
   if (password.length >= 6) return "medium";
   return "weak";
 };
@@ -40,7 +40,7 @@ const ChangeNewPassword = () => {
 
       <div className="form-group2">
         <label>Current password</label>
-        <div className="input-with-icon">
+        <div className="input-with-icon4">
           <input
             type={showCurrent ? "text" : "password"}
             value={currentPassword}
@@ -55,7 +55,7 @@ const ChangeNewPassword = () => {
 
       <div className="form-group2">
         <label>New password</label>
-        <div className="input-with-icon">
+        <div className="input-with-icon4">
           <input
             type={showNew ? "text" : "password"}
             value={newPassword}
@@ -73,7 +73,7 @@ const ChangeNewPassword = () => {
 
       <div className="form-group2">
         <label>Confirm new password</label>
-        <div className="input-with-icon">
+        <div className="input-with-icon4">
             <input
             type={showConfirm ? "text" : "password"}
             value={confirmPassword}

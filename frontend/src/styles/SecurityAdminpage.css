@@ -133,7 +133,7 @@
   
   .actions-red {
     background: red;
-    color: white;
+    color: #333;
     border: none;
   }
   
@@ -145,6 +145,7 @@
   
   .actions-red:hover {
     background: #cc0000;
+    color: white;
     transform: scale(1.05);
   }
   

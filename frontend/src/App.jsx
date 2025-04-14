@@ -10,8 +10,9 @@ import ForgetPassword from './pages/ForgetPasswordpage.jsx';
 import SettingPage from './pages/Settingpage.jsx';
 import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import SystemAdminpage from './pages/SystemAdminpage.jsx';
-
+import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
+import ShowAllCategoryPage from './pages/ShowAllCategorypage.jsx';
 
 function App() {
   const [message, setMessage] = useState('');
@@ -48,6 +49,8 @@ function App() {
         <Route path="/settings" element={<SettingPage />} />
         <Route path="/system-admin" element={<SystemAdminpage />} />
         <Route path="/profile-settings" element={<ProfileSettingPage />} />
+        <Route path="/bookmark" element={<BookmarkPage />} />
+        <Route path="/showallcategory" element={<ShowAllCategoryPage />} />
       </Routes>
     </Router>
   );
