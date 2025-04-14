@@ -1,0 +1,415 @@
+/* ContactUs.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+.contact-us-container {
+    font-family: 'Roboto', sans-serif;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #333;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.header h1 {
+    font-size: 2.8em;
+    color: #4a90e2;
+    margin-bottom: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.icon-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a90e2;
+}
+
+.header p {
+    font-size: 1.2em;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    margin-bottom: 60px;
+}
+
+@media (max-width: 900px) {
+    .content {
+        flex-direction: column;
+    }
+    
+    .help-section, .form-section {
+        width: 100%;
+    }
+}
+
+/* Help Section Styles */
+.help-section {
+    width: 50%;
+}
+
+.help-section h2 {
+    font-size: 2em;
+    color: #4a90e2;
+    margin-bottom: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.help-section > p {
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    color: #666;
+}
+
+.help-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.help-card {
+    background-color: #f9f9f9;
+    padding: 25px 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.help-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #4a90e2;
+}
+
+.help-card h3 {
+    margin: 15px 0;
+    color: #333;
+    font-weight: 500;
+    font-size: 1.2em;
+}
+
+.help-card p {
+    font-size: 0.95em;
+    color: #666;
+    line-height: 1.5;
+}
+
+.icon {
+    font-size: 2em;
+    margin-bottom: 15px;
+    color: #4a90e2;
+    display: flex;
+    justify-content: center;
+}
+
+/* Form Section Styles */
+.form-section {
+    width: 50%;
+}
+
+.form {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 35px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background-color: #fff;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+}
+
+.input-icon {
+    color: #4a90e2;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.email-input,
+.topic-input,
+.message-input,
+.newsletter input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    color: #333 !important; /* Overriding global styles as they were affecting colors */
+    background-color: #fff !important; /* Background color */
+}
+
+.message-input {
+    resize: vertical;
+    min-height: 100px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.email-input::placeholder,
+.topic-input::placeholder,
+.message-input::placeholder,
+.newsletter input::placeholder {
+    color: #aab;
+}
+
+.email-input:focus,
+.topic-input:focus,
+.message-input:focus,
+.newsletter input:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    outline: none;
+}
+
+.select-category {
+    margin-bottom: 12px;
+    color: #555;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: calc(50% - 5px);
+    padding: 12px 10px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    color: #555;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.button-icon {
+    transition: all 0.3s ease;
+}
+
+.button-group button:hover {
+    background-color: #f0f7ff;
+    border-color: #4a90e2;
+}
+
+.button-group button:hover .button-icon {
+    transform: scale(1.1);
+}
+
+.button-group button.active {
+    background-color: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.button-group button.active .button-icon {
+    color: white;
+}
+
+.divider {
+    text-align: center;
+    margin: 25px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+}
+
+.divider span {
+    background: #fff;
+    padding: 0 15px;
+    position: relative;
+    color: #777;
+    font-size: 0.95em;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4a90e2;
+    color: white;
+    font-weight: 500;
+    font-size: 1.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.submit-button:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+}
+
+.submit-button .arrow-icon {
+    transition: transform 0.3s ease;
+}
+
+.submit-button:hover .arrow-icon {
+    transform: translateX(5px);
+}
+
+/* Footer Styles where subscribe button is placed */
+footer {
+    margin-top: 60px;
+    padding: 40px 30px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, #4a90e2, #4caf50);
+}
+
+.footer-content p {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.newsletter-icon {
+    color: #4caf50;
+}
+
+.newsletter {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+    .newsletter {
+        flex-direction: column;
+    }
+}
+
+.newsletter input {
+    flex: 1;
+    min-width: 250px;
+}
+
+.newsletter button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background-color: #4caf50;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.newsletter button:hover {
+    background-color: #388e3c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.newsletter button:hover .button-icon {
+    animation: fly 0.6s ease-out;
+}
+
+@keyframes fly {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* I am overriding global styles here */
+input, textarea {
+    color: #333 !important;
+    background-color: #fff !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* input style enhancements */
+input:focus, textarea:focus {
+    color: #333 !important;
+    background-color: #fff !important;
+    border-color: #4a90e2 !important;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2) !important;
+}

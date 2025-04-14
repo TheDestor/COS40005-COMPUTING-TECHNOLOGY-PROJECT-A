@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
+import ContactUs from './pages/ContactUs.jsx';
 import LoginPage from './pages/Loginpage.jsx';
 import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
 import Footer from './components/Footer.jsx';
@@ -51,6 +52,7 @@ function App() {
         <Route path="/profile-settings" element={<ProfileSettingPage />} />
         <Route path="/bookmark" element={<BookmarkPage />} />
         <Route path="/showallcategory" element={<ShowAllCategoryPage />} />
+        <Route path="/contact-us" element={<ContactUs />} /> 
       </Routes>
     </Router>
   );
