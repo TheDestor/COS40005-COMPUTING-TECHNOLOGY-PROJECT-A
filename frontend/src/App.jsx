@@ -8,6 +8,7 @@ import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
 import Footer from './components/Footer.jsx';
 import ForgetPassword from './pages/ForgetPasswordpage.jsx';
 import SettingPage from './pages/Settingpage.jsx';
+import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import SystemAdminpage from './pages/SystemAdminpage.jsx';
 
 import './App.css';
@@ -46,6 +47,7 @@ function App() {
         <Route path="/forgetpassword" element={<ForgetPassword />} />
         <Route path="/settings" element={<SettingPage />} />
         <Route path="/system-admin" element={<SystemAdminpage />} />
+        <Route path="/profile-settings" element={<ProfileSettingPage />} />
       </Routes>
     </Router>
   );

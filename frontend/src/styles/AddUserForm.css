@@ -76,43 +76,6 @@
   }
   
   /* -----------------------------------------
-     🔐 Password Fields
-  ------------------------------------------ */
-  .password-field {
-    position: relative;
-  }
-  
-  .password-input {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 0 0.5rem;
-    background-color: #fff;
-  }
-  
-  .password-input input {
-    flex: 1;
-    border: none;
-    padding: 0.75rem;
-    font-size: 1rem;
-    border-radius: 8px;
-    outline: none;
-    background: transparent;
-  }
-  
-  .password-input span {
-    cursor: pointer;
-    padding-left: 0.5rem;
-    color: #007bff;
-    transition: color 0.2s ease;
-  }
-  
-  .password-input span:hover {
-    color: #0056b3;
-  }
-  
-  /* -----------------------------------------
      🧮 Action Buttons
   ------------------------------------------ */
   .form-actions {
