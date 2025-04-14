@@ -1,0 +1,155 @@
+
+  
+  /* Header layout with refresh on same row */
+  .security-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .refresh-btn {
+    background: #007efe;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .refresh-btn:hover {
+    background: #005bbf;
+  }
+  
+  /* 2x2 Card grid */
+  .security-dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+  }
+  
+  .card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  /* Checkboxes */
+  .security-policies {
+    margin-top: 20px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    gap: 20px;
+    border: 1px solid #ccc;
+  }
+  
+  .security-policies label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .security-policies input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: red;
+  }
+  
+  /* Chart Section */
+  .chart-section {
+    margin-top: 30px;
+  }
+  
+  .chart-placeholder {
+    height: 250px;
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-style: italic;
+    animation: shimmer 1.5s infinite ease-in-out;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+  }
+  
+  /* Alerts Section */
+  .alerts-section {
+    margin-top: 30px;
+  }
+  
+  .alert-card {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-left: 6px solid red;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .alert-card:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  }
+  
+  .alert-card strong {
+    font-weight: 600;
+  }
+  
+  .alert-card p {
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 4px;
+  }
+  
+  /* Alert Actions */
+  .alert-card .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  
+  .alert-card .actions button {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .actions-red {
+    background: red;
+    color: white;
+    border: none;
+  }
+  
+  .actions-white {
+    background: #f0f0f0;
+    color: black;
+    border: none;
+  }
+  
+  .actions-red:hover {
+    background: #cc0000;
+    transform: scale(1.05);
+  }
+  
+  .actions-white:hover {
+    background: #e2e2e2;
+    transform: scale(1.05);
+  }
+  

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import '../styles/SystemAdminpage.css';
+import React, { useState, useEffect, useRef } from 'react';
+import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
 import { RiUserAddLine } from "react-icons/ri";
+import AddUserForm from '../components/AddUserForm.jsx';
 
 const UserManagementPage = () => {
   const usersPerPage = 2;
+
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
@@ -12,39 +15,25 @@ const UserManagementPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const filterRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setShowFilters(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const allUsers = [
-    {
-      id: 1,
-      name: 'Alvin Tan',
-      email: 'at@example.com',
-      role: 'CBT Admin',
-      status: 'Active',
-      lastActive: 'Today, 10:45 AM',
-    },
-    {
-      id: 2,
-      name: 'Kenneth Kuan',
-      email: 'kk@example.com',
-      role: 'User',
-      status: 'Inactive',
-      lastActive: 'Yesterday, 5:22 PM',
-    },
-    {
-      id: 3,
-      name: 'Sophia Lim',
-      email: 'sl@example.com',
-      role: 'Business User',
-      status: 'Inactive',
-      lastActive: '2 days ago',
-    },
-    {
-      id: 4,
-      name: 'Daniel Lee',
-      email: 'dl@example.com',
-      role: 'System Admin',
-      status: 'Inactive',
-      lastActive: 'Yesterday, 11:00 AM',
-    },
+    { id: 1, name: 'Alvin Tan', email: 'at@example.com', role: 'CBT Admin', status: 'Active', lastActive: 'Today, 10:45 AM' },
+    { id: 2, name: 'Kenneth Kuan', email: 'kk@example.com', role: 'User', status: 'Inactive', lastActive: 'Yesterday, 5:22 PM' },
+    { id: 3, name: 'Sophia Lim', email: 'sl@example.com', role: 'Business User', status: 'Inactive', lastActive: '2 days ago' },
+    { id: 4, name: 'Daniel Lee', email: 'dl@example.com', role: 'System Admin', status: 'Inactive', lastActive: 'Yesterday, 11:00 AM' },
   ];
 
   const roleOptions = ['System Admin', 'CBT Admin', 'Business User', 'User'];
@@ -86,6 +75,24 @@ const UserManagementPage = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Confirmation on Edit
+  const handleEditClick = (userId) => {
+    const confirmEdit = window.confirm('Are you sure you want to edit this user?');
+    if (confirmEdit) {
+      console.log('User ID', userId, 'edited');
+      // Implement your edit logic here
+    }
+  };
+
+  // Confirmation on Delete
+  const handleDeleteClick = (userId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this user?');
+    if (confirmDelete) {
+      console.log('User ID', userId, 'deleted');
+      // Implement your delete logic here
+    }
+  };
+
   return (
     <div className="content-section2">
       <h2><FaUsersCog className="icon" /> User Management</h2>
@@ -100,49 +107,57 @@ const UserManagementPage = () => {
               onChange={handleSearchChange}
             />
           </div>
-          <button className="add-user-button">
+          <button className="add-user-button" onClick={() => setShowAddUserForm(true)}>
             <RiUserAddLine className="add-user-icon" /> Add New User
           </button>
         </div>
 
-        <div className="user-controls">
-        <div className="filter-wrapper">
-        <button className="filter-button" onClick={toggleFilter}>
-            <FaFilter className="add-user-icon" /> Filter
-        </button>
-        {showFilters && (
-            <div className="filter-dropdown">
-            <div className="filter-group">
-                <h4>Role</h4>
-                <div className="filter-options">
-                {roleOptions.map((role) => (
-                    <div
-                    key={role}
-                    className={`filter-option ${selectedRoles.includes(role) ? 'selected' : ''}`}
-                    onClick={() => toggleOption(role, selectedRoles, setSelectedRoles)}
-                    >
-                    {role}
-                    </div>
-                ))}
-                </div>
-            </div>
-            <div className="filter-group">
-                <h4>Status</h4>
-                <div className="filter-options">
-                {statusOptions.map((status) => (
-                    <div
-                    key={status}
-                    className={`filter-option ${selectedStatuses.includes(status) ? 'selected' : ''}`}
-                    onClick={() => toggleOption(status, selectedStatuses, setSelectedStatuses)}
-                    >
-                    {status}
-                    </div>
-                ))}
-                </div>
-            </div>
-            </div>
+        {showAddUserForm && (
+          <div className="add-user-overlay">
+            <AddUserForm onClose={() => setShowAddUserForm(false)} />
+          </div>
         )}
-        </div>
+
+        <div className="user-controls">
+          <div className="filter-wrapper" ref={filterRef}>
+            <button className="filter-button" onClick={toggleFilter}>
+              <FaFilter className="add-user-icon" /> Filter
+            </button>
+            {showFilters && (
+              <div className="filter-dropdown">
+                <div className="filter-group">
+                  <h4>Role</h4>
+                  <div className="filter-options">
+                    {roleOptions.map((role) => (
+                      <label key={role} className="filter-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedRoles.includes(role)}
+                          onChange={() => toggleOption(role, selectedRoles, setSelectedRoles)}
+                        />
+                        {role}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="filter-group">
+                  <h4>Status</h4>
+                  <div className="filter-options">
+                    {statusOptions.map((status) => (
+                      <label key={status} className="filter-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedStatuses.includes(status)}
+                          onChange={() => toggleOption(status, selectedStatuses, setSelectedStatuses)}
+                        />
+                        {status}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="pagination">
             <button onClick={() => changePage(currentPage - 1)}>{'<'}</button>
             {[...Array(totalPages)].map((_, idx) => (
@@ -194,8 +209,16 @@ const UserManagementPage = () => {
                       </span>
                     </td>
                     <td className="action-icons">
-                      <i className="fas fa-edit" title="Edit"></i>
-                      <i className="fas fa-trash-alt" title="Delete"></i>
+                      <i
+                        className="fas fa-edit"
+                        title="Edit"
+                        onClick={() => handleEditClick(user.id)}
+                      ></i>
+                      <i
+                        className="fas fa-trash-alt"
+                        title="Delete"
+                        onClick={() => handleDeleteClick(user.id)}
+                      ></i>
                     </td>
                   </tr>
                 ))

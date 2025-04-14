@@ -10,6 +10,9 @@ import {
 import Navbar from '../components/MenuNavbar.jsx';
 import UserManagementPage from '../pages/UserManagementpage.jsx';
 import SystemAdminDashboard from '../pages/SystemAdminDashboard.jsx';
+import DataManagementPage from './DataManagementpage.jsx';
+import SystemMonitoringPage from './SystemMonitoringpage.jsx';
+import SecurityAdminPage from './SecurityAdminpage.jsx';
 
 const SystemAdminPage = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -28,11 +31,11 @@ const SystemAdminPage = () => {
       case 'user':
         return <UserManagementPage />
       case 'monitoring':
-        return <SectionPlaceholder icon={<FaServer className="icon" />} title="System Monitoring" />;
+        return <SystemMonitoringPage />
       case 'data':
-        return <SectionPlaceholder icon={<FaDatabase className="icon" />} title="Data Management" />;
+        return <DataManagementPage />;
       case 'security':
-        return <SectionPlaceholder icon={<FaShieldAlt className="icon" />} title="Security" />;
+        return <SecurityAdminPage />;
       default:
         return null;
     }
