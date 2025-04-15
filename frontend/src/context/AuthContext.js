@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
         const checkAuthStatus = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:5050/businessRegister",,
+                    "http://localhost:5050/businessRegister",
                     {
                         withCredentials: true
                     }
@@ -42,7 +42,9 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (identifier, password) => {
         try {
-            const response
+
+        } catch (error) {
+
         }
     }
 }
