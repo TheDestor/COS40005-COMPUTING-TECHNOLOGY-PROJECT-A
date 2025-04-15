@@ -1,30 +1,49 @@
-// ShowAllCategoryPage.jsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import '../styles/MajorTownPage.css';
-import metaverseIMG from '../assets/MetaverseTrails.jpg';
+import kuchingImg from '../assets/Kuching.png';
+import kotaSamarahanImg from '../assets/KotaSamarahan.png';
+import serianImg from '../assets/Serian.png';
+import sriAmanImg from '../assets/SriAman.png';
+import betongImg from '../assets/Betong.png';
+import sarikeiImg from '../assets/Sarikei.png';
+import sibuImg from '../assets/Sibu.png';
+import kapitImg from '../assets/Kapit.png';
+import mukahImg from '../assets/Mukah.png';
+import bintuluImg from '../assets/Bintulu.png';
+import miriImg from '../assets/Miri.png';
+import limbangImg from '../assets/Limbang.png';
 
-const ShowAllCategoryPage = () => {
+const MajorTownPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
 
+  const handleSortToggle = () => {
+    setSortOrder(prevOrder => {
+      if (prevOrder === 'default') return 'asc';
+      if (prevOrder === 'asc') return 'desc';
+      return 'default';
+    });
+  };
+
   const places = [
-    { name: "Kuching", desc: "This is Kuching." },
-    { name: "Kota Samarahan", desc: "This is Kota Samarahan." },
-    { name: "Serian", desc: "This is Serian." },
-    { name: "Sri Aman", desc: "This is Sri Aman." },
-    { name: "Betong", desc: "This is Betong." },
-    { name: "Sarikei", desc: "This is Sarikei." },
-    { name: "Sibu", desc: "This is Sibu." },
-    { name: "Kapit", desc: "This is Kapit." },
-    { name: "Mukah", desc: "This is Mukah." },
-    { name: "Bintulu", desc: "This is Bintulu." },
-    { name: "Miri", desc: "This is Miri." },
-    { name: "Limbang", desc: "This is Limbang." }
+    { name: "Kuching", slug: "kuching", desc: "Sarawak’s capital city, known for its culture, food, and waterfront.", image: kuchingImg },
+    { name: "Kota Samarahan", slug: "kota-samarahan", desc: "A growing education and medical hub near Kuching.", image: kotaSamarahanImg },
+    { name: "Serian", slug: "serian", desc: "Famous for its markets, hills, and Bidayuh culture.", image: serianImg },
+    { name: "Sri Aman", slug: "sri-aman", desc: "Known for the Tidal Bore Festival and Batang Lupar River.", image: sriAmanImg },
+    { name: "Betong", slug: "betong", desc: "A peaceful rural town with rich Iban heritage.", image: betongImg },
+    { name: "Sarikei", slug: "sarikei", desc: "Renowned for its agriculture, especially pineapples and pepper.", image: sarikeiImg },
+    { name: "Sibu", slug: "sibu", desc: "A bustling riverine town rich in Chinese and Iban culture.", image: sibuImg },
+    { name: "Kapit", slug: "kapit", desc: "Located upriver on the Rajang, known for longhouses and rapids.", image: kapitImg },
+    { name: "Mukah", slug: "mukah", desc: "Cultural heartland of the Melanau people by the sea.", image: mukahImg },
+    { name: "Bintulu", slug: "bintulu", desc: "An industrial town famous for natural gas and beaches.", image: bintuluImg },
+    { name: "Miri", slug: "miri", desc: "A resort city and gateway to national parks and caves.", image: miriImg },
+    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture and nature.", image: limbangImg }
   ];
 
-  const filteredPlaces = places
+  const filteredPlaces = [...places]
     .filter(place =>
       place.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -33,14 +52,6 @@ const ShowAllCategoryPage = () => {
       if (sortOrder === 'desc') return b.name.localeCompare(a.name);
       return 0;
     });
-
-  const handleSortToggle = () => {
-    setSortOrder(prev => {
-      if (prev === 'default') return 'asc';
-      if (prev === 'asc') return 'desc';
-      return 'default';
-    });
-  };
 
   return (
     <div className="category-page">
@@ -76,20 +87,37 @@ const ShowAllCategoryPage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredPlaces.map((place, index) => (
-          <div
-            className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}
-            key={index}
-          >
-            <img src={metaverseIMG} alt={place.name} />
-            <div className="card-content">
-              <h3>{place.name}</h3>
-              <div className="rating">⭐⭐⭐⭐⭐</div>
-              <p>{place.desc}</p>
-              <button className="explore-btn">Explore</button>
+        {filteredPlaces.map((place, index) => {
+          const lineNumber = Math.floor(index / 4);
+          const positionInLine = index % 4;
+          const isTall = lineNumber % 2 === 0 
+            ? positionInLine % 2 === 0 
+            : positionInLine % 2 !== 0;
+
+          return (
+            <div 
+              className="card-wrapper" 
+              key={index}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className={`card ${isTall ? 'tall-card' : 'short-card'}`}>
+                <img src={place.image} alt={place.name} />
+                <div className="card-content">
+                  <h3>{place.name}</h3>
+                  <div className="rating">⭐⭐⭐⭐⭐</div>
+                  <div className="desc-scroll">
+                    <p>{place.desc}</p>
+                  </div>
+                  <div className="button-container">
+                    <Link to={`/details/${place.slug}`} className="explore-btn">
+                      Explore
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Footer />
@@ -97,4 +125,4 @@ const ShowAllCategoryPage = () => {
   );
 };
 
-export default ShowAllCategoryPage;
+export default MajorTownPage;
