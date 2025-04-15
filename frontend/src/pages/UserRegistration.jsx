@@ -7,15 +7,15 @@ import axios from 'axios';
 import { toast } from "react-toastify";
 
 const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent form submission
-      const formElements = Array.from(e.currentTarget.closest('form')?.querySelectorAll('input, select') || []);
-      const index = formElements.indexOf(e.target);
-      if (index !== -1 && index < formElements.length - 1) {
-        formElements[index + 1].focus();
-      }
+  if (e.key === 'Enter') {
+    e.preventDefault(); // Prevent form submission
+    const formElements = Array.from(e.currentTarget.closest('form')?.querySelectorAll('input, select') || []);
+    const index = formElements.indexOf(e.target);
+    if (index !== -1 && index < formElements.length - 1) {
+      formElements[index + 1].focus();
     }
-  };
+  }
+};
 
 const UserRegistration = () => {
   // Password state
@@ -31,7 +31,7 @@ const UserRegistration = () => {
     phonePrefix: '+60', // Default
     phoneNumber: '',
     password: '',
-    confirmPassword: '',
+    confirmPassword: ''
   });
 
   // Destructure all the inputs into a single variable
@@ -73,7 +73,7 @@ const UserRegistration = () => {
       lastName,
       email,
       phoneNumber: fullPhoneNumber,
-      password,
+      password
     }
 
     // POST API call to backend for registration
@@ -85,6 +85,7 @@ const UserRegistration = () => {
           headers: {
             'Content-Type': 'application/json',
           },
+          withCredentials: true,
         }
       );
       const { success, message } = response.data;
@@ -100,7 +101,7 @@ const UserRegistration = () => {
         handleError(message);
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      handleError(error.response.data.message);
     }
   }
 
