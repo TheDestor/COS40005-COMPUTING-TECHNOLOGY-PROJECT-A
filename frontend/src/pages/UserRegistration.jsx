@@ -4,11 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
 import axios from 'axios';
+import { toast } from "react-toastify";
 
 const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
-      const formElements = Array.from(document.querySelectorAll('.registration-form input'));
+      const formElements = Array.from(e.currentTarget.closest('form')?.querySelectorAll('input, select') || []);
       const index = formElements.indexOf(e.target);
       if (index !== -1 && index < formElements.length - 1) {
         formElements[index + 1].focus();
@@ -17,11 +18,12 @@ const handleKeyDown = (e) => {
   };
 
 const UserRegistration = () => {
+  // Password state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
 
-  // State to hold all the input values
+  // Form input values state
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -32,8 +34,10 @@ const UserRegistration = () => {
     confirmPassword: '',
   });
 
+  // Destructure all the inputs into a single variable
   const { firstName, lastName, email, phonePrefix, phoneNumber, password, confirmPassword } = formData;
 
+  // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -42,22 +46,28 @@ const UserRegistration = () => {
     });
   };
 
+  // Toast success
+  const handleSuccess = (msg) => {
+    toast.success(msg, {
+      position: "bottom-right",
+    });
+  };
+
+  // Toast error
+  const handleError = (msg) => {
+    toast.error(msg, {
+      position: "bottom-right",
+    });
+  };
+
+  // Registration API call
   const handleRegisterSubmit = async (e) => {
     e.preventDefault(); // Prevent default submission
-    
-    // Client side validation
-    if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmPassword) {
-      console.error("Please fill in all required fields");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      console.error("Passwords do not match");
-      return;
-    }
-
+  
+    // Combine the prefix and phone number together
     const fullPhoneNumber = `${phonePrefix}${phoneNumber}`;
 
+    // Pack all input values together
     const userData = {
       firstName,
       lastName,
@@ -66,6 +76,7 @@ const UserRegistration = () => {
       password,
     }
 
+    // POST API call to backend for registration
     try {
       const response = await axios.post(
         "http://localhost:5050/register",
@@ -74,19 +85,19 @@ const UserRegistration = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          // withCredentials: true
         }
       );
       const { success, message } = response.data;
       if (success) {
-        console.log("Registration successful");
+        handleSuccess(message);
+        // Clear the form after a successful registration
         setFormData({
           firstName: '', lastName: '', email: '',
           phoneCountryCode: '+60', phoneNumber: '',
           password: '', confirmPassword: '',
         });
       } else {
-        console.log("test");
+        handleError(message);
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -107,13 +118,13 @@ const UserRegistration = () => {
             <span className="close-btn2" onClick={() => navigate('/')}>&times;</span>
           </div>
 
-          <form className="registration-form" onSubmit={handleRegisterSubmit}>
+          <form className="registration-form" onSubmit={handleRegisterSubmit} onKeyDown={handleKeyDown}>
             <div className="form-row">
-              <input className='input-field' type="text" placeholder="First Name" name="firstName" value={firstName} onChange={handleInputChange} onKeyDown={handleKeyDown} required/>
-              <input className='input-field' type="text" placeholder="Last Name" name="lastName" value={lastName} onChange={handleInputChange} onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="text" placeholder="First Name" name="firstName" value={firstName} onChange={handleInputChange} required/>
+              <input className='input-field' type="text" placeholder="Last Name" name="lastName" value={lastName} onChange={handleInputChange} required/>
             </div>
             <div className="form-row">
-              <input className='input-field' type="email" placeholder="Email" name="email" value={email} onChange={handleInputChange} onKeyDown={handleKeyDown} required/>
+              <input className='input-field' type="email" placeholder="Email" name="email" value={email} onChange={handleInputChange} required/>
             </div>
             <div className="form-row">
                 <div className="phone-input-wrapper">
@@ -129,7 +140,7 @@ const UserRegistration = () => {
                       <option value="+44">🇬🇧 +44</option>
                       <option value="+91">🇮🇳 +91</option>
                     </select>
-                    <input type="tel" placeholder="Phone Number" name="phoneNumber" value={phoneNumber} onChange={handleInputChange} onKeyDown={handleKeyDown} required/>
+                    <input type="tel" placeholder="Phone Number" name="phoneNumber" value={phoneNumber} onChange={handleInputChange} pattern="[0-9]*" title="Only numbers are allowed." required/>
                 </div>
             </div>
             <div className="form-row">
@@ -141,7 +152,6 @@ const UserRegistration = () => {
                   name="password"
                   value={password}
                   onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
                   required
                 />
                 <span onClick={() => setShowPassword(!showPassword)}>
@@ -158,7 +168,6 @@ const UserRegistration = () => {
                       name="confirmPassword"
                       value={confirmPassword}
                       onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
                       required
                     />
                     <span onClick={() => setShowConfirm(!showConfirm)}>

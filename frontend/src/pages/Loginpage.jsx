@@ -1,20 +1,79 @@
 import React, { useState } from 'react';
 import '../styles/Loginpage.css';
-import backgroundImg from '../assets/Kuching.png'; // Adjust path if needed
+import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const LoginPage = () => {
+  // States
   const [activeTab, setActiveTab] = useState('otp');
-  const [phoneEmail, setPhoneEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
   const [isRobotChecked, setIsRobotChecked] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: ""
+  });
+  const { identifier, password } = formData;
 
+  // Handlers
   const handleTabClick = (tab) => setActiveTab(tab);
   const handleSendOtp = (e) => e.preventDefault();
-  const handleLogin = (e) => e.preventDefault();
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleSuccess = (msg) => {
+    toast.success(msg, {
+      position: "bottom-right",
+    });
+  };
+
+  const handleError = (msg) => {
+    toast.error(msg, {
+      position: "bottom-right",
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+
+    const userData = {
+      identifier,
+      password
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5050/login",
+        userData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const { success, message } = response.data;
+      if (success) {
+        handleSuccess(message);
+        setFormData({
+          identifier: '',
+          password: '',
+        })
+      } else {
+        handleError(message);
+      }
+    } catch (error) {
+      handleError(error.response.data.message)
+    }
+  }
 
   return (
     <div className="overlay">
@@ -39,14 +98,15 @@ const LoginPage = () => {
             <Link to="/" className="close-btn">✕</Link>
           </div>
 
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <input
                 type="text"
                 className="input-field"
                 placeholder="Phone Number/Email"
-                value={phoneEmail}
-                onChange={(e) => setPhoneEmail(e.target.value)}
+                name="identifier"
+                value={formData.identifier}
+                onChange={handleInputChange}
                 required
               />
             </div>
@@ -72,8 +132,9 @@ const LoginPage = () => {
                     type={showConfirm ? 'text' : 'password'}
                     className="input-field"
                     placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     required
                   />
                   <span className="eye-icon" onClick={() => setShowConfirm(!showConfirm)}>
