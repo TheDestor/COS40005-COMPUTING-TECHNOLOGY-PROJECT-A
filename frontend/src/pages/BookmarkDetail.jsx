@@ -1,25 +1,28 @@
 import React from 'react';
 import '../styles/BookmarkDetail.css';
-import { AiFillStar } from 'react-icons/ai';
+import { FaStar, FaArrowLeft } from 'react-icons/fa';
 
 const BookmarkDetail = ({ title, places, onClose }) => {
   return (
-    <div className="bookmark-detail-container">
-      <div className="detail-header">
-        <h2>{title}</h2>
-        <span className="close-icon" onClick={onClose}>✕</span>
+    <div className="bookmark-panel">
+      <div className="bookmark-header">
+        <div className="bookmark-title">
+          {title}
+        </div>
+        <span className="bookmark-close" onClick={onClose}><FaArrowLeft /></span>
       </div>
-      <hr className="divider" />
-      <div className="places-list">
+
+      <div className="bookmark-detail-list">
         {places.map((place, index) => (
-          <div key={index} className="place-card">
-            <img src={place.image} alt={place.title} className="place-image" />
-            <div className="place-info">
-              <div className="place-title">{place.title}</div>
-              <div className="place-rating">
-                {place.rating} <AiFillStar className="star-icon" /> ({place.reviews})
+          <div className="bookmark-detail-card" key={index}>
+            <img src={place.image} alt={place.title} className="bookmark-detail-image" />
+            <div className="bookmark-detail-info">
+              <div className="bookmark-detail-title">{place.title}</div>
+              <div className="bookmark-detail-rating">
+                <FaStar className="star-icon" />
+                {place.rating} ({place.reviews})
               </div>
-              <div className="place-category">{place.category}</div>
+              <div className="bookmark-detail-category">{place.category}</div>
             </div>
           </div>
         ))}

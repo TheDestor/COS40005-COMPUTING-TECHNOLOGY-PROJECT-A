@@ -13,7 +13,8 @@ import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import SystemAdminpage from './pages/SystemAdminpage.jsx';
 import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
-import ShowAllCategoryPage from './pages/ShowAllCategorypage.jsx';
+import MajorTownPage from './pages/MajorTownPage.jsx';
+import ReviewPage from './pages/ReviewPage.jsx';
 
 function App() {
   // const [message, setMessage] = useState('');
@@ -46,13 +47,15 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/footer" element={<Footer />} />
-        <Route path="/forgetpassword" element={<ForgetPassword />} />
+        <Route path="/forget-password" element={<ForgetPassword />} />
         <Route path="/settings" element={<SettingPage />} />
         <Route path="/system-admin" element={<SystemAdminpage />} />
         <Route path="/profile-settings" element={<ProfileSettingPage />} />
         <Route path="/bookmark" element={<BookmarkPage />} />
-        <Route path="/showallcategory" element={<ShowAllCategoryPage />} />
+        <Route path="/major-town" element={<MajorTownPage />} />
         <Route path="/contact-us" element={<ContactUs />} /> 
+        <Route path="/review" element={<ReviewPage />} />
+        {/* Add more routes as needed */}
       </Routes>
     </Router>
   );

@@ -1,80 +1,88 @@
-.bookmark-detail-container {
-    background-color: #fff;
-    width: 320px;
+.bookmark-panel {
+  position: fixed; /* stays over the content */
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh; /* full viewport height */
+    background-color: #f5f5f5;
     padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0; /* remove rounded corners if full screen */
     overflow-y: auto;
-    max-height: 90vh;
-    margin: 20px;
-  }
-  
-  .detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  
-  .close-icon {
-    font-size: 20px;
-    cursor: pointer;
-  }
-  
-  .divider {
-    border: none;
-    height: 1px;
-    background-color: #ddd;
-    margin-bottom: 10px;
-  }
-  
-  .places-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .place-card {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  
-  .place-image {
-    width: 70px;
-    height: 70px;
-    border-radius: 10px;
-    object-fit: cover;
-  }
-  
-  .place-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  
-  .place-title {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  
-  .place-rating {
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: #444;
-  }
-  
-  .star-icon {
-    color: #fbc02d;
-  }
-  
-  .place-category {
-    font-size: 12px;
-    color: #888;
-  }
-  
+    z-index: 1000; /* make sure it's on top */
+}
+
+.bookmark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bookmark-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a73e8;
+}
+
+.bookmark-close {
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+}
+
+.bookmark-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bookmark-detail-card {
+  display: flex;
+  gap: 12px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.bookmark-detail-card:hover {
+  background-color: #e4e4e4;
+}
+
+.bookmark-detail-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.bookmark-detail-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bookmark-detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #202124;
+  margin-bottom: 2px;
+}
+
+.bookmark-detail-rating {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #444;
+  gap: 4px;
+}
+
+.bookmark-detail-category {
+  font-size: 12px;
+  color: #888;
+}
+
+.star-icon {
+  color: #fbc02d;
+}

@@ -42,7 +42,7 @@ const ProfileDropdown = () => {
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item">
+                <button className="menu-item" onClick={() => navigate('/contact-us')}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>
@@ -61,19 +61,19 @@ const ProfileDropdown = () => {
               </div>
               <div className="divider" />
               <div>
-                <button className="menu-item">
+                <button className="menu-item" onClick={() => navigate('/settings')}>
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item">
+                <button className="menu-item" onClick={() => navigate('/bookmark')}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
-                <button className="menu-item">
+                <button className="menu-item" onClick={() => navigate('/profile-settings')}>
                   <FiUser size={18} />
                   Profile Setting
                 </button>
-                <button className="menu-item">
+                <button className="menu-item" onClick={() => navigate('/contact-us')}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>
