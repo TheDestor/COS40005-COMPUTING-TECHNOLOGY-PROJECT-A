@@ -1,6 +1,7 @@
 // ContactUs.jsx
 import React, { useState } from "react";
 import "../styles/ContactUs.css";
+import Navbar from '../components/MenuNavbar.jsx'; 
 
 export default function ContactUs() {
   const [activeButton, setActiveButton] = useState(null);

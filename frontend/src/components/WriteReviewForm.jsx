@@ -78,7 +78,7 @@ const WriteReviewForm = ({ onClose }) => {
       </label>
 
       <div className="review-buttons">
-        <button className="cancel-btn" onClick={onClose}>Cancel</button>
+        <button className="cancel-btn6" onClick={onClose}>Cancel</button>
         <button className="post-btn">Post</button>
       </div>
     </div>

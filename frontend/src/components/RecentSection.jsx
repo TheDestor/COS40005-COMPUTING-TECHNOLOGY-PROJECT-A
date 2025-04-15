@@ -13,8 +13,8 @@ const RecentSection = ({ isOpen, onClose }) => {
       </div>
 
       <div className="recent-filters">
-        <button className="filter-button active"><FaMap /> All</button>
-        <button className="filter-button"><FaLocationDot /> Kuching</button>
+        <button className="filter-button2 active"><FaMap /> All</button>
+        <button className="filter-button2"><FaLocationDot /> Kuching</button>
       </div>
 
       <div className="recent-group">

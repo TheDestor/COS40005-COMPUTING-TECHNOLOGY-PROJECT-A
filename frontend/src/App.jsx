@@ -15,6 +15,7 @@ import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
 import MajorTownPage from './pages/MajorTownPage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
+// import WriteReviewForm from './components/WriteReviewForm.jsx';
 
 function App() {
   // const [message, setMessage] = useState('');
@@ -55,6 +56,7 @@ function App() {
         <Route path="/major-town" element={<MajorTownPage />} />
         <Route path="/contact-us" element={<ContactUs />} /> 
         <Route path="/review" element={<ReviewPage />} />
+        {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
         {/* Add more routes as needed */}
       </Routes>
     </Router>

@@ -8,27 +8,27 @@ const DataManagementPage = () => {
       <h2><FaServer /> System Monitoring</h2>
 
       <div className="system-cards">
-        <div className="card cpu">
+        <div className="card2 cpu">
             <h3>CPU Usage</h3>
             <div className="value">70%</div>
             <div className="change positive">+5% over the last day</div>
         </div>
-        <div className="card memory">
+        <div className="card2 memory">
             <h3>Memory Usage</h3>
             <div className="value">64%</div>
             <div className="change positive">+10% over the last day</div>
         </div>
-        <div className="card storage">
+        <div className="card2 storage">
             <h3>Storage</h3>
             <div className="value">1.2TB / 2TB</div>
             <div className="change positive">51% used</div>
         </div>
-        <div className="card network">
+        <div className="card2 network">
             <h3>Network</h3>
             <div className="value">124 Mbps</div>
             <div className="change">12ms latency</div>
         </div>
-        <div className="card performance">
+        <div className="card2 performance">
             <div className="performance-circle">
             <div className="percentage">82.3%</div>
             <div className="status">Good</div>

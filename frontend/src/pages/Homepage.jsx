@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar.jsx';
-import TouristInfoSection from '../components/TouristInfoSection.jsx';  
+import TouristInfoSection from '../components/TouristInfoSection.jsx';
+import LeftSidebar from '../components/LeftSideBar.jsx';  
 
 const HomePage = () => {
   return (
@@ -14,6 +15,7 @@ const HomePage = () => {
         {/* Your main content goes here */}
       </div>
       <TouristInfoSection />
+      <LeftSidebar />
     </div>
   );
 };

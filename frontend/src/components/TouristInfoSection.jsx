@@ -5,6 +5,7 @@ import kuchingImage from '../assets/Kuching.png';
 import sibuImage from '../assets/Sibu.png'; // Add these image imports
 import miriImage from '../assets/Miri.png';
 import bintuluImage from '../assets/Bintulu.png';
+import { Link } from 'react-router-dom';
 
 const TouristInfoSection = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -69,7 +70,7 @@ const TouristInfoSection = () => {
       <div className="info-content">
         <div className="discover-more-container">
           <span className="discover-more">Discover more?</span>
-          <span className="show-more">Show more</span>
+          <Link to="/major-town" className="show-more">Show more</Link>
         </div>
 
         <div className="items-list">

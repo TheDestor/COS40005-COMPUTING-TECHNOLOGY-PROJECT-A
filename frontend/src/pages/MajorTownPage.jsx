@@ -40,7 +40,7 @@ const MajorTownPage = () => {
     { name: "Mukah", slug: "mukah", desc: "Cultural heartland of the Melanau people by the sea.", image: mukahImg },
     { name: "Bintulu", slug: "bintulu", desc: "An industrial town famous for natural gas and beaches.", image: bintuluImg },
     { name: "Miri", slug: "miri", desc: "A resort city and gateway to national parks and caves.", image: miriImg },
-    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture and nature.", image: limbangImg }
+    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture Border town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureand nature.", image: limbangImg }
   ];
 
   const filteredPlaces = [...places]
@@ -59,7 +59,7 @@ const MajorTownPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>Metaverse Trails</h1>
+          <h1>Metaverse Trails 2.0</h1>
           <p>Navigating Sarawak Tourism Destination Sustainably</p>
         </div>
       </div>

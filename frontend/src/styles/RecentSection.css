@@ -51,7 +51,7 @@
     margin-bottom: 16px;
   }
   
-  .filter-button {
+  .filter-button2 {
     padding: 6px 12px;
     border-radius: 20px;
     border: none;
@@ -59,7 +59,7 @@
     cursor: pointer;
   }
   
-  .filter-button.active {
+  .filter-button2.active {
     background-color: #d1f0db;
     font-weight: bold;
   }

@@ -19,28 +19,28 @@ const SecurityAdminPage = () => {
     <div className="content-section2">
       {/* Header */}
       <div className="security-header">
-        <h2><FaShieldAlt className="icon" /> Security</h2>
+        <h2><FaShieldAlt /> Security</h2>
         <button className="refresh-btn"><AiOutlineReload /> Refresh</button>
       </div>
 
       {/* Dashboard Cards */}
       <div className="security-dashboard">
-        <div className="card">
+        <div className="card2">
           <p>Threats Detected</p>
           <h3>12</h3>
           <span>+3 new today</span>
         </div>
-        <div className="card">
+        <div className="card2">
           <p>Failed Logins</p>
           <h3>24</h3>
           <span>▲ 40% decrease</span>
         </div>
-        <div className="card">
+        <div className="card2">
           <p>Security Updates</p>
           <h3>5</h3>
           <span>All systems patched</span>
         </div>
-        <div className="card">
+        <div className="card2">
           <p>Firewall Blocks</p>
           <h3>87</h3>
           <span>▲ 15% increase</span>

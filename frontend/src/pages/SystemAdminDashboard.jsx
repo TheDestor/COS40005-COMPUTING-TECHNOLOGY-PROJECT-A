@@ -1,13 +1,12 @@
-// src/pages/SystemAdminDashboard.jsx
-
 import React from 'react';
-import { FaTachometerAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaSave, FaUserCog, FaExclamationTriangle } from 'react-icons/fa';
+import { MdSpeed } from 'react-icons/md';
 
 const SystemAdminDashboard = () => {
   const summaryData = [
-    { title: 'Active Today', value: '250 users', status: '+5% over the last day', class: 'positive' },
-    { title: 'System Performance', value: '99.98% uptime', status: '+0% over the last day', class: 'neutral' },
-    { title: 'Data Integrity', value: 'Backup up to date', status: 'Today 2am', class: 'positive' },
+    { title: 'Active Today', value: '250 users', status: '+5% over the last day', class: 'positive', icon: <FaUsers /> },
+    { title: 'System Performance', value: '99.98% uptime', status: '+0% over the last day', class: 'neutral', icon: <MdSpeed /> },
+    { title: 'Data Integrity', value: 'Backup up to date', status: 'Today 2am', class: 'positive', icon: <FaSave /> },
   ];
 
   const adminActivities = [
@@ -20,10 +19,13 @@ const SystemAdminDashboard = () => {
     { alert: 'Performance', message: 'High server load', date: '31/3/2025', status: 'Monitoring' },
   ];
 
-  const renderTable = (title, headers, data) => (
+  const renderTable = (title, headers, data, icon) => (
     <div className="table-section">
       <div className="table-header">
-        <h3>{title}</h3>
+        <h3>
+          <span className="header-icon">{icon}</span>
+          {title}
+        </h3>
         <button className="view-all">View All</button>
       </div>
       <div className="table-scroll-wrapper">
@@ -53,20 +55,23 @@ const SystemAdminDashboard = () => {
 
   return (
     <div className="content-section2">
-      <h2><FaTachometerAlt className="icon" /> Dashboard</h2>
+      <h2><FaTachometerAlt /> Dashboard</h2>
 
       <div className="summary-container">
         {summaryData.map((item, idx) => (
           <div className="summary-box" key={idx}>
-            <h3>{item.title}</h3>
+            <h3>
+              <span className="summary-icon">{item.icon}</span>
+              {item.title}
+            </h3>
             <p className="value">{item.value}</p>
             <p className={`status ${item.class}`}>{item.status}</p>
           </div>
         ))}
       </div>
 
-      {renderTable('Recent Admin Activity', ['Admin', 'Action', 'Date', 'Status'], adminActivities)}
-      {renderTable('System Alerts', ['Alert', 'Message', 'Date', 'Status'], systemAlerts)}
+      {renderTable('Recent Admin Activity', ['Admin', 'Action', 'Date', 'Status'], adminActivities, <FaUserCog />)}
+      {renderTable('System Alerts', ['Alert', 'Message', 'Date', 'Status'], systemAlerts, <FaExclamationTriangle />)}
     </div>
   );
 };

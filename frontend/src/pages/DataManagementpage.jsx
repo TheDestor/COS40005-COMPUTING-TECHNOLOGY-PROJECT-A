@@ -38,7 +38,7 @@ const DataManagementPage = () => {
 
   return (
     <div className="content-section2">
-      <h2><FaDatabase className="icon" /> Data Management</h2>
+      <h2><FaDatabase /> Data Management</h2>
       
       <div className="backup-controls">
         <button className="run-backup"><FaPlay /> Run Backup Now</button>

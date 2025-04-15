@@ -95,7 +95,7 @@ const UserManagementPage = () => {
 
   return (
     <div className="content-section2">
-      <h2><FaUsersCog className="icon" /> User Management</h2>
+      <h2><FaUsersCog /> User Management</h2>
       <div className="user-management">
         <div className="user-controls">
           <div className="search-container">

@@ -14,19 +14,19 @@
     margin-bottom: 2rem;
   }
   
-  .card {
+  .card2 {
     background: #fff;
     border-radius: 12px;
     padding: 1rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   }
 
-  .card.cpu { grid-column: 1; grid-row: 1; }
-.card.memory { grid-column: 2; grid-row: 1; }
-.card.storage { grid-column: 1; grid-row: 2; }
-.card.network { grid-column: 2; grid-row: 2; }
+  .card2.cpu { grid-column: 1; grid-row: 1; }
+.card2.memory { grid-column: 2; grid-row: 1; }
+.card2.storage { grid-column: 1; grid-row: 2; }
+.card2.network { grid-column: 2; grid-row: 2; }
 
-.card.performance {
+.card2.performance {
     grid-column: 3 / span 2;
     grid-row: 1 / span 2;
     display: flex;
@@ -35,7 +35,7 @@
     flex-direction: column;
   }
   
-  .card h3 {
+  .card2 h3 {
     margin-bottom: 0.5rem;
     font-size: 1rem;
   }

@@ -27,7 +27,7 @@ const Footer = () => {
             </h3>
         </div>
         <div className="newsletter">
-            <div className="email-input">
+            <div className="email-input2">
             <div className="email-icon-wrapper">
                 <FaEnvelope className="email-icon" />
                 <input

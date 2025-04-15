@@ -44,7 +44,7 @@
     text-align: right;
   }
   
-  .email-input {
+  .email-input2 {
     display: flex;
     gap: 10px;
     align-items: center;
@@ -81,7 +81,7 @@
     border-radius: 25px;
   }
   
-  .email-input button {
+  .email-input2 button {
     background-color: #007bff;
     margin-top: 25px;
     color: white;
@@ -95,7 +95,7 @@
     gap: 5px;
   }
   
-  .email-input button:hover {
+  .email-input2 button:hover {
     background-color: #0056b3;
     transform: scale(1.05);
   }

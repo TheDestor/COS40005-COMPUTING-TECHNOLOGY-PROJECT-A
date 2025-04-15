@@ -26,7 +26,7 @@ const MenuNavbar = () => {
 
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
-    { name: 'Major Town', icon: <FaLocationDot />, path: '/' },
+    { name: 'Major Town', icon: <FaLocationDot />, path: '/major-town' },
     { name: 'Homestay', icon: <FaBed />, path: '/homestay' },
     { name: 'Museum', icon: <FaUniversity />, path: '/museum' },
     { name: 'National Park', icon: <FaMountain />, path: '/national-park' },

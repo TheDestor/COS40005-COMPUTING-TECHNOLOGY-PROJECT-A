@@ -243,16 +243,26 @@
     }
   }
 
-  .modal-overlay {
+  .review-side-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
-    width: 100vw;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 998;
   }
+  
+  .review-side-panel {
+    position: fixed;
+    top: 0;
+    left: 30%;
+    height: 100%;
+    z-index: 999;
+    padding: 50px;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  
   

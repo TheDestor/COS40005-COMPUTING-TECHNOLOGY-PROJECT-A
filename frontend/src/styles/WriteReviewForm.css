@@ -1,69 +1,91 @@
 .write-review-modal {
-  background-color: #f1f1f1;
-  width: 320px;
-  padding: 20px;
-  border-radius: 10px;
-  font-family: Arial, sans-serif;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  width: 500px;
+  max-width: 95%;
+  padding: 24px;
+  border-radius: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .location-title {
   text-align: center;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
   margin-bottom: 10px;
 }
 
 .user-section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .avatar-circle {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   background-color: royalblue;
   border-radius: 50%;
 }
 
 .username {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
+  color: #222;
 }
 
 .star-rating {
   display: flex;
   justify-content: center;
-  gap: 5px;
-  font-size: 20px;
+  gap: 8px;
+  font-size: 26px;
   color: #ccc;
   cursor: pointer;
 }
 
 .star-rating .star:hover,
-.star-rating .star:hover ~ .star,
-.star-rating .star:active {
-  color: #f5b301;
+.star-rating .star:hover ~ .star {
+  color: #ffba00;
 }
 
 .review-textbox {
-  width: 100%;
-  min-height: 80px;
-  resize: none;
-  padding: 10px;
-  border-radius: 8px;
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px;
+  border-radius: 12px;
   border: 1px solid #ccc;
-  font-size: 14px;
+  font-size: 15px;
+  transition: border-color 0.2s;
+}
+
+.review-textbox:focus {
+  border-color: #0077ff;
+  outline: none;
   background-color: #fff;
 }
 
 .file-upload-container {
-  background-color: #dbe3ed;
-  padding: 8px 16px;
-  border-radius: 20px;
+  background-color: #eef3fa;
+  padding: 10px 18px;
+  border-radius: 25px;
   text-align: center;
   font-size: 14px;
   color: #333;
@@ -72,34 +94,54 @@
   gap: 10px;
   justify-content: center;
   cursor: pointer;
+  border: 1px solid #ccc;
+  transition: background-color 0.2s;
+}
+
+.file-upload-container:hover {
+  background-color: #dde6f1;
 }
 
 .upload-icon {
-  font-size: 18px;
+  font-size: 20px;
   color: #3273dc;
 }
 
 .review-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
-.cancel-btn {
+.cancel-btn6 {
   background-color: transparent;
   border: none;
-  color: #333;
+  color: #0077ff;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  padding: 6px 12px;
+  transition: color 0.2s;
+}
+
+.cancel-btn6:hover {
+  color: white;
+  background-color: #0077ff;
+  border-radius: 999px;
 }
 
 .post-btn {
   background-color: #0077ff;
   border: none;
-  padding: 6px 16px;
-  border-radius: 16px;
+  padding: 8px 18px;
+  border-radius: 20px;
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.post-btn:hover {
+  background-color: #005fca;
+  border-radius: 999px;
 }

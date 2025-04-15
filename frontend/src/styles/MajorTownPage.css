@@ -167,10 +167,10 @@
 
 .card-content {
   padding: 1rem;
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  height: 100%;
 }
 
 .card-content h3 {
@@ -179,11 +179,12 @@
 }
 
 .card-content p {
-  max-height: 80px; /* or any height that fits your design */
+  max-height: 80px; /* Keep the text area height fixed */
   overflow-y: auto;
   margin-bottom: 1rem;
   font-size: 0.9rem;
   line-height: 1.4;
+  flex-grow: 1; /* Allows the text area to grow, but it won’t push the button */
 }
 
 /* Optional: Add scrollbar styling for a nicer look */
@@ -232,7 +233,7 @@
 }
 
 .short-card {
-  height: 380px;
+  height: auto;
 }
 
 @media (max-width: 768px) {

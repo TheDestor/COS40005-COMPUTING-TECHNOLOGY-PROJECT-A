@@ -4,7 +4,7 @@
 .admin-container {
     display: flex;  
     height: 150vh;
-    width: 100vw;
+    min-width: 99vw;
     font-family: 'Segoe UI', sans-serif;
     background-color: #f4f6f8;
     flex-direction: row;
@@ -132,9 +132,15 @@
 }
 
 .summary-box h3 {
-    font-size: 16px;
-    color: #444;
-}
+    display: flex;
+    align-items: center;
+  }
+  
+  .summary-icon {
+    margin-right: 8px; /* Adjust spacing between the icon and the title */
+    font-size: 1.5rem; /* Adjust the size of the icon */
+  }
+  
 
 .summary-box .value {
     font-size: 20px;
@@ -175,10 +181,22 @@
     margin-bottom: 15px;
 }
 
+/* Align h3 and icon in the table-header */
 .table-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 18px;
     color: #333;
 }
+
+.header-icon {
+    font-size: 18px;
+    color: #007bff;
+    display: flex;
+    align-items: center;
+}
+
 
 /* ==========================
    View All Button Styles
