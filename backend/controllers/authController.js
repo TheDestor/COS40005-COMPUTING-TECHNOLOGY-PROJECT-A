@@ -6,12 +6,12 @@ export const register = async (req, res) => {
         const { firstName, lastName, email, phoneNumber, password } = req.body;
 
         if (!firstName || !lastName || !email || !phoneNumber || !password) {
-            return res.json({ success: false, message: "Missing Details" });
+            return res.status(400).json({ success: false, message: "All fields must be filled in." });
         };
 
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
-            return res.json({ success: false, message: "User already exists" });
+            return res.status(400).json({ success: false, message: "This user already exists." });
         }
 
         const user = await userModel.create({ firstName, lastName, email, phoneNumber, password });
@@ -22,34 +22,42 @@ export const register = async (req, res) => {
         });
         res
             .status(201)
-            .json({ message: "User signed in successfully", success: true, user });
+            .json({ success: true, message: "Account registered successfully.", user });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: "An internal server error occured during registration." });
     }
 };
 
 export const login = async (req, res) => {
     try {
-        const { phoneNumber, email, password } = req.body;
-        if (!(phoneNumber || email) || !password) {
-            return res.json({ message: "All field are required" });
+        const { identifier, password } = req.body;
+        if (!identifier || !password) {
+            return res.status(400).json({ success: false, message: "Identifier (email/phone) and password are required."});
         }
-        const user = await userModel.findOne({ email });
+        const user = await userModel.findOne({
+            $or: [
+                { email: identifier },
+                { phoneNumber: identifier }
+            ]
+        });
         if (!user) {
-            return res.json({ message: "Incorrect password or email/phone number" });
+            return res.status(401).json({ success: false, message: "Incorrect password or email/phone number" });
         }
 
         const auth = await (password === user.password);
         if (!auth) {
-            return res.json({ message: "Incorrect password or email/phone number" });
+            return res.status(401).json({ success: false, message: "Incorrect password or email/phone number"});
         }
+
         const token = createSecretToken(user._id);
         res.cookie("token", token, {
             withCredentials: true,
             httpOnly: false
         });
-        res.status(201).json({ message: "User logged in successfully", success: true });
+        res.status(200).json({ success: true, message: "User logged in successfully" });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: "An internal server error occured during login." });
     }
 };
