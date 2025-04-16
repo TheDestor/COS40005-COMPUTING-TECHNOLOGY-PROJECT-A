@@ -1,9 +1,5 @@
 import { businessUserModel, userModel } from "../models/UserModel.js";
-import createSecretToken from "../util/TokenGen.js";
-
-const cookieOptions = {
-    httpOnly: true
-}
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
     try {
@@ -19,11 +15,7 @@ export const register = async (req, res) => {
         }
 
         const user = await userModel.create({ firstName, lastName, email, phoneNumber, password, role: 'tourist' });
-        // const token = createSecretToken(user._id, user.role);
-        // res.cookie("token", token, {
-        //     withCredentials: true,
-        //     httpOnly: true
-        // });
+
         res.status(201).json({
             success: true,
             message: "Account registered successfully."
@@ -58,13 +50,6 @@ export const businessRegister = async (req, res) => {
             companyAddress: companyAddress,
         })
 
-        // const token = createSecretToken(businessUser._id, businessUser.role);
-
-        // res.cookie("token", token, {
-        //     withCredentials: true,
-        //     httpOnly: true
-        // });
-
         res.status(201).json({ message: "Business account registered successfully.", success: true });
     } catch (error) {
         console.error(error);
@@ -78,60 +63,121 @@ export const login = async (req, res) => {
         if (!identifier || !password) {
             return res.status(400).json({ success: false, message: "Identifier (email/phone) and password are required."});
         }
+
         const user = await userModel.findOne({
             $or: [
                 { email: identifier },
                 { phoneNumber: identifier }
             ]
         });
+
         if (!user) {
             return res.status(401).json({ success: false, message: "Incorrect password or email/phone number" });
         }
 
         const auth = await (password === user.password);
+
         if (!auth) {
             return res.status(401).json({ success: false, message: "Incorrect password or email/phone number"});
         }
 
-        const token = createSecretToken(user._id, user.role);
-        res.cookie("token", token, cookieOptions);
-        res.status(200).json({
-            success: true,
-            message: "User logged in successfully",
+        const accessToken = jwt.sign(
+            {
+                "UserInfo": {
+                    "identifier": identifier,
+                    "firstName": user.firstName,
+                    "role": user.role
+                }
+            },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '10s' }
+        );
+
+        const refreshToken = jwt.sign(
+            {
+                "identifier": identifier,
+            },
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.cookie('jwt', refreshToken, {
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
+
+        res.json({ accessToken, message: "Login successful", success: true });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "An internal server error occured during login." });
     }
 };
 
-export const logout = (req, res) => {
-    res.clearCookie('token', cookieOptions);
-    res.status(200).json({ message: "Logged out successfully", success: true });
-};
-
-export const getAuthStatus = async (req, res) => {
+export const refresh = async (req, res) => {
     try {
-        const user = await userModel.findById(req.userID)
+        const cookies = req.cookies
 
-        if (!user) {
-            res.clearCookie('token');
-            return res.status(404).json({ message: "User not found.", success: false });
+        if (!cookies?.jwt) {
+            return res.status(401).json({ message: "Unauthorized", success: false });
         }
 
-        res.status(200).json({
-            message: "User is authenticated.",
-            success: true,
-            user: {
-                id: user._id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role,
+        const refreshToken = cookies.jwt
+
+        jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET,
+            async (err, decoded) => {
+                if (err) {
+                    return res.status(403).json({ message: "Forbidden", success: false });
+                }
+
+                try {
+                    const foundUser = await userModel.findOne({
+                        $or: [
+                            { email: decoded.identifier },
+                            { phoneNumber: decoded.identifier }
+                        ]
+                    });
+
+                    if (!foundUser) {
+                        return res.status(401).json({ message: "Unauthorized", success: false });
+                    }
+
+                    const accessToken = jwt.sign(
+                        {
+                            "UserInfo": {
+                                "identifier": foundUser.identifier,
+                                "firstName": foundUser.firstName,
+                                "role": foundUser.role
+                            }
+                        },
+                        process.env.ACCESS_TOKEN_SECRET,
+                        { expiresIn: '10s' }
+                    );
+
+                    res.json({ accessToken, success: true });
+                } catch (error) {
+                    console.error(error);
+                    res.status(500).json({ message: 'Internal Server Error' });
+                }
             }
-        });
+        )
     } catch (error) {
-        console.error("Get Auth Status Error:", error);
-        res.status(500).json({ message: "An internal server error occurred.", success: false });
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+export const logout = (req, res) => {
+    const cookies = req.cookies
+    if (!cookies?.jwt) {
+        return res.sendStatus(204);
+    }
+
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        // sameSite: 'none'
+    })
+
+    res.json({ message: "Cookie cleared" });
+};

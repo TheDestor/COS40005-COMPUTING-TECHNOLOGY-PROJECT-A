@@ -1,13 +1,12 @@
-import { login, register, logout, businessRegister, getAuthStatus } from "../controllers/authController.js";
-import { isAuthenticated } from "../middleware/AuthMiddleware.js";
+import { login, register, logout, businessRegister, refresh } from "../controllers/authController.js";
 import { Router } from "express";
-const router = Router();
 
-router.post("/register", register);
-router.post("/businessRegister", businessRegister);
-router.post("/login", login);
-router.post("/logout", logout);
+const authRouter = Router();
 
-router.get("/status", isAuthenticated, getAuthStatus);
+authRouter.post("/register", register);
+authRouter.post("/businessRegister", businessRegister);
+authRouter.post("/login", login);
+authRouter.post("/logout", logout);
+authRouter.get("/refresh", refresh);
 
-export default router;
+export default authRouter;

@@ -77,7 +77,7 @@ const BusinessRegistrationpage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5050/businessRegister",
+        "http://localhost:5050/auth/businessRegister",
         userData,
         {
           headers: {

@@ -1,6 +1,7 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
 import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
 import ContactUs from './pages/ContactUs.jsx';
@@ -20,25 +21,27 @@ import ReviewPage from './pages/ReviewPage.jsx';
 function App() {
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/register" element={<UserRegistration />} />
-        <Route path="/business-register" element={<BusinessRegistration />} />
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/footer" element={<Footer />} />
-        <Route path="/forget-password" element={<ForgetPassword />} />
-        <Route path="/settings" element={<SettingPage />} />
-        <Route path="/system-admin" element={<SystemAdminpage />} />
-        <Route path="/profile-settings" element={<ProfileSettingPage />} />
-        <Route path="/bookmark" element={<BookmarkPage />} />
-        <Route path="/major-town" element={<MajorTownPage />} />
-        <Route path="/contact-us" element={<ContactUs />} /> 
-        <Route path="/review" element={<ReviewPage />} />
-        {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
-        {/* Add more routes as needed */}
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/register" element={<UserRegistration />} />
+          <Route path="/business-register" element={<BusinessRegistration />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/footer" element={<Footer />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route path="/settings" element={<SettingPage />} />
+          <Route path="/system-admin" element={<SystemAdminpage />} />
+          <Route path="/profile-settings" element={<ProfileSettingPage />} />
+          <Route path="/bookmark" element={<BookmarkPage />} />
+          <Route path="/major-town" element={<MajorTownPage />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/review" element={<ReviewPage />} />
+          {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
+          {/* Add more routes as needed */}
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

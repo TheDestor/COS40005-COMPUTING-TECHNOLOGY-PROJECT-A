@@ -79,7 +79,7 @@ const UserRegistration = () => {
     // POST API call to backend for registration
     try {
       const response = await axios.post(
-        "http://localhost:5050/register",
+        "http://localhost:5050/auth/register",
         userData,
         {
           headers: {

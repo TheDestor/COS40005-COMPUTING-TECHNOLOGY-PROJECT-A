@@ -1,25 +1,24 @@
 import jwt from 'jsonwebtoken';
 
-export const isAuthenticated = (req, res, next) => {
-    const token = req.cookies.token;
+export const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization || req.headers.Authorization
 
-    if (!token) {
-        return res.status(401).json({ message: "Unauthorized", success: false });
+    if (!authHeader?.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Unauthorized" });
     }
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.split(' ')[1]
 
-        req.userID = decoded.id;
-        req.userRole = decoded.role;
-        next();
-    } catch (error) {
-        console.error("JWT Verification Error:", error.message);
-        if (error.name === 'TokenExpiredError') {
-             return res.status(401).json({ message: 'Unauthorized: Token expired' });
+    jwt.verify(
+        token,
+        process.env.ACCESS_TOKEN_SECRET,
+        (err, decoded) => {
+            if (err) return res.status(403).json({ message: "Forbidden" });
+            req.user = decoded.UserInfo.identifier
+            req.role = decoded.UserInfo.role
+            next();
         }
-        return res.status(401).json({ message: 'Unauthorized: Invalid token' });
-    }
+    )
 }
 
 export const checkRole = (allowedRoles) => {

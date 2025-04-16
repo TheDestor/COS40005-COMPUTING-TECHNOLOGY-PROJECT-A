@@ -5,23 +5,30 @@
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark, FiUser } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/ProfileDropdown.css';
 
 const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const user = {
-    firstName: 'John',
-    profileImage: 'https://i.pravatar.cc/150?img=3'
-  };
-
+  const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+  }
+
+  const displayName = user?.firstName || "error";
+  const profileImage = 'https://i.pravatar.cc/150?img=3';
 
   return (
     <div className="profile-dropdown">
       <button className="profile-button" onClick={() => setIsOpen(!isOpen)}>
-        👤
+        {isLoggedIn ? (
+          <img src={profileImage} alt="Profile Picture"></img>
+        ) : (
+          <FiUser size={24} />
+        )}
       </button>
 
       {isOpen && (
@@ -52,10 +59,10 @@ const ProfileDropdown = () => {
             <>
               <div className="loggedin-section">
                 <div className="user-info">
-                  <img src={user.profileImage} alt="Profile" className="user-avatar" />
-                  <span>{user.firstName}</span>
+                  <img src={profileImage} alt="Profile" className="user-avatar" />
+                  <span>{displayName}</span>
                 </div>
-                <button className="logout-button" onClick={() => setIsLoggedIn(false)}>
+                <button className="logout-button" onClick={handleLogout}>
                   Logout
                 </button>
               </div>

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   // States
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
@@ -43,36 +46,15 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const result = await login(identifier, password);
 
-    const userData = {
-      identifier,
-      password
-    }
-
-    try {
-      const response = await axios.post(
-        "http://localhost:5050/login",
-        userData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      );
-
-      const { success, message } = response.data;
-      if (success) {
-        handleSuccess(message);
-        setFormData({
-          identifier: '',
-          password: '',
-        })
-      } else {
-        handleError(message);
-      }
-    } catch (error) {
-      handleError(error.response.data.message)
+    if (result.success) {
+      handleSuccess(result.message);
+      setFormData({ identifier: '', password: '' });
+      setIsRobotChecked(false);
+      navigate('/');
+    } else {
+      handleError(result.message || "Login failed. Please check credentials.");
     }
   }
 
