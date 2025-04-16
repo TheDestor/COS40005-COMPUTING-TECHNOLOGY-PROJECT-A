@@ -35,7 +35,7 @@
   border: none;
   outline: none;
   font-size: 14px;
-  background: transparent;
+  background: transparent !important;
   padding: 8px;
   transition: all 0.3s ease;
   color: #333;
