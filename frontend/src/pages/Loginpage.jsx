@@ -10,7 +10,7 @@ import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -18,6 +18,7 @@ const LoginPage = () => {
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
+  
   // States
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
