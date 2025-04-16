@@ -8,12 +8,14 @@
   width: 100vw;
   height: 100vh;
   /* background: #ffffff; */
+  background-color: rgba(0,0,0,0.3);
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   z-index: 9999;
 }
+
 
 /* ============================
    2. LOGIN WRAPPER
@@ -155,7 +157,7 @@
 .eye-icon {
   position: absolute;
   top: 55%;
-  right: 0;
+  right: -3%;
   transform: translateY(-50%);
   cursor: pointer;
   color: #666;
@@ -174,10 +176,6 @@
   position: relative;
   width: 100%;
 }
-
-/* .otp-input {
-  padding-right: 85px;
-} */
 
 .send-button-inside {
   position: absolute;
@@ -271,6 +269,7 @@
 .forgot-password a {
   color: #007bff;
   text-decoration: none;
+  cursor: pointer;
   font-weight: 500;
   transition: text-decoration 0.2s;
 }
@@ -278,6 +277,7 @@
 .signup-link:hover,
 .forgot-password a:hover {
   text-decoration: underline;
+  color: #0056b3;
 }
 
 /* ============================

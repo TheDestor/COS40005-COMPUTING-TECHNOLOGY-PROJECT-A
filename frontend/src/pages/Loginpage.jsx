@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext.jsx';
+import UserRegistration from './UserRegistration.jsx';
+import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-
+  
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
   // States
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
@@ -58,6 +66,10 @@ const LoginPage = () => {
     }
   }
 
+  // Add this state at the top of your LoginPage component
+const [showUserRegister, setShowUserRegister] = useState(false);
+const [showBusinessRegister, setShowBusinessRegister] = useState(false);
+
   return (
     <div className="overlay">
       <div className="login-wrapper">
@@ -78,7 +90,7 @@ const LoginPage = () => {
             >
               Password Login
             </button>
-            <Link to="/" className="close-btn">✕</Link>
+            <button className="close-btn" onClick={onClose}>✕</button>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -147,18 +159,43 @@ const LoginPage = () => {
           {activeTab === 'otp' ? (
             <div className="bottom-links-row center-links">
               <span className="signup-text">
-                Don’t have an account? <Link to="/register" className="signup-link">Sign up</Link>
+                Don’t have an account? <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
               </span>
             </div>
           ) : (
             <div className="bottom-links-row spaced-links">
               <span className="signup-text">
-                Don’t have an account? <Link to="/register" className="signup-link">Sign up</Link>
+                Don’t have an account? <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
               </span>
               <span className="forgot-password">
-                <Link to="/forgetpassword">Forgot Password?</Link>
+                <Link to="/forget-password">Forgot Password?</Link>
               </span>
             </div>
+          )}
+          {showUserRegister && (
+            <UserRegistration
+              onClose={() => setShowUserRegister(false)}
+              onSwitchToLogin={() => {
+                setShowUserRegister(false);
+              }}
+              onSwitchToBusiness={() => {
+                setShowUserRegister(false);
+                setShowBusinessRegister(true);
+              }}
+            />
+          )}
+
+          {showBusinessRegister && (
+            <BusinessRegistrationpage
+              onClose={() => setShowBusinessRegister(false)}
+              onSwitchToLogin={() => {
+                setShowBusinessRegister(false);
+              }}
+              onSwitchToUser={() => {
+                setShowBusinessRegister(false);
+                setShowUserRegister(true);
+              }}
+            />
           )}
         </div>
       </div>

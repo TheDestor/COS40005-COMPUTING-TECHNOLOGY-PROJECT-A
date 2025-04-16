@@ -50,9 +50,9 @@ const Footer = () => {
         <div className="hornbill-social">
           <img src={HornbillImage} alt="Hornbill" className="hornbill-img" />
           <div className="icons">
-            <FaInstagram />
-            <FaFacebookF />
-            <FaTwitter />
+            <a href ="https://www.instagram.com/sarawaktravel/"><FaInstagram /></a>
+            <a href="https://www.facebook.com/visitsarawak"><FaFacebookF /></a>
+            <a href="https://x.com/SarawakTravel"><FaTwitter /></a>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="footer-bottom">
         <div className="copyright">
-          ©2025 Metaverse Trail 2.0 | Sarawak Tourism
+          ©2025 Metaverse Trails 2.0 | Sarawak Tourism
         </div>
         <div className="legal-links">
           <span>Terms of service</span>

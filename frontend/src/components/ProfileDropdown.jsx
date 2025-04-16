@@ -4,11 +4,11 @@
 
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark, FiUser } from 'react-icons/fi';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/ProfileDropdown.css';
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -37,13 +37,17 @@ const ProfileDropdown = () => {
             <>
               <div className="login-section">
                 <span>Login to learn more</span>
-                <Link to="/login" className="login-button2" onClick={() => {
-                    navigate('/login');
-                    setIsOpen(false);}}>
-                  Login
-                </Link>
+                <button
+                className="login-button2"
+                onClick={() => {
+                  onLoginClick();     // Show login modal
+                  setIsOpen(false);   // Close dropdown
+                }}
+              >
+                Login
+              </button>
               </div>
-              <div className="divider" />
+              <div className="divider3" />
               <div>
               <button className="menu-item" onClick={() => navigate('/settings')}>
                   <FiSettings size={18} />

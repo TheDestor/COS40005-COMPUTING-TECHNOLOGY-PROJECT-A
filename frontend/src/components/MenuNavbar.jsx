@@ -10,7 +10,7 @@ import '../styles/MenuNavbar.css';
 import logo from '../assets/SarawakTourismLogo.png'; 
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
 
-const MenuNavbar = () => {
+const MenuNavbar = ({ onLoginClick }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
@@ -68,7 +68,7 @@ const MenuNavbar = () => {
         </div>
     </div>
     <div className="profile-container2">
-        <ProfileDropdown />
+        <ProfileDropdown onLoginClick={onLoginClick} />
     </div>
     </div>
   );

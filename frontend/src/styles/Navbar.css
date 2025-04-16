@@ -8,7 +8,7 @@
   padding: 16px 32px;
   position: fixed;
   top: 0;
-  left: 0;
+  left: 2%;
   right: 0;
   z-index: 1000;
   flex-wrap: wrap;
@@ -226,4 +226,18 @@
   .town-selector {
     font-size: 0.85rem;
   }
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.5s ease;
+  padding: 4px;
+}
+
+.arrow.up {
+  transform: rotate(-120deg); /* up arrow */
+}
+
+.arrow.down {
+  transform: rotate(120deg); /* down arrow */
 }

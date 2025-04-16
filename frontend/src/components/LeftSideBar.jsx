@@ -10,7 +10,11 @@ const LeftSidebar = () => {
   const [destination, setDestination] = useState('');
   const [showRecent, setShowRecent] = useState(false);
 
-  const toggleSidebar = () => setIsExpanded(!isExpanded);
+  const toggleSidebar = () => {
+    // If Recent is open, close it before opening Sidebar
+    if (showRecent) setShowRecent(false);
+    setIsExpanded((prev) => !prev);
+  };
 
   const handleVehicleClick = (vehicle) => {
     if (!startingPoint.trim() || !destination.trim()) {
@@ -21,7 +25,9 @@ const LeftSidebar = () => {
   };
 
   const toggleRecentHistory = () => {
-    setShowRecent(true);
+    // If Sidebar is open, close it before opening Recent
+    if (isExpanded) setIsExpanded(false);
+    setShowRecent((prev) => !prev);
   };
 
   return (
@@ -31,9 +37,9 @@ const LeftSidebar = () => {
         <div className="menu-icon100" onClick={toggleSidebar}>
           <FaBars />
         </div>
-        <div className="menu-item100">
-          <FaClock className="icon100" onClick={toggleRecentHistory} />
-          <span className="label100" onClick={toggleRecentHistory}>Recent</span>
+        <div className="menu-item100" onClick={toggleRecentHistory}>
+          <FaClock className="icon100"  />
+          <span className="label100" >Recent</span>
         </div>
         <div className="menu-item100">
           <FaBuilding className="icon100" />
