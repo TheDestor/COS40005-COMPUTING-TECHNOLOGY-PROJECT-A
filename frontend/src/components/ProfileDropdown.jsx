@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/ProfileDropdown.css';
 
-const ProfileDropdown = ({ onLoginClick }) => {
+const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
                 <button
                 className="login-button2"
                 onClick={() => {
-                  onLoginClick();     // Show login modal
+                  navigate('/login');
                   setIsOpen(false);   // Close dropdown
                 }}
               >

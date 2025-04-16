@@ -66,7 +66,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     }
 
     const fullPhoneNumber = `${phonePrefix}${phoneNumber}`;
-    const businessData = {
+    const userData = {
       firstName, lastName, companyName, companyRegistrationNo,
       email, phoneNumber: fullPhoneNumber, companyAddress, password
     };
@@ -81,7 +81,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
         }
       );
 
-      const { success, message } = res.data;
+      const { success, message } = response.data;
       if (success) {
         handleSuccess(message);
         setFormData({

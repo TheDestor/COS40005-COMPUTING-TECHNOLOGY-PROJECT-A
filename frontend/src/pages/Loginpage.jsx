@@ -6,8 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
-const LoginPage = () => {
+const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -68,8 +69,8 @@ const LoginPage = () => {
   }
 
   // Add this state at the top of your LoginPage component
-const [showUserRegister, setShowUserRegister] = useState(false);
-const [showBusinessRegister, setShowBusinessRegister] = useState(false);
+  const [showUserRegister, setShowUserRegister] = useState(false);
+  const [showBusinessRegister, setShowBusinessRegister] = useState(false);
 
   return (
     <div className="overlay">
