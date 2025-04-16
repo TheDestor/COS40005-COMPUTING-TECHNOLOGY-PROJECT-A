@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
+import LoginPage from './Loginpage';
 import '../styles/MajorTownPage.css';
 import kuchingImg from '../assets/Kuching.png';
 import kotaSamarahanImg from '../assets/KotaSamarahan.png';
@@ -17,6 +18,16 @@ import miriImg from '../assets/Miri.png';
 import limbangImg from '../assets/Limbang.png';
 
 const MajorTownPage = () => {
+  const [showLogin, setShowLogin] = useState(false);
+    
+  const handleLoginClick = () => {
+    setShowLogin(true);
+  };
+
+  const closeLogin = () => {
+    setShowLogin(false);
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
 
@@ -27,6 +38,21 @@ const MajorTownPage = () => {
       return 'default';
     });
   };
+
+  const highlightMatch = (name) => {
+    const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
+    if (index === -1 || !searchQuery) return name;
+  
+    return (
+      <>
+        {name.substring(0, index)}
+        <span style={{ backgroundColor: '#ffe066' }}>
+          {name.substring(index, index + searchQuery.length)}
+        </span>
+        {name.substring(index + searchQuery.length)}
+      </>
+    );
+  };  
 
   const places = [
     { name: "Kuching", slug: "kuching", desc: "Sarawak’s capital city, known for its culture, food, and waterfront.", image: kuchingImg },
@@ -40,7 +66,7 @@ const MajorTownPage = () => {
     { name: "Mukah", slug: "mukah", desc: "Cultural heartland of the Melanau people by the sea.", image: mukahImg },
     { name: "Bintulu", slug: "bintulu", desc: "An industrial town famous for natural gas and beaches.", image: bintuluImg },
     { name: "Miri", slug: "miri", desc: "A resort city and gateway to national parks and caves.", image: miriImg },
-    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture Border town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureBorder town between Brunei, rich in culture and natureand nature.", image: limbangImg }
+    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture and nature.", image: limbangImg }
   ];
 
   const filteredPlaces = [...places]
@@ -55,7 +81,7 @@ const MajorTownPage = () => {
 
   return (
     <div className="category-page">
-      <Navbar />
+      <Navbar onLoginClick={handleLoginClick} />
 
       <div className="hero-banner">
         <div className="hero-overlay">
@@ -78,7 +104,7 @@ const MajorTownPage = () => {
             className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
             onClick={handleSortToggle}
           >
-            <span>≡</span>
+            <span aria-label="Sort by name">≡</span>
             {sortOrder === 'asc' && 'A-Z'}
             {sortOrder === 'desc' && 'Z-A'}
             {sortOrder === 'default' && 'Sort'}
@@ -103,7 +129,7 @@ const MajorTownPage = () => {
               <div className={`card ${isTall ? 'tall-card' : 'short-card'}`}>
                 <img src={place.image} alt={place.name} />
                 <div className="card-content">
-                  <h3>{place.name}</h3>
+                <h3>{highlightMatch(place.name)}</h3>
                   <div className="rating">⭐⭐⭐⭐⭐</div>
                   <div className="desc-scroll">
                     <p>{place.desc}</p>
@@ -119,6 +145,8 @@ const MajorTownPage = () => {
           );
         })}
       </div>
+      
+      {showLogin && <LoginPage onClose={closeLogin} />}
 
       <Footer />
     </div>

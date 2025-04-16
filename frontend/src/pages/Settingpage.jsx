@@ -5,13 +5,26 @@ import { FaRegQuestionCircle, FaUserCog, FaBug, FaMicrophoneSlash } from 'react-
 import { RiGlobalLine } from "react-icons/ri";
 import { MdOutlineSettings, MdOutlineQuestionAnswer } from "react-icons/md";
 import { FiCheck } from "react-icons/fi";
-import Navbar from '../components/MenuNavbar.jsx'; 
+import MenuNavbar from '../components/MenuNavbar.jsx'; 
+import SeniorModeConfirm from '../components/SeniorModeConfirm.jsx';
+import LoginPage from './Loginpage.jsx';
 
 const SettingsPage = () => {
+  const [showLogin, setShowLogin] = useState(false);
+  
+  const handleLoginClick = () => {
+    setShowLogin(true);
+  };
+
+  const closeLogin = () => {
+    setShowLogin(false);
+  };
+
   const [activeSection, setActiveSection] = useState('general');
   const [seniorMode, setSeniorMode] = useState(false);
   const [voiceAssistant, setVoiceAssistant] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [showSeniorConfirm, setShowSeniorConfirm] = useState(false);
 
   const renderContent = () => {
     switch(activeSection) {
@@ -23,7 +36,13 @@ const SettingsPage = () => {
             <div className="setting-item">
               <span>Senior Mode</span>
               <Switch
-                onChange={setSeniorMode}
+                onChange={(checked) => {
+                  if (checked) {
+                    setShowSeniorConfirm(true); // open popup, wait for confirmation
+                  } else {
+                    setSeniorMode(false); // if toggling OFF, apply immediately
+                  }
+                }}
                 checked={seniorMode}
                 offColor="#ccc"
                 onColor="#007bff"
@@ -102,7 +121,7 @@ const SettingsPage = () => {
 
   return (
     <div>
-      <Navbar /> 
+      <MenuNavbar onLoginClick={handleLoginClick}/> 
       <div className="settings-container">
         <div className="sidebar">
           <div
@@ -129,6 +148,20 @@ const SettingsPage = () => {
           {renderContent()}
         </div>
       </div>
+      <>
+      {showSeniorConfirm && (
+          <SeniorModeConfirm
+            onConfirm={() => {
+              setSeniorMode(true); // apply setting
+              setShowSeniorConfirm(false); // close popup
+            }}
+            onCancel={() => {
+              setShowSeniorConfirm(false); // just close popup, don’t change mode
+            }}
+          />
+        )}
+      </>
+      {showLogin && <LoginPage onClose={closeLogin} />}
     </div>
   );
 };

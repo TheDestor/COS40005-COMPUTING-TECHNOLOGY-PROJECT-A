@@ -159,7 +159,9 @@
   object-fit: cover;
   border-radius: 12px 12px 0 0;
   transition: transform 0.3s ease;
+  background: #e0e0e0;
 }
+
 
 .card:hover img {
   transform: scale(1.05);
@@ -191,10 +193,20 @@
 .card-content p::-webkit-scrollbar {
   width: 6px;
 }
-.card-content p::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+.card-content p::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
 }
+
+.card-content p::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.card-content p::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
 
 .rating {
   color: #ffcc00;

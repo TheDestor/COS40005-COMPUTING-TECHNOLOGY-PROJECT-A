@@ -1,4 +1,4 @@
-import { businessUserModel, userModel } from "../models/UserModel.js";
+import { businessUserModel, userModel } from "../models/userModel.js";
 import createSecretToken from "../util/TokenGen.js";
 
 const cookieOptions = {

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import '../styles/UserRegistration.css';
-import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
 import axios from 'axios';
@@ -17,11 +16,10 @@ const handleKeyDown = (e) => {
   }
 };
 
-const UserRegistration = () => {
+const UserRegistration = ({ onClose, onSwitchToLogin, onSwitchToBusiness }) => {
   // Password state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const navigate = useNavigate();
 
   // Form input values state
   const [formData, setFormData] = useState({
@@ -115,8 +113,8 @@ const UserRegistration = () => {
         <div className="registration-right">
           <div className="tabs">
             <span className="active-tab">User registration</span>
-            <Link to="/business-register" className="inactive-tab">Business registration</Link>
-            <span className="close-btn2" onClick={() => navigate('/')}>&times;</span>
+            <span className="inactive-tab" onClick={ onSwitchToBusiness }>Business registration</span>
+            <span className="close-btn2"  onClick={onClose}>&times;</span>
           </div>
 
           <form className="registration-form" onSubmit={handleRegisterSubmit} onKeyDown={handleKeyDown}>
@@ -180,10 +178,10 @@ const UserRegistration = () => {
           </form>
 
           <p className="signin-link">
-            Already have an account? <Link to="/login">Sign in</Link>
+            Already have an account?{" "}  <span onClick={onSwitchToLogin}>Sign in</span>
           </p>
         </div>
-      </div>
+      </div>  
     </div>
   );
 };

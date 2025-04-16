@@ -15,8 +15,8 @@
   .recent-slide-container {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 350px;
+    left: 50px;
+    width: 300px;
     height: 100vh;
     background-color: #f5f5f5;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
@@ -57,11 +57,12 @@
     border: none;
     background-color: #e0e0e0;
     cursor: pointer;
+    font-size: 14px;
   }
   
   .filter-button2.active {
     background-color: #d1f0db;
-    font-weight: bold;
+    font-weight: 500;
   }
   
   .recent-group {

@@ -8,7 +8,7 @@ import ProfileDropdown from './ProfileDropdown.jsx';
 import WeatherDateTime from './WeatherDateTime.jsx'; // Imported the new component
 import '../styles/Navbar.css';
 
-const NavigationBar = () => {
+const NavigationBar = ({ onLoginClick }) => {
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [activeMenuOption, setActiveMenuOption] = useState('Major Town');
 
@@ -41,7 +41,7 @@ const NavigationBar = () => {
             currentTown={currentTown}
             setCurrentTown={setCurrentTown}
           />
-          <ProfileDropdown />
+          <ProfileDropdown onLoginClick={onLoginClick} />
         </div>
       </div>
     </div>

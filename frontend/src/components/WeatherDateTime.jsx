@@ -102,9 +102,9 @@ const WeatherDateTime = ({ currentTown, setCurrentTown }) => {
       </div>
       <div className="weather-section">
         <div className="dropdown-container2">
-          <button className="town-selector" onClick={() => setShowTownDropdown(!showTownDropdown)}>
-            {getTownCode(currentTown)} {showTownDropdown ? '▲' : '▼'}
-          </button>
+        <button className="town-selector" onClick={() => setShowTownDropdown(!showTownDropdown)}>
+          {getTownCode(currentTown)} <span className={`arrow ${showTownDropdown ? 'up' : 'down'}`}>{showTownDropdown ? '▲' : '▼'}</span>
+        </button>
           {showTownDropdown && (
             <div className="dropdown">
               <div className="current-location">Current Location: {currentTown}</div>
