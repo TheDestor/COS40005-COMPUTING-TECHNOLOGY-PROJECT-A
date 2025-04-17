@@ -1,3 +1,4 @@
+import { contactUsModel } from "../models/ContactUsModel.js";
 import { userModel } from "../models/UserModel.js";
 
 // @desc Update user profile information
@@ -60,5 +61,26 @@ export const updateUserProfile = async (req, res) => {
         }
 
         res.status(500).json({ success: false, message: "An internal server error occurred." });
+    }
+}
+
+// @desc Contact us
+// @route POST /contactUs
+// @access public
+export const contactUs = async (req, res) => {
+    try {
+        const { email, category, topic, message } = req.body;
+
+        const contactUs = await contactUsModel.create({
+            email: email,
+            category: category,
+            topic: topic,
+            message: message
+        })
+
+        res.status(201).json({ message: "Contact form submission successful.", success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An internal server error occured during login." });
     }
 }
