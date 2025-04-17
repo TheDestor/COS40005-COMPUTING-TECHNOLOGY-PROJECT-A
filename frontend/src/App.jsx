@@ -16,8 +16,6 @@ import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
 import MajorTownPage from './pages/MajorTownPage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
-// import WriteReviewForm from './components/WriteReviewForm.jsx';
-// import NavigationBar from './components/Navbar.jsx';
 
 function App() {
 

@@ -4,40 +4,50 @@ import '../styles/Navbar.css';
 
 const API_KEY = '8be72b9eaf2d1c81e052f4fc2c58ad0c';
 
+// ✅ Town to coordinates mapping
+const townCoordinates = {
+  'Kuching': { lat: 1.5535, lon: 110.3593 },
+  'Sibu': { lat: 2.2870, lon: 111.8320 },
+  'Mukah': { lat: 2.8988, lon: 112.0914 },
+  'Serian': { lat: 1.2020, lon: 110.3952 },
+  'Bintulu': { lat: 3.1707, lon: 113.0360 },
+  'Betong': { lat: 1.4075, lon: 111.5400 },
+  'Kota Samarahan': { lat: 1.4591, lon: 110.4883 },
+  'Miri': { lat: 4.3993, lon: 113.9914 },
+  'Kapit': { lat: 2.0167, lon: 112.9333 },
+  'Sri Aman': { lat: 1.2389, lon: 111.4636 },
+  'Sarikei': { lat: 2.1271, lon: 111.5182 },
+  'Limbang': { lat: 4.7500, lon: 115.0000 },
+};
+
 const WeatherDateTime = ({ currentTown, setCurrentTown }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [weatherData, setWeatherData] = useState(null);
   const [showTownDropdown, setShowTownDropdown] = useState(false);
 
-  const towns = [
-    'Kuching', 'Sibu', 'Mukah', 'Serian', 'Bintulu', 'Betong',
-    'Kota Samarahan', 'Miri', 'Kapit', 'Sri Aman', 'Sarikei', 'Limbang'
-  ];
+  const towns = Object.keys(townCoordinates);
 
+  // ✅ Time updater
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now);
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // 🔁 Updates every second
+  
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);  
 
-      const seconds = now.getSeconds();
-      const msUntilNextMinute = (60 - seconds) * 1000;
-
-      setTimeout(() => {
-        updateTime();
-        const timer = setInterval(updateTime, 60000);
-        return () => clearInterval(timer);
-      }, msUntilNextMinute);
-    };
-
-    updateTime();
-    return () => clearTimeout(updateTime);
-  }, []);
-
+  // ✅ Weather fetch
   useEffect(() => {
     const fetchWeather = async () => {
+      const coordinates = townCoordinates[currentTown];
+
+      if (!coordinates) return;
+
+      const { lat, lon } = coordinates;
+
       try {
         const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${currentTown},MY&appid=${API_KEY}&units=metric`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
         );
         const data = await response.json();
         setWeatherData(data);
@@ -102,27 +112,31 @@ const WeatherDateTime = ({ currentTown, setCurrentTown }) => {
       </div>
       <div className="weather-section">
         <div className="dropdown-container2">
-        <button className="town-selector" onClick={() => setShowTownDropdown(!showTownDropdown)}>
-          {getTownCode(currentTown)} <span className={`arrow ${showTownDropdown ? 'up' : 'down'}`}>{showTownDropdown ? '▲' : '▼'}</span>
-        </button>
+          <button className="town-selector" onClick={() => setShowTownDropdown(!showTownDropdown)}>
+            {getTownCode(currentTown)} <span className={`arrow ${showTownDropdown ? 'up' : 'down'}`}>{showTownDropdown ? '▲' : '▼'}</span>
+          </button>
           {showTownDropdown && (
             <div className="dropdown">
               <div className="current-location">Current Location: {currentTown}</div>
-                <div className="dropdown-items-grid">
+              <div className="dropdown-items-grid">
                 {towns.map((town) => (
-                    <div key={town} className="dropdown-item" onClick={() => handleTownSelect(town)}>
+                  <div key={town} className="dropdown-item" onClick={() => handleTownSelect(town)}>
                     {town}
-                    </div>
+                  </div>
                 ))}
-                </div>
+              </div>
             </div>
           )}
         </div>
         <div className="weather-info">
-          <div>
-            {weatherData?.weather?.[0]?.main}<br />
-            {Math.round(weatherData?.main?.temp)}°C
-          </div>
+          {weatherData ? (
+            <div>
+              {weatherData.weather?.[0]?.main}<br />
+              {Math.round(weatherData.main?.temp)}°C
+            </div>
+          ) : (
+            <div>Loading...</div>
+          )}
           <span className="weather-icon">
             {getWeatherIcon(weatherData?.weather)}
           </span>

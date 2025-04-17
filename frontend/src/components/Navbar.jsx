@@ -22,6 +22,7 @@ const NavigationBar = ({ onLoginClick }) => {
     // Add your map view change logic here
     console.log('Selected view:', option);
   };
+  
 
   return (
     <div className="navbar">

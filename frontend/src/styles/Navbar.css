@@ -12,6 +12,14 @@
   right: 0;
   z-index: 1000;
   flex-wrap: wrap;
+  background-color: transparent;
+  pointer-events: none;
+}
+
+.navbar .left-section,
+.navbar .center-section,
+.navbar .top-right-section {
+  pointer-events: all; /* Ensure interactive elements inside navbar are still clickable */
 }
 
 .left-section {
@@ -25,7 +33,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  /* flex: 1; */
 }
 
 .top-right-section {

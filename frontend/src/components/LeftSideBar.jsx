@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
-import RecentSection from './RecentSection'; // Make sure this path is correct
+import RecentSection from './RecentSection';
+import BusinessSection from './BusinessSection';
 
 const LeftSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -9,10 +10,12 @@ const LeftSidebar = () => {
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
   const [showRecent, setShowRecent] = useState(false);
+  const [showBusiness, setShowBusiness] = useState(false);
 
   const toggleSidebar = () => {
     // If Recent is open, close it before opening Sidebar
     if (showRecent) setShowRecent(false);
+    if (showBusiness) setShowBusiness(false);
     setIsExpanded((prev) => !prev);
   };
 
@@ -27,7 +30,14 @@ const LeftSidebar = () => {
   const toggleRecentHistory = () => {
     // If Sidebar is open, close it before opening Recent
     if (isExpanded) setIsExpanded(false);
+    if (showBusiness) setShowBusiness(false);
     setShowRecent((prev) => !prev);
+  };
+
+  const toggleBusinessPanel = () => {
+    if (isExpanded) setIsExpanded(false);
+    if (showRecent) setShowRecent(false);
+    setShowBusiness((prev) => !prev);
   };
 
   return (
@@ -41,7 +51,7 @@ const LeftSidebar = () => {
           <FaClock className="icon100"  />
           <span className="label100" >Recent</span>
         </div>
-        <div className="menu-item100">
+        <div className="menu-item100" onClick={toggleBusinessPanel}>
           <FaBuilding className="icon100" />
           <span className="label100">Business</span>
         </div>
@@ -182,6 +192,7 @@ const LeftSidebar = () => {
 
       {/* Slide-in RecentSection */}
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
+      <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
     </>
   );
 };
