@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/Loginpage.css'; 
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import React, { useState } from 'react';
 import backgroundImg from '../assets/Kuching.png';
 
-const ResetPassword = ({ email }) => {
+const ResetPassword = ({ phone, onCancel }) => {
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const navigate = useNavigate();
 
   const isMatch = newPass && confirmPass && newPass === confirmPass;
   const isMismatch = confirmPass && newPass !== confirmPass;
@@ -25,21 +22,28 @@ const ResetPassword = ({ email }) => {
     e.preventDefault();
     if (isMatch) {
       alert("✅ Password reset successful!");
-      navigate('/login');
+      onCancel(); // or trigger success modal from parent if needed
     } else {
       alert("❌ Passwords do not match.");
     }
   };
 
+  const handleCancel = () => {
+    const confirmCancel = window.confirm("Are you sure you want to discard changes?");
+    if (confirmCancel) {
+      onCancel(); // this just calls prevStep from parent
+    }
+  };  
+
   return (
     <div className="overlay">
-      <div className="login-wrapper">
+      <div className="login-wrapper2">
         <div className="login-image">
           <img src={backgroundImg} alt="Background" />
         </div>
         <div className="login-container reset-container3">
           <h2>Reset Your Password</h2>
-          <p>New password should at least 8 characters and contains at least 1 special symbol.</p>
+          <p>New password should be at least 8 characters and contain at least 1 special symbol.</p>
           <form onSubmit={handleSubmit} className="reset-form">
             <div className="input-with-icon2">
               <input
@@ -80,9 +84,9 @@ const ResetPassword = ({ email }) => {
             {isMatch && (
               <div className="match-success">✅ Passwords match.</div>
             )}
-
+  
             <div className="reset-buttons">
-            <button type="button" className="btn-back" onClick={() => navigate('/login')}>Cancel</button>
+              <button type="button" className="btn-back" onClick={handleCancel}>Cancel</button>
               <button type="submit" className="btn-continue">Reset Password</button>
             </div>
           </form>

@@ -122,7 +122,7 @@ const countries = [
           </div>
   
           <div className="modal-actions">
-            <button onClick={onClose} className="cancel-btn">Cancel</button>
+            <button onClick={onClose} className="cancel-btn2">Cancel</button>
             <button onClick={() => onSave(selectedAvatar)} className="save-btn" disabled={!selectedAvatar}>Save</button>
           </div>
         </div>
@@ -161,16 +161,6 @@ const ProfileSettingsPage = () => {
                 <button className="change-btn" onClick={() => setShowPhotoModal(true)}>
                     <MdOutlinePhoto /> Change
                 </button>
-                {showPhotoModal && (
-                <AvatarModal
-                    onClose={() => setShowPhotoModal(false)}
-                    onSave={(avatar) => {
-                    console.log("Avatar selected:", avatar);
-                    setShowPhotoModal(false);
-                    // You can set profile picture state here
-                    }}
-                />
-                )}
 
                 <button className="remove-btn"><MdDelete /> Remove</button>
             </div>
@@ -226,7 +216,7 @@ const ProfileSettingsPage = () => {
 
             {isEditingProfile && (
             <div className="profile-buttons">
-                <button className="cancel-btn2" onClick={() => {
+                <button className="cancel-btn6" onClick={() => {
                 setIsEditingProfile(false);
                 setIsEditingEmail(false);
                 setIsEditingPhone(false);
@@ -265,6 +255,16 @@ const ProfileSettingsPage = () => {
           {renderContent()}
         </div>
       </div>
+      {showPhotoModal && (
+        <AvatarModal
+            onClose={() => setShowPhotoModal(false)}
+            onSave={(avatar) => {
+            console.log("Avatar selected:", avatar);
+            setShowPhotoModal(false);
+            // You can set profile picture state here
+            }}
+        />
+        )}
     </div>
   );
 };

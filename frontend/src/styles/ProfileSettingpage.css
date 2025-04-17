@@ -1,7 +1,7 @@
 .profile-settings-container {
     display: flex;
     height: 100vh;
-    width: 100vw;
+    width: 99vw;
     font-family: 'Segoe UI', sans-serif;
   }
   
@@ -111,14 +111,14 @@
     gap: 15px;
   }
   
-  .cancel-btn2 {
+  .cancel-btn6 {
     background-color: white;
     color: #007bff;
     border-radius: 999px;
     border: 1px solid #007bff;
   }
 
-  .cancel-btn2:hover {
+  .cancel-btn6:hover {
     background-color: #007bff;
     color: white;
     border-radius: 999px;
@@ -261,7 +261,7 @@
     margin-top: 1rem;
   }
   
-  .modal-actions .cancel-btn2,
+  .modal-actions .cancel-btn6,
   .modal-actions .save-btn {
     padding: 8px 16px;
     border: none;
@@ -285,4 +285,10 @@
     border: 2px solid #007bff;
   }
   
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   

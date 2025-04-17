@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Switch from "react-switch";
 import { MdSubscriptions } from "react-icons/md";
 import "../styles/PushNotificationPage.css";
@@ -11,75 +11,56 @@ const PushSubscriptionPage = () => {
     event: true,
   });
 
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+
   const toggleSubscriptions = (key) => {
-    setSubscriptions((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    setSubscriptions((prev) => {
+      const updatedValue = !prev[key];
+      const message = `${key.charAt(0).toUpperCase() + key.slice(1)} ${updatedValue ? "enabled" : "disabled"}`;
+      setConfirmationMessage(message);
+      return {
+        ...prev,
+        [key]: updatedValue,
+      };
+    });
   };
+
+  // Auto-hide the confirmation message after 2.5s
+  useEffect(() => {
+    if (confirmationMessage) {
+      const timer = setTimeout(() => setConfirmationMessage(""), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [confirmationMessage]);
 
   return (
     <div className="push-notification-container">
       <h2><MdSubscriptions size={22} /> Subscriptions</h2>
 
+      {confirmationMessage && (
+        <div className="confirmation-toast">
+          {confirmationMessage}
+        </div>
+      )}
+
       <div className="notification-item">
         <span>Push subscriptions</span>
-        <Switch
-          checked={subscriptions.push}
-          onChange={() => toggleSubscriptions("push")}
-          onColor="#2563eb"
-          offColor="#ccc"
-          uncheckedIcon={false}
-          checkedIcon={false}
-          height={22}
-          width={44}
-          handleDiameter={20}
-        />
+        <Switch checked={subscriptions.push} onChange={() => toggleSubscriptions("push")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
       </div>
 
       <div className="notification-item">
-        <span>LNewsletter updates</span>
-        <Switch
-          checked={subscriptions.newsletter}
-          onChange={() => toggleSubscriptions("newsletter")}
-          onColor="#2563eb"
-          offColor="#ccc"
-          uncheckedIcon={false}
-          checkedIcon={false}
-          height={22}
-          width={44}
-          handleDiameter={20}
-        />
+        <span>Newsletter updates</span>
+        <Switch checked={subscriptions.newsletter} onChange={() => toggleSubscriptions("newsletter")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
       </div>
 
       <div className="notification-item">
         <span>Blog and post updates</span>
-        <Switch
-          checked={subscriptions.blog}
-          onChange={() => toggleSubscriptions("blog")}
-          onColor="#2563eb"
-          offColor="#ccc"
-          uncheckedIcon={false}
-          checkedIcon={false}
-          height={22}
-          width={44}
-          handleDiameter={20}
-        />
+        <Switch checked={subscriptions.blog} onChange={() => toggleSubscriptions("blog")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
       </div>
 
       <div className="notification-item">
         <span>Event updates</span>
-        <Switch
-          checked={subscriptions.event}
-          onChange={() => toggleSubscriptions("event")}
-          onColor="#2563eb"
-          offColor="#ccc"
-          uncheckedIcon={false}
-          checkedIcon={false}
-          height={22}
-          width={44}
-          handleDiameter={20}
-        />
+        <Switch checked={subscriptions.event} onChange={() => toggleSubscriptions("event")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
       </div>
     </div>
   );

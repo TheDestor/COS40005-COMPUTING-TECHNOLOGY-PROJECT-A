@@ -11,7 +11,7 @@ const containerStyle = {
   backgroundColor: '#e0e0e0' // Fallback color
 };
 
-const center = { lat: 2.5, lng: 113.5 };
+const center = { lat: 3.1175031, lng: 113.2648667 };
 
 function MapComponent() {
   const [mapError, setMapError] = useState('');
@@ -41,7 +41,7 @@ function MapComponent() {
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={center}
-      zoom={7}
+      zoom={7.2}
       onLoad={(map) => (mapRef.current = map)}
       options={{
         disableDefaultUI: true,

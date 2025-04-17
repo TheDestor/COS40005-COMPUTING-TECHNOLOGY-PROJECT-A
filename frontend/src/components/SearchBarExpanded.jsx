@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { FiClock } from 'react-icons/fi';
-import { FaPizzaSlice, FaHotel, FaCalendarAlt } from 'react-icons/fa';
-import { GiPalmTree } from 'react-icons/gi';
 import '../styles/Searchbar.css';
 import RecentSection from "./RecentSection";
+import foodImage from '../assets/Food.png';
+import hotelImage from '../assets/Hotel.png';
+import placesImage from '../assets/place.png';
+import eventImage from '../assets/Event.png';
 
 const SearchBarExpanded = ({ category, setCategory, history }) => {
   const [showRecent, setShowRecent] = useState(false);
 
   const categories = [
-    { name: 'Food', icon: <FaPizzaSlice />, bgColor: '#FFE0B2', iconColor: '#FF7043' },
-    { name: 'Hotel', icon: <FaHotel />, bgColor: '#D1C4E9', iconColor: '#7E57C2' },
-    { name: 'Places', icon: <GiPalmTree />, bgColor: '#C8E6C9', iconColor: '#388E3C' },
-    { name: 'Event', icon: <FaCalendarAlt />, bgColor: '#FFCDD2', iconColor: '#E53935' },
+    { name: 'Food', image: foodImage, bgColor: '#FFE0B2' },
+    { name: 'Hotel', image: hotelImage, bgColor: '#D1C4E9' },
+    { name: 'Places', image: placesImage, bgColor: '#C8E6C9' },
+    { name: 'Event', image: eventImage, bgColor: '#FFCDD2' },
   ];
 
   return (
@@ -28,8 +30,8 @@ const SearchBarExpanded = ({ category, setCategory, history }) => {
               }}
               onClick={() => setCategory(cat.name)}
             >
-              <div className="category-icon" style={{ color: cat.iconColor }}>
-                {cat.icon}
+              <div className="category-icon">
+                <img src={cat.image} alt={cat.name} className="category-image" />
               </div>
               <div className="category-label">{cat.name}</div>
             </div>

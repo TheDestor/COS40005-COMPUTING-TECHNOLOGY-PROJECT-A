@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 
-const OTPVerification = ({ onNext, onBack, email }) => {
+const OTPVerification = ({ onNext, onBack, phone }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -46,18 +46,20 @@ const OTPVerification = ({ onNext, onBack, email }) => {
 
   return (
     <div className="overlay">
-      <div className="login-wrapper">
+      <div className="login-wrapper2">
         <div className="login-image">
           <img src={backgroundImg} alt="Background" />
         </div>
         <div className="login-container reset-container2">
           <h2>Enter Verification Code</h2>
-          <p>We have sent a code to <strong>{email}</strong></p>
+          <p>We have sent a code to <strong>{phone}</strong></p>
 
           <form onSubmit={handleSubmit} className="otp-form">
             <div className="otp-box-wrapper">
               {otp.map((digit, idx) => (
                 <input
+                  inputMode="numeric"
+                  pattern="\d*"
                   key={idx}
                   id={`otp-${idx}`}
                   type="text"

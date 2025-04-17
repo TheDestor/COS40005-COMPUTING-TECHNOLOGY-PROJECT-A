@@ -10,6 +10,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+
   }
   
   /* ========== Main Container ========== */
@@ -22,7 +23,7 @@
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: fadeIn 0.8s ease forwards;
+    /* animation: fadeIn 0.4s ease forwards; */
   }
   
   /* ========== Left Panel (Image) ========== */

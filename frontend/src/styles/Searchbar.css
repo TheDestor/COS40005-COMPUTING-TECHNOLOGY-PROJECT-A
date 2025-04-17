@@ -1,3 +1,4 @@
+
 /* ============================
    1. Wrapper & Layout
 ============================ */
@@ -86,6 +87,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   z-index: 999;
   animation: fadeIn 0.3s ease-out;
+  width: 100%;
 }
 
 @keyframes fadeIn {
@@ -127,7 +129,7 @@
 .category-item:hover {
   background: #c0f1ff;
   transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 172, 193, 0.4);
+  box-shadow: 0 3px 6px #007bff;
 }
 
 .category-item.active {
@@ -138,8 +140,8 @@
 
 
 .category-icon {
-  font-size: 24px;
-  margin-bottom: 6px;
+  font-size: 10px;
+  margin-bottom: 4px;
   color: #333;
 }
 
@@ -147,6 +149,13 @@
   font-size: 13px;
   font-weight: 600;
   color: #333;
+}
+
+.category-image {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 8px; /* optional, for slightly rounded corners */
 }
 
 /* ============================

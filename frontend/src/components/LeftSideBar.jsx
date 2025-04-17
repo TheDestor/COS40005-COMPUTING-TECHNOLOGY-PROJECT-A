@@ -3,8 +3,9 @@ import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort } from 'r
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
 import BusinessSection from './BusinessSection';
+import { useEffect } from 'react';
 
-const LeftSidebar = () => {
+const LeftSidebar = ({ mapType, onMapTypeChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -54,6 +55,20 @@ const LeftSidebar = () => {
         <div className="menu-item100" onClick={toggleBusinessPanel}>
           <FaBuilding className="icon100" />
           <span className="label100">Business</span>
+        </div>
+      </div>
+      <div className="layer-section">
+        <div className="layer-title">🗺️ Map Layers</div>
+        <div className="layer-options">
+          {['roadmap', 'satellite', 'terrain', 'hybrid'].map((type) => (
+            <div
+              key={type}
+              className={`layer-option ${mapType === type ? 'active' : ''}`}
+              onClick={() => onMapTypeChange(type)}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </div>
+          ))}
         </div>
       </div>
 

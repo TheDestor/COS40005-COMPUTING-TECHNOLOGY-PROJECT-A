@@ -3,42 +3,42 @@ import { Link } from 'react-router-dom';
 import backgroundImg from '../assets/Kuching.png';
 import '../styles/Loginpage.css';
 
-const EmailVerification = ({ onNext, setEmail }) => {
-  const [email, setEmailInput] = useState('');
+const PhoneVerification = ({ onNext, setPhone, onCancel }) => {
+  const [phone, setPhoneInput] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setEmail(email);
+    setPhone(phone);
     onNext();
   };
 
   return (
     <div className="overlay">
-      <div className="login-wrapper">
+      <div className="login-wrapper2">
         <div className="login-image">
           <img src={backgroundImg} alt="Background" />
         </div>
 
         <div className="reset-container">
-          <Link to="/login" className="close-btn">✕</Link>
+          <button onClick={onCancel} className="close-btn">✕</button>
 
           <h2>Forgot Password</h2>
-          <p>Please enter your email to receive a verification code.</p>
+          <p>Please enter your phone number to receive a verification code.</p>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <input
-                type="email"
+                type="tel"
                 className="input-field"
-                placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={(e) => setPhoneInput(e.target.value)}
                 required
               />
             </div>
 
             <div className="reset-buttons">
-              <Link to="/login" className="btn-back">Cancel</Link>
+              <button type="button" className="btn-back" onClick={onCancel}>Cancel</button>
               <button type="submit" className="btn-continue">Continue</button>
             </div>
           </form>
@@ -48,4 +48,4 @@ const EmailVerification = ({ onNext, setEmail }) => {
   );
 };
 
-export default EmailVerification;
+export default PhoneVerification;

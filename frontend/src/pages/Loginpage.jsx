@@ -1,3 +1,5 @@
+// src/pages/LoginPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
@@ -6,9 +8,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
-
+import { useAuth } from '../context/AuthContext.jsx';
+import { auth } from '../../../backend/routes/firebaseConfig.js'; // Import auth from the firebaseConfig file
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'; // Import necessary Firebase auth methods
 
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
@@ -21,7 +24,7 @@ const LoginPage = ({ onClose }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [loadingOtp, setLoadingOtp] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
@@ -41,79 +44,94 @@ const LoginPage = ({ onClose }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleSuccess = (msg) => {
-    toast.success(msg, {
-      position: 'bottom-right',
-    });
+    toast.success(msg, { position: 'bottom-right' });
   };
 
   const handleError = (msg) => {
-    toast.error(msg, {
-      position: 'bottom-right',
-    });
+    toast.error(msg, { position: 'bottom-right' });
   };
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
 
     if (!identifier) {
-      handleError("Please enter your phone number or email.");
+      handleError('Please enter your phone number.');
+      return;
+    }
+
+    if (!/^\+?\d{10,15}$/.test(identifier)) {
+      handleError('Only valid phone numbers are supported. Include country code (e.g., +60).');
       return;
     }
 
     setLoadingOtp(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        handleSuccess(data.message || 'OTP sent successfully!');
-        setOtpSent(true);
-      } else {
-        handleError(data.message || 'Failed to send OTP.');
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+          size: 'invisible',
+        }, auth);
+        await window.recaptchaVerifier.render();
       }
+
+      const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      handleSuccess('OTP sent to phone.');
+      setOtpSent(true);
     } catch (error) {
-      console.error(error);
-      handleError("Something went wrong while sending OTP.");
+      console.error('🔥 Firebase OTP Error:', error.message);
+      handleError(`Error: ${error.message}`);
     }
 
     setLoadingOtp(false);
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (confirmationResult) {
+        const result = await confirmationResult.confirm(otp);
+        handleSuccess('OTP Verified successfully!');
+        navigate('/');
+      } else {
+        handleError('Please request an OTP first.');
+      }
+    } catch (error) {
+      console.error(error);
+      handleError('Invalid OTP. Please try again.');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!isRobotChecked) {
-      handleError("Please verify the captcha.");
+      handleError('Please verify the captcha.');
       return;
     }
 
     if (activeTab === 'otp') {
-      handleError("OTP login is not yet supported on backend.");
+      handleVerifyOtp(e);
       return;
     }
 
     const result = await login(identifier, password);
 
     if (result.success) {
-      handleSuccess(result.message || "Login successful!");
+      handleSuccess(result.message || 'Login successful!');
       setFormData({ identifier: '', password: '' });
       setIsRobotChecked(false);
       navigate('/');
     } else {
-      handleError(result.message || "Login failed. Please check credentials.");
+      handleError(result.message || 'Login failed. Please check credentials.');
     }
   };
 
@@ -140,7 +158,9 @@ const LoginPage = ({ onClose }) => {
             >
               Password Login
             </button>
-            <button className="close-btn" onClick={onClose}>✕</button>
+            <button className="close-btn" onClick={onClose}>
+              ✕
+            </button>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -148,7 +168,7 @@ const LoginPage = ({ onClose }) => {
               <input
                 type="text"
                 className="input-field"
-                placeholder="Phone Number/Email"
+                placeholder="Phone Number"
                 name="identifier"
                 value={formData.identifier}
                 onChange={handleInputChange}
@@ -210,21 +230,26 @@ const LoginPage = ({ onClose }) => {
             <button type="submit" className="login-button">
               Login
             </button>
+
+            {/* reCAPTCHA container */}
+            <div id="recaptcha-container"></div>
           </form>
 
           {activeTab === 'otp' ? (
             <div className="bottom-links-row center-links">
               <span className="signup-text">
-                Don’t have an account? <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
+                Don’t have an account?{' '}
+                <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
               </span>
             </div>
           ) : (
             <div className="bottom-links-row spaced-links">
               <span className="signup-text">
-                Don’t have an account? <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
+                Don’t have an account?{' '}
+                <span className="signup-link" onClick={() => setShowUserRegister(true)}>Sign up</span>
               </span>
-              <span className="forgot-password">
-                <span onClick={() => setShowForgotPassword(true)}>Forgot Password?</span>
+              <span className="forgot-password" onClick={() => setShowForgotPassword(true)}>
+                Forgot Password?
               </span>
             </div>
           )}
