@@ -24,4 +24,4 @@ const contactUsSchema = new mongoose.Schema({
     message: { type: String, required: true },
 }, baseOptions);
 
-export const contactUsModel = mongoose.model('contactUs', userSchema);
+export const contactUsModel = mongoose.model('contactUs', contactUsSchema);
