@@ -22,11 +22,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     confirmPassword: ''
   });
 
-  const {
-    firstName, lastName, companyName, companyRegistrationNo,
-    email, phonePrefix, phoneNumber, companyAddress,
-    password, confirmPassword
-  } = formData;
+  const { firstName, lastName, companyName, companyRegistrationNo, email, phonePrefix, phoneNumber, companyAddress, password, confirmPassword} = formData;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -82,6 +78,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
       );
 
       const { success, message } = response.data;
+      
       if (success) {
         handleSuccess(message);
         setFormData({

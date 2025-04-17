@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "firebase": "^11.6.0",
-    "firebase-admin": "^13.2.0"
-  },
-  "devDependencies": {
-    "dotenv-webpack": "^8.1.0"
-  }
-}
