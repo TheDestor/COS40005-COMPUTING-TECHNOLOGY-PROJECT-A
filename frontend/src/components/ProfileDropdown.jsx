@@ -12,6 +12,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
 
   const handleLogout = async () => {
     await logout();
+    navigate('/');
     setIsOpen(false);
   };
 

@@ -1,7 +1,7 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.jsx';
+import { AuthProvider } from './context/AuthProvider.jsx';
 import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
 import ContactUs from './pages/ContactUs.jsx';

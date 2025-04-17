@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/ProfileSettingpage.css';
 import Navbar from '../components/MenuNavbar.jsx';
 import { MdPerson, MdSecurity, MdNotificationsNone, MdSubscriptions, MdOutlinePhoto, MdDelete } from 'react-icons/md';
@@ -7,6 +7,8 @@ import Select from 'react-select';
 import ChangeNewPassword from './ChangeNewPassword.jsx';
 import PushNotificationPage from './PushNotificationpage.jsx';
 import PushSubscriptionPage from './PushSuscriptionpage.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import axios from 'axios';
 
 const countries = [
     { name: 'Malaysia', code: 'MY', flag: 'https://flagcdn.com/w40/my.png' },
@@ -130,15 +132,85 @@ const countries = [
     );
   };
   
-  
 const ProfileSettingsPage = () => {
   const [activeSection, setActiveSection] = useState('account');
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: ''
+  });
+  const {user, accessToken, updateUserContext } = useAuth();
+  
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || ''
+      });
+    }
+  }, [user]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+      });
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    const updatePayload = {
+      _id: user._id,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber
+    };
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5050/user/updateUserProfile",
+        updatePayload,
+        {
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+          withCredentials: true
+        }
+      );
+
+      const { success, message } = response.data;
+
+      if (success) {
+        if (updateUserContext && response.data) {
+          updateUserContext(response.data.updatedUser)
+        }
+
+        setIsEditingProfile(false);
+      } else {
+        console.log("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  }
 
   const renderContent = () => {
     switch (activeSection) {
@@ -185,46 +257,45 @@ const ProfileSettingsPage = () => {
             <div className="profile-fields">
               <div className="field-group">
                 <label>First name</label>
-                <input type="text" defaultValue="Alvin" readOnly={!isEditingProfile} />
+                <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} readOnly={!isEditingProfile} />
               </div>
               <div className="field-group">
                 <label>Last name</label>
-                <input type="text" defaultValue="Tan" readOnly={!isEditingProfile} />
+                <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} readOnly={!isEditingProfile} />
               </div>
               <div className="field-group email-group">
                 <label>Email</label>
                 <div className="input-wrapper">
-                    <input
+                  <input
+                    id="email"
+                    name="email"
                     type="email"
-                    defaultValue="aylt@outlook.com"
-                    readOnly={!isEditingEmail}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    readOnly={!isEditingProfile}
                     />
                 </div>
                 </div>
 
                 <div className="field-group phone-group">
-                    <label>Phone number</label>
-                    <div className="input-wrapper">
-                        <input
-                        type="tel"
-                        defaultValue="+6010-123-5678"
-                        readOnly={!isEditingPhone}
-                        />
-                    </div>
-                    </div>
+                  <label>Phone number</label>
+                  <div className="input-wrapper">
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      readOnly={!isEditingProfile}
+                    />
+                  </div>
+                </div>
             </div>
 
             {isEditingProfile && (
             <div className="profile-buttons">
-                <button className="cancel-btn6" onClick={() => {
-                setIsEditingProfile(false);
-                setIsEditingEmail(false);
-                setIsEditingPhone(false);
-                }}>Cancel</button>
-                <button className="update-btn" onClick={() => {
-                // Save logic here
-                setIsEditingProfile(false);
-                }}>Update</button>
+                <button className="cancel-btn6" onClick={handleCancelEdit}>Cancel</button>
+                <button className="update-btn" onClick={handleUpdateProfile}>Update</button>
             </div>
             )}
           </div>

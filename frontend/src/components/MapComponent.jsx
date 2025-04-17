@@ -12,12 +12,13 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
+const libraries = ['marker'];
 
 function MapComponent() {
   const [mapError, setMapError] = useState('');
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI',
-    libraries: ['marker'],
+    libraries,
     onError: (err) => setMapError('Failed to load Google Maps')
   });
 

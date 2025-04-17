@@ -1,5 +1,3 @@
-// src/pages/LoginPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
@@ -10,13 +8,14 @@ import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { auth } from '../../../backend/routes/firebaseConfig.js'; // Import auth from the firebaseConfig file
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'; // Import necessary Firebase auth methods
+// import { auth } from '../../../backend/routes/firebaseConfig.js'; // Import auth from the firebaseConfig file
+// import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'; // Import necessary Firebase auth methods
 
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // States
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
   const [isRobotChecked, setIsRobotChecked] = useState(false);
@@ -29,9 +28,12 @@ const LoginPage = ({ onClose }) => {
     identifier: '',
     password: '',
   });
+  const [showUserRegister, setShowUserRegister] = useState(false);
+  const [showBusinessRegister, setShowBusinessRegister] = useState(false);
 
   const { identifier, password } = formData;
 
+  // Close the window when esc key is pressed
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -40,8 +42,10 @@ const LoginPage = ({ onClose }) => {
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
+  // Handle clicking for the two tabs
   const handleTabClick = (tab) => setActiveTab(tab);
 
+  // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -50,47 +54,49 @@ const LoginPage = ({ onClose }) => {
     }));
   };
 
+  // Handle success toasts
   const handleSuccess = (msg) => {
     toast.success(msg, { position: 'bottom-right' });
   };
 
+  // Handle error toasts
   const handleError = (msg) => {
     toast.error(msg, { position: 'bottom-right' });
   };
 
   const handleSendOtp = async (e) => {
-    e.preventDefault();
+    // e.preventDefault();
 
-    if (!identifier) {
-      handleError('Please enter your phone number.');
-      return;
-    }
+    // if (!identifier) {
+    //   handleError('Please enter your phone number.');
+    //   return;
+    // }
 
-    if (!/^\+?\d{10,15}$/.test(identifier)) {
-      handleError('Only valid phone numbers are supported. Include country code (e.g., +60).');
-      return;
-    }
+    // if (!/^\+?\d{10,15}$/.test(identifier)) {
+    //   handleError('Only valid phone numbers are supported. Include country code (e.g., +60).');
+    //   return;
+    // }
 
-    setLoadingOtp(true);
+    // setLoadingOtp(true);
 
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-          size: 'invisible',
-        }, auth);
-        await window.recaptchaVerifier.render();
-      }
+    // try {
+    //   if (!window.recaptchaVerifier) {
+    //     window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+    //       size: 'invisible',
+    //     }, auth);
+    //     await window.recaptchaVerifier.render();
+    //   }
 
-      const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
-      setConfirmationResult(result);
-      handleSuccess('OTP sent to phone.');
-      setOtpSent(true);
-    } catch (error) {
-      console.error('🔥 Firebase OTP Error:', error.message);
-      handleError(`Error: ${error.message}`);
-    }
+    //   const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
+    //   setConfirmationResult(result);
+    //   handleSuccess('OTP sent to phone.');
+    //   setOtpSent(true);
+    // } catch (error) {
+    //   console.error('🔥 Firebase OTP Error:', error.message);
+    //   handleError(`Error: ${error.message}`);
+    // }
 
-    setLoadingOtp(false);
+    // setLoadingOtp(false);
   };
 
   const handleVerifyOtp = async (e) => {
@@ -110,6 +116,7 @@ const LoginPage = ({ onClose }) => {
     }
   };
 
+  // Submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -123,20 +130,19 @@ const LoginPage = ({ onClose }) => {
       return;
     }
 
+    // Call the login method with the id and password the user entered
     const result = await login(identifier, password);
 
+    // Process the returned values
     if (result.success) {
       handleSuccess(result.message || 'Login successful!');
       setFormData({ identifier: '', password: '' });
       setIsRobotChecked(false);
-      navigate('/');
+      onClose();
     } else {
       handleError(result.message || 'Login failed. Please check credentials.');
     }
   };
-
-  const [showUserRegister, setShowUserRegister] = useState(false);
-  const [showBusinessRegister, setShowBusinessRegister] = useState(false);
 
   return (
     <div className="overlay">
