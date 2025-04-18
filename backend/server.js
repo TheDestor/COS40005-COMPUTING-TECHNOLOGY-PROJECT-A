@@ -4,6 +4,7 @@ import connectDB from "./config/mongodb.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/AuthRoutes.js";
 import userRouter from "./routes/UserRoutes.js";
+import locationRouter from "./routes/LocationRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5050
@@ -16,6 +17,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use("/locations", locationRouter);
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 

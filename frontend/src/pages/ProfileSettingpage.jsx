@@ -37,16 +37,16 @@ const naSelectOption = {
 const countryOptions = [
   naSelectOption,
   ...countries.map((country) => ({
-      value: country.name,
-      label: (
-          <img
-              src={country.flag}
-              alt={country.name}
-              style={{ width: '25px', height: '25px', borderRadius: '999px', objectFit: 'cover' }}
-          />
-      ),
-      code: country.code,
-      flag: country.flag,
+    value: country.name,
+    label: (
+      <img
+        src={country.flag}
+        alt={country.name}
+        style={{ width: '25px', height: '25px', borderRadius: '999px', objectFit: 'cover' }}
+      />
+    ),
+    code: country.code,
+    flag: country.flag,
   }))
 ];
 
