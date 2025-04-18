@@ -1,12 +1,10 @@
 import { Router } from "express";
-import { updateUserProfile } from "../controllers/UserController.js";
+import { contactUs, updateUserProfile } from "../controllers/UserController.js";
 import { verifyJWT } from "../middleware/AuthMiddleware.js";
 
 const userRouter = Router();
 
-// Check for permission
-userRouter.use(verifyJWT);
-
-userRouter.post("/updateUserProfile", updateUserProfile);
+userRouter.post("/updateUserProfile", verifyJWT, updateUserProfile);
+userRouter.post("/contactUs", contactUs);
 
 export default userRouter;

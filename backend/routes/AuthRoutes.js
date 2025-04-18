@@ -10,4 +10,5 @@ authRouter.post("/login", login);
 authRouter.post("/logout", logout);
 authRouter.get("/refresh", refresh, verifyJWT); // Check for permission
 
+
 export default authRouter;

@@ -81,6 +81,6 @@ export const contactUs = async (req, res) => {
         res.status(201).json({ message: "Contact form submission successful.", success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "An internal server error occured during login." });
+        res.status(500).json({ message: "An internal server error occured during login.", success: false });
     }
 }

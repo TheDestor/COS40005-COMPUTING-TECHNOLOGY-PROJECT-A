@@ -1,14 +1,99 @@
 // ContactUs.jsx
 import React, { useState } from "react";
 import "../styles/ContactUs.css";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function ContactUs() {
+  // States
   const [activeButton, setActiveButton] = useState(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    topic: '',
+    message: ''
+  });
   
+  const { email, topic, message } = formData;
+
+  // Category button click handler
   const handleButtonClick = (buttonName) => {
     setActiveButton(activeButton === buttonName ? null : buttonName);
   };
 
+  // Handle the form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Toast success
+  const handleSuccess = (msg) => {
+    toast.success(msg, { position: "bottom-right" });
+  };
+  
+  // Toast error
+  const handleError = (msg) => {
+    toast.error(msg, { position: "bottom-right" });
+  };
+
+  // Submit the form using backend api
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!email.trim()) {
+      handleError("Please enter your email address");
+      return;
+    }
+    if (!activeButton) {
+      handleError("Please choose a category");
+      return;
+    }
+    if (!topic.trim()) {
+      handleError("Please enter a topic");
+      return;
+    }
+    if (!message.trim()) {
+      handleError("Please enter a message");
+      return;
+    }
+
+    // Prepare data for submission
+    const submissionData = {
+      email: email,
+      category: activeButton,
+      topic: topic,
+      message: message
+    }
+
+    // POST api call to backend
+    try {
+      const response = await axios.post(
+        "http://localhost:5050/user/contactUs",
+        submissionData,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const { success, message } = response.data;
+
+      if (success) {
+        handleSuccess(message);
+        setFormData({
+          email: '',
+          topic: '',
+          message: ''
+        })
+        setActiveButton(null);
+      } else {
+        handleError(response.data.message);
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  }
   return (
     <div className="contact-us-container">
       <div className="header">
@@ -90,7 +175,7 @@ export default function ContactUs() {
           </div>
         </div>
         <div className="form-section">
-          <div className="form">
+          <form className="form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">
                 <svg className="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -103,8 +188,12 @@ export default function ContactUs() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   placeholder="Enter your email address"
                   className="email-input"
+                  required
+                  value={email}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -116,6 +205,7 @@ export default function ContactUs() {
             </p>
             <div className="button-group">
               <button 
+                type="button"
                 className={activeButton === 'billing' ? 'active' : ''} 
                 onClick={() => handleButtonClick('billing')}
               >
@@ -126,6 +216,7 @@ export default function ContactUs() {
                 Billing
               </button>
               <button 
+                type="button"
                 className={activeButton === 'booking' ? 'active' : ''} 
                 onClick={() => handleButtonClick('booking')}
               >
@@ -138,6 +229,7 @@ export default function ContactUs() {
                 Booking
               </button>
               <button 
+                type="button"
                 className={activeButton === 'login' ? 'active' : ''} 
                 onClick={() => handleButtonClick('login')}
               >
@@ -149,6 +241,7 @@ export default function ContactUs() {
                 Login
               </button>
               <button 
+                type="button"
                 className={activeButton === 'signup' ? 'active' : ''} 
                 onClick={() => handleButtonClick('signup')}
               >
@@ -177,8 +270,12 @@ export default function ContactUs() {
                 <input 
                   type="text" 
                   id="topic" 
+                  name="topic"
                   placeholder="Enter your topic" 
                   className="topic-input" 
+                  required
+                  value={topic}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -195,9 +292,13 @@ export default function ContactUs() {
               <div className="input-wrapper">
                 <textarea 
                   id="message"
+                  name="message"
                   placeholder="Describe your issue in detail..." 
                   className="message-input"
                   rows="4"
+                  value={message}
+                  required
+                  onChange={handleInputChange}
                 ></textarea>
               </div>
             </div>
@@ -208,7 +309,7 @@ export default function ContactUs() {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </button>
-          </div>
+          </form>
         </div>
       </div>
       <footer>
