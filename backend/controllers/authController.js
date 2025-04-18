@@ -113,7 +113,8 @@ export const login = async (req, res) => {
                     "lastName": user.lastName,
                     "email": user.email,
                     "phoneNumber": user.phoneNumber,
-                    "role": user.role
+                    "role": user.role,
+                    "nationality": user.nationality
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -179,7 +180,8 @@ export const refresh = async (req, res) => {
                                 "lastName": user.lastName,
                                 "email": user.email,
                                 "phoneNumber": user.phoneNumber,
-                                "role": user.role
+                                "role": user.role,
+                                "nationality": user.nationality
                             }
                         },
                         process.env.ACCESS_TOKEN_SECRET,

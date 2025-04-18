@@ -36,9 +36,9 @@ export const AuthProvider = ({ children }) => {
                 lastName: userInfo.lastName,
                 email: userInfo.email,
                 phoneNumber: userInfo.phoneNumber,
-                role: userInfo.role
+                role: userInfo.role,
+                nationality: userInfo.nationality
             });
-
             // Store the valid access token
             setAccessToken(token);
             // Set the user as logged in

@@ -10,6 +10,8 @@ import PushSubscriptionPage from './PushSuscriptionpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import axios from 'axios';
 
+const naCountryObject = { name: 'N/A', code: 'NA', flag: null };
+
 const countries = [
     { name: 'Malaysia', code: 'MY', flag: 'https://flagcdn.com/w40/my.png' },
     { name: 'Singapore', code: 'SG', flag: 'https://flagcdn.com/w40/sg.png' },
@@ -25,18 +27,28 @@ const countries = [
     { name: 'United Kingdom', code: 'GB', flag: 'https://flagcdn.com/w40/gb.png' },
   ];  
 
-  const countryOptions = countries.map((country) => ({
-    value: country.name,
-    label: (
-      <img
-        src={country.flag}
-        alt={country.name}
-        style={{ width: '25px', height: '25px', borderRadius: '999px', objectFit: 'cover' }}
-      />
-    ),
-    code: country.code,
-    flag: country.flag,
-  }));  
+const naSelectOption = {
+  value: 'N/A',
+  label: 'N/A',
+  code: 'N/A',
+  flag: null
+};
+
+const countryOptions = [
+  naSelectOption,
+  ...countries.map((country) => ({
+      value: country.name,
+      label: (
+          <img
+              src={country.flag}
+              alt={country.name}
+              style={{ width: '25px', height: '25px', borderRadius: '999px', objectFit: 'cover' }}
+          />
+      ),
+      code: country.code,
+      flag: country.flag,
+  }))
+];
 
   const customStyles = {
     control: (provided) => ({
@@ -134,7 +146,7 @@ const countries = [
   
 const ProfileSettingsPage = () => {
   const [activeSection, setActiveSection] = useState('account');
-  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+  const [selectedCountry, setSelectedCountry] = useState(naCountryObject);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [formData, setFormData] = useState({
@@ -151,8 +163,17 @@ const ProfileSettingsPage = () => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        phoneNumber: user.phoneNumber || ''
+        phoneNumber: user.phoneNumber || '',
+        nationality: user.nationality || 'N/A'
       });
+      
+      let matchedCountryObject = naCountryObject;
+      if (user.nationality != 'N/A') {
+        matchedCountryObject = countries.find(c => c.name === user.nationality) || naCountryObject;
+        setSelectedCountry(matchedCountryObject);
+      }
+    } else {
+      setSelectedCountry(naCountryObject);
     }
   }, [user]);
 
@@ -174,6 +195,12 @@ const ProfileSettingsPage = () => {
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
       });
+
+      let matchedCountryObject = naCountryObject;
+      if (user.nationality != 'N/A') {
+        matchedCountryObject = countries.find(c => c.name === user.nationality) || naCountryObject;
+        setSelectedCountry(matchedCountryObject);
+      }
     }
   };
 
@@ -183,7 +210,8 @@ const ProfileSettingsPage = () => {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      phoneNumber: formData.phoneNumber
+      phoneNumber: formData.phoneNumber,
+      nationality: selectedCountry.name,
     };
 
     try {
@@ -215,6 +243,9 @@ const ProfileSettingsPage = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'account':
+
+      const currentSelectValue = countryOptions.find(option => option.value === selectedCountry.name);
+        
         return (
             <div className="profile-section">
             <div className="section-header">
@@ -241,14 +272,19 @@ const ProfileSettingsPage = () => {
                 <div className="nationality-row">
                 <Select
                     options={countryOptions}
-                    defaultValue={countryOptions[0]}
+                    value={currentSelectValue}
                     onChange={(selectedOption) => {
+                      if (selectedOption.value === 'N/A') {
+                        setSelectedCountry(naCountryObject);
+                      } else {
                         const matched = countries.find(c => c.name === selectedOption.value);
                         setSelectedCountry(matched);
+                      }
                     }}
                     className="nationality-select"
                     styles={customStyles}
                     isSearchable={false}
+                    isDisabled={!isEditingProfile}
                     />
                 <input type="text" value={selectedCountry.name} readOnly className="nationality-input" />
                 </div>

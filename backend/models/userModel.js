@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true }, // Haven't done for phone number yet
     password: { type: String, required: true },
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
+    nationality: { type: String, required: true, default: 'N/A'},
 }, baseOptions);
 
 export const userModel = mongoose.models.user || mongoose.model('users', userSchema);

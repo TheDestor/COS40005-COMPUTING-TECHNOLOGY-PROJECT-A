@@ -6,7 +6,7 @@ import { userModel } from "../models/UserModel.js";
 // @access private
 export const updateUserProfile = async (req, res) => {
     try {
-        const { _id, firstName, lastName, email, phoneNumber } = req.body;
+        const { _id, firstName, lastName, email, phoneNumber, nationality } = req.body;
         
         // Find the user using the id
         const currentUser = await userModel.findById(_id);
@@ -29,6 +29,10 @@ export const updateUserProfile = async (req, res) => {
         if (phoneNumber !== undefined && phoneNumber !== currentUser.phoneNumber) {
             updateData.phoneNumber = phoneNumber;
             phoneChanged = true;
+        }
+
+        if (nationality !== undefined && nationality !== currentUser.nationality) {
+            updateData.nationality = nationality;
         }
 
         // Update the user
