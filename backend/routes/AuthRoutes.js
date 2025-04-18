@@ -1,8 +1,8 @@
-import { login, register, logout, businessRegister, refresh } from "../controllers/AuthController.js";
+import { login, register, logout, businessRegister, refresh } from "../controllers/authController.js";
 import { Router } from "express";
 import { verifyJWT } from "../middleware/AuthMiddleware.js";
 
-const authRouter = Router();
+const authRouter = Router()
 
 authRouter.post("/register", register);
 authRouter.post("/businessRegister", businessRegister);
