@@ -8,21 +8,20 @@ import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-// import { auth } from '../../../backend/routes/firebaseConfig.js'; // Import auth from the firebaseConfig file
-// import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'; // Import necessary Firebase auth methods
+
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { auth } from '../firebaseConfig.js';
 
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // States
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
   const [isRobotChecked, setIsRobotChecked] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [loadingOtp, setLoadingOtp] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [formData, setFormData] = useState({
     identifier: '',
@@ -30,10 +29,10 @@ const LoginPage = ({ onClose }) => {
   });
   const [showUserRegister, setShowUserRegister] = useState(false);
   const [showBusinessRegister, setShowBusinessRegister] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { identifier, password } = formData;
 
-  // Close the window when esc key is pressed
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -42,10 +41,8 @@ const LoginPage = ({ onClose }) => {
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
-  // Handle clicking for the two tabs
   const handleTabClick = (tab) => setActiveTab(tab);
 
-  // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -54,61 +51,90 @@ const LoginPage = ({ onClose }) => {
     }));
   };
 
-  // Handle success toasts
   const handleSuccess = (msg) => {
     toast.success(msg, { position: 'bottom-right' });
   };
 
-  // Handle error toasts
   const handleError = (msg) => {
     toast.error(msg, { position: 'bottom-right' });
   };
 
-  const handleSendOtp = async (e) => {
-    // e.preventDefault();
+  const handleSendOtp = async () => {
+    if (!identifier) {
+      handleError('Please enter your phone number.');
+      return;
+    }
 
-    // if (!identifier) {
-    //   handleError('Please enter your phone number.');
-    //   return;
-    // }
+    if (!/^\+?\d{10,15}$/.test(identifier)) {
+      handleError('Enter a valid phone number with country code (e.g., +60)');
+      return;
+    }
 
-    // if (!/^\+?\d{10,15}$/.test(identifier)) {
-    //   handleError('Only valid phone numbers are supported. Include country code (e.g., +60).');
-    //   return;
-    // }
+    setLoadingOtp(true);
 
-    // setLoadingOtp(true);
+    try {
+      if (!window.recaptchaVerifier) {
+        // Initialize RecaptchaVerifier
+        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+          size: 'invisible',
+          callback: (response) => {
+            // Handle success here (if needed)
+          },
+          'expired-callback': () => {
+            // Handle expiration here (if needed)
+          }
+        }, auth);
 
-    // try {
-    //   if (!window.recaptchaVerifier) {
-    //     window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-    //       size: 'invisible',
-    //     }, auth);
-    //     await window.recaptchaVerifier.render();
-    //   }
+        // Only disable app verification for testing in development mode
+        if (process.env.NODE_ENV === 'development') {
+          window.recaptchaVerifier.verifyForTesting = true;
+        }
 
-    //   const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
-    //   setConfirmationResult(result);
-    //   handleSuccess('OTP sent to phone.');
-    //   setOtpSent(true);
-    // } catch (error) {
-    //   console.error('🔥 Firebase OTP Error:', error.message);
-    //   handleError(`Error: ${error.message}`);
-    // }
+        // Render reCAPTCHA
+        await window.recaptchaVerifier.render();
+      }
 
-    // setLoadingOtp(false);
+      // Send OTP
+      const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      handleSuccess('OTP sent successfully!');
+      setOtpSent(true);
+    } catch (error) {
+      console.error('🔥 OTP Error:', error.message);
+      handleError(`Error sending OTP: ${error.message}`);
+    }
+
+    setLoadingOtp(false);
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
 
+    if (!confirmationResult) {
+      handleError('Please request an OTP first.');
+      return;
+    }
+
     try {
-      if (confirmationResult) {
-        const result = await confirmationResult.confirm(otp);
-        handleSuccess('OTP Verified successfully!');
+      const result = await confirmationResult.confirm(otp);
+      const user = result.user;
+
+      const token = await user.getIdToken();
+
+      const response = await fetch('http://localhost:5050/auth/firebase-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        handleSuccess('Logged in via OTP!');
+        onClose();
         navigate('/');
       } else {
-        handleError('Please request an OTP first.');
+        handleError(data.message || 'Backend login failed.');
       }
     } catch (error) {
       console.error(error);
@@ -116,7 +142,6 @@ const LoginPage = ({ onClose }) => {
     }
   };
 
-  // Submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -130,10 +155,8 @@ const LoginPage = ({ onClose }) => {
       return;
     }
 
-    // Call the login method with the id and password the user entered
     const result = await login(identifier, password);
 
-    // Process the returned values
     if (result.success) {
       handleSuccess(result.message || 'Login successful!');
       setFormData({ identifier: '', password: '' });
@@ -154,19 +177,17 @@ const LoginPage = ({ onClose }) => {
           <div className="login-type-selector">
             <button
               className={`login-tab ${activeTab === 'otp' ? 'active-tab' : ''}`}
-              onClick={() => handleTabClick('otp')}
+              onClick={() => setActiveTab('otp')}
             >
               OTP Login
             </button>
             <button
               className={`login-tab ${activeTab === 'password' ? 'active-tab' : ''}`}
-              onClick={() => handleTabClick('password')}
+              onClick={() => setActiveTab('password')}
             >
               Password Login
             </button>
-            <button className="close-btn" onClick={onClose}>
-              ✕
-            </button>
+            <button className="close-btn" onClick={onClose}>✕</button>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -176,7 +197,7 @@ const LoginPage = ({ onClose }) => {
                 className="input-field"
                 placeholder="Phone Number"
                 name="identifier"
-                value={formData.identifier}
+                value={identifier}
                 onChange={handleInputChange}
                 required
               />
@@ -194,6 +215,7 @@ const LoginPage = ({ onClose }) => {
                     required
                   />
                   <button
+                    type="button"
                     className="send-button-inside"
                     onClick={handleSendOtp}
                     disabled={loadingOtp}
@@ -210,7 +232,7 @@ const LoginPage = ({ onClose }) => {
                     className="input-field"
                     placeholder="Password"
                     name="password"
-                    value={formData.password}
+                    value={password}
                     onChange={handleInputChange}
                     required
                   />
@@ -237,7 +259,6 @@ const LoginPage = ({ onClose }) => {
               Login
             </button>
 
-            {/* reCAPTCHA container */}
             <div id="recaptcha-container"></div>
           </form>
 
@@ -263,7 +284,6 @@ const LoginPage = ({ onClose }) => {
           {showForgotPassword && (
             <ForgotPasswordpage onClose={() => setShowForgotPassword(false)} />
           )}
-
           {showUserRegister && (
             <UserRegistration
               onClose={() => setShowUserRegister(false)}
@@ -274,15 +294,10 @@ const LoginPage = ({ onClose }) => {
               }}
             />
           )}
-
           {showBusinessRegister && (
             <BusinessRegistrationpage
               onClose={() => setShowBusinessRegister(false)}
               onSwitchToLogin={() => setShowBusinessRegister(false)}
-              onSwitchToUser={() => {
-                setShowBusinessRegister(false);
-                setShowUserRegister(true);
-              }}
             />
           )}
         </div>
