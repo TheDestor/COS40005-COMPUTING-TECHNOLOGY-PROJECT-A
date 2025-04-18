@@ -10,7 +10,7 @@ import ForgotPasswordpage from './ForgetPasswordpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { auth } from '../firebaseConfig.js';
+// import { auth } from '../firebaseConfig.js';
 
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
@@ -177,13 +177,13 @@ const LoginPage = ({ onClose }) => {
           <div className="login-type-selector">
             <button
               className={`login-tab ${activeTab === 'otp' ? 'active-tab' : ''}`}
-              onClick={() => setActiveTab('otp')}
+              onClick={() => handleTabClick('otp')}
             >
               OTP Login
             </button>
             <button
               className={`login-tab ${activeTab === 'password' ? 'active-tab' : ''}`}
-              onClick={() => setActiveTab('password')}
+              onClick={() => handleTabClick('password')}
             >
               Password Login
             </button>
