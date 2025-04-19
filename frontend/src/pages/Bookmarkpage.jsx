@@ -3,7 +3,6 @@ import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
 import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft } from 'react-icons/fa';
 import { MdOutlineFavoriteBorder } from 'react-icons/md';
-import { HiOutlineDotsVertical } from 'react-icons/hi';
 import petrosainsImg from '../assets/petrosains.jpg';
 import borneoImg from '../assets/borneo.jpg';
 import raneeImg from '../assets/ranee.jpg';
@@ -68,7 +67,7 @@ const BookmarkPage = ({ isOpen, onClose }) => {
   );
 
   return (
-    <div className={`bookmark-panel ${isOpen ? "show" : ""}`}>
+    <div className={`bookmark-panel ${isOpen ? "hidden" : ""}`}>
       {selectedSection !== null ? (
         <BookmarkDetail
           title={sections[selectedSection].title}
@@ -97,7 +96,6 @@ const BookmarkPage = ({ isOpen, onClose }) => {
                   count={section.count}
                   Icon={section.icon}
                 />
-                <HiOutlineDotsVertical className="dots" />
               </div>
             ))}
           </div>

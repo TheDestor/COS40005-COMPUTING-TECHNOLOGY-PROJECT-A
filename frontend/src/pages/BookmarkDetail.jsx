@@ -4,18 +4,22 @@ import { FaStar, FaArrowLeft } from 'react-icons/fa';
 
 const BookmarkDetail = ({ title, places, onClose }) => {
   return (
-    <div className="bookmark-panel">
+    <div className="bookmark-detail-content">
       <div className="bookmark-header">
-        <div className="bookmark-title">
-          {title}
-        </div>
-        <span className="bookmark-close" onClick={onClose}><FaArrowLeft /></span>
+        <div className="bookmark-title">{title}</div>
+        <span className="bookmark-close" onClick={onClose}>
+          <FaArrowLeft />
+        </span>
       </div>
 
       <div className="bookmark-detail-list">
         {places.map((place, index) => (
           <div className="bookmark-detail-card" key={index}>
-            <img src={place.image} alt={place.title} className="bookmark-detail-image" />
+            <img
+              src={place.image}
+              alt={place.title}
+              className="bookmark-detail-image"
+            />
             <div className="bookmark-detail-info">
               <div className="bookmark-detail-title">{place.title}</div>
               <div className="bookmark-detail-rating">

@@ -31,7 +31,6 @@
     transform: translateX(0);
   }
   
-  
   .recent-header {
     display: flex;
     justify-content: space-between;
@@ -41,8 +40,17 @@
     margin-bottom: 12px;
   }
   
-  .back-icon {
+  .recent-header span {
+    margin-left: 6px;
+  }
+
+  .back-icon3 {
     cursor: pointer;
+    margin-left: auto;
+  }
+
+  .recent-icon {
+    font-size: 18px;
   }
   
   .recent-filters {

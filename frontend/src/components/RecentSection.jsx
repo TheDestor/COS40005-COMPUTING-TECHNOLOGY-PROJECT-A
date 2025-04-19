@@ -1,6 +1,6 @@
 import React from "react";
 import "../styles/RecentSection.css";
-import { FaArrowLeft, FaMap } from "react-icons/fa";
+import { FaArrowLeft, FaMap, FaClock } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import images from "../assets/Kuching.png";
 
@@ -8,8 +8,9 @@ const RecentSection = ({ isOpen, onClose }) => {
   return (
     <div className={`recent-slide-container ${isOpen ? "show" : ""}`}>
       <div className="recent-header">
+        <FaClock className="recent-icon"/>
         <span>Recents</span>
-        <FaArrowLeft className="back-icon" onClick={onClose} />
+        <FaArrowLeft className="back-icon3" onClick={onClose} />
       </div>
 
       <div className="recent-filters">

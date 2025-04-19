@@ -117,7 +117,7 @@
   margin: 12px 20px;
 }
 
-.menu-item {
+.menu-item51 {
   width: 100%;
   padding: 12px 20px;
   text-align: left;
@@ -133,7 +133,7 @@
   transition: background 0.3s ease, color 0.2s ease;
 }
 
-.menu-item:hover {
+.menu-item51:hover {
   background-color: #e0d4e8;
   color: #007bff;
   border-radius: 8px;

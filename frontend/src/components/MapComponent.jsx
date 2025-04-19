@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap } from '@vis.gl/react-google-maps'
 import axios from 'axios';
 
 const containerStyle = {
@@ -15,18 +15,19 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function MapComponent({ startingPoint, destination, mapType}) {
+function MapComponent({ mapType, startingPoint, destination, selectedVehicle }) {
   const [locations, setLocations] = useState([]);
-  // const [directions, setDirections] = useState(null);
   const mapRef = useRef(null);
-  const directionsRendererRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
 
-  // useEffect(() => {
-  //   if (mapRef.current) {
-  //     mapRef.current.setMapTypeId(mapType);
-  //   }
-  // }, [mapType]);
+  const travelModes = {
+    Car: 'DRIVING',
+    Bus: 'TRANSIT',
+    Walking: 'WALKING',
+    Bicycle: 'BICYCLING',
+    Motorbike: 'DRIVING',
+    Flight: 'DRIVING',
+  };
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -60,36 +61,66 @@ function MapComponent({ startingPoint, destination, mapType}) {
     fetchLocations();
   }, []);
 
-  useEffect(() => {
-    if (!startingPoint || !destination || !window.google || !mapInstanceRef.current) return;
+  function Directions({ startingPoint={startingPoint}, destination={destination} }) {
+    const map = useMap();
+    const routesLibrary = useMapsLibrary('routes');
+    const [directionsService, setDirectionsService] = useState();
+    const [directionsRenderer, setDirectionsRenderer] = useState();
+    const [routes, setRoutes] = useState([]);
+    const [routesIndex, setRoutesIndex] = useState(0);
+    const selected = routes[routesIndex];
+    const leg = selected?.legs[0];
 
-    const directionsService = new window.google.maps.DirectionsService();
+    useEffect(() => {
+      if(!routesLibrary || !map) return;
+      setDirectionsService(new routesLibrary.DirectionsService());
+      setDirectionsRenderer(new routesLibrary.DirectionsRenderer({ map }));
+    }, [routesLibrary, map])
 
-    if (!directionsRendererRef.current) {
-      directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
-        suppressMarkers: false,
-        preserveViewport: true,
-      });
-      directionsRendererRef.current.setMap(mapInstanceRef.current);
-    }
+    useEffect(() => {
+      if(!directionsService || !directionsRenderer) return;
 
-    directionsService.route(
-      {
+      directionsService.route({
         origin: startingPoint,
         destination: destination,
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === 'OK') {
-          directionsRendererRef.current.setDirections(result);
-          console.log("Route rendered");
-        } else {
-          console.error('Directions request failed:', status);
-          directionsRendererRef.current.setDirections({ routes: [] });
-        }
-      }
+        travelMode: routesLibrary.TravelMode.DRIVING,
+        provideRouteAlternatives: true,
+      }). then(response => {
+        directionsRenderer.setDirections(response);
+        setRoutes(response.routes);
+      });
+    }, [directionsService, directionsRenderer]);
+
+    useEffect(() => {
+      if(!directionsRenderer) return;
+
+      directionsRenderer.setRouteIndex(routesIndex);
+    }, [routesIndex, directionsRenderer]);
+
+    if(!leg) return null;
+
+    return (
+      <div className="directions">
+        <h2>[selected.summary]</h2>
+        <p>
+          {leg.start_address.split(",")[0]} to {leg.end_address.split(",")[0]}
+        </p>
+        <p>Distance: {leg.distance?.text}</p>
+        <p>Duration: {leg.duration?.text}</p>
+
+        <h2>Other routes</h2>
+        <ul>
+          {routes.map((route, index) => (
+            <li key={route.summary}>
+              <button onClick={() => setRoutesIndex(index)}>
+                {route.summary}
+              </button>
+            </li>
+          ))}  
+        </ul>
+      </div>
     );
-  }, [startingPoint, destination]);
+  }
 
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI'>
@@ -113,9 +144,13 @@ function MapComponent({ startingPoint, destination, mapType}) {
             key={loc.id}
             position={{ lat: loc.latitude, lng: loc.longitude }}
             title={loc.name}
-          />
-          
-        ))}   
+          />   
+        ))} 
+        <Directions 
+          startingPoint={startingPoint}
+          destination={destination}
+          travelMode={travelModes[selectedVehicle] || 'DRIVING'}
+        />
       </Map>
     </APIProvider>
   );

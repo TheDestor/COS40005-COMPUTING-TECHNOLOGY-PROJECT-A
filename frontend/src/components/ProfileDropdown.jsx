@@ -55,11 +55,11 @@ const ProfileDropdown = ({ onLoginClick }) => {
               </div>
               <div className="divider3" />
               <div>
-                <button className="menu-item" onClick={() => navigate('/settings')}>
+                <button className="menu-item51" onClick={() => navigate('/settings')}>
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item" onClick={() => navigate('/contact-us')}>
+                <button className="menu-item51" onClick={() => navigate('/contact-us')}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>
@@ -78,20 +78,20 @@ const ProfileDropdown = ({ onLoginClick }) => {
               </div>
               <div className="divider3" />
               <div>
-                <button className="menu-item" onClick={() => navigate('/settings')}>
+                <button className="menu-item51" onClick={() => navigate('/settings')}>
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item" onClick={() =>{ navigate('/', { state: { openBookmark: true } });
+                <button className="menu-item51" onClick={() =>{ navigate('/', { state: { openBookmark: true } });
                     setIsOpen(false);}}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
-                <button className="menu-item" onClick={() => navigate('/profile-settings')}>
+                <button className="menu-item51" onClick={() => navigate('/profile-settings')}>
                   <FaUser size={18} />
                   Profile Setting
                 </button>
-                <button className="menu-item" onClick={() => navigate('/contact-us')}>
+                <button className="menu-item51" onClick={() => navigate('/contact-us')}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>

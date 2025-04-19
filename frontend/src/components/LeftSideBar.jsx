@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort, FaBookmark, FaLayerGroup } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
@@ -6,7 +6,6 @@ import BusinessSection from './BusinessSection';
 import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
-import { useEffect } from 'react';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 
 const LeftSidebar = () => {
@@ -143,7 +142,6 @@ const LeftSidebar = () => {
              
               <FaSearch className="input-icon" />
             </div>
-            <button className="sort-btn"><FaSort /></button>
           </div>
 
           <div className="input-container">
@@ -159,14 +157,13 @@ const LeftSidebar = () => {
                 
               <FaSearch className="input-icon" />
             </div>
-            <button className="sort-btn"><FaSort /></button>
           </div>
 
           <div className="add-destination">➕ Add destination</div>
 
-          <button className="submit-btn" onClick={handleSubmit}>
+          {/* <button className="submit-btn" onClick={handleSubmit}>
             Submit Route
-          </button>
+          </button> */}
           <hr />
 
           {startingPoint.trim() && destination.trim() ? (
