@@ -1,0 +1,60 @@
+.map-layer-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 60px;
+    background: #f5f5f5;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 12px 16px;
+    z-index: 1100;
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 10px;
+    gap: 10px;
+  }
+  
+  .map-layer-panel.open {
+    display: flex;
+  }
+  
+  .map-layer-options {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .layer-box {
+    background-color: #f0f0f0;
+    padding: 5px;
+    min-width: 60px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }  
+  
+  .layer-box:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .layer-box.selected {
+    background-color: #007bff;
+    color: white;
+    font-weight: 600;
+  }
+
+  .layer-image {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  
+  .layer-label {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  

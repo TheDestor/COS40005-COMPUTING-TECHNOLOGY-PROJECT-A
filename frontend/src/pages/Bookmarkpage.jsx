@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
-import { FaRegBookmark, FaRegFlag, FaRegStar } from 'react-icons/fa';
+import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft } from 'react-icons/fa';
 import { MdOutlineFavoriteBorder } from 'react-icons/md';
-import { RxCross1 } from 'react-icons/rx';
 import { HiOutlineDotsVertical } from 'react-icons/hi';
 import petrosainsImg from '../assets/petrosains.jpg';
 import borneoImg from '../assets/borneo.jpg';
 import raneeImg from '../assets/ranee.jpg';
 
-const BookmarkPage = ({ onClose }) => {
+const BookmarkPage = ({ isOpen, onClose }) => {
   const [selectedSection, setSelectedSection] = useState(null);
 
   const sections = [
@@ -58,17 +57,6 @@ const BookmarkPage = ({ onClose }) => {
     }
   ];
 
-  if (selectedSection !== null) {
-    const section = sections[selectedSection];
-    return (
-      <BookmarkDetail
-        title={section.title}
-        places={section.places}
-        onClose={() => setSelectedSection(null)}
-      />
-    );
-  }
-
   const HeaderWithLogo = ({ title, count, Icon }) => (
     <div className="header-with-logo">
       <Icon className="header-icon" />
@@ -80,31 +68,41 @@ const BookmarkPage = ({ onClose }) => {
   );
 
   return (
-    <div className="bookmark-panel">
-      <div className="bookmark-header">
-        <div className="bookmark-title">
-          <FaRegBookmark className="bookmark-icon" />
-          My Bookmark
-        </div>
-        <span className="bookmark-close" onClick={onClose}><RxCross1 /></span>
-      </div>
-
-      <div className="bookmark-sections">
-        {sections.map((section, index) => (
-          <div
-            key={index}
-            className="bookmark-section-card"
-            onClick={() => setSelectedSection(index)}
-          >
-            <HeaderWithLogo
-              title={section.title}
-              count={section.count}
-              Icon={section.icon}
-            />
-            <HiOutlineDotsVertical className="dots" />
+    <div className={`bookmark-panel ${isOpen ? "show" : ""}`}>
+      {selectedSection !== null ? (
+        <BookmarkDetail
+          title={sections[selectedSection].title}
+          places={sections[selectedSection].places}
+          onClose={() => setSelectedSection(null)}
+        />
+      ) : (
+        <>
+          <div className="bookmark-header">
+            <div className="bookmark-title">
+              <FaRegBookmark className="bookmark-icon" />
+              My Bookmark
+            </div>
+            <span className="bookmark-close" onClick={onClose}><FaArrowLeft /></span>
           </div>
-        ))}
-      </div>
+
+          <div className="bookmark-sections">
+            {sections.map((section, index) => (
+              <div
+                key={index}
+                className="bookmark-section-card"
+                onClick={() => setSelectedSection(index)}
+              >
+                <HeaderWithLogo
+                  title={section.title}
+                  count={section.count}
+                  Icon={section.icon}
+                />
+                <HiOutlineDotsVertical className="dots" />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

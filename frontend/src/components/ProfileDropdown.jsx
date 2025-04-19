@@ -4,9 +4,11 @@ import { FaUser } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/ProfileDropdown.css';
+import BookmarkPage from '../pages/Bookmarkpage.jsx';
 
 const ProfileDropdown = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showBookmark, setShowBookmark] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -29,6 +31,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
   
 
   return (
+    <>
     <div className="profile-dropdown">
       <button className="profile-button" onClick={() => setIsOpen(!isOpen)}>
         {profileIcon}
@@ -79,7 +82,8 @@ const ProfileDropdown = ({ onLoginClick }) => {
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item" onClick={() => navigate('/bookmark')}>
+                <button className="menu-item" onClick={() =>{ navigate('/', { state: { openBookmark: true } });
+                    setIsOpen(false);}}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
@@ -92,11 +96,13 @@ const ProfileDropdown = ({ onLoginClick }) => {
                   Contact Us
                 </button>
               </div>
-            </>
+            </>    
           )}
         </div>
       )}
     </div>
+    {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
+    </>
   );
 };
 

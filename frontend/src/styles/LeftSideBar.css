@@ -11,6 +11,8 @@
   align-items: center;
   padding-top: 30px;
   z-index: 9999;
+  padding-bottom: 10px;
+  box-sizing: border-box;
 }
 
 .menu-icon100 {
@@ -19,11 +21,17 @@
   cursor: pointer;
 }
 
+.menu-item101,
 .menu-item100 {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 30px;
+}
+
+.menu-item101 {
+  margin-top: auto;
+  margin-bottom: 15px;
 }
 
 .icon100 {
@@ -233,38 +241,9 @@
   font-size: 16px;
 }
 
-/* Hover effect for the menu icon */
+.menu-item101:hover, .menu-item101:hover .label100,
 .menu-icon100:hover,.menu-item100:hover, .menu-item100:hover .label100 {
-  color: #007bff; /* Change color */
+  color: #007bff;
   transition: all 0.2s ease;
 }
 
-.layer-section {
-  margin-top: 16px;
-  padding: 10px;
-}
-
-.layer-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.layer-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.layer-option {
-  padding: 6px 12px;
-  border-radius: 6px;
-  background-color: #e0e0e0;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 14px;
-}
-
-.layer-option.active {
-  background-color: #007bff;
-  color: white;
-}
