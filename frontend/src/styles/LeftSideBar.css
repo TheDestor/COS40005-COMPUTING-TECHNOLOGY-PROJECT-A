@@ -245,3 +245,8 @@
   transition: all 0.2s ease;
 }
 
+.menu-item100.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
+}

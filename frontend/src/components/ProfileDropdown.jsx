@@ -24,8 +24,8 @@ const ProfileDropdown = ({ onLoginClick }) => {
   const profileIcon = isLoggedIn ? (
     <img src={profileImage} alt="Profile" className="profile-icon3" />
   ) : (
-    <div className="icon-wrapper">
-      <FaUser size={24} className="user-icon" />
+    <div className="icon-wrapper2">
+      <FaUser size={24} className="user-icon2" />
     </div>
   );
   
