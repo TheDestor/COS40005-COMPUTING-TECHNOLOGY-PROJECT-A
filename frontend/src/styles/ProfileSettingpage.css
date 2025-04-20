@@ -4,6 +4,14 @@
     width: 99vw;
     font-family: 'Segoe UI', sans-serif;
   }
+
+  .sidebar50 {
+    width: 270px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  }
   
   .section-header {
     display: flex; 
@@ -14,6 +22,8 @@
   .profile-section h2 {
     margin-bottom: 20px;
     color: #333;
+    font-size: 1.5rem;
+    font-weight: 600;
   }
   
   .top-section {

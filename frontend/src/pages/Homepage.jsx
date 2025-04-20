@@ -14,7 +14,6 @@ const HomePage = () => {
   const [showBookmark, setShowBookmark] = useState(false);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
-  const [mapType, setMapType] = useState('roadmap'); // Default map type
 
   // Show bookmark if state passed from navigation
   useEffect(() => {

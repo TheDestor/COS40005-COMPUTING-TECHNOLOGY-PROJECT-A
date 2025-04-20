@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Switch from "react-switch";
 import { MdSubscriptions } from "react-icons/md";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../styles/PushNotificationPage.css";
 
 const PushSubscriptionPage = () => {
@@ -11,57 +13,71 @@ const PushSubscriptionPage = () => {
     event: true,
   });
 
-  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [disabledSwitches, setDisabledSwitches] = useState({}); // ⛔ track disabled state per switch
 
-  const toggleSubscriptions = (key) => {
-    setSubscriptions((prev) => {
-      const updatedValue = !prev[key];
-      const message = `${key.charAt(0).toUpperCase() + key.slice(1)} ${updatedValue ? "enabled" : "disabled"}`;
-      setConfirmationMessage(message);
-      return {
-        ...prev,
-        [key]: updatedValue,
-      };
-    });
+  const labels = {
+    push: "Push subscriptions",
+    newsletter: "Newsletter updates",
+    blog: "Blog and post updates",
+    event: "Event updates",
   };
 
-  // Auto-hide the confirmation message after 2.5s
-  useEffect(() => {
-    if (confirmationMessage) {
-      const timer = setTimeout(() => setConfirmationMessage(""), 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [confirmationMessage]);
+  const toggleSubscriptions = (key) => {
+    if (disabledSwitches[key]) return; // If switch is temporarily disabled, do nothing
+
+    // Disable this switch
+    setDisabledSwitches((prev) => ({ ...prev, [key]: true }));
+
+    // Update toggle state
+    const newStatus = !subscriptions[key];
+    setSubscriptions((prev) => ({
+      ...prev,
+      [key]: newStatus,
+    }));
+
+    // Toast notification
+    toast[newStatus ? "success" : "error"](
+      `${labels[key]} ${newStatus ? "enabled" : "disabled"}`,
+      {
+        position: "top-right",
+        autoClose: 2500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      }
+    );
+
+    // Re-enable switch after 1 second
+    setTimeout(() => {
+      setDisabledSwitches((prev) => ({ ...prev, [key]: false }));
+    }, 1000);
+  };
 
   return (
     <div className="push-notification-container">
       <h2><MdSubscriptions size={22} /> Subscriptions</h2>
 
-      {confirmationMessage && (
-        <div className="confirmation-toast">
-          {confirmationMessage}
+      {Object.entries(subscriptions).map(([key, value]) => (
+        <div className="notification-item" key={key}>
+          <span>{labels[key]}</span>
+          <Switch
+            checked={value}
+            onChange={() => toggleSubscriptions(key)}
+            onColor="#2563eb"
+            offColor="#ccc"
+            uncheckedIcon={false}
+            checkedIcon={false}
+            height={22}
+            width={44}
+            handleDiameter={20}
+            disabled={disabledSwitches[key] || false}
+          />
         </div>
-      )}
+      ))}
 
-      <div className="notification-item">
-        <span>Push subscriptions</span>
-        <Switch checked={subscriptions.push} onChange={() => toggleSubscriptions("push")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
-      </div>
-
-      <div className="notification-item">
-        <span>Newsletter updates</span>
-        <Switch checked={subscriptions.newsletter} onChange={() => toggleSubscriptions("newsletter")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
-      </div>
-
-      <div className="notification-item">
-        <span>Blog and post updates</span>
-        <Switch checked={subscriptions.blog} onChange={() => toggleSubscriptions("blog")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
-      </div>
-
-      <div className="notification-item">
-        <span>Event updates</span>
-        <Switch checked={subscriptions.event} onChange={() => toggleSubscriptions("event")} onColor="#2563eb" offColor="#ccc" uncheckedIcon={false} checkedIcon={false} height={22} width={44} handleDiameter={20} />
-      </div>
+      <ToastContainer />
     </div>
   );
 };

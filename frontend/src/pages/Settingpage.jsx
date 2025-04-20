@@ -123,7 +123,7 @@ const SettingsPage = () => {
     <div>
       <MenuNavbar onLoginClick={handleLoginClick}/> 
       <div className="settings-container">
-        <div className="sidebar">
+        <div className="sidebar2">
           <div
             className={`sidebar-item ${activeSection === 'general' ? 'active' : ''}`}
             onClick={() => setActiveSection('general')}

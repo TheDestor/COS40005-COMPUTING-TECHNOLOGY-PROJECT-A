@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../styles/PushNotificationPage.css";
 
 const PushNotificationPage = () => {
@@ -11,38 +13,46 @@ const PushNotificationPage = () => {
     event: true,
   });
 
-  const [showModal, setShowModal] = useState(false);
-  const [pendingKey, setPendingKey] = useState(null);
+  const [disabledSwitches, setDisabledSwitches] = useState({}); // 🔒 Track disabled switches
+
+  const notificationLabels = {
+    push: "Push notifications",
+    location: "Location-based notifications",
+    price: "Price offer notifications",
+    event: "Event notifications",
+  };
 
   const handleSwitchChange = (key) => {
-    if (notifications[key]) {
-      // Trying to turn OFF
-      setPendingKey(key);
-      setShowModal(true);
-    } else {
-      // Turn ON directly
-      toggleNotification(key);
-    }
-  };
+    if (disabledSwitches[key]) return; // Prevent interaction during cooldown
 
-  const toggleNotification = (key) => {
+    // Disable switch for 1 second
+    setDisabledSwitches((prev) => ({ ...prev, [key]: true }));
+
+    // Toggle the value
+    const newStatus = !notifications[key];
     setNotifications((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [key]: newStatus,
     }));
-    setShowModal(false);
-    setPendingKey(null);
-  };
 
-  const handleConfirm = () => {
-    if (pendingKey) {
-      toggleNotification(pendingKey);
-    }
-  };
+    // Show toast
+    toast[newStatus ? "success" : "error"](
+      `${notificationLabels[key]} ${newStatus ? "enabled" : "disabled"}`,
+      {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      }
+    );
 
-  const handleCancel = () => {
-    setShowModal(false);
-    setPendingKey(null);
+    // Re-enable after 1s
+    setTimeout(() => {
+      setDisabledSwitches((prev) => ({ ...prev, [key]: false }));
+    }, 1000);
   };
 
   return (
@@ -51,12 +61,7 @@ const PushNotificationPage = () => {
 
       {Object.entries(notifications).map(([key, value]) => (
         <div className="notification-item" key={key}>
-          <span>{{
-            push: "Push notifications",
-            location: "Location-based notifications",
-            price: "Price offer notifications",
-            event: "Event notifications"
-          }[key]}</span>
+          <span>{notificationLabels[key]}</span>
           <Switch
             checked={value}
             onChange={() => handleSwitchChange(key)}
@@ -67,22 +72,12 @@ const PushNotificationPage = () => {
             height={22}
             width={44}
             handleDiameter={20}
+            disabled={disabledSwitches[key] || false}
           />
         </div>
       ))}
 
-      {/* Modal */}
-      {showModal && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
-            <p>If you turn this off, you will no longer receive notifications.</p>
-            <div className="modal-buttons">
-              <button className="cancel-btn7" onClick={handleCancel}>Cancel</button>
-              <button className="confirm-btn" onClick={handleConfirm}>Turn Off</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ToastContainer />
     </div>
   );
 };

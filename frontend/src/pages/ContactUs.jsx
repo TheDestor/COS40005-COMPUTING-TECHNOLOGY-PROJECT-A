@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import "../styles/ContactUs.css";
 import axios from "axios";
 import { toast } from "react-toastify";
+import MenuNavBar from "../components/MenuNavBar";
 
 export default function ContactUs() {
   // States
@@ -94,7 +95,10 @@ export default function ContactUs() {
       handleError(error);
     }
   }
+
   return (
+    <>
+    <MenuNavBar />
     <div className="contact-us-container">
       <div className="header">
         <h1>
@@ -336,5 +340,6 @@ export default function ContactUs() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

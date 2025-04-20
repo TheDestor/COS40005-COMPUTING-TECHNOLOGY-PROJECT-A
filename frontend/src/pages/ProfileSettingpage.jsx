@@ -352,7 +352,7 @@ const ProfileSettingsPage = () => {
     <div>
       <Navbar />
       <div className="profile-settings-container">
-        <div className="sidebar">
+        <div className="sidebar50">
           <div className={`sidebar-item ${activeSection === 'account' ? 'active' : ''}`} onClick={() => setActiveSection('account')}><MdPerson className="sidebar-icon" /> Account preferences</div>
           <div className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`} onClick={() => setActiveSection('security')}><MdSecurity className="sidebar-icon" /> Sign in & security</div>
           <div className={`sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`} onClick={() => setActiveSection('notifications')}><MdNotificationsNone className="sidebar-icon" /> Notifications</div>
