@@ -166,7 +166,7 @@ const LeftSidebar = () => {
           </button> */}
           <hr />
 
-          {startingPoint.trim() && destination.trim() ? (
+          {/* {startingPoint.trim() && destination.trim() ? (
             <div className="route-list">
               <div className="route-item">
                 <div><strong>Via Jalan Taman Budaya</strong></div>
@@ -237,7 +237,7 @@ const LeftSidebar = () => {
                 </div>
               ))}
             </div>
-          )}
+          )} */}
         </div>
       </APIProvider>
 
@@ -245,8 +245,8 @@ const LeftSidebar = () => {
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} />
-      <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} />
-      <MapComponent startingPoint={startingPoint} destination={destination} />
+      <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)}/>
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType}/>
     </>
   );
 };

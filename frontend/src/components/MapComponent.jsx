@@ -15,7 +15,7 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function MapComponent({ mapType, startingPoint, destination, selectedVehicle }) {
+function MapComponent({ startingPoint, destination, selectedVehicle, mapType }) {
   const [locations, setLocations] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
@@ -83,7 +83,7 @@ function MapComponent({ mapType, startingPoint, destination, selectedVehicle }) 
       directionsService.route({
         origin: startingPoint,
         destination: destination,
-        travelMode: routesLibrary.TravelMode.DRIVING,
+        travelMode: travelModes[selectedVehicle] || 'DRIVING',
         provideRouteAlternatives: true,
       }). then(response => {
         directionsRenderer.setDirections(response);
@@ -101,7 +101,7 @@ function MapComponent({ mapType, startingPoint, destination, selectedVehicle }) 
 
     return (
       <div className="directions">
-        <h2>[selected.summary]</h2>
+        <h2>{selected?.summary}</h2>
         <p>
           {leg.start_address.split(",")[0]} to {leg.end_address.split(",")[0]}
         </p>
@@ -137,7 +137,7 @@ function MapComponent({ mapType, startingPoint, destination, selectedVehicle }) 
         gestureHandling={'greedy'}
         disableDefaultUI={true}
         mapId='DEMO_MAP_ID' // Do not change for now
-        mapType={mapType}
+        mapTypeId = {mapType}
       >
         {locations.map((loc) => (
           <AdvancedMarker
