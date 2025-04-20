@@ -8,9 +8,9 @@ import ProfileDropdown from './ProfileDropdown.jsx';
 import WeatherDateTime from './WeatherDateTime.jsx'; // Imported the new component
 import '../styles/Navbar.css';
 
-const NavigationBar = ({ onLoginClick }) => {
+const NavigationBar = ({ onLoginClick, activeOption, onMenuChange }) => {
   const [currentTown, setCurrentTown] = useState('Kuching');
-  const [activeMenuOption, setActiveMenuOption] = useState('Major Town');
+  // const [activeMenuOption, setActiveMenuOption] = useState('Major Town');
 
   const handleSearch = (query) => {
     console.log('Searching for:', query);
@@ -18,7 +18,8 @@ const NavigationBar = ({ onLoginClick }) => {
   };
 
   const handleMenuSelect = (option) => {
-    setActiveMenuOption(option);
+    // setActiveMenuOption(option);
+    onMenuChange(option);
     // Add your map view change logic here
     console.log('Selected view:', option);
   };
@@ -33,7 +34,7 @@ const NavigationBar = ({ onLoginClick }) => {
       </div>
 
       <div className="center-section">
-        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeMenuOption} />
+        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} />
       </div>
 
       <div className="top-right-section">

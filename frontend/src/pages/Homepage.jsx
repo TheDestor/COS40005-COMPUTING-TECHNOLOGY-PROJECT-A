@@ -14,6 +14,7 @@ const HomePage = () => {
   const [showBookmark, setShowBookmark] = useState(false);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
+  const [locationType, setLocationType] = useState('Major Town');
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -35,12 +36,16 @@ const HomePage = () => {
 
   return (
     <div>
-      <Navbar onLoginClick={handleLoginClick} />
+      <Navbar 
+        onLoginClick={handleLoginClick}
+        activeOption={locationType}
+        onMenuChange={setLocationType}
+      />
 
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
-        // onMapTypeChange={mapType}
+        selectedCategory={locationType}
       />
       
       <TouristInfoSection />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
 import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft } from 'react-icons/fa';
@@ -6,9 +6,20 @@ import { MdOutlineFavoriteBorder } from 'react-icons/md';
 import petrosainsImg from '../assets/petrosains.jpg';
 import borneoImg from '../assets/borneo.jpg';
 import raneeImg from '../assets/ranee.jpg';
+import LoginPage from './Loginpage';
+import { useAuth } from '../context/AuthContext'; // adjust if needed
 
-const BookmarkPage = ({ isOpen, onClose }) => {
+
+const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
   const [selectedSection, setSelectedSection] = useState(null);
+  const auth = useAuth();
+
+  useEffect(() => {
+    if (isOpen && (!auth || !auth.user)) {
+      if (showLoginOverlay) showLoginOverlay(); // show the login overlay
+      if (onClose) onClose(); // close the bookmark panel
+    }
+  }, [isOpen, auth, showLoginOverlay, onClose]);
 
   const sections = [
     {

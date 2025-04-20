@@ -7,6 +7,7 @@ import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
+import LoginModal from '../pages/Loginpage';
 
 const LeftSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,6 +19,7 @@ const LeftSidebar = () => {
   const [showBookmarkpage, setShowBookmarkpage] = useState(false);
   const [showLayersPanel, setShowLayersPanel] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -26,6 +28,10 @@ const LeftSidebar = () => {
     if (showBookmarkpage) setShowBookmarkpage(false);
     setShowLayersPanel((prev) => !prev);
   }
+
+  const openLoginOverlay = () => {
+    setShowLoginModal(true);
+  };
 
   const toggleSidebar = () => {
     // If Recent is open, close it before opening Sidebar
@@ -244,9 +250,10 @@ const LeftSidebar = () => {
       {/* Slide-in RecentSection */}
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
-      <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} />
+      <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)}/>
       <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType}/>
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );
 };
