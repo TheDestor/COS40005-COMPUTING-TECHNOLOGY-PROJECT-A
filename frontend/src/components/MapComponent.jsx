@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap } from '@vis.gl/react-google-maps'
 import axios from 'axios';
 import aeroplaneIcon from '../assets/aeroplane.png';
-import MapViewMenu from './MapViewMenu'; // adjust path if needed
+import homestayIcon from '../assets/homestay.png';
+import museumIcon from '../assets/museum.png';
+import parkIcon from '../assets/national_park.png';
 
 
 // const townCoordinates = {
@@ -37,6 +39,14 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
   const [locations, setLocations] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
+
+  const categoryIcons = {
+    'Homestay': homestayIcon,
+    'Airport': aeroplaneIcon,
+    // 'Major Town': townIcon,
+    'Museum': museumIcon,
+    'National Park': parkIcon,
+  };
 
   const travelModes = {
     Car: 'DRIVING',
@@ -80,34 +90,44 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
   // }, []);
 
   // Testing (console shows the location type is correct, but the locations does not show up on the map)
-  const fetchLocations = async (type = 'National Park') => {
-    try {
-      let url = "http://localhost:5050/locations/";
-      if (type !== 'All') {
-        url += `?type=${type}`;
-      }
-  
-      const response = await axios.get(url);
-      const allFetchedLocations = response.data;
-  
-      const isValidLocation = (loc) => {
-        const lat = loc.latitude;
-        const lng = loc.longitude;
-        return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-      };
-      const validLocations = allFetchedLocations.filter(isValidLocation);
-  
-      setLocations(validLocations);
-      console.log(`Set ${validLocations.length} valid ${type} locations to state.`);
-    } catch (error) {
-      console.error(error);
-      setLocations([]);
-    }
-  };
-  
+
   useEffect(() => {
-    console.log("Fetching locations for category:", selectedCategory); // DEBUG
-    fetchLocations(selectedCategory);
+    const type = selectedCategory || 'All';
+    console.log("Fetching locations for category:", type);
+  
+    const fetchLocations = async () => {
+      try {
+        const response = await axios.get("http://localhost:5050/locations");
+        const allFetchedLocations = response.data;
+  
+        const isValidLocation = (loc) => {
+          const lat = loc.lat || loc.latitude;
+          const lng = loc.lng || loc.longitude;
+          return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
+        };
+  
+        const validLocations = allFetchedLocations.filter(isValidLocation);
+        console.log('Valid locations:', validLocations); // Debug valid locations
+  
+        const filtered = type === 'All'
+          ? validLocations
+          : validLocations.filter(loc => {
+              const locType = loc.type?.toLowerCase().trim();
+              const selectedType = type.toLowerCase().trim();
+              const isMatch = locType === selectedType;
+              console.log(`Checking ${locType} vs ${selectedType}: ${isMatch}`); // Debug each comparison
+              return isMatch;
+            });
+  
+        console.log(`Filtered locations (${type}):`, filtered); // Debug filtered locations
+        setLocations(filtered);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        setLocations([]);
+      }
+    };
+  
+    fetchLocations();
   }, [selectedCategory]);
 
 function Directions({ startingPoint={startingPoint}, destination={destination} }) {
@@ -209,25 +229,23 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         mapId='DEMO_MAP_ID' // Do not change for now
         mapTypeId = {mapType}
       >
-        {locations.map((loc) => (
-          <AdvancedMarker
-            key={loc.id}
-            position={{ lat: loc.latitude, lng: loc.longitude }}
-            title={loc.name}
-          >
-            <img src={aeroplaneIcon} alt="plane" style={{ width: '40px', height: '40px' }}/>   
-          </AdvancedMarker>
-        ))} 
-        
-        {/* {filteredLocations.map((loc) => (
-        <AdvancedMarker
-          key={loc.id}
-          position={{ lat: loc.latitude, lng: loc.longitude }}
-          title={loc.name}
-        >
-          <img src={aeroplaneIcon} alt="plane" style={{ width: '40px', height: '40px' }}/>
-        </AdvancedMarker>
-      ))} */}
+        {locations.length > 0 ? (
+          locations.map((loc) => {
+            const categoryIcon = categoryIcons[loc.type] || aeroplaneIcon;  // Default to aeroplane icon if category is not found
+
+            return (
+              <AdvancedMarker
+                key={loc.id}
+                position={{ lat: loc.lat || loc.latitude, lng: loc.lng || loc.longitude }}
+                title={loc.name}
+              >
+                <img src={categoryIcon} alt={loc.type} style={{ width: '25px', height: '25px' }} />
+              </AdvancedMarker>
+            );
+          })
+        ) : (
+          <p>No locations available for the selected category.</p>
+        )}
 
         <Directions 
           startingPoint={startingPoint}
