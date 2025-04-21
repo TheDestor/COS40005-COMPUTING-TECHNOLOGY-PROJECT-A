@@ -98,8 +98,8 @@ const UserManagementPage = () => {
       <h2><FaUsersCog /> User Management</h2>
       <div className="user-management">
         <div className="user-controls">
-          <div className="search-container">
-            <FaSearch className="search-icon" />
+          <div className="search-container51">
+            <FaSearch className="search-icon51" />
             <input
               className="search-input"
               placeholder="Search user..."

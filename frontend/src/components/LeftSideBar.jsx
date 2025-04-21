@@ -9,6 +9,15 @@ import MapComponent from './MapComponent';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 
+const travelModes = {
+  Car: 'DRIVING',
+  Bus: 'TRANSIT',
+  Walking: 'WALKING',
+  Bicycle: 'BICYCLING',
+  Motorbike: 'DRIVING', // treated like Car
+  Flight: 'TRANSIT',    // flights not directly supported, fallback to TRANSIT
+};
+
 const LeftSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
@@ -20,6 +29,9 @@ const LeftSidebar = () => {
   const [showLayersPanel, setShowLayersPanel] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [routes, setRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -41,12 +53,38 @@ const LeftSidebar = () => {
     setIsExpanded((prev) => !prev);
   };
 
-  const handleVehicleClick = (vehicle) => {
+  const handleVehicleClick = async (vehicle) => {
     if (!startingPoint.trim() || !destination.trim()) {
       alert('You need to fill in your starting point and destination first');
       return;
     }
     setSelectedVehicle(vehicle);
+
+    if (vehicle === 'Flight' && isLocalDestination) {
+      alert('Flight mode is not available for local destinations');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setSelectedVehicle(vehicle);
+      
+      const directionsService = new window.google.maps.DirectionsService();
+      const response = await directionsService.route({
+        origin: startingPoint,
+        destination: destination,
+        travelMode: travelModes[vehicle],
+        provideRouteAlternatives: true,
+      });
+      
+      setRoutes(response.routes);
+      setSelectedRouteIndex(0);
+    } catch (error) {
+      console.error('Error fetching directions:', error);
+      alert('Failed to get directions. Please check your inputs and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleRecentHistory = () => {
@@ -167,83 +205,42 @@ const LeftSidebar = () => {
 
           <div className="add-destination">➕ Add destination</div>
 
-          {/* <button className="submit-btn" onClick={handleSubmit}>
-            Submit Route
-          </button> */}
-          <hr />
-
-          {/* {startingPoint.trim() && destination.trim() ? (
-            <div className="route-list">
-              <div className="route-item">
-                <div><strong>Via Jalan Taman Budaya</strong></div>
-                <div className="route-details">
-                  <span className="time">6 min</span>
-                  <span className="distance">2.6 km</span>
-                </div>
-              </div>
-              <hr />
-              <div className="route-item">
-                <div><strong>Via Jalan P Ramlee</strong></div>
-                <div className="route-details">
-                  <span className="time">7 min</span>
-                  <span className="distance">3.1 km</span>
-                </div>
-              </div>
-              <hr />
-              <div className="route-item">
-                <div><strong>Via Jalan Tun Abang Haji Openg</strong></div>
-                <div className="route-details">
-                  <span className="time">8 min</span>
-                  <span className="distance">3.4 km</span>
-                </div>
-              </div>
-
-              <hr />
-
-              <div className="route-footer">
-                <div className="send-copy-row">
-                  <div className="send-directions-text">📩 Send Directions</div>
-                  <div className="copy-link">COPY LINK</div>
-                </div>
-
-                <hr />
-
-                <div className="explore-nearby-text">🔍 Explore Nearby</div>
-                <div className="nearby-items">
-                  {[
-                    { icon: '🍽️', label: 'Restaurant' },
-                    { icon: '🏨', label: 'Hotel' },
-                    { icon: '🛍️', label: 'Mall' },
-                    { icon: '🏥', label: 'Hospital' },
-                    { icon: '⛽', label: 'Gas Station' },
-                    { icon: '🚓', label: 'Police Station' },
-                  ].map((item, index) => (
-                    <div className="nearby-item" key={index}>
-                      <span className="nearby-icon">{item.icon}</span>
-                      <span className="nearby-label">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {isLoading ? (
+            <div className="loading-message">Calculating routes...</div>
           ) : (
-            <div className="location-list">
-              {[
-                'Your Location',
-                'Kuching',
-                'Warung Acik Mila',
-                'Borneo Cultures Museum',
-                'Borneo Medical Centre',
-                'Hotel',
-                'Airport Airasia',
-              ].map((item, index) => (
-                <div className="location-item" key={index}>
-                  <FaClock className="location-icon" />
-                  <span>{item}</span>
+            routes.length > 0 && (
+              <div className="route-list">
+                {routes.map((route, index) => (
+                  <div 
+                    key={index} 
+                    className={`route-item ${index === selectedRouteIndex ? 'active-route' : ''}`}
+                    onClick={() => setSelectedRouteIndex(index)}
+                  >
+                    <div><strong>{route.summary}</strong></div>
+                    <div className="route-details">
+                      <span className="time">
+                        <FaClock /> {route.legs[0]?.duration?.text || 'N/A'}
+                      </span>
+                      <span className="distance">
+                        <FaMapMarkerAlt /> {route.legs[0]?.distance?.text || 'N/A'}
+                      </span>
+                    </div>
+                    <hr />
+                  </div>
+                ))}
+
+                <div className="route-footer">
+                  <div className="send-copy-row">
+                    <div className="send-directions-text">📩 Send Directions</div>
+                    <div className="copy-link">COPY LINK</div>
+                  </div>
+                  <hr />
+                  <div className="explore-nearby-text">🔍 Explore Nearby</div>
+                  {/* Keep your existing nearby items */}
                 </div>
-              ))}
-            </div>
-          )} */}
+              </div>
+            )
+          )}
         </div>
       </APIProvider>
 

@@ -35,7 +35,7 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory }) {
+function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedLocation, selectedRouteIndex }) {
   const [locations, setLocations] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
@@ -54,7 +54,7 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
     Walking: 'WALKING',
     Bicycle: 'BICYCLING',
     Motorbike: 'DRIVING',
-    Flight: 'DRIVING',
+    Flight: 'TRANSIT',
   };
 
   // useEffect(() => {
@@ -229,6 +229,9 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         mapId='DEMO_MAP_ID' // Do not change for now
         mapTypeId = {mapType}
       >
+
+      {selectedLocation && <Marker position={selectedLocation} />}
+
         {locations.length > 0 ? (
           locations.map((loc) => {
             const categoryIcon = categoryIcons[loc.type] || aeroplaneIcon;  // Default to aeroplane icon if category is not found
