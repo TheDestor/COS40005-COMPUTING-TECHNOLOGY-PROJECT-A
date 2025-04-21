@@ -392,8 +392,10 @@
   border-radius: 6px;
   pointer-events: none;
   font-size: 12px;
-  z-index: 10;
+  z-index: 1000;
   white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.2s ease;
 }
 
 /* Position relative helper */
@@ -443,6 +445,24 @@ svg {
 .viz-content svg {
   max-width: 100%;
   height: auto;
+}
+
+/* Make axis lines and ticks more subtle */
+.x-axis path,
+.y-axis path,
+.x-axis line,
+.y-axis line {
+  stroke: #e2e8f0;
+}
+
+.grid line {
+  stroke: #e2e8f0;
+  stroke-opacity: 0.3;
+  shape-rendering: crispEdges;
+}
+
+.grid path {
+  stroke-width: 0;
 }
 
 /* To make dashboard area adjusts to sidebar */
