@@ -41,6 +41,9 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
   const [selectedPlaces, setSelectedPlaces] = useState(null);
   const [markerRef, marker] = useAdvancedMarkerRef();
+  const markerRefs = useRef([]);
+
+
 
   const MapHandler = ({ place, marker }) => {
     const map = useMap();
@@ -102,40 +105,6 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
     Flight: 'DRIVING',
   };
 
-  // useEffect(() => {
-  //   const fetchLocations = async () => {
-  //     try {
-  //       const response = await axios.get("http://localhost:5050/locations/");
-  //       const allFetchedLocations = response.data;
-
-  //       const isValidLocation = (loc) => {
-  //         const lat = loc.latitude;
-  //         const lng = loc.longitude;
-  //         return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-  //       };
-  //       const validLocations = allFetchedLocations.filter(isValidLocation);
-  //       const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
-
-  //       if (invalidLocations.length > 0) {
-  //         console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
-  //         invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
-  //       } else {
-  //         console.log("All fetched locations have valid coordinates.");
-  //       }
-
-  //       setLocations(validLocations);
-  //       console.log(`Set ${validLocations.length} valid locations to state.`);
-  //     } catch (error) {
-  //       console.error(error);
-  //       setLocations([]);
-  //     }
-  //   };
-
-  //   fetchLocations();
-  // }, []);
-
-  // Testing (console shows the location type is correct, but the locations does not show up on the map)
-
   useEffect(() => {
     const type = selectedCategory || 'All';
     console.log("Fetching locations for category:", type);
@@ -152,7 +121,7 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
         };
   
         const validLocations = allFetchedLocations.filter(isValidLocation);
-        console.log('Valid locations:', validLocations); // Debug valid locations
+        // console.log('Valid locations:', validLocations); // Debug valid locations
   
         const filtered = type === 'All'
           ? validLocations
@@ -274,26 +243,34 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         mapId='DEMO_MAP_ID' // Do not change for now
         mapTypeId = {mapType}
       >
-        <AdvancedMarker ref={markerRef} position={null} />
+        {/* <AdvancedMarker ref={markerRef} position={null} /> */}
 
 
-        {locations.length > 0 ? (
-          locations.map((loc) => {
-            const categoryIcon = categoryIcons[loc.type] || aeroplaneIcon;  // Default to aeroplane icon if category is not found
+        {locations
+  .filter(loc => (loc.lat || loc.latitude) && (loc.lng || loc.longitude))
+  .map((loc, index) => (
+    <AdvancedMarker
+      key={`${loc.id}-${index}`}
+      position={{
+        lat: loc.latitude || loc.lat,
+        lng: loc.longitude || loc.lng,
+      }}
+      title={loc.name}
+    >
+      <img
+        src={categoryIcons[loc.type] || aeroplaneIcon}
+        alt={loc.type}
+        style={{
+          width: '32px',
+          height: '32px',
+          objectFit: 'contain',
+        }}
+      />
+    </AdvancedMarker>
+))}
 
-            return (
-              <AdvancedMarker
-                key={loc.id}
-                position={{ lat: loc.lat || loc.latitude, lng: loc.lng || loc.longitude }}
-                title={loc.name}
-              >
-                <img src={categoryIcon} alt={loc.type} style={{ width: '25px', height: '25px' }} />
-              </AdvancedMarker>
-            );
-          })
-        ) : (
-          <p>No locations available for the selected category.</p>
-        )}
+
+
 
         <Directions 
           startingPoint={startingPoint}

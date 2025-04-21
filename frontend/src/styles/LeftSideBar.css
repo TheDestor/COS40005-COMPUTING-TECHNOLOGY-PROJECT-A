@@ -127,6 +127,18 @@
   background: transparent;
 }
 
+.input-box button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: red;
+  display: flex;
+  padding: 0px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
 .input-icon {
   font-size: 14px;
   color: #333;
@@ -250,3 +262,19 @@
   pointer-events: none;
   cursor: default;
 }
+
+/* Add new destination */
+/* .delete-destination-btn {
+  background: none;
+  border: none;
+  color: #c00;
+  font-size: 12px;
+  display: flex;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: transform 0.2s ease;
+}
+
+.delete-destination-btn:hover {
+  transform: scale(1.1);
+} */

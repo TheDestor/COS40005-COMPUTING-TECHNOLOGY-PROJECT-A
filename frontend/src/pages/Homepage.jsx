@@ -6,6 +6,7 @@ import LoginPage from './Loginpage.jsx';
 import MapComponent from '../components/MapComponent.jsx';
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
+import MapViewMenu from '../components/MapViewMenu.jsx';
 
 const HomePage = () => {
   const location = useLocation();
@@ -15,6 +16,7 @@ const HomePage = () => {
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
   const [locationType, setLocationType] = useState('Major Town');
+
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -40,6 +42,11 @@ const HomePage = () => {
         onLoginClick={handleLoginClick}
         activeOption={locationType}
         onMenuChange={setLocationType}
+      />
+
+      <MapViewMenu 
+        onSelect={setLocationType}  // Pass onSelect (setLocationType) to MapViewMenu
+        activeOption={locationType}  // Pass activeOption (locationType) to MapViewMenu
       />
 
       <MapComponent 

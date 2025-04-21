@@ -8,6 +8,7 @@ import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
+import { IoCloseOutline } from "react-icons/io5";
 
 const travelModes = {
   Car: 'DRIVING',
@@ -32,6 +33,7 @@ const LeftSidebar = () => {
   const [routes, setRoutes] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [addDestinations, setAddDestinations] = useState([]);
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -51,6 +53,10 @@ const LeftSidebar = () => {
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     setIsExpanded((prev) => !prev);
+  };
+
+  const handleAddDestination = () => {
+    setAddDestinations((prev) => [...prev, '']);
   };
 
   const handleVehicleClick = async (vehicle) => {
@@ -173,38 +179,67 @@ const LeftSidebar = () => {
             </div>
           </div>
 
+          {/* Starting Point Input */}
           <div className="input-container">
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon red" />
-              
                 <input
                   type="text"
                   placeholder="Choosing Starting point"
                   value={startingPoint}
                   onChange={(e) => setStartingPoint(e.target.value)}
                 />
-             
               <FaSearch className="input-icon" />
             </div>
           </div>
 
+          {/* Destination Input */}
           <div className="input-container">
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon red" />
-                
                   <input
                     type="text"
                     placeholder="Choosing Destination"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                   />
-                
               <FaSearch className="input-icon" />
             </div>
           </div>
 
-          <div className="add-destination">➕ Add destination</div>
+          {/* Additional Destinations */}
+          {addDestinations.map((point, index) => (
+            <div className="input-container" key={index}>
+              <div className="input-box">
+                <FaMapMarkerAlt className="input-icon red" />
+                <input
+                  type="text"
+                  placeholder={`Add Destination ${index + 1}`}
+                  value={point}
+                  onChange={(e) => {
+                    const newPoints = [...addDestinations];
+                    newPoints[index] = e.target.value;
+                    setAddDestinations(newPoints);
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const updated = [...addDestinations];
+                    updated.splice(index, 1);
+                    setAddDestinations(updated);
+                  }}
+                >
+                  <IoCloseOutline />
+                </button>
+                <FaSearch className="input-icon" />
+              </div>
+            </div>
+          ))}
 
+          {/* Add Destination Button */}
+          <div className="add-destination" onClick={handleAddDestination}>➕ Add destination</div>
+
+          {/* Routes */}
           {isLoading ? (
             <div className="loading-message">Calculating routes...</div>
           ) : (
@@ -249,7 +284,7 @@ const LeftSidebar = () => {
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType}/>
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} />
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );
