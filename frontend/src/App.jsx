@@ -17,6 +17,7 @@ import './App.css';
 import MajorTownPage from './pages/MajorTownPage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
 import DashboardPage from './pages/DashboardPage';
+import ViewAnalytics from './pages/ViewAnalytics.jsx';
 
 function App() {
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/view-analytics" element={<ViewAnalytics />} />
           {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
           {/* Add more routes as needed */}
 
