@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap } from '@vis.gl/react-google-maps'
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, ControlPosition, MapControl, useAdvancedMarkerRef, } from '@vis.gl/react-google-maps'
 import axios from 'axios';
 import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
@@ -35,10 +35,55 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedLocation, selectedRouteIndex }) {
+function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace }) {
   const [locations, setLocations] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
+  const [selectedPlaces, setSelectedPlaces] = useState(null);
+  const [markerRef, marker] = useAdvancedMarkerRef();
+
+  const MapHandler = ({ place, marker }) => {
+    const map = useMap();
+  
+    useEffect(() => {
+      if (!map || !place || !marker) return;
+  
+      if (place.geometry?.viewport) {
+        map.fitBounds(place.geometry?.viewport);
+      }
+  
+      marker.position = place.geometry?.location;
+    }, [map, place, marker]);
+    return null;
+  };
+  
+  const PlaceAutocomplete = ({ onPlaceSelect }) => {
+    const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
+    const inputRef = useRef(null);
+    const places = useMapsLibrary("places");
+  
+    useEffect(() => {
+      if (!places || !inputRef.current) return;
+  
+      const options = {
+        fields: ["geometry", "name", "formatted_address"],
+      };
+  
+      setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
+    }, [places]);
+    useEffect(() => {
+      if (!placeAutocomplete) return;
+  
+      placeAutocomplete.addListener("place_changed", () => {
+        onPlaceSelect(placeAutocomplete.getPlace());
+      });
+    }, [onPlaceSelect, placeAutocomplete]);
+    return (
+      <div className="autocomplete-container">
+        <input ref={inputRef} />
+      </div>
+    );
+  };
 
   const categoryIcons = {
     'Homestay': homestayIcon,
@@ -54,7 +99,7 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
     Walking: 'WALKING',
     Bicycle: 'BICYCLING',
     Motorbike: 'DRIVING',
-    Flight: 'TRANSIT',
+    Flight: 'DRIVING',
   };
 
   // useEffect(() => {
@@ -229,8 +274,8 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         mapId='DEMO_MAP_ID' // Do not change for now
         mapTypeId = {mapType}
       >
+        <AdvancedMarker ref={markerRef} position={null} />
 
-      {selectedLocation && <Marker position={selectedLocation} />}
 
         {locations.length > 0 ? (
           locations.map((loc) => {
@@ -256,6 +301,12 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
           travelMode={travelModes[selectedVehicle] || 'DRIVING'}
         />
       </Map>
+      <MapControl position={ControlPosition.TOP}>
+        <div className="autocomplete-control">
+          <PlaceAutocomplete onPlaceSelect={setSelectedPlaces} />
+        </div>
+      </MapControl>
+      <MapHandler place={selectedPlace} marker={marker} />
     </APIProvider>
   );
 }

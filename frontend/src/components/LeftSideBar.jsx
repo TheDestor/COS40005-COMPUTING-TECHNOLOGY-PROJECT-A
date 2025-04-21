@@ -109,16 +109,16 @@ const LeftSidebar = () => {
     setShowBookmarkpage((prev) => !prev);
   }
 
-  const handleSubmit = () => {
-    if (!startingPoint.trim() || !destination.trim()) {
-      alert('Please fill in both starting point and destination!');
-      return;
-    }
+  // const handleSubmit = () => {
+  //   if (!startingPoint.trim() || !destination.trim()) {
+  //     alert('Please fill in both starting point and destination!');
+  //     return;
+  //   }
   
-    console.log('Starting Point:', startingPoint);
-    console.log('Destination:', destination);
-    // Add any action here — API call, direction logic, etc.
-  };
+  //   console.log('Starting Point:', startingPoint);
+  //   console.log('Destination:', destination);
+  //   // Add any action here — API call, direction logic, etc.
+  // };
 
   return (
     <>

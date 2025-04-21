@@ -15,7 +15,6 @@ const HomePage = () => {
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
   const [locationType, setLocationType] = useState('Major Town');
-  const [selectedLocation, setSelectedLocation] = useState(null);
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -41,14 +40,12 @@ const HomePage = () => {
         onLoginClick={handleLoginClick}
         activeOption={locationType}
         onMenuChange={setLocationType}
-        onPlacedSelected={setSelectedLocation}
       />
 
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
         selectedCategory={locationType}
-        selectedLocation={selectedLocation}
       />
       
       <TouristInfoSection />

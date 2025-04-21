@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import SearchBarExpanded from './SearchBarExpanded.jsx'; // Import here
 import '../styles/Searchbar.css';
 import logo from '../assets/SarawakTourismLogo.png'; // Import your logo here
+import MapComponent from './MapComponent.jsx';
 
 const SearchBar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState(null); // State to hold the selected place
+
   const [history, setHistory] = useState([
     'Borneo Cultural Museum',
     'Borneo Cultural Museum',
@@ -69,7 +72,10 @@ const SearchBar = () => {
           history={history}
         />
       )}
+
+      {/* <MapComponent selectedPlace={selectedPlace}/> */}
     </div>
+
   );
 };
 
