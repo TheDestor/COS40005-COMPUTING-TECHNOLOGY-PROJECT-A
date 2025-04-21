@@ -1,0 +1,437 @@
+/* Dashboard Layout */
+.dashboard-container {
+    display: grid;
+    height: 2500px;
+    grid-template-areas:
+      "user-engagement business-participation"
+      "organic-traffic .";
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+  
+  .ue-card {
+    grid-area: user-engagement;
+    height: 500px;
+    width: 550px;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .business-chart-wrapper {
+    grid-area: business-participation;
+    height: 500px;
+    width: 550px;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .traffic-card {
+    grid-area: organic-traffic;
+    height: 700px;
+    width: 550px;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Dashboard section helpers */
+  .dashboard-section {
+    min-width: 0;
+  }
+  
+  /* User Engagement Chart */
+  .ue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+  }
+  
+  .ue-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+  
+  .ue-total {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+  }
+  
+  .ue-menu-container {
+    position: relative;
+  }
+  
+  .ue-menu-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #718096;
+  }
+  
+  .ue-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 1.75rem;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 0.875rem;
+    z-index: 100;
+  }
+  
+  .ue-menu-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+  
+  .ue-menu-item:hover {
+    background: #F7FAFC;
+  }
+  
+  .ue-menu-item--danger {
+    color: #E53E3E;
+  }
+  
+  .ue-chart {
+    width: 100%;
+    height: 450px;
+    overflow: visible;
+  }
+  
+  .ue-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #4A5568;
+  }
+  
+  .legend-dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+  
+  .legend-dot--inactive { background: #9F7AEA; }
+  .legend-dot--active { background: #48BB78; }
+  .legend-dot--new { background: #ED64A6; }
+  
+  /* Business Participation Chart */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  
+  .chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  
+  .chart-center-text .percentage {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .chart-center-text .label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  .stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: auto;
+  }
+  
+  .stat-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, #f0f4ff, #e0e7ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  
+  .stat-box:nth-child(2) .stat-icon {
+    background: radial-gradient(circle at center, #effbea, #daf5d4);
+  }
+  
+  .stat-text .value {
+    font-weight: bold;
+    color: #111;
+  }
+  
+  .stat-text .label {
+    font-size: 12px;
+    color: #555;
+  }
+  
+  /* Organic Traffic Chart Components */
+  .traffic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .time-selector {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .time-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.5rem;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+  }
+  
+  .time-button.active {
+    background: #4F46E5;
+    color: white;
+    border-color: #4F46E5;
+  }
+  
+ 
+  
+  .traffic-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #4A5568;
+    justify-content: center;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .legend-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  .legend-color--registered { background: #4F46E5; }
+  .legend-color--new-users { background: #10B981; }
+  .legend-color--visitors { background: #EF4444; }
+  
+  
+  .value {
+    fill: #6dfa50;
+    font-size: 12px;
+  }
+
+  .axis-text1 {
+    fill: #ffffff;
+    font-size: 14px;
+}
+
+.time-dropdown {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    color: #374151;
+  }
+  .traffic-chart-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .bar-margin {
+    margin-top: 5rem; /* Adds space between map and bar chart */
+  }
+  
+  .traffic-mapchart {
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+  }
+  
+  .traffic-barchart {
+    background-color: #130b57;
+    border-radius: 8px;
+    padding:5px;
+    width: 100%;
+    height: auto;
+    max-width: 600px;
+  }
+
+  .floating-plane {
+    position: absolute;
+    top: 100px; /* adjust as needed */
+    left: 360px;
+    width: 300px;
+    transform: scaleX(-1);
+    z-index: 10; /* optional, in case it’s under something */
+  }
+  
+  /*Session Device*/
+
+  .device-chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    max-width: 600px;
+    height: 550px;
+  }
+  
+  .device-title {
+    font-size: 25px;
+    font-weight: 600;
+    margin-bottom: 30px;
+  }
+  
+  .device-chart {
+    width: 100%;
+    height: 80%;
+    margin-top: 20px;
+    margin-bottom: -130px;
+  }
+  
+  .device-stats {
+    text-align: center;
+  }
+  
+  .device-number {
+    font-size: 29px;
+    font-weight: bold;
+    margin-top: -50px;
+  }
+  
+  .device-label {
+    color: #6B7280;
+    font-size: 19px;
+    margin-bottom: 40px;
+  }
+  
+  .device-legend {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .legend-item {
+    font-size: 18px;
+    color: #374151;
+  }
+  
+  .legend-item .dot {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 9999px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  
+  .browser-card {
+    background-color: #f9f9ff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .browser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .browser-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #111827;
+  }
+  
+  .dropdown {
+    font-size: 14px;
+    color: #6b7280;
+    cursor: pointer;
+  }
+  
+  .browser-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .browser-icon {
+    font-size: 20px;
+    margin-right: 10px;
+    width: 30px;
+    text-align: center;
+  }
+  
+  .bar-container {
+    flex: 1;
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  .bar-fill {
+    height: 100%;
+    background-color: #c084fc;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+  }
+  
+  .percent-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+  
