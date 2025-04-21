@@ -1,26 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, ControlPosition, MapControl, useAdvancedMarkerRef, } from '@vis.gl/react-google-maps'
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, ControlPosition, MapControl, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import axios from 'axios';
 import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
 import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 
-
-// const townCoordinates = {
-//   'Kuching': { lat: 1.5535, lon: 110.3593 },
-//   'Sibu': { lat: 2.2870, lon: 111.8320 },
-//   'Mukah': { lat: 2.8988, lon: 112.0914 },
-//   'Serian': { lat: 1.2020, lon: 110.3952 },
-//   'Bintulu': { lat: 3.1707, lon: 113.0360 },
-//   'Betong': { lat: 1.4075, lon: 111.5400 },
-//   'Kota Samarahan': { lat: 1.4591, lon: 110.4883 },
-//   'Miri': { lat: 4.3993, lon: 113.9914 },
-//   'Kapit': { lat: 2.0167, lon: 112.9333 },
-//   'Sri Aman': { lat: 1.2389, lon: 111.4636 },
-//   'Sarikei': { lat: 2.1271, lon: 111.5182 },
-//   'Limbang': { lat: 4.7500, lon: 115.0000 },
-// };
+const townCoordinates = {
+  'Kuching': { lat: 1.5535, lon: 110.3593 },
+  'Sibu': { lat: 2.2870, lon: 111.8320 },
+  'Mukah': { lat: 2.8988, lon: 112.0914 },
+  'Serian': { lat: 1.2020, lon: 110.3952 },
+  'Bintulu': { lat: 3.1707, lon: 113.0360 },
+  'Betong': { lat: 1.4075, lon: 111.5400 },
+  'Kota Samarahan': { lat: 1.4591, lon: 110.4883 },
+  'Miri': { lat: 4.3993, lon: 113.9914 },
+  'Kapit': { lat: 2.0167, lon: 112.9333 },
+  'Sri Aman': { lat: 1.2389, lon: 111.4636 },
+  'Sarikei': { lat: 2.1271, lon: 111.5182 },
+  'Limbang': { lat: 4.7500, lon: 115.0000 },
+};
 
 const containerStyle = {
   position: 'absolute',
@@ -35,63 +34,58 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace }) {
+function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
   const [locations, setLocations] = useState([]);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null); // actual Google Maps Map instance
-  const [selectedPlaces, setSelectedPlaces] = useState(null);
-  const [markerRef, marker] = useAdvancedMarkerRef();
   const markerRefs = useRef([]);
 
-
-
-  const MapHandler = ({ place, marker }) => {
-    const map = useMap();
+  // const MapHandler = ({ place, marker }) => {
+  //   const map = useMap();
   
-    useEffect(() => {
-      if (!map || !place || !marker) return;
+  //   useEffect(() => {
+  //     if (!map || !place || !marker) return;
   
-      if (place.geometry?.viewport) {
-        map.fitBounds(place.geometry?.viewport);
-      }
+  //     if (place.geometry?.viewport) {
+  //       map.fitBounds(place.geometry?.viewport);
+  //     }
   
-      marker.position = place.geometry?.location;
-    }, [map, place, marker]);
-    return null;
-  };
+  //     marker.position = place.geometry?.location;
+  //   }, [map, place, marker]);
+  //   return null;
+  // };
   
-  const PlaceAutocomplete = ({ onPlaceSelect }) => {
-    const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
-    const inputRef = useRef(null);
-    const places = useMapsLibrary("places");
+  // const PlaceAutocomplete = ({ onPlaceSelect }) => {
+  //   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
+  //   const inputRef = useRef(null);
+  //   const places = useMapsLibrary("places");
   
-    useEffect(() => {
-      if (!places || !inputRef.current) return;
+  //   useEffect(() => {
+  //     if (!places || !inputRef.current) return;
   
-      const options = {
-        fields: ["geometry", "name", "formatted_address"],
-      };
+  //     const options = {
+  //       fields: ["geometry", "name", "formatted_address"],
+  //     };
   
-      setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
-    }, [places]);
-    useEffect(() => {
-      if (!placeAutocomplete) return;
+  //     setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
+  //   }, [places]);
+  //   useEffect(() => {
+  //     if (!placeAutocomplete) return;
   
-      placeAutocomplete.addListener("place_changed", () => {
-        onPlaceSelect(placeAutocomplete.getPlace());
-      });
-    }, [onPlaceSelect, placeAutocomplete]);
-    return (
-      <div className="autocomplete-container">
-        <input ref={inputRef} />
-      </div>
-    );
-  };
+  //     placeAutocomplete.addListener("place_changed", () => {
+  //       onPlaceSelect(placeAutocomplete.getPlace());
+  //     });
+  //   }, [onPlaceSelect, placeAutocomplete]);
+  //   return (
+  //     <div className="autocomplete-container">
+  //       <input ref={inputRef} />
+  //     </div>
+  //   );
+  // };
 
   const categoryIcons = {
     'Homestay': homestayIcon,
     'Airport': aeroplaneIcon,
-    // 'Major Town': townIcon,
     'Museum': museumIcon,
     'National Park': parkIcon,
   };
@@ -106,11 +100,52 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
   };
 
   useEffect(() => {
+    console.log("Rendering markers for:", locations.length, "locations");
+  }, [locations]);
+
+  useEffect(() => {
+    // Clear previous markers
+    markerRefs.current.forEach(marker => marker.setMap(null));
+    markerRefs.current = [];
+  
+    const newMarkers = locations.map(loc => {
+      const lat = loc.lat || loc.latitude;
+      const lng = loc.lng || loc.longitude;
+  
+      if (!lat || !lng) return null;
+  
+      const marker = new window.google.maps.Marker({
+        position: { lat, lng },
+        map: mapRef.current, // Your Google Map instance
+        icon: categoryIcons[loc.type] || aeroplaneIcon,
+        title: loc.name
+      });
+  
+      return marker;
+    }).filter(Boolean);
+  
+    markerRefs.current = newMarkers;
+  }, [locations]);
+
+  useEffect(() => {
     const type = selectedCategory || 'All';
     console.log("Fetching locations for category:", type);
   
     const fetchLocations = async () => {
       try {
+        if (selectedCategory === 'Major Town') {
+          // Convert townCoordinates to locations format
+          const townLocations = Object.entries(townCoordinates).map(([name, coord]) => ({
+            _id: name, // Use name as ID since we don't have real IDs
+            name,
+            type: 'Major Town',
+            lat: coord.lat,
+            lng: coord.lng
+          }));
+          setLocations(townLocations);
+          return;
+        }
+
         const response = await axios.get("http://localhost:5050/locations");
         const allFetchedLocations = response.data;
   
@@ -121,19 +156,19 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
         };
   
         const validLocations = allFetchedLocations.filter(isValidLocation);
-        // console.log('Valid locations:', validLocations); // Debug valid locations
+  
+        // Normalize the type for comparison (case and space insensitive)
+        const normalizeType = (type) => type?.toLowerCase().replace(/\s+/g, '').trim();
   
         const filtered = type === 'All'
           ? validLocations
           : validLocations.filter(loc => {
-              const locType = loc.type?.toLowerCase().trim();
-              const selectedType = type.toLowerCase().trim();
-              const isMatch = locType === selectedType;
-              console.log(`Checking ${locType} vs ${selectedType}: ${isMatch}`); // Debug each comparison
-              return isMatch;
+              const locType = normalizeType(loc.type);
+              const selectedType = normalizeType(type);
+              return locType === selectedType;
             });
   
-        console.log(`Filtered locations (${type}):`, filtered); // Debug filtered locations
+        console.log("Filtered Locations: ", filtered);
         setLocations(filtered);
       } catch (error) {
         console.error("Error fetching locations:", error);
@@ -232,7 +267,7 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         ref={(map) => {
           if (map) {
             mapRef.current = map;
-            mapInstanceRef.current = map.map; // Native Google Maps instance
+            mapInstanceRef.current = map.map; 
           }
         }}
         style={containerStyle}
@@ -243,34 +278,58 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
         mapId='DEMO_MAP_ID' // Do not change for now
         mapTypeId = {mapType}
       >
-        {/* <AdvancedMarker ref={markerRef} position={null} /> */}
+      <div key={JSON.stringify(locations.map(l => l._id))}>
+      {/* Force full re-render of all markers when category changes */}
+         {locations.map((loc) => {
+    const lat = loc.lat || loc.latitude;
+    const lng = loc.lng || loc.longitude;
+    if (!lat || !lng) return null;
 
+    const icon = categoryIcons[loc.type] || aeroplaneIcon;
 
-        {locations
-  .filter(loc => (loc.lat || loc.latitude) && (loc.lng || loc.longitude))
-  .map((loc, index) => (
-    <AdvancedMarker
-      key={`${loc.id}-${index}`}
-      position={{
-        lat: loc.latitude || loc.lat,
-        lng: loc.longitude || loc.lng,
-      }}
-      title={loc.name}
-    >
-      <img
-        src={categoryIcons[loc.type] || aeroplaneIcon}
-        alt={loc.type}
-        style={{
-          width: '32px',
-          height: '32px',
-          objectFit: 'contain',
-        }}
-      />
-    </AdvancedMarker>
-))}
+    return (
+      <AdvancedMarker
+        key={`${loc._id || loc.name}-${selectedCategory}`}
+        position={{ lat, lng }}
+        title={loc.name}
+      >
+        <img src={icon} alt={loc.type} style={{ width: '30px', height: '30px' }} />
+      </AdvancedMarker>
+    );
+  })}
 
+        {/* Nearby Places */}
+        {nearbyPlaces.map((place) => {
+          const lat = place.geometry?.location?.lat();
+          const lng = place.geometry?.location?.lng();
+          if (!lat || !lng) return null;
 
+          const getPlaceType = (types) => {
+            if (types?.includes('airport')) return 'Airport';
+            if (types?.includes('lodging')) return 'Homestay';
+            if (types?.includes('museum')) return 'Museum';
+            if (types?.includes('park')) return 'National Park';
+            return 'Other';
+          };
 
+          const type = getPlaceType(place.types);
+          const icon = categoryIcons[type];
+
+          return (
+            <AdvancedMarker
+              key={place.place_id}
+              position={{ lat, lng }}
+              title={`Nearby: ${place.name}`}
+            >
+              <img
+                src={icon}
+                alt={type}
+                style={{ width: '36px', height: '36px', filter: 'hue-rotate(180deg)' }}
+              />
+              </AdvancedMarker>
+            );
+          })}
+      </div>
 
         <Directions 
           startingPoint={startingPoint}
@@ -278,12 +337,13 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
           travelMode={travelModes[selectedVehicle] || 'DRIVING'}
         />
       </Map>
-      <MapControl position={ControlPosition.TOP}>
+      
+      {/* <MapControl position={ControlPosition.TOP}>
         <div className="autocomplete-control">
           <PlaceAutocomplete onPlaceSelect={setSelectedPlaces} />
         </div>
       </MapControl>
-      <MapHandler place={selectedPlace} marker={marker} />
+      <MapHandler place={selectedPlace} marker={marker} /> */}
     </APIProvider>
   );
 }
