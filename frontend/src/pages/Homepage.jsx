@@ -15,7 +15,7 @@ const HomePage = () => {
   const [showBookmark, setShowBookmark] = useState(false);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
-  const [locationType, setLocationType] = useState('Major Town');
+  const [selectedCategory, setSelectedCategory] = useState('Major Town');
 
 
   // Show bookmark if state passed from navigation
@@ -40,19 +40,19 @@ const HomePage = () => {
     <div>
       <Navbar 
         onLoginClick={handleLoginClick}
-        activeOption={locationType}
-        onMenuChange={setLocationType}
+        activeOption={selectedCategory}
+        onMenuChange={setSelectedCategory}
       />
 
       <MapViewMenu 
-        onSelect={setLocationType}  // Pass onSelect (setLocationType) to MapViewMenu
-        activeOption={locationType}  // Pass activeOption (locationType) to MapViewMenu
+        onSelect={(category) => setSelectedCategory(category)}
+        activeOption={selectedCategory}
       />
 
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
-        selectedCategory={locationType}
+        selectedCategory={selectedCategory}
       />
       
       <TouristInfoSection />

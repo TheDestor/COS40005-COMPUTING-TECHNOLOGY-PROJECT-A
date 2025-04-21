@@ -5,20 +5,21 @@ import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
 import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
+import townIcon from '../assets/town.png';
 
 const townCoordinates = {
-  'Kuching': { lat: 1.5535, lon: 110.3593 },
-  'Sibu': { lat: 2.2870, lon: 111.8320 },
-  'Mukah': { lat: 2.8988, lon: 112.0914 },
-  'Serian': { lat: 1.2020, lon: 110.3952 },
-  'Bintulu': { lat: 3.1707, lon: 113.0360 },
-  'Betong': { lat: 1.4075, lon: 111.5400 },
-  'Kota Samarahan': { lat: 1.4591, lon: 110.4883 },
-  'Miri': { lat: 4.3993, lon: 113.9914 },
-  'Kapit': { lat: 2.0167, lon: 112.9333 },
-  'Sri Aman': { lat: 1.2389, lon: 111.4636 },
-  'Sarikei': { lat: 2.1271, lon: 111.5182 },
-  'Limbang': { lat: 4.7500, lon: 115.0000 },
+  'Kuching': { lat: 1.5535, lng: 110.3593 },
+  'Sibu': { lat: 2.2870, lng: 111.8320 },
+  'Mukah': { lat: 2.8988, lng: 112.0914 },
+  'Serian': { lat: 1.2020, lng: 110.3952 },
+  'Bintulu': { lat: 3.1707, lng: 113.0360 },
+  'Betong': { lat: 1.4075, lng: 111.5400 },
+  'Kota Samarahan': { lat: 1.4591, lng: 110.4883 },
+  'Miri': { lat: 4.3993, lng: 113.9914 },
+  'Kapit': { lat: 2.0167, lng: 112.9333 },
+  'Sri Aman': { lat: 1.2389, lng: 111.4636 },
+  'Sarikei': { lat: 2.1271, lng: 111.5182 },
+  'Limbang': { lat: 4.7500, lng: 115.0000 },
 };
 
 const containerStyle = {
@@ -33,153 +34,9 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
+const normalizeType = (typeStr) => typeStr?.toLowerCase().replace(/\s+/g, '').trim();
 
-function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
-  const [locations, setLocations] = useState([]);
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null); // actual Google Maps Map instance
-  const markerRefs = useRef([]);
-
-  // const MapHandler = ({ place, marker }) => {
-  //   const map = useMap();
-  
-  //   useEffect(() => {
-  //     if (!map || !place || !marker) return;
-  
-  //     if (place.geometry?.viewport) {
-  //       map.fitBounds(place.geometry?.viewport);
-  //     }
-  
-  //     marker.position = place.geometry?.location;
-  //   }, [map, place, marker]);
-  //   return null;
-  // };
-  
-  // const PlaceAutocomplete = ({ onPlaceSelect }) => {
-  //   const [placeAutocomplete, setPlaceAutocomplete] = useState(null);
-  //   const inputRef = useRef(null);
-  //   const places = useMapsLibrary("places");
-  
-  //   useEffect(() => {
-  //     if (!places || !inputRef.current) return;
-  
-  //     const options = {
-  //       fields: ["geometry", "name", "formatted_address"],
-  //     };
-  
-  //     setPlaceAutocomplete(new places.Autocomplete(inputRef.current, options));
-  //   }, [places]);
-  //   useEffect(() => {
-  //     if (!placeAutocomplete) return;
-  
-  //     placeAutocomplete.addListener("place_changed", () => {
-  //       onPlaceSelect(placeAutocomplete.getPlace());
-  //     });
-  //   }, [onPlaceSelect, placeAutocomplete]);
-  //   return (
-  //     <div className="autocomplete-container">
-  //       <input ref={inputRef} />
-  //     </div>
-  //   );
-  // };
-
-  const categoryIcons = {
-    'Homestay': homestayIcon,
-    'Airport': aeroplaneIcon,
-    'Museum': museumIcon,
-    'National Park': parkIcon,
-  };
-
-  const travelModes = {
-    Car: 'DRIVING',
-    Bus: 'TRANSIT',
-    Walking: 'WALKING',
-    Bicycle: 'BICYCLING',
-    Motorbike: 'DRIVING',
-    Flight: 'DRIVING',
-  };
-
-  useEffect(() => {
-    console.log("Rendering markers for:", locations.length, "locations");
-  }, [locations]);
-
-  useEffect(() => {
-    // Clear previous markers
-    markerRefs.current.forEach(marker => marker.setMap(null));
-    markerRefs.current = [];
-  
-    const newMarkers = locations.map(loc => {
-      const lat = loc.lat || loc.latitude;
-      const lng = loc.lng || loc.longitude;
-  
-      if (!lat || !lng) return null;
-  
-      const marker = new window.google.maps.Marker({
-        position: { lat, lng },
-        map: mapRef.current, // Your Google Map instance
-        icon: categoryIcons[loc.type] || aeroplaneIcon,
-        title: loc.name
-      });
-  
-      return marker;
-    }).filter(Boolean);
-  
-    markerRefs.current = newMarkers;
-  }, [locations]);
-
-  useEffect(() => {
-    const type = selectedCategory || 'All';
-    console.log("Fetching locations for category:", type);
-  
-    const fetchLocations = async () => {
-      try {
-        if (selectedCategory === 'Major Town') {
-          // Convert townCoordinates to locations format
-          const townLocations = Object.entries(townCoordinates).map(([name, coord]) => ({
-            _id: name, // Use name as ID since we don't have real IDs
-            name,
-            type: 'Major Town',
-            lat: coord.lat,
-            lng: coord.lng
-          }));
-          setLocations(townLocations);
-          return;
-        }
-
-        const response = await axios.get("http://localhost:5050/locations");
-        const allFetchedLocations = response.data;
-  
-        const isValidLocation = (loc) => {
-          const lat = loc.lat || loc.latitude;
-          const lng = loc.lng || loc.longitude;
-          return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-        };
-  
-        const validLocations = allFetchedLocations.filter(isValidLocation);
-  
-        // Normalize the type for comparison (case and space insensitive)
-        const normalizeType = (type) => type?.toLowerCase().replace(/\s+/g, '').trim();
-  
-        const filtered = type === 'All'
-          ? validLocations
-          : validLocations.filter(loc => {
-              const locType = normalizeType(loc.type);
-              const selectedType = normalizeType(type);
-              return locType === selectedType;
-            });
-  
-        console.log("Filtered Locations: ", filtered);
-        setLocations(filtered);
-      } catch (error) {
-        console.error("Error fetching locations:", error);
-        setLocations([]);
-      }
-    };
-  
-    fetchLocations();
-  }, [selectedCategory]);
-
-function Directions({ startingPoint={startingPoint}, destination={destination} }) {
+function Directions({ startingPoint={startingPoint}, destination={destination}, selectedVehicle }) {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
@@ -237,30 +94,131 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
   }, [routesIndex, directionsRenderer]);
 
   if(!leg) return null;
+  return null;
 
-  return (
-    <div className="directions">
-      <h2>{selected?.summary}</h2>
-      <p>
-        {leg.start_address.split(",")[0]} to {leg.end_address.split(",")[0]}
-      </p>
-      <p>Distance: {leg.distance?.text}</p>
-      <p>Duration: {leg.duration?.text}</p>
+  // return (
+  //   <div className="directions">
+  //     <h2>{selected?.summary}</h2>
+  //     <p>
+  //       {leg.start_address.split(",")[0]} to {leg.end_address.split(",")[0]}
+  //     </p>
+  //     <p>Distance: {leg.distance?.text}</p>
+  //     <p>Duration: {leg.duration?.text}</p>
 
-      <h2>Other routes</h2>
-      <ul>
-        {routes.map((route, index) => (
-          <li key={route.summary}>
-            <button onClick={() => setRoutesIndex(index)}>
-              {route.summary}
-            </button>
-          </li>
-        ))}  
-      </ul>
-    </div>
-  );
+  //     <h2>Other routes</h2>
+  //     <ul>
+  //       {routes.map((route, index) => (
+  //         <li key={route.summary}>
+  //           <button onClick={() => setRoutesIndex(index)}>
+  //             {route.summary}
+  //           </button>
+  //         </li>
+  //       ))}  
+  //     </ul>
+  //   </div>
+  // );
 }
 
+function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null); // actual Google Maps Map instance
+  const [locations, setLocations] = useState([]);
+
+  const categoryIcons = {
+    'Major Town': townIcon,
+    'Homestay': homestayIcon,
+    'Airport': aeroplaneIcon,
+    'Museum': museumIcon,
+    'National Park': parkIcon,
+    'Seaport': townIcon,
+  };
+
+  const travelModes = {
+    Car: 'DRIVING',
+    Bus: 'TRANSIT',
+    Walking: 'WALKING',
+    Bicycle: 'BICYCLING',
+    Motorbike: 'DRIVING',
+    Flight: 'DRIVING',
+  };
+
+  useEffect(() => {
+    console.log(`MapComponent received category: ${selectedCategory}`);
+    const fetchLocations = async () => {
+      const type = selectedCategory || 'Museum'; // Default to 'Major Town' if none selected
+      console.log(`Fetching locations for type: ${type}`);
+
+      try {
+        let fetchedLocations = [];
+        if (type === 'Major Town') {
+          fetchedLocations = Object.entries(townCoordinates).map(([name, coord]) => ({
+            _id: name, // Use name as ID for towns
+            name,
+            type: 'Major Town',
+            lat: coord.lat,
+            lng: coord.lng // Ensure lng is used
+          }));
+          console.log(`Fetched Major Towns:`, fetchedLocations);
+        } else {
+          // Fetch from API only if not 'Major Town'
+          const response = await axios.get("http://localhost:5050/locations"); // Ensure this URL is correct
+          const valid = response.data.filter(loc =>
+            typeof (loc.lat ?? loc.latitude) === 'number' && // Use nullish coalescing
+            typeof (loc.lng ?? loc.longitude) === 'number'
+          );
+          console.log(`Fetched ${valid.length} valid locations from API`);
+
+          const normalizedSelectedType = normalizeType(type);
+          fetchedLocations = type === 'All'
+            ? valid
+            : valid.filter(loc => {
+                const locTypeNormalized = normalizeType(loc.type);
+                // console.log(`Comparing: '${locTypeNormalized}' === '${normalizedSelectedType}' for ${loc.name}`);
+                return locTypeNormalized === normalizedSelectedType;
+              });
+        }
+
+        console.log(`Filtered down to ${fetchedLocations.length} locations for type ${type}`);
+        console.log('Setting locations state with:', fetchedLocations);
+        setLocations([...fetchedLocations]);
+
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        setLocations([]); // Clear locations on error
+      }
+    };
+
+    fetchLocations();
+  }, [selectedCategory]); // Re-run ONLY when selectedCategory changes
+
+  const [markerComponents, setMarkerComponents] = useState([]);
+  useEffect(() => {
+    const markers = locations.map(loc => {
+      const lat = Number(loc.lat ?? loc.latitude);
+      const lng = Number(loc.lng ?? loc.longitude);
+      const iconUrl = categoryIcons[loc.type];
+
+      return (
+        <AdvancedMarker
+          key={loc._id}
+          position={{ lat, lng }}
+          title={loc.name}
+        >
+          <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
+        </AdvancedMarker>
+      );
+    });
+
+    setMarkerComponents(markers);
+  }, [locations]);
+
+  // Log when component renders and how many locations it has
+  console.log('Rendering MapComponent. Locations count:', locations.length);
+
+  useEffect(() => {
+    console.log('Locations changed:', locations);
+  }, [locations]);
+  
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI'>
       <Map
@@ -270,66 +228,85 @@ function Directions({ startingPoint={startingPoint}, destination={destination} }
             mapInstanceRef.current = map.map; 
           }
         }}
+        key={selectedCategory + '-' + locations.length}
         style={containerStyle}
         defaultCenter={center}
-        defaultZoom={7.2}
+        defaultZoom={7.5}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
-        mapId='DEMO_MAP_ID' // Do not change for now
+        mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
       >
-      <div key={JSON.stringify(locations.map(l => l._id))}>
-      {/* Force full re-render of all markers when category changes */}
-         {locations.map((loc) => {
-    const lat = loc.lat || loc.latitude;
-    const lng = loc.lng || loc.longitude;
-    if (!lat || !lng) return null;
+      {/* Render markers ONLY for the filtered locations */}
+      {/* <div key={selectedCategory}> 
+  {locations.map((loc) => {
+    const lat = Number(loc.lat ?? loc.latitude);
+    const lng = Number(loc.lng ?? loc.longitude);
 
-    const icon = categoryIcons[loc.type] || aeroplaneIcon;
+    if (isNaN(lat) || isNaN(lng)) return null;
+
+    const iconUrl = categoryIcons[loc.type] || categoryIcons['Default'];
 
     return (
       <AdvancedMarker
-        key={`${loc._id || loc.name}-${selectedCategory}`}
+        key={loc.id}
         position={{ lat, lng }}
         title={loc.name}
       >
-        <img src={icon} alt={loc.type} style={{ width: '30px', height: '30px' }} />
+        <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
       </AdvancedMarker>
     );
   })}
+</div> */}
+{markerComponents}
+
 
         {/* Nearby Places */}
-        {nearbyPlaces.map((place) => {
-          const lat = place.geometry?.location?.lat();
-          const lng = place.geometry?.location?.lng();
-          if (!lat || !lng) return null;
+        {/* {nearbyPlaces
+  .filter((place) => {
+    const getPlaceType = (types) => {
+      if (types?.includes('airport')) return "Airport";
+      if (types?.includes('lodging')) return "Homestay";
+      if (types?.includes('museum')) return "Museum";
+      if (types?.includes('park')) return "National Park";
+      return 'Other';
+    };
 
-          const getPlaceType = (types) => {
-            if (types?.includes('airport')) return 'Airport';
-            if (types?.includes('lodging')) return 'Homestay';
-            if (types?.includes('museum')) return 'Museum';
-            if (types?.includes('park')) return 'National Park';
-            return 'Other';
-          };
+    const type = getPlaceType(place.types);
+    return selectedCategory === 'All' || type === selectedCategory;
+  })
+  .map((place) => {
+    const lat = place.geometry?.location?.lat();
+    const lng = place.geometry?.location?.lng();
+    if (!lat || !lng) return null;
 
-          const type = getPlaceType(place.types);
-          const icon = categoryIcons[type];
+    const getPlaceType = (types) => {
+      if (types?.includes('airport')) return "Airport";
+      if (types?.includes('lodging')) return "Homestay";
+      if (types?.includes('museum')) return "Museum";
+      if (types?.includes('park')) return "National Park";
+      return 'Other';
+    };
 
-          return (
-            <AdvancedMarker
-              key={place.place_id}
-              position={{ lat, lng }}
-              title={`Nearby: ${place.name}`}
-            >
-              <img
-                src={icon}
-                alt={type}
-                style={{ width: '36px', height: '36px', filter: 'hue-rotate(180deg)' }}
-              />
-              </AdvancedMarker>
-            );
-          })}
-      </div>
+    const type = getPlaceType(place.types);
+    const icon = categoryIcons[type];
+
+    return (
+      <AdvancedMarker
+        key={place.place_id}
+        position={{ lat, lng }}
+        title={`Nearby: ${place.name}`}
+      >
+        <img
+          src={icon}
+          alt={type}
+          style={{ width: '36px', height: '36px' }}
+        />
+      </AdvancedMarker>
+    );
+  })} */}
+
+      {/* </div> */}
 
         <Directions 
           startingPoint={startingPoint}
