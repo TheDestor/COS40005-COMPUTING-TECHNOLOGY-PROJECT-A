@@ -34,6 +34,7 @@ const LeftSidebar = () => {
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -59,6 +60,34 @@ const LeftSidebar = () => {
     setAddDestinations((prev) => [...prev, '']);
   };
 
+  const geocodeAddress = (address, callback) => {
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        callback(results[0].geometry.location);
+      } else {
+        alert('Geocode failed: ' + status);
+      }
+    });
+  };
+
+  const fetchNearbyPlaces = (locationCoords, placeType = 'restaurant') => {
+    const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+    const request = {
+      location: locationCoords,
+      radius: 2000,
+      type: placeType,
+    };
+
+    service.nearbySearch(request, (results, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        setNearbyPlaces(results);
+      } else {
+        console.error('Nearby search error:', status);
+      }
+    });
+  };
+
   const handleVehicleClick = async (vehicle) => {
     if (!startingPoint.trim() || !destination.trim()) {
       alert('You need to fill in your starting point and destination first');
@@ -71,10 +100,10 @@ const LeftSidebar = () => {
       return;
     }
 
+    setIsLoading(true);
+    setSelectedVehicle(vehicle);
+
     try {
-      setIsLoading(true);
-      setSelectedVehicle(vehicle);
-      
       const directionsService = new window.google.maps.DirectionsService();
       const response = await directionsService.route({
         origin: startingPoint,
@@ -155,27 +184,19 @@ const LeftSidebar = () => {
         {/* Expanded Panel */}
         <div className={`side-panel100 ${isExpanded ? 'expanded' : ''}`}>
           <div className="transport-section">
-            <div className="transport-row">
-              <div className={`transport-option ${selectedVehicle === 'Car' ? 'active' : ''}`} onClick={() => handleVehicleClick('Car')}>
-                🚗<span>Car</span>
-              </div>
-              <div className={`transport-option ${selectedVehicle === 'Bus' ? 'active' : ''}`} onClick={() => handleVehicleClick('Bus')}>
-                🚌<span>Bus</span>
-              </div>
-              <div className={`transport-option ${selectedVehicle === 'Walking' ? 'active' : ''}`} onClick={() => handleVehicleClick('Walking')}>
-                🚶<span>Walking</span>
-              </div>
+          <div className="transport-row">
+              {['Car', 'Bus', 'Walking'].map((v) => (
+                <div key={v} className={`transport-option ${selectedVehicle === v ? 'active' : ''}`} onClick={() => handleVehicleClick(v)}>
+                  {v === 'Car' ? '🚗' : v === 'Bus' ? '🚌' : '🚶'}<span>{v}</span>
+                </div>
+              ))}
             </div>
             <div className="transport-row">
-              <div className={`transport-option ${selectedVehicle === 'Bicycle' ? 'active' : ''}`} onClick={() => handleVehicleClick('Bicycle')}>
-                🚴<span>Bicycle</span>
-              </div>
-              <div className={`transport-option ${selectedVehicle === 'Motorbike' ? 'active' : ''}`} onClick={() => handleVehicleClick('Motorbike')}>
-                🏍️<span>Motorbike</span>
-              </div>
-              <div className={`transport-option ${selectedVehicle === 'Flight' ? 'active' : ''}`} onClick={() => handleVehicleClick('Flight')}>
-                ✈️<span>Flight</span>
-              </div>
+              {['Bicycle', 'Motorbike', 'Flight'].map((v) => (
+                <div key={v} className={`transport-option ${selectedVehicle === v ? 'active' : ''}`} onClick={() => handleVehicleClick(v)}>
+                  {v === 'Bicycle' ? '🚴' : v === 'Motorbike' ? '🏍️' : '✈️'}<span>{v}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -269,9 +290,16 @@ const LeftSidebar = () => {
                     <div className="send-directions-text">📩 Send Directions</div>
                     <div className="copy-link">COPY LINK</div>
                   </div>
+                  
                   <hr />
-                  <div className="explore-nearby-text">🔍 Explore Nearby</div>
-                  {/* Keep your existing nearby items */}
+
+                  <div className="explore-nearby-text" onClick={() => {
+                    if (destination) {
+                      geocodeAddress(destination, (coords) => {
+                        fetchNearbyPlaces(coords); // You can change 'restaurant' to other types
+                      });
+                    }
+                  }}>🔍 Explore Nearby</div>
                 </div>
               </div>
             )
@@ -284,7 +312,7 @@ const LeftSidebar = () => {
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} />
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces}/>
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );
