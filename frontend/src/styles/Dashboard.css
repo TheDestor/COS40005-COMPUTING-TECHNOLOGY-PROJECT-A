@@ -14,7 +14,8 @@
   position: absolute; 
   right: 0; 
   top: 0; 
-  bottom: 0; 
+  bottom: 0;
+  overflow-y: auto;
 }
 
 .dashboard-header {
@@ -330,7 +331,132 @@
   transform: scale(1.5);
 }
 
+/* Data Visualization styles */
+.dashboard-visualizations {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.visualization-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  min-height: 400px;
+  height: 450px;
+}
+
+.visualization-card:hover {
+  box-shadow: 0 12px 24px rgba(108, 93, 211, 0.15);
+  border-color: rgba(108, 93, 211, 0.1);
+}
+
+.viz-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 15px;
+}
+
+.viz-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3345;
+}
+
+.viz-header p {
+  margin: 5px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.viz-content {
+  height: 340px;
+  width: 100%;
+  position: relative;
+}
+
+/* Chart tooltip styles */
+.chart-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background: rgba(30, 41, 59, 0.9);
+  color: #fff;
+  border-radius: 6px;
+  pointer-events: none;
+  font-size: 12px;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* Position relative helper */
+.position-relative {
+  position: relative;
+}
+
+/* Business Participation Chart specific styles */
+.business-indicators {
+  position: absolute;
+  top: 50px;
+  right: 30px;
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 5;
+}
+
+.business-indicators > div {
+  background-color: white;
+}
+
+.business-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 0 20px;
+  z-index: 5;
+}
+
+/* Fix for user engagement chart */
+.dashboard-visualizations .visualization-card:first-child .viz-content {
+  height: 350px;
+}
+
+/* D3 specific fixes */
+svg {
+  overflow: visible;
+}
+
+/* Make sure charts are responsive */
+.viz-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* To make dashboard area adjusts to sidebar */
+@media (max-width: 1200px) {
+  .dashboard-visualizations {
+    grid-template-columns: 1fr;
+  }
+  
+  .visualization-card {
+    height: auto;
+    min-height: 450px;
+  }
+}
+
 @media (max-width: 992px) {
   .dashboard-content {
     margin-left: 250px;
@@ -339,6 +465,14 @@
   
   .stat-cards-container {
     gap: 16px;
+  }
+  
+  .business-indicators {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    margin-top: 10px;
   }
 }
 
@@ -374,5 +508,11 @@
   
   .stat-card {
     width: 100%;
+  }
+  
+  .business-legend {
+    position: relative;
+    margin-top: 10px;
+    bottom: auto;
   }
 }
