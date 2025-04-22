@@ -7,7 +7,7 @@ import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 import townIcon from '../assets/town.png';
 
-const townCoordinates = {
+const townCoordinates = { 
   'Kuching': { lat: 1.5535, lng: 110.3593 },
   'Sibu': { lat: 2.2870, lng: 111.8320 },
   'Mukah': { lat: 2.8988, lng: 112.0914 },
@@ -34,7 +34,6 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
-const normalizeType = (typeStr) => typeStr?.toLowerCase().replace(/\s+/g, '').trim();
 
 function Directions({ startingPoint={startingPoint}, destination={destination}, selectedVehicle }) {
   const map = useMap();
@@ -121,7 +120,7 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
 
 function MapComponent({ startingPoint, destination, selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
   const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null); // actual Google Maps Map instance
+  const mapInstanceRef = useRef(null);
   const [locations, setLocations] = useState([]);
 
   const categoryIcons = {
@@ -143,81 +142,95 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
   };
 
   useEffect(() => {
+    if (!selectedCategory) return;
+  
     console.log(`MapComponent received category: ${selectedCategory}`);
-    const fetchLocations = async () => {
-      const type = selectedCategory || 'Museum'; // Default to 'Major Town' if none selected
-      console.log(`Fetching locations for type: ${type}`);
-
-      try {
-        let fetchedLocations = [];
-        if (type === 'Major Town') {
-          fetchedLocations = Object.entries(townCoordinates).map(([name, coord]) => ({
-            _id: name, // Use name as ID for towns
-            name,
-            type: 'Major Town',
-            lat: coord.lat,
-            lng: coord.lng // Ensure lng is used
-          }));
-          console.log(`Fetched Major Towns:`, fetchedLocations);
-        } else {
-          // Fetch from API only if not 'Major Town'
-          const response = await axios.get("http://localhost:5050/locations"); // Ensure this URL is correct
-          const valid = response.data.filter(loc =>
-            typeof (loc.lat ?? loc.latitude) === 'number' && // Use nullish coalescing
-            typeof (loc.lng ?? loc.longitude) === 'number'
-          );
-          console.log(`Fetched ${valid.length} valid locations from API`);
-
-          const normalizedSelectedType = normalizeType(type);
-          fetchedLocations = type === 'All'
-            ? valid
-            : valid.filter(loc => {
-                const locTypeNormalized = normalizeType(loc.type);
-                // console.log(`Comparing: '${locTypeNormalized}' === '${normalizedSelectedType}' for ${loc.name}`);
-                return locTypeNormalized === normalizedSelectedType;
-              });
-        }
-
-        console.log(`Filtered down to ${fetchedLocations.length} locations for type ${type}`);
-        console.log('Setting locations state with:', fetchedLocations);
-        setLocations([...fetchedLocations]);
-
-      } catch (error) {
-        console.error("Error fetching locations:", error);
-        setLocations([]); // Clear locations on error
+    fetchLocations(selectedCategory);
+  }, [selectedCategory]);
+  
+  const fetchLocations = async (category) => {
+    try {
+      let fetchedLocations = [];
+  
+      if (category === 'Major Town') {
+        // Use predefined town coordinates
+        fetchedLocations = Object.entries(townCoordinates).map(([name, coord]) => ({
+          _id: name,
+          name,
+          type: 'Major Town',
+          lat: coord.lat,
+          lng: coord.lng,
+        }));
+        console.log(`Fetched Major Towns:`, fetchedLocations);
+      } else {
+        const response = await axios.get("http://localhost:5050/locations");
+        const validLocations = response.data.filter((loc) =>
+          typeof (loc.lat ?? loc.latitude) === 'number' &&
+          typeof (loc.lng ?? loc.longitude) === 'number'
+        );
+  
+        console.log(`Fetched ${validLocations.length} valid locations from API`);
+  
+        const normalizedSelectedType = normalizeType(category);
+  
+        fetchedLocations = validLocations.filter((loc) => {
+          const locType = normalizeType(loc.type);
+          return locType === normalizedSelectedType;
+        });
       }
+  
+      console.log(`Filtered down to ${fetchedLocations.length} locations for type ${category}`);
+      setLocations(fetchedLocations);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      setLocations([]); // Clear on error
+    }
+  };
+  
+  const normalizeType = (type = '') => {
+    const map = {
+      'majortown': 'Major Town',
+      'homestay': 'Homestay',
+      'airport': 'Airport',
+      'museum': 'Museum',
+      'nationalpark': 'National Park',
+      'seaport': 'Seaport',
+      'beach': 'Beach',
+      'hospital': 'Hospital',
+      'event': 'Event',
     };
+    return map[type.toLowerCase().replace(/\s/g, '')] || type;
+  };
+  
+  
+  // const [markerComponents, setMarkerComponents] = useState([]);
+  // useEffect(() => {
+  //   const markers = locations.map(loc => {
+  //     const lat = Number(loc.lat ?? loc.latitude);
+  //     const lng = Number(loc.lng ?? loc.longitude);
+  //     const normalizedType = normalizeType(loc.type);
+  //     const iconUrl = categoryIcons[normalizedType];
 
-    fetchLocations();
-  }, [selectedCategory]); // Re-run ONLY when selectedCategory changes
+  //     return (
+  //       <AdvancedMarker
+  //         key={loc._id}
+  //         position={{ lat, lng }}
+  //         title={loc.name}
+  //       >
+  //         <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
+  //       </AdvancedMarker>
+  //     );
+  //   });
 
-  const [markerComponents, setMarkerComponents] = useState([]);
-  useEffect(() => {
-    const markers = locations.map(loc => {
-      const lat = Number(loc.lat ?? loc.latitude);
-      const lng = Number(loc.lng ?? loc.longitude);
-      const iconUrl = categoryIcons[loc.type];
-
-      return (
-        <AdvancedMarker
-          key={loc._id}
-          position={{ lat, lng }}
-          title={loc.name}
-        >
-          <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
-        </AdvancedMarker>
-      );
-    });
-
-    setMarkerComponents(markers);
-  }, [locations]);
+  //   setMarkerComponents(markers);
+  // }, [locations]);
 
   // Log when component renders and how many locations it has
-  console.log('Rendering MapComponent. Locations count:', locations.length);
+  // console.log('Rendering MapComponent. Locations count:', locations.length);
 
-  useEffect(() => {
-    console.log('Locations changed:', locations);
-  }, [locations]);
+  // useEffect(() => {
+  //   console.log('Locations changed:', locations);
+  // }, [locations]);
   
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI'>
@@ -228,7 +241,6 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
             mapInstanceRef.current = map.map; 
           }
         }}
-        key={selectedCategory + '-' + locations.length}
         style={containerStyle}
         defaultCenter={center}
         defaultZoom={7.5}
@@ -238,27 +250,36 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
         mapTypeId = {mapType}
       >
       {/* Render markers ONLY for the filtered locations */}
-      {/* <div key={selectedCategory}> 
-  {locations.map((loc) => {
-    const lat = Number(loc.lat ?? loc.latitude);
-    const lng = Number(loc.lng ?? loc.longitude);
+      {locations.length > 0 &&
+          locations.map((loc) => {
+            const lat = Number(loc.lat ?? loc.latitude);
+            const lng = Number(loc.lng ?? loc.longitude);
 
-    if (isNaN(lat) || isNaN(lng)) return null;
+            if (isNaN(lat) || isNaN(lng)) {
+              console.log(`Skipping invalid coordinates for ${loc.name}`);
+              return null;
+            }
 
-    const iconUrl = categoryIcons[loc.type] || categoryIcons['Default'];
+            // const normalizedType = normalizeType(loc.type);
+            // const iconUrl = categoryIcons[normalizedType];
 
-    return (
-      <AdvancedMarker
-        key={loc.id}
-        position={{ lat, lng }}
-        title={loc.name}
-      >
-        <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
-      </AdvancedMarker>
-    );
-  })}
-</div> */}
-{markerComponents}
+            console.log(`Rendering marker for ${loc.name}:`, { lat, lng, categoryIcons });
+            return (
+              <AdvancedMarker
+                key={loc._id}
+                position={{ lat, lng }}
+                title={loc.name}
+                icon={categoryIcons[loc.type]}
+                animation="drop" // Optional: Add animation
+              >
+              </AdvancedMarker>
+            );
+          })}
+
+
+
+
+{/* {markerComponents} */}
 
 
         {/* Nearby Places */}

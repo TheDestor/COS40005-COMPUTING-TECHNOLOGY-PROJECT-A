@@ -7,7 +7,7 @@ import { FaLocationDot } from "react-icons/fa6";
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'; // FontAwesome Icons
 import '../styles/MapViewMenu.css';
 
-const MapViewMenu = ({ onSelect, activeOption = 'Major Town' }) => {
+const MapViewMenu = ({ onSelect, activeOption}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -42,6 +42,8 @@ const MapViewMenu = ({ onSelect, activeOption = 'Major Town' }) => {
         <div className="menu-container">
           {menuItems.map((item) => {
             const isActive = activeOption === item.name;
+            console.log("Rendering", item.name, "active:", isActive);
+
             return (
               <button
                 key={item.name}

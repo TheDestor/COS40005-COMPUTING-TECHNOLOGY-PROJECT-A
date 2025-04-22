@@ -44,10 +44,10 @@ const HomePage = () => {
         onMenuChange={setSelectedCategory}
       />
 
-      <MapViewMenu 
+      {/* <MapViewMenu 
         onSelect={(category) => setSelectedCategory(category)}
         activeOption={selectedCategory}
-      />
+      /> */}
 
       <MapComponent 
         startingPoint={startingPoint} 
