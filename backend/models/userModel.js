@@ -1,4 +1,31 @@
 import mongoose from "mongoose";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { error } from "console";
+
+const keyLength = 32;
+// Password hashing function
+const hash = async (password) => {
+    return new Promise((resolve, reject) => {
+        const salt = randomBytes(16).toString("hex");
+
+        scrypt(password, salt, keyLength, (error, derivedKey) => {
+            if (error) reject(error);
+            resolve(`${salt}.${derivedKey.toString("hex")}`);
+        });
+    });
+};
+
+// Compare password hash
+const compare = async (password, hash) => {
+    return new Promise((resolve, reject) => {
+        const [salt, hashKey] = hash.split(".");
+        const hashKeyBuffer = Buffer.from(hashKey, "hex");
+        scrypt(password, salt, keyLength, (error, derivedKey) => {
+            if (error) reject(error);
+            resolve(timingSafeEqual(hashKeyBuffer, derivedKey));
+        })
+    })
+}
 
 export const userRoles = ['tourist', 'business', 'cbt_admin', "system_admin"];
 const baseOptions = {
@@ -29,6 +56,25 @@ const userSchema = new mongoose.Schema({
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
     nationality: { type: String, required: true, default: 'N/A'},
 }, baseOptions);
+
+userSchema.pre('save', async function (next) {
+    try {
+        if (!this.isModified('password')) return next();
+        const hashedPassword = await hash(this.password);
+        this.password = hashedPassword;
+        next();
+    } catch (Error) {
+        next(error);
+    }
+});
+
+userSchema.methods.isValidPassword = async function (password) {
+    try {
+        return await compare(password, this.password);
+    } catch (error) {
+        throw new Error("Password comparison failed");
+    }
+};
 
 export const userModel = mongoose.models.user || mongoose.model('users', userSchema);
 

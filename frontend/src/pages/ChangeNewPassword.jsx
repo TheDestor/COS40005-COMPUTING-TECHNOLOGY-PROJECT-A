@@ -3,6 +3,8 @@ import "../styles/ChangeNewPassword.css";
 import Switch from "react-switch";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
+import { useAuth } from "../context/AuthContext.jsx";
+import axios from "axios";
 
 const getPasswordStrength = (password) => {
   if (password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
@@ -11,41 +13,82 @@ const getPasswordStrength = (password) => {
 };
 
 const ChangeNewPassword = () => {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const { currentPassword, newPassword, confirmPassword } = formData;
   const [enableMFA, setEnableMFA] = useState(false);
-
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const strength = getPasswordStrength(newPassword);
-  const confirmStrength = getPasswordStrength(confirmPassword);
+  const { accessToken } = useAuth();
 
-  const isFormFilled = currentPassword && newPassword && confirmPassword;
+  const passwordsMatch = newPassword === confirmPassword;
+  const isFormValid = currentPassword && newPassword && confirmPassword && passwordsMatch;
 
-  const handleUpdate = () => {
-    console.log("Updated:", {
-      currentPassword,
-      newPassword,
-      confirmPassword,
-      enableMFA,
-    });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
 
+  const handleClearForm = () => {
+    setFormData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+  }
+
+  const handleUpdatePassword = async () => {
+    if (!isFormValid) {
+      console.log("Missing fields/passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5050/user/updatePassword",
+        { currentPassword, newPassword },
+        {
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+          withCredentials: true
+        }
+      );
+
+      const { success, message } = response.data;
+
+      if (success) {
+        console.log(message);
+      } else {
+        console.log(message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  
   return (
     <div className="change-password-container">
       <h2><MdSecurity size={20} /> Sign in & security</h2>
 
       <div className="form-group2">
-        <label>Current password</label>
+        <label htmlFor="currentPassword">Current password</label>
         <div className="input-with-icon4">
           <input
             type={showCurrent ? "text" : "password"}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
+            value={formData.currentPassword}
+            id="currentPassword"
+            name="currentPassword"
+            onChange={handleInputChange}
             placeholder="Enter current password"
+            className="input-field"
           />
           <button onClick={() => setShowCurrent(!showCurrent)}>
             {showCurrent ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -54,13 +97,16 @@ const ChangeNewPassword = () => {
       </div>
 
       <div className="form-group2">
-        <label>New password</label>
+        <label htmlFor="newPassword">New password</label>
         <div className="input-with-icon4">
           <input
             type={showNew ? "text" : "password"}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            value={formData.newPassword}
+            id="newPassword"
+            name="newPassword"
+            onChange={handleInputChange}
             placeholder="New password"
+            className="input-field"
           />
           <button onClick={() => setShowNew(!showNew)}>
             {showNew ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -72,24 +118,27 @@ const ChangeNewPassword = () => {
       </div>
 
       <div className="form-group2">
-        <label>Confirm new password</label>
+        <label htmlFor="confirmPassword">Confirm new password</label>
         <div className="input-with-icon4">
             <input
             type={showConfirm ? "text" : "password"}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={formData.confirmPassword}
+            id="confirmPassword"
+            name="confirmPassword"
+            onChange={handleInputChange}
             placeholder="Confirm password"
+            className="input-field"
             />
             <button onClick={() => setShowConfirm(!showConfirm)}>
             {showConfirm ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
             </button>
         </div>
-        {confirmPassword && (
-            confirmPassword === newPassword ? (
+        {confirmPassword && newPassword && (
+          passwordsMatch ? (
             <div className="password-match">Passwords match</div>
-            ) : (
+          ) : (
             <div className="password-mismatch">Passwords do not match</div>
-            )
+          )
         )}
         </div>
 
@@ -115,10 +164,10 @@ const ChangeNewPassword = () => {
         </div>
 
 
-      {isFormFilled && (
+      {(currentPassword || newPassword || confirmPassword) && (
         <div className="action-buttons3 left-align">
-          <button className="cancel-btn3">Cancel</button>
-          <button className="update-btn3" onClick={handleUpdate}>Update</button>
+          <button type="button" className="cancel-btn3" onClick={handleClearForm}>Cancel</button>
+          <button type="button" className="update-btn3" onClick={handleUpdatePassword} disabled={!isFormValid}>Update</button>
         </div>
       )}
     </div>

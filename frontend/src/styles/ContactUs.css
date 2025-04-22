@@ -400,16 +400,16 @@ footer::before {
 }
 
 /* I am overriding global styles here */
-input, textarea {
+/* input, textarea {
     color: #333 !important;
     background-color: #fff !important;
     font-family: 'Roboto', sans-serif !important;
-}
+} */
 
 /* input style enhancements */
-input:focus, textarea:focus {
+/* input:focus, textarea:focus {
     color: #333 !important;
     background-color: #fff !important;
     border-color: #4a90e2 !important;
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2) !important;
-}
+} */

@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 export const verifyJWT = (req, res, next) => {
-    console.log(`verifyJWT triggered for: ${req.method} ${req.originalUrl}`); // <-- Add this log
+    console.log(`verifyJWT triggered for: ${req.method} ${req.originalUrl}`);
 
     const authHeader = req.headers.authorization || req.headers.Authorization
     
@@ -16,7 +16,7 @@ export const verifyJWT = (req, res, next) => {
         process.env.ACCESS_TOKEN_SECRET,
         (err, decoded) => {
             if (err) return res.status(403).json({ message: "Forbidden" });
-            req.user = decoded.UserInfo.identifier
+            req.user = decoded.UserInfo._id
             req.role = decoded.UserInfo.role
             next();
         }

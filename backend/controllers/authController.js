@@ -1,32 +1,5 @@
 import { businessUserModel, userModel } from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-
-const keyLength = 32;
-
-// Password hashing function
-const hash = async (password) => {
-    return new Promise((resolve, reject) => {
-        const salt = randomBytes(16).toString("hex");
-
-        scrypt(password, salt, keyLength, (error, derivedKey) => {
-            if (error) reject(error);
-            resolve(`${salt}.${derivedKey.toString("hex")}`);
-        });
-    });
-};
-
-// Compare password hash
-const compare = async (password, hash) => {
-    return new Promise((resolve, reject) => {
-        const [salt, hashKey] = hash.split(".");
-        const hashKeyBuffer = Buffer.from(hashKey, "hex");
-        scrypt(password, salt, keyLength, (error, derivedKey) => {
-            if (error) reject(error);
-            resolve(timingSafeEqual(hashKeyBuffer, derivedKey));
-        })
-    })
-}
 
 // @desc User registration
 // @route POST /register
@@ -50,10 +23,8 @@ export const register = async (req, res) => {
             return res.status(400).json({ success: false, message: "This user already exists." });
         }
 
-        const hashedPassword = await hash(password);
-
         // Create the user if validations pass
-        const user = await userModel.create({ firstName, lastName, email, phoneNumber, password: hashedPassword, role: 'tourist' });
+        const user = await userModel.create({ firstName, lastName, email, phoneNumber, password, role: 'tourist' });
 
         // Return success
         res.status(201).json({
@@ -87,15 +58,13 @@ export const businessRegister = async (req, res) => {
             return res.status(400).json({ success: false, message: "This user already exists." });
         }
 
-        const hashedPassword = await hash(password);
-
         // Create businessUser if validation passes
         const businessUser = await businessUserModel.create({
             firstName: firstName,
             lastName: lastName,
             email: email,
             phoneNumber: phoneNumber,
-            password: hashedPassword,
+            password: password,
             companyName: companyName,
             companyRegistrationNo: companyRegistrationNo,
             companyAddress: companyAddress,
@@ -130,7 +99,7 @@ export const login = async (req, res) => {
         }
 
         // Check if password is correct
-        const auth = await compare(password, user.password);
+        const auth = await user.isValidPassword(password);
         if (!auth) {
             return res.status(401).json({ success: false, message: "Incorrect password or email/phone number"});
         }

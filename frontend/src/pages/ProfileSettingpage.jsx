@@ -209,8 +209,6 @@ const ProfileSettingsPage = () => {
       _id: user._id,
       firstName: formData.firstName,
       lastName: formData.lastName,
-      email: formData.email,
-      phoneNumber: formData.phoneNumber,
       nationality: selectedCountry.name,
     };
 
@@ -293,11 +291,12 @@ const ProfileSettingsPage = () => {
             <div className="profile-fields">
               <div className="field-group">
                 <label>First name</label>
-                <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} readOnly={!isEditingProfile} />
+                <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} readOnly={!isEditingProfile} className="input-field" />
               </div>
               <div className="field-group">
                 <label>Last name</label>
-                <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} readOnly={!isEditingProfile} />
+                <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} readOnly={!isEditingProfile}
+                className="input-field"/>
               </div>
               <div className="field-group email-group">
                 <label>Email</label>
@@ -307,8 +306,9 @@ const ProfileSettingsPage = () => {
                     name="email"
                     type="email"
                     value={formData.email}
-                    onChange={handleInputChange}
-                    readOnly={!isEditingProfile}
+                    readOnly={true}
+                    disabled={true}
+                    className="input-readonly input-field"
                     />
                 </div>
                 </div>
@@ -321,8 +321,9 @@ const ProfileSettingsPage = () => {
                       name="phoneNumber"
                       type="tel"
                       value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      readOnly={!isEditingProfile}
+                      readOnly={true}
+                      disabled={true}
+                      className="input-readonly input-field"
                     />
                   </div>
                 </div>
