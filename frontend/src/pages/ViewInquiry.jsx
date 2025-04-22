@@ -16,6 +16,16 @@ import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
 import '../styles/ViewInquiry.css';
 
+// Import profile images
+import profile1 from '../assets/profile1.png';
+import profile2 from '../assets/profile2.png';
+import profile3 from '../assets/profile3.png';
+import profile4 from '../assets/profile4.png';
+import profile5 from '../assets/profile5.png';
+import profile6 from '../assets/profile6.png';
+import profile7 from '../assets/profile7.png';
+import profile8 from '../assets/profile8.png';
+
 const ViewInquiry = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -30,100 +40,100 @@ const ViewInquiry = () => {
     const dummyInquiries = [
       {
         id: 1,
-        name: 'John Smith',
-        email: 'john.smith@example.com',
+        name: 'Gokul Kalla',
+        email: 'gokulkalla@gmail.com',
         subject: 'Information about business registration',
         message: 'Hello, I would like to know more about how to register my business on your platform. What are the requirements and associated costs? Do you have any special offers for new businesses?',
         date: '2025-04-20T14:25:00',
         status: 'unread',
         priority: 'medium',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile1
       },
       {
         id: 2,
-        name: 'Emily Johnson',
-        email: 'emily.johnson@example.com',
+        name: 'Carlos Sainz',
+        email: 'carlos.sainz@gmail.com',
         subject: 'Technical support needed',
         message: 'I am experiencing issues with uploading photos to my business profile. The system keeps showing an error message. I have tried different browsers but the problem persists. Can you please help me resolve this issue as soon as possible? My business ID is BUS-2023-456.',
         date: '2025-04-19T09:12:00',
         status: 'in-progress',
         priority: 'high',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile2
       },
       {
         id: 3,
-        name: 'Michael Brown',
-        email: 'michael.brown@example.com',
+        name: 'Kenneth',
+        email: 'kenneth@gmail.com',
         subject: 'Feedback on recent features',
         message: 'I wanted to share some feedback on the new booking feature. It has significantly improved my business workflow. However, I would suggest adding a calendar sync option to avoid double bookings with my existing systems. Overall, great work with the platform improvements!',
         date: '2025-04-18T16:35:00',
         status: 'resolved',
         priority: 'low',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile3
       },
       {
         id: 4,
-        name: 'Sarah Williams',
-        email: 'sarah.williams@example.com',
+        name: 'Daniel',
+        email: 'daniel@gmail.com',
         subject: 'Complaint about review system',
         message: 'I believe there are some fake reviews on my business profile. I have noticed several 1-star reviews from accounts with no other activity. Could you please investigate this matter? This is severely affecting my business reputation. I can provide more details if needed.',
         date: '2025-04-17T11:20:00',
         status: 'unread',
         priority: 'high',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile4
       },
       {
         id: 5,
-        name: 'David Lee',
-        email: 'david.lee@example.com',
+        name: 'Steph',
+        email: 'steph12@gmail.com',
         subject: 'Partnership proposal',
         message: 'I represent a tourism board in the Sunshine Coast region. We are interested in forming a strategic partnership with your platform to promote local businesses. Could someone from your business development team contact me to discuss potential collaboration opportunities?',
         date: '2025-04-16T14:50:00',
         status: 'in-progress',
         priority: 'medium',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile5
       },
       {
         id: 6,
-        name: 'Jessica Taylor',
-        email: 'jessica.taylor@example.com',
+        name: 'Alvin',
+        email: 'alvin@gmail.com',
         subject: 'Account deletion request',
         message: 'I would like to request the deletion of my business account. I have closed my business and no longer need the listing. Please confirm when this has been completed. My business ID is BUS-2021-789.',
         date: '2025-04-15T08:05:00',
         status: 'resolved',
         priority: 'low',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile6
       },
       {
         id: 7,
-        name: 'Ryan Martinez',
-        email: 'ryan.martinez@example.com',
+        name: 'Gary',
+        email: 'gary@gmail.com',
         subject: 'Issue with payment processing',
         message: 'I attempted to pay for the premium subscription but the transaction failed multiple times. My card has sufficient funds and works on other platforms. Can you please check if there are any issues with your payment gateway? I would like to upgrade as soon as possible.',
         date: '2025-04-14T13:15:00',
         status: 'unread',
         priority: 'high',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile7
       },
       {
         id: 8,
-        name: 'Lauren Wilson',
-        email: 'lauren.wilson@example.com',
+        name: 'Lara Wilson',
+        email: 'lauren.wilson@gmail.com',
         subject: 'Question about analytics feature',
         message: 'I recently upgraded to your premium plan but I am having trouble understanding some of the analytics data. Specifically, the conversion metrics seem confusing. Could you provide some guidance or documentation on how to interpret these numbers?',
         date: '2025-04-13T15:40:00',
         status: 'in-progress',
         priority: 'medium',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: profile8
       }
     ];
     
     setInquiries(dummyInquiries);
-    // Set the first inquiry as selected by default
+    // first inquiry selected by default
     setSelectedInquiry(dummyInquiries[0]);
   }, []);
 
-  // Format date to readable string
+  // readable string format of date
   const formatDate = (dateString) => {
     const options = { 
       year: 'numeric', 
@@ -185,7 +195,7 @@ const ViewInquiry = () => {
     e.preventDefault();
     if (!replyText.trim()) return;
     
-    // In a real application, you would send this to the backend
+    // WE CAN USE THIS FOR BACKEND PURPOSE
     console.log(`Reply to inquiry #${selectedInquiry.id}:`, replyText);
     
     // Mark as resolved
@@ -194,7 +204,7 @@ const ViewInquiry = () => {
     // Reset reply field
     setReplyText('');
     
-    // Show success message (in a real app, you might use a toast notification)
+    // Show success message (we might use a toast notification)
     alert("Reply sent successfully!");
   };
 
