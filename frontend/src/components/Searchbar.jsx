@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+// import { APIProvider } from '@vis.gl/react-google-maps';
 import { FiSearch, FiX, FiMic } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import SearchBarExpanded from './SearchBarExpanded.jsx'; // Import here
+import SearchBarExpanded from './SearchBarExpanded.jsx';
 import '../styles/Searchbar.css';
-import logo from '../assets/SarawakTourismLogo.png'; // Import your logo here
-import MapComponent from './MapComponent.jsx';
+import logo from '../assets/SarawakTourismLogo.png'; 
 
-const SearchBar = () => {
+const SearchBar = ({ setSelectedPlace }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPlace, setSelectedPlace] = useState(null); // State to hold the selected place
 
   const [history, setHistory] = useState([
     'Borneo Cultural Museum',
@@ -20,6 +19,37 @@ const SearchBar = () => {
   ]);
   const [category, setCategory] = useState('All');
   const ref = useRef();
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (
+        window.google &&
+        window.google.maps &&
+        window.google.maps.places &&
+        inputRef.current
+      ) {
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+          // types: ['(cities)'],
+          // componentRestrictions: { country: 'MY' },
+        });
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry) return;
+
+          const name = place.formatted_address || place.name;
+          setSearchTerm(name);
+          setSelectedPlace(place); // <--- pass place object up
+          handleSearch(name);
+        });
+
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSearch = (term) => {
     if (!term.trim()) return;
@@ -48,6 +78,7 @@ const SearchBar = () => {
           <img src={logo} alt="Logo" className="logo" />
         </Link>
         <input
+          ref={inputRef}
           type="text"
           className="searchbar-input"
           placeholder="Search for airport, homestay"
@@ -72,10 +103,7 @@ const SearchBar = () => {
           history={history}
         />
       )}
-
-      {/* <MapComponent selectedPlace={selectedPlace}/> */}
     </div>
-
   );
 };
 

@@ -18,7 +18,8 @@ const HomePage = () => {
   const [destination, setDestination] = useState('');
   const [addDestinations, setAddDestinations] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Major Town'); // Default category
+  const [selectedCategory, setSelectedCategory] = useState('Major Town');
+  const [selectedPlace, setSelectedPlace] = useState(null);
   
 
   // Show bookmark if state passed from navigation
@@ -45,6 +46,7 @@ const HomePage = () => {
         onLoginClick={handleLoginClick}
         activeOption={selectedCategory}
         onMenuChange={setSelectedCategory}
+        setSelectedPlace={setSelectedPlace}
       />
 
       <MapComponent 
@@ -53,6 +55,7 @@ const HomePage = () => {
         addDestinations={addDestinations}
         nearbyPlaces={nearbyPlaces}
         selectedCategory={selectedCategory}
+        selectedPlace={selectedPlace}
       />
       
       <TouristInfoSection />
