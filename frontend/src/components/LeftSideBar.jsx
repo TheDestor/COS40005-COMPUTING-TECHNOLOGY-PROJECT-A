@@ -35,6 +35,7 @@ const LeftSidebar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -71,7 +72,8 @@ const LeftSidebar = () => {
     });
   };
 
-  const fetchNearbyPlaces = (locationCoords, placeType = 'restaurant') => {
+  const fetchNearbyPlaces = (locationCoords) => {
+    const placeType = selectedCategory === 'All' ? 'restaurant' : selectedCategory.toLowerCase();
     const service = new window.google.maps.places.PlacesService(document.createElement('div'));
     const request = {
       location: locationCoords,
@@ -311,8 +313,8 @@ const LeftSidebar = () => {
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
-      <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces}/>
+      <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]}/>
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );

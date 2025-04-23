@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, ControlPosition, MapControl, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
-import axios from 'axios';
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, ControlPosition, MapControl, useAdvancedMarkerRef, CollisionBehavior } from '@vis.gl/react-google-maps';
 import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
 import museumIcon from '../assets/museum.png';
@@ -35,7 +34,7 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function Directions({ startingPoint={startingPoint}, destination={destination}, selectedVehicle }) {
+function Directions({ startingPoint={startingPoint}, destination={destination}, nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory }) {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
@@ -44,12 +43,17 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
   const [routesIndex, setRoutesIndex] = useState(0);
   const selected = routes[routesIndex];
   const leg = selected?.legs[0];
+  const [isRoutesLoaded, setIsRoutesLoaded] = useState(false);
+
+  useEffect(() => {
+    if (routesLibrary) setIsRoutesLoaded(true);
+  }, [routesLibrary]);
 
   useEffect(() => {
     if(!routesLibrary || !map) return;
 
     const newService = new routesLibrary.DirectionsService();
-    const newRenderer = new google.maps.DirectionsRenderer({ map });
+    const newRenderer = new routesLibrary.DirectionsRenderer({ map });
 
     setDirectionsService(newService);
     setDirectionsRenderer(newRenderer);
@@ -60,28 +64,38 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
     };
   }, [routesLibrary, map])
 
+  // Fetch and render directions
   useEffect(() => {
-    if (!directionsService || !directionsRenderer || !startingPoint || !destination) return;
-  
+    if (!directionsService || !directionsRenderer) return;
+
     const getRoutes = async () => {
       try {
-        // Clear previous directions
-        directionsRenderer.setDirections({ routes: [] });
+        // Convert addresses to coordinates if needed
+        const geocode = async (input) => {
+          if (typeof input === 'string') {
+            const geocoder = new window.google.maps.Geocoder();
+            const results = await geocoder.geocode({ address: input });
+            return results.results[0].geometry.location;
+          }
+          return input;
+        };
 
-        const routeResponse = await directionsService.route({
-          origin: startingPoint,
-          destination: destination,
-          travelMode: travelModes[selectedVehicle] || 'DRIVING',
+        const origin = await geocode(startingPoint);
+        const dest = await geocode(destination);
+
+        const response = await directionsService.route({
+          origin: origin,
+          destination: dest,
+          travelMode: selectedVehicle,
           provideRouteAlternatives: true,
         });
-        
-        directionsRenderer.setDirections(routeResponse);
-        setRoutes(routeResponse.routes);
-        setRoutesIndex(0); // Reset to the first route
-      } catch (err) {
-        console.error("Error getting directions:", err);
+
+        directionsRenderer.setDirections(response);
+      } catch (error) {
+        console.error('Directions error:', error);
       }
     };
+
     getRoutes();
   }, [directionsService, directionsRenderer, startingPoint, destination, selectedVehicle]);
   
@@ -201,6 +215,14 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
     };
     return map[type.toLowerCase().replace(/\s/g, '')] || type;
   };
+
+  const getPlaceType = (types) => {
+    if (types?.includes('airport')) return "Airport";
+    if (types?.includes('lodging')) return "Homestay";
+    if (types?.includes('museum')) return "Museum";
+    if (types?.includes('park')) return "National Park";
+    return 'Other';
+  };
   
   
   // const [markerComponents, setMarkerComponents] = useState([]);
@@ -246,6 +268,7 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
         defaultZoom={7.5}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
+        // mapId='DEMO_MAP_ID'
         mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
       >
@@ -260,79 +283,71 @@ function MapComponent({ startingPoint, destination, selectedVehicle, mapType, se
               return null;
             }
 
-            // const normalizedType = normalizeType(loc.type);
-            // const iconUrl = categoryIcons[normalizedType];
+            const normalizedType = normalizeType(loc.type);
+            const iconUrl = categoryIcons[normalizedType];
 
-            console.log(`Rendering marker for ${loc.name}:`, { lat, lng, categoryIcons });
+            console.log(`Rendering marker for ${loc.name}:`, { lat, lng, iconUrl });
             return (
               <AdvancedMarker
                 key={loc._id}
                 position={{ lat, lng }}
                 title={loc.name}
-                icon={categoryIcons[loc.type]}
-                animation="drop" // Optional: Add animation
+                icon={iconUrl}
+
+                // animation="drop" // Optional: Add animation
               >
               </AdvancedMarker>
             );
           })}
 
-
-
-
-{/* {markerComponents} */}
-
-
+{/* <AdvancedMarker position={{ lat: 1.5535, lng: 110.3593 }} />
+<AdvancedMarker position={{lat: 29.5, lng: -81.2}}>
+    <img src={townIcon} width={32} height={32} />
+  </AdvancedMarker> */}
+        
         {/* Nearby Places */}
-        {/* {nearbyPlaces
-  .filter((place) => {
-    const getPlaceType = (types) => {
-      if (types?.includes('airport')) return "Airport";
-      if (types?.includes('lodging')) return "Homestay";
-      if (types?.includes('museum')) return "Museum";
-      if (types?.includes('park')) return "National Park";
-      return 'Other';
-    };
+        {nearbyPlaces.filter((place) => {
+          
+          const type = getPlaceType(place.types);
+          return selectedCategory === 'All' || type === selectedCategory;
+        })
+        .map((place) => {
+          const lat = place.geometry?.location?.lat();
+          const lng = place.geometry?.location?.lng();
+          if (!lat || !lng) return null;
 
-    const type = getPlaceType(place.types);
-    return selectedCategory === 'All' || type === selectedCategory;
-  })
-  .map((place) => {
-    const lat = place.geometry?.location?.lat();
-    const lng = place.geometry?.location?.lng();
-    if (!lat || !lng) return null;
+          const getPlaceType = (types) => {
+            if (types?.includes('airport')) return "Airport";
+            if (types?.includes('lodging')) return "Homestay";
+            if (types?.includes('museum')) return "Museum";
+            if (types?.includes('park')) return "National Park";
+            return 'Other';
+          };
 
-    const getPlaceType = (types) => {
-      if (types?.includes('airport')) return "Airport";
-      if (types?.includes('lodging')) return "Homestay";
-      if (types?.includes('museum')) return "Museum";
-      if (types?.includes('park')) return "National Park";
-      return 'Other';
-    };
+          const type = getPlaceType(place.types);
+          const icon = categoryIcons[type];
 
-    const type = getPlaceType(place.types);
-    const icon = categoryIcons[type];
-
-    return (
-      <AdvancedMarker
-        key={place.place_id}
-        position={{ lat, lng }}
-        title={`Nearby: ${place.name}`}
-      >
-        <img
-          src={icon}
-          alt={type}
-          style={{ width: '36px', height: '36px' }}
-        />
-      </AdvancedMarker>
-    );
-  })} */}
+          return (
+            <AdvancedMarker
+              key={place.place_id}
+              position={{ lat, lng }}
+              title={`Nearby: ${place.name}`}
+            >
+              <img
+                src={icon}
+                alt={type}
+                style={{ width: '36px', height: '36px' }}
+              />
+            </AdvancedMarker>
+          );
+        })}
 
       {/* </div> */}
 
         <Directions 
           startingPoint={startingPoint}
           destination={destination}
-          travelMode={travelModes[selectedVehicle] || 'DRIVING'}
+          selectedVehicle={selectedVehicle}
         />
       </Map>
       
