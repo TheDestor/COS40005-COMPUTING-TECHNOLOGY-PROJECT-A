@@ -7,6 +7,7 @@ import MapComponent from '../components/MapComponent.jsx';
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MapViewMenu from '../components/MapViewMenu.jsx';
+import { APIProvider } from '@vis.gl/react-google-maps';
 
 const HomePage = () => {
   const location = useLocation();
@@ -15,8 +16,10 @@ const HomePage = () => {
   const [showBookmark, setShowBookmark] = useState(false);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Major Town');
-
+  const [addDestinations, setAddDestinations] = useState([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('Major Town'); // Default category
+  
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -37,21 +40,18 @@ const HomePage = () => {
   };
 
   return (
-    <div>
+    <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
       <Navbar 
         onLoginClick={handleLoginClick}
         activeOption={selectedCategory}
         onMenuChange={setSelectedCategory}
       />
 
-      {/* <MapViewMenu 
-        onSelect={(category) => setSelectedCategory(category)}
-        activeOption={selectedCategory}
-      /> */}
-
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
+        addDestinations={addDestinations}
+        nearbyPlaces={nearbyPlaces}
         selectedCategory={selectedCategory}
       />
       
@@ -60,13 +60,16 @@ const HomePage = () => {
       <LeftSidebar
         startingPoint={startingPoint}
         destination={destination}
+        addDestinations={addDestinations}
         setStartingPoint={setStartingPoint}
         setDestination={setDestination}
+        setAddDestinations={setAddDestinations}
+        setNearbyPlaces={setNearbyPlaces}
       />
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
-    </div>
+      </APIProvider>
   );
 };
 

@@ -88,3 +88,8 @@ a:focus {
   }
 }
 
+/* Hide scrollbars for better aesthetics */
+::-webkit-scrollbar {
+  display: none;
+}
+

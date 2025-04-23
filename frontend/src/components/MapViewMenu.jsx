@@ -42,7 +42,7 @@ const MapViewMenu = ({ onSelect, activeOption}) => {
         <div className="menu-container">
           {menuItems.map((item) => {
             const isActive = activeOption === item.name;
-            console.log("Rendering", item.name, "active:", isActive);
+            // console.log("Rendering", item.name, "active:", isActive);
 
             return (
               <button

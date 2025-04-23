@@ -36,6 +36,11 @@ const LeftSidebar = () => {
   const [addDestinations, setAddDestinations] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [segmentedRoutes, setSegmentedRoutes] = useState([]);
+
+  const handleRoutesCalculated = (routesData) => {
+    setSegmentedRoutes(routesData.routes);
+  };
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
@@ -58,7 +63,13 @@ const LeftSidebar = () => {
   };
 
   const handleAddDestination = () => {
-    setAddDestinations((prev) => [...prev, '']);
+    setAddDestinations(prev => [...prev, '']);
+  };
+
+  const handleDestinationChange = (index, value) => {
+    const newDestinations = [...addDestinations];
+    newDestinations[index] = value;
+    setAddDestinations(newDestinations);
   };
 
   const geocodeAddress = (address, callback) => {
@@ -75,6 +86,7 @@ const LeftSidebar = () => {
   const fetchNearbyPlaces = (locationCoords) => {
     const placeType = selectedCategory === 'All' ? 'restaurant' : selectedCategory.toLowerCase();
     const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+    console.log('Fetching nearby places for:', placeType, 'at:', locationCoords);
     const request = {
       location: locationCoords,
       radius: 2000,
@@ -82,10 +94,12 @@ const LeftSidebar = () => {
     };
 
     service.nearbySearch(request, (results, status) => {
+      console.log('Nearby search results:', results, 'Status:', status);
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
         setNearbyPlaces(results);
       } else {
         console.error('Nearby search error:', status);
+        setNearbyPlaces([]);
       }
     });
   };
@@ -110,6 +124,7 @@ const LeftSidebar = () => {
       const response = await directionsService.route({
         origin: startingPoint,
         destination: destination,
+        // addDestinations: addDestinations,
         travelMode: travelModes[vehicle],
         provideRouteAlternatives: true,
       });
@@ -231,36 +246,27 @@ const LeftSidebar = () => {
           </div>
 
           {/* Additional Destinations */}
-          {addDestinations.map((point, index) => (
+          {addDestinations.map((dest, index) => (
             <div className="input-container" key={index}>
               <div className="input-box">
-                <FaMapMarkerAlt className="input-icon red" />
+                <FaMapMarkerAlt className="input-icon" />
                 <input
                   type="text"
-                  placeholder={`Add Destination ${index + 1}`}
-                  value={point}
-                  onChange={(e) => {
-                    const newPoints = [...addDestinations];
-                    newPoints[index] = e.target.value;
-                    setAddDestinations(newPoints);
-                  }}
+                  placeholder={`Add destination ${index + 1}`}
+                  value={dest}
+                  onChange={(e) => handleDestinationChange(index, e.target.value)}
                 />
-                <button
-                  onClick={() => {
-                    const updated = [...addDestinations];
-                    updated.splice(index, 1);
-                    setAddDestinations(updated);
-                  }}
-                >
+                <button onClick={() => setAddDestinations(prev => prev.filter((_, i) => i !== index))}>
                   <IoCloseOutline />
                 </button>
-                <FaSearch className="input-icon" />
               </div>
             </div>
           ))}
 
-          {/* Add Destination Button */}
-          <div className="add-destination" onClick={handleAddDestination}>➕ Add destination</div>
+          {/* Additional Destinations Button*/}
+          <button onClick={handleAddDestination}>
+            ➕ Add Destination
+          </button>
 
           {/* Routes */}
           {isLoading ? (
@@ -302,6 +308,23 @@ const LeftSidebar = () => {
                       });
                     }
                   }}>🔍 Explore Nearby</div>
+
+                  {/* Nearby Places List */}
+                  {nearbyPlaces.length > 0 && (
+                    <div className="nearby-places-container100">
+                      {nearbyPlaces.map((place, index) => (
+                        <div key={index} className="nearby-place-item100">
+                          <div className="place-name100">{place.name}</div>
+                          <div className="place-address100">{place.vicinity}</div>
+                          {place.rating && (
+                            <div className="place-rating100">
+                              ⭐ {place.rating} ({place.user_ratings_total || 0} reviews)
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -314,7 +337,7 @@ const LeftSidebar = () => {
       <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]}/>
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}/>
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );

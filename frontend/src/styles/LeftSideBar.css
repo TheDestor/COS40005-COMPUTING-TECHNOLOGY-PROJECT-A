@@ -263,6 +263,51 @@
   cursor: default;
 }
 
+/* Nearby Places List */
+.nearby-places-container100 {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nearby-place-item100 {
+  padding: 12px;
+  margin: 8px 0;
+  background: white;
+  border-radius: 6px;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.nearby-place-item100:hover {
+  transform: translateX(5px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.place-name100 {
+  font-weight: 600;
+  color: #2d3436;
+  font-size: 0.95rem;
+}
+
+.place-address100 {
+  color: #636e72;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.place-rating100 {
+  color: #e67e22;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 /* Add new destination */
 /* .delete-destination-btn {
   background: none;

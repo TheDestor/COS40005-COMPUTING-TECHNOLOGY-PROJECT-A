@@ -6,7 +6,7 @@ const locationSchema = new mongoose.Schema({
     divison: { type: String, required: true, trim: true },
     name: { type: String, required: true, trim: true },
     latitude: { type: Number, required: true, trim: true },
-    longtitude: { type: Number, required: true, trim: true },
+    longitude: { type: Number, required: true, trim: true },
     url: { type: String, trim: true }
 });
 
