@@ -19,6 +19,7 @@ import ReviewPage from './pages/ReviewPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 import ViewAnalytics from './pages/ViewAnalytics.jsx';
 import ViewInquiry from './pages/ViewInquiry.jsx';
+import AddEventPage from './pages/AddEventPage.jsx';
 
 function App() {
 
@@ -42,6 +43,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/view-analytics" element={<ViewAnalytics />} />
           <Route path="/view-inquiry" element={<ViewInquiry />} />
+          <Route path="/add-event" element={<AddEventPage />} />
           {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
           {/* Add more routes as needed */}
 
