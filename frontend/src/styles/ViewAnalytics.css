@@ -1,53 +1,110 @@
 /* Dashboard Layout */
-.dashboard-container {
+.viewanalytics-container {
     display: grid;
     height: 2500px;
     grid-template-areas:
       "user-engagement business-participation"
-      "organic-traffic .";
+      "organic-traffic session-device"
+      "organic-traffic  browser-usage"
+      "organic-traffic  user-overview";
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
+    gap: 2rem;
+    margin-left: 260px;
+    width: calc(100% - 280px); /* Prevent overflow */
+    box-sizing: border-box;
   }
   
   .ue-card {
     grid-area: user-engagement;
-    height: 500px;
-    width: 550px;
-    background: #fff;
+    display: grid;
+    height: 550px;
+    width: 650px;
+    background: #fcfdff;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0px 1px 12px rgba(0,0,0,0.1);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    margin-left: -250px;
+    margin-top:-10px;
   }
   
   .business-chart-wrapper {
     grid-area: business-participation;
-    height: 500px;
-    width: 550px;
-    background: #fff;
+    display: grid;
+    height: 550px;
+    width: 650px;
+    background: #fcfdff;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0px 1px 12px rgba(0,0,0,0.1);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    margin-top:-10px;
   }
   
   .traffic-card {
     grid-area: organic-traffic;
-    height: 700px;
-    width: 550px;
-    background: #fff;
+    display: grid;
+    height: 1000px;
+    width: 650px;
+    background: #fcfdff;
     border-radius: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    padding: 1.5rem;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.1);
+    padding: 1rem;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    margin-left: -250px;
+    margin-top:-290px;
   }
   
-  /* Dashboard section helpers */
+  .device-chart-card {
+    grid-area: session-device;
+    background: #fcfdff;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.1);
+    height: 550px;
+    width: 650px;
+    margin-top:-290px;
+  }
+
+  .browser-card {
+    grid-area: browser-usage;
+    display: grid;
+    background: #fcfdff;
+    padding: 20px;
+    border-radius: 12px;
+    height: 335px; /* ensures it fills available space */
+    width: 650px;
+    box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+    margin-right: -200px;
+    margin-top:-425px;
+  }
+
+  .UO_chart-container {
+    overflow: visible;
+    position: relative;
+    display: grid;
+    height: 450px;
+    width: 100%;
+    max-width: 700px;
+    background: #fcfdff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+    margin-bottom: 0px;
+    margin-top: -520px;
+  }
+
+
+/* Dashboard section helpers */
   .dashboard-section {
     min-width: 0;
   }
@@ -61,7 +118,7 @@
   }
   
   .ue-title {
-    font-size: 1.125rem;
+    font-size: 1.6rem;
     font-weight: 600;
   }
   
@@ -118,8 +175,9 @@
     display: flex;
     gap: 1.5rem;
     margin-top: 1rem;
-    font-size: 0.875rem;
+    font-size: 1rem;
     color: #4A5568;
+    margin-left: 80px;
   }
   
   .legend-dot {
@@ -135,12 +193,26 @@
   .legend-dot--new { background: #ED64A6; }
   
   /* Business Participation Chart */
-  .chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 200px;
-    margin: 0 auto;
+
+  .bp-header {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
   }
+
+  .bp-title {
+    font-size: 26px;
+
+  }
+
+  .bp-total {
+    font-size: 20px;
+    margin-top: 0.25rem;
+    color: #8b8c8b;
+
+  } 
   
   .chart-center-text {
     position: absolute;
@@ -154,36 +226,61 @@
     font-size: 24px;
     font-weight: bold;
     color: #333;
+    margin-left: 60px;
+    margin-top: 70px;
   }
   
   .chart-center-text .label {
     font-size: 12px;
     color: #666;
-    margin-top: 4px;
+    margin-left: 50px;
+    margin-top: 10px;
+    
+  }
+  
+  .chart-and-stats {
+    display: flex;
+    align-items: center; /* Align chart and stats vertically */
+    gap: 32px;
+    justify-content: start; /* Or center depending on layout */
+    flex-wrap: wrap; /* Optional for responsiveness */
+    margin-top: 1rem;
+  }
+  
+  .chart-container {
+    width: 100%;
+    max-width: 200px;
+    height: 200px;
+    position: relative;
+    margin: 0 auto;
+    margin-bottom: 120px;
+    margin-right: 50px;
   }
   
   .stats {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: auto;
+    align-items: flex-start; /* Align text to left */
+    margin-bottom: 75px;
+    margin-right:70px;
   }
   
   .stat-box {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
   }
   
   .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: radial-gradient(circle at center, #f0f4ff, #e0e7ff);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 24px;
   }
   
   .stat-box:nth-child(2) .stat-icon {
@@ -196,7 +293,7 @@
   }
   
   .stat-text .label {
-    font-size: 12px;
+    font-size: 14px;
     color: #555;
   }
   
@@ -260,12 +357,12 @@
   
   .value {
     fill: #6dfa50;
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .axis-text1 {
     fill: #ffffff;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .time-dropdown {
@@ -303,35 +400,31 @@
 
   .floating-plane {
     position: absolute;
-    top: 100px; /* adjust as needed */
-    left: 360px;
-    width: 300px;
+    top: 110px; /* adjust as needed */
+    left: 325px;
+    width: 380px;
     transform: scaleX(-1);
     z-index: 10; /* optional, in case it’s under something */
   }
   
   /*Session Device*/
 
-  .device-chart-card {
-    background: white;
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    max-width: 600px;
-    height: 550px;
-  }
+.tooltip {
+  transition: opacity 0.2s ease;
+}
+
   
   .device-title {
     font-size: 25px;
     font-weight: 600;
-    margin-bottom: 30px;
+    margin-bottom: 0px;
   }
   
   .device-chart {
     width: 100%;
-    height: 80%;
-    margin-top: 20px;
-    margin-bottom: -130px;
+    height: 60%;
+    margin-top: 10px;
+    margin-bottom: -110px;
   }
   
   .device-stats {
@@ -341,7 +434,7 @@
   .device-number {
     font-size: 29px;
     font-weight: bold;
-    margin-top: -50px;
+    margin-top: -20px;
   }
   
   .device-label {
@@ -370,33 +463,49 @@
     margin-right: 6px;
     vertical-align: middle;
   }
-  
-  .browser-card {
-    background-color: #f9f9ff;
-    padding: 20px;
-    border-radius: 12px;
-    width: 100%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
-    font-family: 'Segoe UI', sans-serif;
-  }
+
+  /* Browser Usage */
+
+  /* Browser Usage Chart Enhancements */
+.browser-row {
+  position: relative;
+  margin: 8px 15px;
+}
+
+.bar-fill:hover {
+  transform: scaleX(1.02) scaleY(1.25);
+  box-shadow: 3px 2px 3px -1.5px rgba(147, 51, 234, 0.3);
+  z-index: 2;
+}
   
   .browser-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 20px;
+    margin-top: -5px;
   }
   
   .browser-header h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 25px;
     color: #111827;
   }
   
+  .dropdown-container {
+    position: relative; /* or absolute depending on the context */
+  }
+
   .dropdown {
-    font-size: 14px;
+    font-size: 16px;
+    max-width: 120px;
+    min-width: 10px;
     color: #6b7280;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    background-color: #f9f9ff;
     cursor: pointer;
+    padding: 5px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    margin-top: -37px;
+    margin-right: 10px;
   }
   
   .browser-row {
@@ -406,32 +515,296 @@
   }
   
   .browser-icon {
-    font-size: 20px;
+    font-size: 22px;
     margin-right: 10px;
     width: 30px;
     text-align: center;
+    transition: transform 0.3s ease;
   }
   
+  .browser-row:hover .browser-icon {
+    transform: scale(1.25);
+  }
   .bar-container {
     flex: 1;
-    height: 6px;
+    max-height: 10px;
+    height: 8px;
     background-color: #e5e7eb;
     border-radius: 6px;
-    overflow: hidden;
   }
   
   .bar-fill {
+    max-height: none;
     height: 100%;
     background-color: #c084fc;
     border-radius: 6px;
-    transition: width 0.4s ease;
+    transition: width 0.6s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center left;
+    position: relative;
+    z-index: 1;
   }
   
   .percent-labels {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    font-size: 12px;
+    font-size: 17px;
     color: #6b7280;
+    padding-left: 60px;
+    padding-right: 20px;
+  }
+
+  .BU_tooltip {
+    z-index: 4;
+    position: absolute;
   }
   
+  .BU_tooltip-bg {
+    fill: rgba(0, 0, 0, 0.9);
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1px;
+    opacity: 0.8;
+    rx: 4;
+  }
+  
+  .BU_tooltip-text {
+    font-size: 15px;
+    font-weight: 500;
+    fill: white;
+    letter-spacing: 0.3px;
+    font-family: sans-serif;
+  }
+
+
+  
+  
+  
+  /*Overwrite dashboard container (from Dashboard.css)*/
+  .dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #ffffff;
+    width: 100%;
+  }
+  
+  /* User Overview chart*/  
+.UO_chart-container {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* Header Styles */
+.UO_chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 3;
+}
+
+.UO_chart-title {
+  font-size: 1.6rem;
+  color: #111827;
+  z-index: 2;
+  margin-top: -10px;
+}
+
+/* Chart SVG Container */
+.UO_chart-svg {
+  width: 100%;
+  height: 300px;
+  display: block;
+  position: relative;
+  z-index: 2;
+  margin-left: 0; /* Removed negative margin */
+}
+
+/* Custom Select Dropdown */
+.custom-select {
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+  margin: 0px 10px;
+  margin-top: -30px;
+  position: relative;
+  z-index: 3;
+}
+
+/* Chart Elements Layering */
+.UO_chart-svg rect.bar {
+  position: relative;
+  z-index: 2; /* Bars above area chart */
+  transition: all 0.2s ease;
+}
+
+.path[fill="url(#areaGradient)"] {
+  z-index: 3; /* Area chart behind bars */
+  position: relative;
+}
+
+/* Tooltip Stacking */
+.tooltip {
+  z-index: 4; /* Highest z-index */
+  position: absolute;
+}
+
+.tooltip-bg {
+  fill: rgba(0, 0, 0, 0.9);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1px;
+}
+
+.tooltip-text {
+  font-size: 16px;
+  font-weight: 500;
+  fill: white;
+  letter-spacing: 0.3px;
+}
+
+/* Axis Styling */
+.y-axis .tick text {
+  font-family: -apple-system, sans-serif;
+  fill: #6b7280;
+}
+
+.y-axis .tick line {
+  stroke: #e2e8f0;
+  stroke-dasharray: 2;
+}
+
+/* Hover Effects */
+.UO_chart-svg rect:hover {
+  filter: brightness(110%);
+  z-index: 3; /* Hovered bar above others */
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.Title h3 {
+  flex:1;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  color: #2c3345;
+  letter-spacing: -0.5px;
+  margin-left:30px;
+  margin-top:11px;
+  margin-bottom: 18px;
+}
+
+/* Search bar */
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  justify-content: flex-end;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #f4f5f7;
+  padding: 0 15px;
+  border-radius: 8px;
+  height: 42px;
+  width: 280px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.search-bar:focus-within {
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-color: #e2e8f0;
+}
+
+.search-icon {
+  font-size: 16px;
+  color: #6c5dd3;
+  margin-right: 10px;
+}
+
+.search-bar input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: #2c3345;
+  width: 100%;
+  height: 100%;
+}
+
+.search-bar input::placeholder {
+  color: #a0aec0;
+}
+
+/* Notification icons */
+.action-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 93, 211, 0.15);
+}
+
+.action-icon {
+  font-size: 16px;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.icon-wrapper:hover .action-icon {
+  color: #6c5dd3;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #6c5dd3;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  height: 18px;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
