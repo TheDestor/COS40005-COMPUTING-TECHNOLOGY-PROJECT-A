@@ -3,7 +3,7 @@ import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, u
 import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
 import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
-import homestayIcon1 from '../assets/homestay1.png';
+// import homestayIcon1 from '../assets/homestay1.png';
 import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 import townIcon from '../assets/town.png';
@@ -41,73 +41,73 @@ const townData = {
   Kuching: {
     population: "570,000",
     attractions: ["Sarawak Cultural Village", "Kuching Waterfront", "Bako National Park"],
-    images: [kuching, kuching, kuching],
+    images: [kuching, limbang, sibu],
     image: kuching
   },
   Miri: {
     population: "350,000",
     attractions: ["Niah Caves", "Canada Hill", "Coco Cabana"],
-    images: [miri, kuching, miri],
+    images: [miri, kuching, sibu],
     image: miri
   },
   Sibu: {
     population: "240,000",
     attractions: ["Sibu Central Market", "Bukit Aup", "Wong Nai Siong Memorial Park"],
-    images: [sibu, kuching, sibu],
+    images: [sibu, kuching, miri],
     image: sibu
   },
   Bintulu: {
     population: "210,000",
     attractions: ["Tanjung Batu Beach", "Similajau National Park", "Tumbina Zoo"],
-    images: [bintulu, kuching, bintulu],
+    images: [bintulu, kuching, sibu],
     image: bintulu
   },
   Sarikei: {
     population: "60,000",
     attractions: ["Sarikei Pineapple Statue", "Central Market", "Sebangkoi Park"],
-    images: [sarikei, kuching, sarikei],
+    images: [sarikei, kuching, sibu],
     image: sarikei
   },
   "Sri Aman": {
     population: "55,000",
     attractions: ["Fort Alice", "Sri Aman Waterfront", "Benak Festival"],
-    images: [sriAman, kuching, sriAman],
+    images: [sriAman, kuching, sibu],
     image: sriAman
   },
   Betong: {
     population: "48,000",
     attractions: ["Betong Town Square", "Lichok Longhouse", "Sebetan River"],
-    images: [betong, kuching, betong],
+    images: [betong, kuching, sibu],
     image: betong
   },
   Kapit: {
     population: "66,000",
     attractions: ["Fort Sylvia", "Belaga Longhouses", "Rejang River"],
     images: [kapit, kuching, kapit],
-    image: kapit
+    image: sibu
   },
   Mukah: {
     population: "50,000",
     attractions: ["Kaul Festival", "Mukah Beach", "Tellian Village"],
-    images: [mukah, kuching, mukah],
+    images: [mukah, kuching, sibu],
     image: mukah
   },
   Limbang: {
     population: "45,000",
     attractions: ["Limbang Museum", "Taman Tasik Bukit Mas", "Border to Brunei"],
-    images: [limbang, kuching, limbang],
+    images: [limbang, kuching, sibu],
     image: limbang
   },
   Serian: {
     population: "90,000",
     attractions: ["Ranchan Waterfall", "Tebakang Market", "Tebedu Border Post"],
-    images: [serian, kuching, serian],
+    images: [serian, kuching, sibu],
     image: serian
   },
   "Kota Samarahan": {
     population: "100,000",
     attractions: ["UNIMAS Campus", "Aiman Mall", "Samarahan Expressway Viewpoint"],
-    images: [kotaSamarahan, kuching, kotaSamarahan],
+    images: [kotaSamarahan, kuching, sibu],
     image: kotaSamarahan
   }
 };
@@ -254,7 +254,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   
   const categoryIcons = {
     'Major Town': townIcon,
-    'Homestay': homestayIcon1,
+    'Homestay': homestayIcon,
     'Airport': aeroplaneIcon,
     'Museum': museumIcon,
     'National Park': parkIcon,
