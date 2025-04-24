@@ -116,7 +116,7 @@ const WeatherDateTime = ({ currentTown, setCurrentTown }) => {
             {getTownCode(currentTown)} <span className={`arrow ${showTownDropdown ? 'up' : 'down'}`}>{showTownDropdown ? '▲' : '▼'}</span>
           </button>
           {showTownDropdown && (
-            <div className="dropdown">
+            <div className="dropdown2">
               <div className="current-location">Current Location: {currentTown}</div>
               <div className="dropdown-items-grid">
                 {towns.map((town) => (

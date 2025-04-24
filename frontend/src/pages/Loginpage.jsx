@@ -195,7 +195,7 @@ const LoginPage = ({ onClose }) => {
               <input
                 type="text"
                 className="input-field"
-                placeholder="Phone Number"
+                placeholder="Email/Phone Number"
                 name="identifier"
                 value={identifier}
                 onChange={handleInputChange}
