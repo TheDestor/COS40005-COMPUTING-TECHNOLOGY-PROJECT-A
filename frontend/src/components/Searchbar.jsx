@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-// import { APIProvider } from '@vis.gl/react-google-maps';
 import { FiSearch, FiX, FiMic } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import SearchBarExpanded from './SearchBarExpanded.jsx';
@@ -9,7 +8,49 @@ import logo from '../assets/SarawakTourismLogo.png';
 const SearchBar = ({ setSelectedPlace }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [predictions, setPredictions] = useState([]);
 
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setPredictions([]);
+      return;
+    }
+  
+    const service = new window.google.maps.places.AutocompleteService();
+  
+    service.getPlacePredictions(
+      {
+        input: searchTerm,
+        componentRestrictions: { country: 'MY' },
+        types: ['establishment'],
+        bounds: new window.google.maps.LatLngBounds(
+          new window.google.maps.LatLng(0.9, 109.3),
+          new window.google.maps.LatLng(5.0, 115.5)
+        ),
+        strictBounds: true
+      },
+      (preds) => setPredictions(preds || [])
+    );
+  }, [searchTerm]);
+
+  const handlePredictionClick = (placeId, description) => {
+    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'));
+    placesService.getDetails(
+      {
+        placeId,
+        fields: ['name', 'geometry', 'formatted_address']
+      },
+      (place) => {
+        if (!place || !place.geometry) return;
+  
+        setSelectedPlace(place);
+        handleSearch(description);
+        setSearchTerm('');
+        setPredictions([]);
+      }
+    );
+  };
+  
   const [history, setHistory] = useState([
     'Borneo Cultural Museum',
     'Borneo Cultural Museum',
@@ -30,16 +71,25 @@ const SearchBar = ({ setSelectedPlace }) => {
         inputRef.current
       ) {
         const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-          // types: ['(cities)'],
-          // componentRestrictions: { country: 'MY' },
+          componentRestrictions: { country: 'MY' },
+          fields: ['formatted_address', 'geometry', 'name'], // optional but useful
+          types: ['establishment'], // or ['geocode'], ['address'], or ['(regions)'] depending on use
         });
+        
+        // Restrict to Sarawak via bounding box
+        const sarawakBounds = new window.google.maps.LatLngBounds(
+          new window.google.maps.LatLng(0.9, 109.3),   // SW corner
+          new window.google.maps.LatLng(5.0, 115.5)    // NE corner
+        );
+        autocomplete.setBounds(sarawakBounds);
+        autocomplete.setOptions({ strictBounds: true });
 
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
           if (!place.geometry) return;
 
           const name = place.formatted_address || place.name;
-          setSearchTerm(name);
+          setSearchTerm('');
           setSelectedPlace(place); // <--- pass place object up
           handleSearch(name);
         });
@@ -101,6 +151,9 @@ const SearchBar = ({ setSelectedPlace }) => {
           category={category}
           setCategory={setCategory}
           history={history}
+          searchTerm={searchTerm}
+          predictions={predictions}
+          onPredictionClick={handlePredictionClick}
         />
       )}
     </div>

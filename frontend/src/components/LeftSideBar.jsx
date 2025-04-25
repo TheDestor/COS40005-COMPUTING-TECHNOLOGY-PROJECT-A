@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort, FaBookmark, FaLayerGroup } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
-import BusinessSection from './BusinessSection';
+// import BusinessSection from './BusinessSection';
 import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
@@ -304,7 +304,7 @@ const LeftSidebar = () => {
                   <div className="explore-nearby-text" onClick={() => {
                     if (destination) {
                       geocodeAddress(destination, (coords) => {
-                        fetchNearbyPlaces(coords); // You can change 'restaurant' to other types
+                        fetchNearbyPlaces(coords); 
                       });
                     }
                   }}>🔍 Explore Nearby</div>
@@ -334,7 +334,7 @@ const LeftSidebar = () => {
 
       {/* Slide-in RecentSection */}
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
-      <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
+      {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
       <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}/>

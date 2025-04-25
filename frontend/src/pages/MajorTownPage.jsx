@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/MenuNavbar';
+import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/MajorTownPage.css';
@@ -81,7 +81,7 @@ const MajorTownPage = () => {
 
   return (
     <div className="category-page">
-      <Navbar onLoginClick={handleLoginClick} />
+      <MenuNavbar onLoginClick={handleLoginClick} />
 
       <div className="hero-banner">
         <div className="hero-overlay">

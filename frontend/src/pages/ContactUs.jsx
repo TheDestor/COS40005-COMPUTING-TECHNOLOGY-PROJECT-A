@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import "../styles/ContactUs.css";
 import axios from "axios";
 import { toast } from "react-toastify";
-import MenuNavBar from "../components/MenuNavBar";
+import MenuNavBar from "../components/MenuNavbar";
 
 export default function ContactUs() {
   // States

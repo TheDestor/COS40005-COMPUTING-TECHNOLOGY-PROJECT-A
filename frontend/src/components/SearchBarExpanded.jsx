@@ -7,7 +7,7 @@ import hotelImage from '../assets/Hotel.png';
 import placesImage from '../assets/place.png';
 import eventImage from '../assets/Event.png';
 
-const SearchBarExpanded = ({ category, setCategory, history }) => {
+const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predictions, onPredictionClick }) => {
   const [showRecent, setShowRecent] = useState(false);
 
   const categories = [
@@ -41,19 +41,38 @@ const SearchBarExpanded = ({ category, setCategory, history }) => {
         <hr />
 
         <div className="search-history">
-          {history.map((item, index) => (
-            <div key={index} className="history-item">
-              <FiClock className="history-icon" />
-              <span>{item}</span>
-            </div>
-          ))}
-          {history.length >= 5 && (
-            <div
-              className="more-history"
-              onClick={() => setShowRecent(true)}
-            >
-              More from recent history
-            </div>
+          {searchTerm.trim() === '' ? (
+            <>
+              {history.map((item, index) => (
+                <div key={index} className="history-item">
+                  <FiClock className="history-icon" />
+                  <span>{item}</span>
+                </div>
+              ))}
+              {history.length >= 5 && (
+                <div className="more-history" onClick={() => setShowRecent(true)}>
+                  More from recent history
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {predictions.length > 0 ? (
+                predictions.map((prediction) => (
+                  <div
+                    key={prediction.place_id}
+                    className="history-item prediction"
+                    onClick={() => onPredictionClick(prediction.place_id, prediction.description)}
+                  >
+                    <span>{prediction.description}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="history-item" style={{ color: '#888', fontStyle: 'italic' }}>
+                  No suggestions found
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

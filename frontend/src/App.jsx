@@ -21,6 +21,7 @@ import ViewAnalytics from './pages/ViewAnalytics.jsx';
 import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
+// import HomestayPage from './pages/HomestayPage.jsx';
 
 function App() {
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="/profile-settings" element={<ProfileSettingPage />} />
           <Route path="/bookmark" element={<BookmarkPage />} />
           <Route path="/major-town" element={<MajorTownPage />} />
+          {/* <Route path="/homestay" element={<HomestayPage />} /> */}
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />

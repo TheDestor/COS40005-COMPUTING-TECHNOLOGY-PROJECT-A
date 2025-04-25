@@ -663,6 +663,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           addDestinations={addDestinations}
           selectedVehicle={selectedVehicle}
           nearbyPlaces={nearbyPlaces}
+          selectedCategory={selectedCategory}
         />
       </Map>
     </APIProvider>
