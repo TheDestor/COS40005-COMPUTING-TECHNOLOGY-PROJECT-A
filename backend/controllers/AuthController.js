@@ -69,7 +69,7 @@ export const businessRegister = async (req, res) => {
             companyRegistrationNo: companyRegistrationNo,
             companyAddress: companyAddress,
         })
-
+        
         res.status(201).json({ message: "Business account registered successfully.", success: true });
     } catch (error) {
         console.error(error);

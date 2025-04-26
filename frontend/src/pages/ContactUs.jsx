@@ -1,7 +1,7 @@
 // ContactUs.jsx
 import React, { useState } from "react";
 import "../styles/ContactUs.css";
-import axios from "axios";
+import ky from "ky";
 import { toast } from "react-toastify";
 import MenuNavBar from "../components/MenuNavbar";
 
@@ -72,13 +72,14 @@ export default function ContactUs() {
 
     // POST api call to backend
     try {
-      const response = await axios.post(
-        "http://localhost:5050/user/contactUs",
-        submissionData,
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+      const response = await ky.post(
+        "/api/user/contactUs",
+        {
+          json: submissionData,
+        }
+      ).json();
 
-      const { success, message } = response.data;
+      const { success, message } = response;
 
       if (success) {
         handleSuccess(message);
@@ -89,10 +90,14 @@ export default function ContactUs() {
         })
         setActiveButton(null);
       } else {
-        handleError(response.data.message);
+        handleError(response.message);
       }
     } catch (error) {
-      handleError(error);
+      console.error(error.response);
+      if (error.response) {
+        const errorJson = await error.response.json();
+        handleError(errorJson.message);
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../styles/UserRegistration.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
-import axios from 'axios';
+import ky from 'ky';
 import { toast } from "react-toastify";
 
 const handleKeyDown = (e) => {
@@ -76,17 +76,14 @@ const UserRegistration = ({ onClose, onSwitchToLogin, onSwitchToBusiness }) => {
 
     // POST API call to backend for registration
     try {
-      const response = await axios.post(
-        "http://localhost:5050/auth/register",
-        userData,
+      const response = await ky.post(
+        "/api/auth/register",
         {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
+          json: userData ,
+          credentials: 'include'
         }
-      );
-      const { success, message } = response.data;
+      ).json();
+      const { success, message } = response;
       if (success) {
         handleSuccess(message);
         // Clear the form after a successful registration
@@ -99,7 +96,11 @@ const UserRegistration = ({ onClose, onSwitchToLogin, onSwitchToBusiness }) => {
         handleError(message);
       }
     } catch (error) {
-      handleError(error.response.data.message);
+      console.error(error.response);
+      if (error.response) {
+        const errorJson = await error.response.json();
+        console.error(errorJson.message);
+      }
     }
   }
 

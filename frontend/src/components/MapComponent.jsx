@@ -20,7 +20,7 @@ import mukah from '../assets/Mukah.png';
 import limbang from '../assets/Limbang.png';
 import serian from '../assets/Serian.png';
 import kotaSamarahan from '../assets/KotaSamarahan.png';
-import axios from 'axios';
+import ky from 'ky';
 
 const townCoordinates = { 
   'Kuching': { lat: 1.5535, lng: 110.3593 },
@@ -273,8 +273,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   useEffect(() => {
       const fetchLocations = async () => {
         try {
-          const response = await axios.get("http://localhost:5050/locations/");
-            const allFetchedLocations = response.data;
+          const response = await ky.get("/api/locations/").json();
+            const allFetchedLocations = response;
     
             const isValidLocation = (loc) => {
               const lat = loc.latitude;

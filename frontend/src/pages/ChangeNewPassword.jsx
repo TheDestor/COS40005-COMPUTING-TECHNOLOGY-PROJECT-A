@@ -4,7 +4,7 @@ import Switch from "react-switch";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
 import { useAuth } from "../context/AuthContext.jsx";
-import axios from "axios";
+import ky from "ky";
 
 const getPasswordStrength = (password) => {
   if (password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
@@ -53,24 +53,29 @@ const ChangeNewPassword = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5050/user/updatePassword",
-        { currentPassword, newPassword },
+      const response = await ky.post(
+        "/api/user/updatePassword",
         {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-          withCredentials: true
+          json: { currentPassword, newPassword },
+          credentials: 'include'
         }
-      );
+      ).json();
 
-      const { success, message } = response.data;
+      const { success, message } = response;
 
       if (success) {
         console.log(message);
+        handleClearForm();
       } else {
         console.log(message);
       }
     } catch (error) {
       console.error(error);
+      if (error.response) {
+        const errorJson = await error.response.json();
+        console.log(errorJson.message);
+      }
     }
   }
   
