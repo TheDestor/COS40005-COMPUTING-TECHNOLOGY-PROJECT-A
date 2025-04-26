@@ -1,11 +1,10 @@
 {
-    "builds": [
-        {
-            "src": "server.js",
-            "use": "@vercel/node"
+    "functions": {
+        "server.js": {
+
         }
-    ],
-    "rewrites: ": [
+    },
+    "rewrites": [
         {
             "src": "/api/(.*)",
             "dest": "server.js"
