@@ -7,7 +7,7 @@ import hotelImage from '../assets/Hotel.png';
 import placesImage from '../assets/place.png';
 import eventImage from '../assets/Event.png';
 
-const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predictions, onPredictionClick }) => {
+const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predictions, onPredictionClick, onHistoryClick }) => {
   const [showRecent, setShowRecent] = useState(false);
 
   const categories = [
@@ -44,7 +44,7 @@ const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predict
           {searchTerm.trim() === '' ? (
             <>
               {history.map((item, index) => (
-                <div key={index} className="history-item">
+                <div key={index} className="history-item" onClick={() => onHistoryClick(item)}>
                   <FiClock className="history-icon" />
                   <span>{item}</span>
                 </div>

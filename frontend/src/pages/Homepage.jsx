@@ -6,7 +6,7 @@ import LoginPage from './Loginpage.jsx';
 import MapComponent from '../components/MapComponent.jsx';
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MapViewMenu from '../components/MapViewMenu.jsx';
+// import MapViewMenu from '../components/MapViewMenu.jsx';
 import { APIProvider } from '@vis.gl/react-google-maps';
 
 const HomePage = () => {
@@ -20,7 +20,19 @@ const HomePage = () => {
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Major Town');
   const [selectedPlace, setSelectedPlace] = useState(null);
+  const [searchHistory, setSearchHistory] = useState(() => {
+      const stored = localStorage.getItem('searchHistory');
+      return stored ? JSON.parse(stored) : [];
+    });
   
+    useEffect(() => {
+      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+    }, [searchHistory]);
+
+  const handleSearch = (term) => {
+    if (!term.trim()) return;
+    setSearchHistory(prev => [term, ...prev.filter(item => item !== term)].slice(0, 5));
+  };
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -47,6 +59,8 @@ const HomePage = () => {
         activeOption={selectedCategory}
         onMenuChange={setSelectedCategory}
         setSelectedPlace={setSelectedPlace}
+        onSearch={handleSearch}
+        history={searchHistory}
       />
 
       <MapComponent 
@@ -68,6 +82,8 @@ const HomePage = () => {
         setDestination={setDestination}
         setAddDestinations={setAddDestinations}
         setNearbyPlaces={setNearbyPlaces}
+        onSearch={handleSearch}
+        history={searchHistory}
       />
 
       {showLogin && <LoginPage onClose={closeLogin} />}

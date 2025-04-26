@@ -19,7 +19,7 @@ const travelModes = {
   Flight: 'TRANSIT',    // flights not directly supported, fallback to TRANSIT
 };
 
-const LeftSidebar = () => {
+const LeftSidebar = ({ onSearch, history }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -333,7 +333,7 @@ const LeftSidebar = () => {
       </APIProvider>
 
       {/* Slide-in RecentSection */}
-      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
+      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} onItemClick={onSearch} />
       {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>

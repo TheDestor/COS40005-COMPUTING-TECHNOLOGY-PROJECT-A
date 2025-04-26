@@ -8,14 +8,14 @@ import ProfileDropdown from './ProfileDropdown.jsx';
 import WeatherDateTime from './WeatherDateTime.jsx'; // Imported the new component
 import '../styles/Navbar.css';
 
-const NavigationBar = ({ onLoginClick, activeOption, onMenuChange, setSelectedPlace }) => {
+const NavigationBar = ({ onLoginClick, activeOption, onMenuChange, setSelectedPlace, history, onSearch }) => {
   const [currentTown, setCurrentTown] = useState('Kuching');
   // const [activeMenuOption, setActiveMenuOption] = useState('Major Town');
 
-  const handleSearch = (query) => {
-    console.log('Searching for:', query);
-    // Implement your search functionality here
-  };
+  // const handleSearch = (query) => {
+  //   console.log('Searching for:', query);
+  //   // Implement your search functionality here
+  // };
 
   const handleMenuSelect = (option) => {
     // setActiveMenuOption(option);
@@ -29,7 +29,7 @@ const NavigationBar = ({ onLoginClick, activeOption, onMenuChange, setSelectedPl
     <div className="navbar">
       <div className="left-section">
         <div className="search-container">
-          <SearchBar onSearch={handleSearch} setSelectedPlace={setSelectedPlace} />
+          <SearchBar onSearch={onSearch} setSelectedPlace={setSelectedPlace} history={history} />
         </div>
       </div>
 
