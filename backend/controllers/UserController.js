@@ -79,11 +79,13 @@ export const updatePassword = async (req, res) => {
         const isMatch = await user.isValidPassword(currentPassword);
 
         if (!isMatch) {
+            console.log("test2");
             return res.status(401).json({ message: "Incorrect password", success: false });
         } else {
             user.password = newPassword;
             await user.save();
-
+            
+            console.log("test1");
             res.status(200).json({ message: "Password updated successfully", success: true });
         }
     } catch (error) {

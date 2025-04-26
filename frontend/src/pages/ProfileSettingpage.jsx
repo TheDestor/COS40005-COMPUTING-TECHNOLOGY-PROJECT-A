@@ -8,7 +8,7 @@ import ChangeNewPassword from './ChangeNewPassword.jsx';
 import PushNotificationPage from './PushNotificationpage.jsx';
 import PushSubscriptionPage from './PushSuscriptionpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import axios from 'axios';
+import ky from 'ky';
 
 const naCountryObject = { name: 'N/A', code: 'NA', flag: null };
 
@@ -213,25 +213,25 @@ const ProfileSettingsPage = () => {
     };
 
     try {
-      const response = await axios.post(
-        "http://localhost:5050/user/updateUserProfile",
-        updatePayload,
+      const response = await ky.post(
+        "/api/user/updateUserProfile",
         {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-          withCredentials: true
+          json: updatePayload,
+          credentials: 'include'
         }
-      );
+      ).json();
 
-      const { success, message } = response.data;
+      const { success, message } = response;
 
       if (success) {
-        if (updateUserContext && response.data) {
-          updateUserContext(response.data.updatedUser)
+        if (updateUserContext && response) {
+          updateUserContext(response.updatedUser)
         }
 
         setIsEditingProfile(false);
       } else {
-        console.log("Failed to update profile");
+        console.error(message);
       }
     } catch (error) {
       console.error("Error updating profile:", error);

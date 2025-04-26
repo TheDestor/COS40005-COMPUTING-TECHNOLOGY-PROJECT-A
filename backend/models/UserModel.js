@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { error } from "console";
 
 const keyLength = 32;
 // Password hashing function
@@ -63,7 +62,7 @@ userSchema.pre('save', async function (next) {
         const hashedPassword = await hash(this.password);
         this.password = hashedPassword;
         next();
-    } catch (Error) {
+    } catch (error) {
         next(error);
     }
 });

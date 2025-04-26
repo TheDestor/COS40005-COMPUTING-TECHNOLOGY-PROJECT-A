@@ -21,6 +21,8 @@ const contactUsSchema = new mongoose.Schema({
     category: { type: String, required: true },
     topic: { type: String, required: true },
     message: { type: String, required: true },
+    status: { type: String, required: true, default: 'Unread' }
+
 }, baseOptions);
 
 export const contactUsModel = mongoose.model('contactUs', contactUsSchema);

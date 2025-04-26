@@ -4,7 +4,7 @@ import '../styles/Searchbar.css';
 import RecentSection from "./RecentSection";
 import foodImage from '../assets/Food.png';
 import hotelImage from '../assets/Hotel.png';
-import placesImage from '../assets/place.png';
+import placesImage from '../assets/Place.png';
 import eventImage from '../assets/Event.png';
 
 const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predictions, onPredictionClick, onHistoryClick }) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import ky from "ky";
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "./AuthContext";
 
@@ -58,13 +58,13 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(true);
         try {
             // Request a new access token from the refresh endpoint
-            const response = await axios.get(
-                "http://localhost:5050/auth/refresh",
-                { withCredentials: true }
-            );
+            const response = await ky.get(
+                "/api/auth/refresh",
+                { credentials: 'include' }
+            ).json();
             // Logging
-            console.log("AuthProvider: Refresh response", response.data);
-            processToken(response.data.accessToken); // Call the helper function to set user info
+            console.log("AuthProvider: Refresh response", response);
+            processToken(response.accessToken); // Call the helper function to set user info
             console.log("AuthProvider: Refresh successful.");
         } catch (error) {
             // Log error
@@ -99,41 +99,46 @@ export const AuthProvider = ({ children }) => {
     const login = async (identifier, password) => {
         setIsLoading(true);
         try {
-            const response = await axios.post(
-                "http://localhost:5050/auth/login",
-                { identifier, password },
-                { withCredentials: true }
-            );
-            if (response.data.success) {
-                processToken(response.data.accessToken);
+            const response = await ky.post(
+                "/api/auth/login",
+                {
+                    credentials: 'include',
+                    json: {identifier, password}
+                }
+            ).json();
+            if (response.success) {
+                processToken(response.accessToken);
                 console.log("AuthProvider: Login successful.");
                 setIsLoading(false);
                 return { success: true };
             } else {
                 console.log("AuthProvider: Login failed - API success false or no token.");
                 setIsLoading(false);
-                return { success: false, message: response.data.message || "Login failed" };
+                return { success: false, message: response.message || "Login failed" };
             }
         } catch (error) {
             setIsLoading(false);
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
-            console.error("Login API error:", error.response?.data || error.message);
-            return { success: false, message: error.response?.data?.message || "An error occurred during login." };
+            console.error(error);
+            if (error.response) {
+                const errorJson = await error.response.json();
+                console.error(error);
+                return errorJson.message;
+            }
         }
     };
 
     // Logs out the user
     const logout = async () => {
         try {
-            await axios.post(
-                "http://localhost:5050/auth/logout",
-                null,
-                { withCredentials: true }
+            const response = await ky.post(
+                "/api/auth/logout",
+                { credentials: 'include' }
             )
         } catch (error) {
-            console.error("Logout API error:", error.response?.data || error.message);
+            console.error("Logout API error:", error);
         } finally {
             setAccessToken(null);
             setUser(null);

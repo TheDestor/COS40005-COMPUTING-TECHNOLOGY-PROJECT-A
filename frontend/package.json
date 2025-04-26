@@ -12,10 +12,10 @@
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.5.3",
     "@vis.gl/react-google-maps": "^1.5.2",
-    "axios": "^1.8.4",
     "d3": "^7.9.0",
     "firebase": "^11.6.0",
     "jwt-decode": "^4.0.0",
+    "ky": "^1.8.1",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

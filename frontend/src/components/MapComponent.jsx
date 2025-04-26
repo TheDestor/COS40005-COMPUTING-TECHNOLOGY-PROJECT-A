@@ -20,7 +20,7 @@ import mukah from '../assets/Mukah.png';
 import limbang from '../assets/Limbang.png';
 import serian from '../assets/Serian.png';
 import kotaSamarahan from '../assets/KotaSamarahan.png';
-import axios from 'axios';
+import ky from 'ky';
 
 const townCoordinates = { 
   'Kuching': { lat: 1.5535, lng: 110.3593 },

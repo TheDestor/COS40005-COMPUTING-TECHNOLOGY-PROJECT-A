@@ -156,7 +156,6 @@ const LoginPage = ({ onClose }) => {
     }
 
     const result = await login(identifier, password);
-
     if (result.success) {
       handleSuccess(result.message || 'Login successful!');
       setFormData({ identifier: '', password: '' });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/SystemAdminPage.css';
+import '../styles/SystemAdminpage.css';
 import {
   FaTachometerAlt,
   FaUsersCog,

@@ -3,7 +3,7 @@ import '../styles/UserRegistration.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import ky from 'ky';
 
 const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -68,16 +68,15 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     };
 
     try {
-      const response = await axios.post(
-        "http://localhost:5050/auth/businessRegister",
-        userData,
+      const response = await ky.post(
+        "/api/auth/businessRegister",
         {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true
+          json: userData,
+          credentials: 'include'
         }
-      );
-
-      const { success, message } = response.data;
+      ).json();
+      console.log(response);
+      const { success, message } = response;
       
       if (success) {
         handleSuccess(message);
@@ -90,8 +89,11 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
         handleError(message);
       }
     } catch (error) {
-      console.error(error);
-      handleError(error.response?.data?.message || "Registration failed");
+      console.error(error.response);
+      if (error.response) {
+        const errorJson = await error.response.json();
+        handleError(errorJson.message);
+      }
     }
   };
 
