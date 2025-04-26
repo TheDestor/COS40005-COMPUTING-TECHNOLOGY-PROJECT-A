@@ -1,10 +1,10 @@
 import express from "express";
-import connectDB from "./config/mongodb.js";
+import connectDB from "../config/mongodb.js";
 import cookieParser from "cookie-parser";
-import authRouter from "./routes/AuthRoutes.js";
-import userRouter from "./routes/UserRoutes.js";
-import locationRouter from "./routes/LocationRoutes.js";
-import dashboardRouter from "./routes/DashboardRoutes.js";
+import authRouter from "../routes/AuthRoutes.js";
+import userRouter from "../routes/UserRoutes.js";
+import locationRouter from "../routes/LocationRoutes.js";
+import dashboardRouter from "../routes/DashboardRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5050

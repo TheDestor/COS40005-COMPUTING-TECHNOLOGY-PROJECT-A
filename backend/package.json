@@ -4,7 +4,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "server": "nodemon --env-file=.env server.js"
+    "server": "nodemon --env-file=.env ./api/index.js"
   },
   "keywords": [],
   "author": "",
