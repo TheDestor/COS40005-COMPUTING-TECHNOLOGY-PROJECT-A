@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../styles/BackupConfigModal.css";
+import "../styles/BackupConfigmodal.css";
 
 const BackupConfigurationModal = ({ onClose, onSave }) => {
   const [frequency, setFrequency] = useState("Daily");
