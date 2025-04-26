@@ -281,8 +281,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await ky.get("/api/locations/");
-        const allFetchedLocations = response.data;
+        const response = await ky.get("/api/locations/").json();
+        const allFetchedLocations = response;
   
         const isValidLocation = (loc) => {
           const lat = loc.latitude;
