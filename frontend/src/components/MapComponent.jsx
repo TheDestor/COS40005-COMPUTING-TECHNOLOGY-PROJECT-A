@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef, ControlPosition, MapControl } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, Marker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef, ControlPosition, MapControl } from '@vis.gl/react-google-maps';
 import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import aeroplaneIcon from '../assets/aeroplane.png';
 import homestayIcon from '../assets/homestay.png';
-// import homestayIcon1 from '../assets/homestay1.png';
 import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 import townIcon from '../assets/town.png';
@@ -39,75 +39,51 @@ const townCoordinates = {
 
 const townData = {
   Kuching: {
-    population: "570,000",
     attractions: ["Sarawak Cultural Village", "Kuching Waterfront", "Bako National Park"],
-    images: [kuching, limbang, sibu],
     image: kuching
   },
   Miri: {
-    population: "350,000",
     attractions: ["Niah Caves", "Canada Hill", "Coco Cabana"],
-    images: [miri, kuching, sibu],
     image: miri
   },
   Sibu: {
-    population: "240,000",
     attractions: ["Sibu Central Market", "Bukit Aup", "Wong Nai Siong Memorial Park"],
-    images: [sibu, kuching, miri],
     image: sibu
   },
   Bintulu: {
-    population: "210,000",
     attractions: ["Tanjung Batu Beach", "Similajau National Park", "Tumbina Zoo"],
-    images: [bintulu, kuching, sibu],
     image: bintulu
   },
   Sarikei: {
-    population: "60,000",
     attractions: ["Sarikei Pineapple Statue", "Central Market", "Sebangkoi Park"],
-    images: [sarikei, kuching, sibu],
     image: sarikei
   },
   "Sri Aman": {
-    population: "55,000",
     attractions: ["Fort Alice", "Sri Aman Waterfront", "Benak Festival"],
-    images: [sriAman, kuching, sibu],
     image: sriAman
   },
   Betong: {
-    population: "48,000",
     attractions: ["Betong Town Square", "Lichok Longhouse", "Sebetan River"],
-    images: [betong, kuching, sibu],
     image: betong
   },
   Kapit: {
-    population: "66,000",
     attractions: ["Fort Sylvia", "Belaga Longhouses", "Rejang River"],
-    images: [kapit, kuching, kapit],
-    image: sibu
+    image: kapit
   },
   Mukah: {
-    population: "50,000",
     attractions: ["Kaul Festival", "Mukah Beach", "Tellian Village"],
-    images: [mukah, kuching, sibu],
     image: mukah
   },
   Limbang: {
-    population: "45,000",
     attractions: ["Limbang Museum", "Taman Tasik Bukit Mas", "Border to Brunei"],
-    images: [limbang, kuching, sibu],
     image: limbang
   },
   Serian: {
-    population: "90,000",
     attractions: ["Ranchan Waterfall", "Tebakang Market", "Tebedu Border Post"],
-    images: [serian, kuching, sibu],
     image: serian
   },
   "Kota Samarahan": {
-    population: "100,000",
     attractions: ["UNIMAS Campus", "Aiman Mall", "Samarahan Expressway Viewpoint"],
-    images: [kotaSamarahan, kuching, sibu],
     image: kotaSamarahan
   }
 };
@@ -270,70 +246,83 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     Flight: 'DRIVING',
   };
 
-  useEffect(() => {
-      const fetchLocations = async () => {
-        try {
-          const response = await ky.get("/api/locations/").json();
-            const allFetchedLocations = response;
-    
-            const isValidLocation = (loc) => {
-              const lat = loc.latitude;
-              const lng = loc.longitude;
-              return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-            };
-            const validLocations = allFetchedLocations.filter(isValidLocation);
-            const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
-    
-            if (invalidLocations.length > 0) {
-              console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
-              invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
-            } else {
-              console.log("All fetched locations have valid coordinates.");
-            }
-
-            setLocations(validLocations);
-            console.log(`Fetched ${validLocations.length} valid locations from API`);
-            }catch (error) {
-              console.error("Error fetching locations:", error);
-              setLocations([]); // Clear on error
-            }
-        };
-
-        fetchLocations();
-      }, []);
-
   // useEffect(() => {
-  //   const fetchLocations = async () => {
-  //     try {
-  //       const response = await axios.get("http://localhost:5050/locations/");
-  //       const allFetchedLocations = response.data;
-  
-  //       const isValidLocation = (loc) => {
-  //         const lat = loc.latitude;
-  //         const lng = loc.longitude;
-  //         return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-  //       };
-  
-  //       const validLocations = allFetchedLocations.filter(isValidLocation);
-  //       const filteredByType = validLocations.filter(loc => loc.type === selectedCategory);
-  
-  //       console.log(`Fetched ${filteredByType.length} ${selectedCategory} locations`);
-  //       filteredByType.forEach((loc, i) => {
-  //         console.log(`Location ${i}:`, loc);
-  //       });
-  //       console.log('Filtered down to:', filteredByType);
+  //     const fetchLocations = async () => {
+  //       try {
+  //         const response = await axios.get("http://localhost:5050/locations/");
+  //           const allFetchedLocations = response.data;
+    
+  //           const isValidLocation = (loc) => {
+  //             const lat = loc.latitude;
+  //             const lng = loc.longitude;
+  //             return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
+  //           };
+  //           const validLocations = allFetchedLocations.filter(isValidLocation);
+  //           const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
+    
+  //           if (invalidLocations.length > 0) {
+  //             console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
+  //             invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
+  //           } else {
+  //             console.log("All fetched locations have valid coordinates.");
+  //           }
 
-        
-  //       setLocations(filteredByType);
-  //     } catch (error) {
-  //       console.error("Error fetching locations:", error);
-  //       setLocations([]);
-  //     }
-  //   };
+  //           setLocations(validLocations);
+  //           console.log(`Fetched ${validLocations.length} valid locations from API`);
+  //           }catch (error) {
+  //             console.error("Error fetching locations:", error);
+  //             setLocations([]); // Clear on error
+  //           }
+  //       };
+
+  //       fetchLocations();
+  //     }, []);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await axios.get("http://localhost:5050/locations/");
+        const allFetchedLocations = response.data;
   
-  //   fetchLocations();
-  // }, [selectedCategory]);
+        const isValidLocation = (loc) => {
+          const lat = loc.latitude;
+          const lng = loc.longitude;
+          return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
+        };
   
+        const validLocations = allFetchedLocations.filter(isValidLocation);
+        const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
+  
+        if (invalidLocations.length > 0) {
+          console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
+          invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
+        } else {
+          console.log("All fetched locations have valid coordinates.");
+        }
+  
+        // ✅ Filter locations by selectedCategory
+        const filteredLocations = selectedCategory
+        ? validLocations.filter((loc) => loc.type.toLowerCase() === selectedCategory.toLowerCase())
+        : validLocations;
+  
+        console.log(`Fetched ${filteredLocations.length} ${selectedCategory || 'All'} locations from API`);
+        console.log('locations', filteredLocations);
+
+        setLocations(filteredLocations);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        setLocations([]); // Clear on error
+      }
+    };
+  
+    fetchLocations();
+  }, [selectedCategory]); 
+
+  useEffect(() => {
+    console.log('Updated locations:', locations);
+  }, [locations]);  
+  
+
   const getPlaceType = (types) => {
     if (types?.includes('airport')) return "Airport";
     if (types?.includes('lodging')) return "Homestay";
@@ -353,31 +342,16 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     const [markerRef, marker] = useAdvancedMarkerRef();
     const [infoWindowShown, setInfoWindowShown] = useState(false);
   
-    const handleToggle = () => setInfoWindowShown(prev => !prev);
+    const handleOpen = () => setInfoWindowShown(true);
     const handleClose = () => setInfoWindowShown(false);
-
-    const [currentImgIdx, setCurrentImgIdx] = useState(0);
-
-    useEffect(() => {
-      if (!infoWindowShown || !townInfo?.images?.length) return;
-
-      const interval = setInterval(() => {
-        setCurrentImgIdx(prev => (prev + 1) % townInfo.images.length);
-      }, 1500); // 1.5s per image
-
-      return () => clearInterval(interval);
-    }, [infoWindowShown, townInfo]);
-  
-    const externalLink = `https://www.google.com/search?q=${encodeURIComponent(
-      townName + " Sarawak attractions"
-    )}`;
   
     return (
       <>
         <AdvancedMarker
           ref={markerRef}
           position={position}
-          onClick={handleToggle}
+          onClick={handleOpen}
+          onMouseOut={handleClose}
           title={townName}
         >
           <img
@@ -405,27 +379,20 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               borderRadius: "14px",
               overflow: "hidden",
               fontFamily: "'Segoe UI', sans-serif",
-              backgroundColor: "#fff"
+              backgroundColor: "#fff",
             }}
           >
-            {/* Carousel Section */}
-            <div style={{ position: "relative", width: "100%", height: "160px", overflow: "hidden" }}>
-              {townInfo.images.map((src, idx) => (
-                <img
-                  key={idx}
-                  src={src}
-                  alt={`${townName} image ${idx + 1}`}
-                  style={{
-                    display: idx === currentImgIdx ? "block" : "none",
-                    width: "300px",
-                    height: "200px",
-                    objectFit: "cover",
-                    transition: "opacity 0.6s ease-in-out",
-                    paddingLeft: "10px",
-                    paddingRight: "16px",
-                  }}
-                />
-              ))}
+            <div style={{ position: "relative", width: "100%", height: "160px", overflow: "hidden", padding:"0px 15px 0px 2px" }}>
+              <img
+                src={townInfo?.image}
+                alt={townName}
+                style={{
+                  width: "250px",
+                  height: "150px",
+                  objectFit: "cover",
+                  borderRadius: "10px"
+                }}
+              />
             </div>
         
             {/* Text Content */}
@@ -443,20 +410,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 <FaMapMarkerAlt color="#e74c3c" />
                 {townName}
               </h3>
-        
-              <p
-                style={{
-                  margin: "6px 0",
-                  fontSize: "14px",
-                  color: "#555",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                <FaUsers color="#3498db" />
-                Population: <strong>{townInfo.population}</strong>
-              </p>
         
               <p style={{ fontWeight: "600", marginTop: "10px", marginBottom: "6px" }}>
                 Top Attractions:
@@ -497,10 +450,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                   justifyContent: "flex-end"
                 }}
               >
-                <a
-                  href={externalLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to={'/major-town'}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -516,13 +467,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                     transition: "background 0.3s ease"
                   }}
                   onMouseOver={e => (e.currentTarget.style.background = "#1c6ea4")}
-                  onMouseOut={e =>
-                    (e.currentTarget.style.background =
-                      "linear-gradient(to right, #3498db, #2980b9)")
-                  }
+                  onMouseOut={e => (e.currentTarget.style.background = "linear-gradient(to right, #3498db, #2980b9)")}
                 >
                   Learn More <FaExternalLinkAlt size={12} />
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -531,25 +479,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
       </>
     );
   };
-  
-  // const [markerComponents, setMarkerComponents] = useState([]);
-  // useEffect(() => {
-  //   const markers = locations.map(loc => {
-  //     const lat = Number(loc.lat ?? loc.latitude);
-  //     const lng = Number(loc.lng ?? loc.longitude);
-  //     const normalizedType = normalizeType(loc.type);
-  //     const iconUrl = categoryIcons[normalizedType];
-
-  //     return (
-  //       <AdvancedMarker
-  //         key={loc._id}
-  //         position={{ lat, lng }}
-  //         title={loc.name}
-  //       >
-  //         <img src={iconUrl} alt={loc.type || 'Marker'} style={{ width: '30px', height: 'auto' }} />
-  //       </AdvancedMarker>
-  //     );
-  //   });
   
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI' libraries={['places']}>
@@ -569,21 +498,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
       >
-      {/* Render markers ONLY for the filtered locations */}
-      {/* {locations.map((loc, i) => {
-        console.log("Rendering marker for:", loc.name, loc.latitude, loc.longitude);
-        console.log("Icon URL:", categoryIcons[loc.type] || townIcon);
-        return (
-          <AdvancedMarker
-            key={loc._id || i}
-            position={{ lat: loc.latitude, lng: loc.longitude }}
-            title={loc.name}
-          >
-            <img src={categoryIcons[loc.type] || townIcon} alt={loc.type} style={{ width: '30px', height: '30px'}} />
-          </AdvancedMarker>
-        );
-      })} */}
-      {locations.map((loc) => (
+        
+      {/* {locations.map((loc) => (
         <AdvancedMarker
           key={loc.id}
           position={{ lat: loc.latitude, lng: loc.longitude }}
@@ -591,18 +507,38 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         >
           <img src={categoryIcons[loc.type] || townIcon} alt={loc.type} style={{ width: '30px', height: '30px'}} />
         </AdvancedMarker>
-      ))};
+      ))}; */}
+
+      {/* Locations based on type (render issue) */}
+      {locations.map((loc) => (
+        <AdvancedMarker
+          key={loc.id}
+          position={{ lat: loc.latitude, lng: loc.longitude }}
+          title={loc.name}
+        >
+          {/* <img 
+            src={categoryIcons[loc.type] || townIcon} 
+            alt={loc.type} 
+            style={{ width: '30px', height: '30px' }} 
+          /> */}
+        </AdvancedMarker>
+      ))}
 
 
       {/* Temporary markers for major towns */}
-      {Object.entries(townCoordinates).map(([townName, coords]) => (
-        <MarkerWithInfoWindow
-          key={townName}
-          position={coords}
-          townName={townName}
-          townInfo={townData[townName]}
-        />
-      ))}
+      {Object.entries(townCoordinates).map(([townName, coords]) => {
+        const info = townData[townName];
+        if (!info) return null; // skip if no town info
+
+        return (
+          <MarkerWithInfoWindow
+            key={townName}
+            position={coords}
+            townName={townName}
+            townInfo={info}
+          />
+        );
+      })}
 
       {/* {selectedPlace && selectedPlace.geometry?.location && (
         <AdvancedMarker

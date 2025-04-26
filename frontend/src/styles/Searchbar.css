@@ -203,23 +203,21 @@
 
 /* Override Google Places Autocomplete dropdown */
 .pac-container {
-  background-color: #ede9f0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  font-family: 'Segoe UI', sans-serif;
-  z-index: 10000 !important; /* must be higher than your navbar/z-index */
+  background-color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2) !important;
+  font-family: 'Poppins', sans-serif !important;
+  z-index: 9999 !important; /* make sure it's on top */
 }
 
 .pac-item {
-  padding: 10px;
-  font-size: 14px;
-  color: #333;
-  border-radius: 10px;
-  transition: background-color 0.2s ease;
+  padding: 10px 20px !important;
+  font-size: 16px !important;
+  color: #333 !important;
 }
 
 .pac-item:hover {
-  background-color: #c0f1ff;
+  background-color: #f0f0f0 !important;
 }
 
 .pac-item-query {
