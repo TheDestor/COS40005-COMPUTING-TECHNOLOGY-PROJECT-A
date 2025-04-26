@@ -1,9 +1,0 @@
-{
-    "rewrites": [
-        {
-            "source": "/api/(.*)",
-            "destination": "backend/server.js"
-        }
-    ],
-    "buildCommand": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend"
-}
