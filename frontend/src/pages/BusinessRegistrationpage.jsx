@@ -104,7 +104,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
 
         <div className="registration-right">
           <div className="tabs2">
-            <span className="inactive-tab2" onClick={onSwitchToUser}>User registration</span>
+            <span className="inactive-tab2" onClick={ onSwitchToUser }>User registration</span>
             <span className="active-tab">Business registration</span>
             <span className="close-btn2" onClick={onClose}>&times;</span>
           </div>

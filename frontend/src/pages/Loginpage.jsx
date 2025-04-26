@@ -298,6 +298,10 @@ const LoginPage = ({ onClose }) => {
             <BusinessRegistrationpage
               onClose={() => setShowBusinessRegister(false)}
               onSwitchToLogin={() => setShowBusinessRegister(false)}
+              onSwitchToUser={() => {
+                setShowUserRegister(true);
+                setShowBusinessRegister(false);
+              }}
             />
           )}
         </div>

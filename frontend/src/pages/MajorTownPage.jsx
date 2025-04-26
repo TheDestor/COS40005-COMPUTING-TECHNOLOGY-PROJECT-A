@@ -1,40 +1,139 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/MajorTownPage.css';
+import defaultImage from '../assets/Kuching.png';
 import kuchingImg from '../assets/Kuching.png';
-import kotaSamarahanImg from '../assets/KotaSamarahan.png';
-import serianImg from '../assets/Serian.png';
-import sriAmanImg from '../assets/SriAman.png';
-import betongImg from '../assets/Betong.png';
-import sarikeiImg from '../assets/Sarikei.png';
-import sibuImg from '../assets/Sibu.png';
-import kapitImg from '../assets/Kapit.png';
-import mukahImg from '../assets/Mukah.png';
 import bintuluImg from '../assets/Bintulu.png';
 import miriImg from '../assets/Miri.png';
 import limbangImg from '../assets/Limbang.png';
+import kapitImg from '../assets/Kapit.png';
+import sibuImg from '../assets/Sibu.png';
+
+// Import category images
+const categoryImages = {
+  'Kuching': kuchingImg,
+  'Bintulu': bintuluImg,
+  'Miri': miriImg,
+  'Limbang': limbangImg,
+  'Kapit': kapitImg,
+  'Sibu': sibuImg,
+};
 
 const MajorTownPage = () => {
+  const { category } = useParams();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-    
-  const handleLoginClick = () => {
-    setShowLogin(true);
-  };
-
-  const closeLogin = () => {
-    setShowLogin(false);
-  };
-
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const endpoint = getEndpointByCategory(category);
+        const response = await fetch(`${"http://localhost:5050/locations/"}/${endpoint}`);
+        
+        if (!response.ok) { // Check for HTTP errors
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        const processedData = processData(result, category);
+        setData(processedData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setData([]); // Ensure data is reset on error
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, [category]);
+
+  const getEndpointByCategory = (currentCategory) => {
+    const endpoints = {
+      'major-towns': '',
+      'homestays': 'homestays',
+      'museums': 'attractions?type=museum',
+      'national-parks': 'attractions?type=national-park',
+      'airports': 'attractions?type=airport',
+      'seaports': 'attractions?type=seaport',
+      'accommodations': 'attractions?type=homestay',
+      // Add more categories as needed
+    };
+    return endpoints[currentCategory] || '';
+  };
+
+  const processData = (rawData, currentCategory) => {
+    switch(currentCategory) {
+      case 'major-towns':
+        return processDivisions(rawData);
+      case 'homestays':
+        return processHomestays(rawData);
+      case 'museums':
+      case 'national-parks':
+      case 'airports':
+      case 'seaports':
+      case 'accommodations':
+        return processAttractions(rawData, currentCategory);
+      default:
+        return rawData;
+    }
+  };
+
+  const processDivisions = (divisions) => {
+    return (divisions || []).map(division => ({
+      name: division?.name || 'Unknown Division',
+      slug: division?.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+      desc: `Explore ${division?.name || 'this division'}'s unique culture`,
+      image: categoryImages[division?.name] || defaultImage
+    }));
+  };
+
+  const processHomestays = (homestays) => {
+    return (homestays || []).map(homestay => ({
+      name: homestay?.Name,
+      slug: (homestay?.Name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown'),
+      desc: `Experience life at ${homestay?.Name || 'this homestay'}`,
+      image: defaultImage,
+      location: {
+        lat: homestay?.Latitude || 0,
+        lng: homestay?.Longitude || 0
+      }
+    }));
+  };
+
+  const processAttractions = (attractions, type) => {
+    const typeMap = {
+      'museums': 'Museum',
+      'national-parks': 'National Park',
+      'airports': 'Airport',
+      'seaports': 'Seaport',
+      'accommodations': 'Homestay'
+    };
+    
+    return (attractions || [])
+      .filter(attr => attr?.Type === typeMap[type])
+      .map(attr => ({
+        name: attr?.Name || 'Unknown Attraction',
+        slug: (attr?.Name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown'),
+        desc: `${attr?.Type || 'Attraction'} in ${attr?.Division || 'Sarawak'}`,
+        image: defaultImage,
+        category: attr?.Category || 'General'
+      }));
+  };
+
+  const handleLoginClick = () => setShowLogin(true);
+  const closeLogin = () => setShowLogin(false);
+
   const handleSortToggle = () => {
-    setSortOrder(prevOrder => {
-      if (prevOrder === 'default') return 'asc';
-      if (prevOrder === 'asc') return 'desc';
+    setSortOrder(prev => {
+      if (prev === 'default') return 'asc';
+      if (prev === 'asc') return 'desc';
       return 'default';
     });
   };
@@ -52,32 +151,28 @@ const MajorTownPage = () => {
         {name.substring(index + searchQuery.length)}
       </>
     );
-  };  
+  };
 
-  const places = [
-    { name: "Kuching", slug: "kuching", desc: "Sarawak’s capital city, known for its culture, food, and waterfront.", image: kuchingImg },
-    { name: "Kota Samarahan", slug: "kota-samarahan", desc: "A growing education and medical hub near Kuching.", image: kotaSamarahanImg },
-    { name: "Serian", slug: "serian", desc: "Famous for its markets, hills, and Bidayuh culture.", image: serianImg },
-    { name: "Sri Aman", slug: "sri-aman", desc: "Known for the Tidal Bore Festival and Batang Lupar River.", image: sriAmanImg },
-    { name: "Betong", slug: "betong", desc: "A peaceful rural town with rich Iban heritage.", image: betongImg },
-    { name: "Sarikei", slug: "sarikei", desc: "Renowned for its agriculture, especially pineapples and pepper.", image: sarikeiImg },
-    { name: "Sibu", slug: "sibu", desc: "A bustling riverine town rich in Chinese and Iban culture.", image: sibuImg },
-    { name: "Kapit", slug: "kapit", desc: "Located upriver on the Rajang, known for longhouses and rapids.", image: kapitImg },
-    { name: "Mukah", slug: "mukah", desc: "Cultural heartland of the Melanau people by the sea.", image: mukahImg },
-    { name: "Bintulu", slug: "bintulu", desc: "An industrial town famous for natural gas and beaches.", image: bintuluImg },
-    { name: "Miri", slug: "miri", desc: "A resort city and gateway to national parks and caves.", image: miriImg },
-    { name: "Limbang", slug: "limbang", desc: "Border town between Brunei, rich in culture and nature.", image: limbangImg }
-  ];
+  const filteredData = [...data]
+  .filter(item =>
+    item?.name?.toLowerCase()?.includes(searchQuery.toLowerCase() ?? '')
+  ) // Added missing closing parenthesis
+  .sort((a, b) => {
+    if (sortOrder === 'asc') return a.name?.localeCompare(b.name);
+    if (sortOrder === 'desc') return b.name?.localeCompare(a.name);
+    return 0;
+  });
 
-  const filteredPlaces = [...places]
-    .filter(place =>
-      place.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const formattedCategory = category?.replace(/-/g, ' ') || '';
+
+  if (loading) {
+    return (
+      <div className="loading-spinner">
+        <div className="spinner"></div>
+        <p>Loading {formattedCategory || 'content'}...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="category-page">
@@ -85,8 +180,8 @@ const MajorTownPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>Metaverse Trails 2.0</h1>
-          <p>Navigating Sarawak Tourism Destination Sustainably</p>
+          <h1>{formattedCategory.toUpperCase()}</h1>
+          <p>Exploring {formattedCategory} in Sarawak</p>
         </div>
       </div>
 
@@ -95,7 +190,7 @@ const MajorTownPage = () => {
           <div className="search-bar">
             <input
               type="text"
-              placeholder="Search Major Town..."
+              placeholder={`Search ${formattedCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -113,41 +208,35 @@ const MajorTownPage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredPlaces.map((place, index) => {
-          const lineNumber = Math.floor(index / 4);
-          const positionInLine = index % 4;
-          const isTall = lineNumber % 2 === 0 
-            ? positionInLine % 2 === 0 
-            : positionInLine % 2 !== 0;
-
-          return (
-            <div 
-              className="card-wrapper" 
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${isTall ? 'tall-card' : 'short-card'}`}>
-                <img src={place.image} alt={place.name} />
-                <div className="card-content">
-                <h3>{highlightMatch(place.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{place.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link to={`/details/${place.slug}`} className="explore-btn">
-                      Explore
-                    </Link>
-                  </div>
+        {filteredData.map((item, index) => (
+          <div 
+            className="card-wrapper" 
+            key={index}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+              <img src={item.image} alt={item.name} />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link 
+                    to={`/details/${category}/${item.slug}`} 
+                    className="explore-btn"
+                  >
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
-      
-      {showLogin && <LoginPage onClose={closeLogin} />}
 
+      {showLogin && <LoginPage onClose={closeLogin} />}
       <Footer />
     </div>
   );

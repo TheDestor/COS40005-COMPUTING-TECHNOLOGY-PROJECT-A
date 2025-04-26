@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort, FaBookmark, FaLayerGroup } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
-// import BusinessSection from './BusinessSection';
 import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
@@ -104,31 +103,74 @@ const LeftSidebar = ({ onSearch, history }) => {
     });
   };
 
+  // const handleVehicleClick = async (vehicle) => {
+  //   if (!startingPoint.trim() || !destination.trim()) {
+  //     alert('You need to fill in your starting point and destination first');
+  //     return;
+  //   }
+  //   setSelectedVehicle(vehicle);
+
+  //   if (vehicle === 'Flight' && isLocalDestination) {
+  //     alert('Flight mode is not available for local destinations');
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setSelectedVehicle(vehicle);
+
+  //   try {
+  //     const directionsService = new window.google.maps.DirectionsService();
+  //     const response = await directionsService.route({
+  //       origin: startingPoint,
+  //       destination: destination,
+  //       // addDestinations: addDestinations,
+  //       travelMode: travelModes[vehicle],
+  //       provideRouteAlternatives: true,
+  //     });
+      
+  //     setRoutes(response.routes);
+  //     setSelectedRouteIndex(0);
+  //   } catch (error) {
+  //     console.error('Error fetching directions:', error);
+  //     alert('Failed to get directions. Please check your inputs and try again.');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleVehicleClick = async (vehicle) => {
     if (!startingPoint.trim() || !destination.trim()) {
       alert('You need to fill in your starting point and destination first');
       return;
     }
-    setSelectedVehicle(vehicle);
-
-    if (vehicle === 'Flight' && isLocalDestination) {
-      alert('Flight mode is not available for local destinations');
+  
+    // ✨ Validate both start and end are Malaysia
+    const isStartMalaysia = await validateLocationIsInMalaysia(startingPoint);
+    const isDestMalaysia = await validateLocationIsInMalaysia(destination);
+  
+    if (!isStartMalaysia || !isDestMalaysia) {
+      alert('Starting point and destination must be inside Malaysia.');
       return;
     }
-
-    setIsLoading(true);
+  
     setSelectedVehicle(vehicle);
-
+  
+    if (vehicle === 'Flight') {
+      alert('Flight mode is not supported for local (Malaysia) travel.');
+      return;
+    }
+  
+    setIsLoading(true);
+  
     try {
       const directionsService = new window.google.maps.DirectionsService();
       const response = await directionsService.route({
         origin: startingPoint,
         destination: destination,
-        // addDestinations: addDestinations,
         travelMode: travelModes[vehicle],
         provideRouteAlternatives: true,
       });
-      
+  
       setRoutes(response.routes);
       setSelectedRouteIndex(0);
     } catch (error) {
@@ -138,7 +180,7 @@ const LeftSidebar = ({ onSearch, history }) => {
       setIsLoading(false);
     }
   };
-
+  
   const toggleRecentHistory = () => {
     // If Sidebar is open, close it before opening Recent
     if (isExpanded) setIsExpanded(false);
@@ -161,16 +203,68 @@ const LeftSidebar = ({ onSearch, history }) => {
     setShowBookmarkpage((prev) => !prev);
   }
 
-  // const handleSubmit = () => {
-  //   if (!startingPoint.trim() || !destination.trim()) {
-  //     alert('Please fill in both starting point and destination!');
-  //     return;
-  //   }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        clearInterval(interval);
   
-  //   console.log('Starting Point:', startingPoint);
-  //   console.log('Destination:', destination);
-  //   // Add any action here — API call, direction logic, etc.
-  // };
+        const inputStartingPoint = document.querySelector('input[placeholder="Choosing Starting point"]');
+        const inputDestination = document.querySelector('input[placeholder="Choosing Destination"]');
+      
+        if (inputStartingPoint) {
+          const autocompleteStart = new window.google.maps.places.Autocomplete(inputStartingPoint, {
+            componentRestrictions: { country: 'MY' },
+            fields: ['place_id', 'geometry', 'formatted_address'],
+          });
+      
+          autocompleteStart.addListener('place_changed', () => {
+            const place = autocompleteStart.getPlace();
+            if (place.formatted_address) {
+              setStartingPoint(place.formatted_address);
+            }
+          });
+        }
+      
+        if (inputDestination) {
+          const autocompleteDest = new window.google.maps.places.Autocomplete(inputDestination, {
+            componentRestrictions: { country: 'MY' },
+            fields: ['place_id', 'geometry', 'formatted_address'],
+          });
+      
+          autocompleteDest.addListener('place_changed', () => {
+            const place = autocompleteDest.getPlace();
+            if (place.formatted_address) {
+              setDestination(place.formatted_address);
+            }
+          });
+        }
+      }
+    }, 500); // check every 500ms
+  
+    return () => clearInterval(interval);
+  }, []);
+  
+
+  const validateLocationIsInMalaysia = async (address) => {
+    const geocoder = new window.google.maps.Geocoder();
+    return new Promise((resolve) => {
+      geocoder.geocode({ address }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const countryComponent = results[0].address_components.find(component => 
+            component.types.includes('country')
+          );
+          if (countryComponent && countryComponent.short_name === 'MY') {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        } else {
+          resolve(false);
+        }
+      });
+    });
+  };
+  
 
   return (
     <>
@@ -264,7 +358,7 @@ const LeftSidebar = ({ onSearch, history }) => {
           ))}
 
           {/* Additional Destinations Button*/}
-          <button onClick={handleAddDestination}>
+          <button className="add-destination" onClick={handleAddDestination}>
             ➕ Add Destination
           </button>
 
