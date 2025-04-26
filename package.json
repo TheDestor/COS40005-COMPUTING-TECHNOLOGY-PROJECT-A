@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "d3": "^7.9.0",
+    "ky": "^1.8.1",
+    "topojson-client": "^3.1.0"
+  }
+}
