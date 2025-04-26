@@ -1,8 +1,8 @@
 {
     "rewrites": [
         {
-            "source": "/api/(.*)",
-            "destination": "backend/server.js"
+            "source": "/api/:path*",
+            "destination": "https://metaversetrails20backend.vercel.app/:path*"
         }
     ]
 }
