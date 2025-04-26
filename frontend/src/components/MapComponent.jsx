@@ -281,7 +281,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get("http://localhost:5050/locations/");
+        const response = await ky.get("/api/locations/");
         const allFetchedLocations = response.data;
   
         const isValidLocation = (loc) => {
