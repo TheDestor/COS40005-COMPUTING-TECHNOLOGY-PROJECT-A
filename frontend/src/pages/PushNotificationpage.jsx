@@ -3,7 +3,7 @@ import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "../styles/PushNotificationPage.css";
+import "../styles/PushNotificationpage.css";
 
 const PushNotificationPage = () => {
   const [notifications, setNotifications] = useState({
