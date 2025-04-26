@@ -1,7 +1,7 @@
 {
     "rewrites": [
         {
-            "source": "/api/(.*)",
+            "source": "https://metaversetrails20frontend.vercel.app/api/(.*)",
             "destination": "server.js"
         }
     ]
