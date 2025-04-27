@@ -239,12 +239,20 @@
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
+  margin-top: 1.5rem;
 }
 
 .login-button:hover {
   background-color: #0056b3;
   transform: scale(1.02);
 }
+
+.login-button:disabled {
+  background-color: #d3d3d3; /* Light grey background for disabled state */
+  color: #888888; /* Grey text for disabled state */
+  cursor: not-allowed; /* Change cursor to not-allowed */
+}
+
 
 /* ============================
    9. BOTTOM LINKS

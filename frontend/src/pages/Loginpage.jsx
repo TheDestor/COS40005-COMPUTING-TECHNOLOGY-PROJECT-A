@@ -8,6 +8,7 @@ import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import ReCAPTCHA from "react-google-recaptcha";
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 // import { auth } from '../firebaseConfig.js';
@@ -242,7 +243,9 @@ const LoginPage = ({ onClose }) => {
               </div>
             )}
 
-            <div className="captcha-section">
+            <ReCAPTCHA sitekey="6LfCWiYrAAAAAO8XpIB9MNNt56rK7eNgShDxDcTR" onChange={(e) => setIsRobotChecked(e ? true : false)} />
+
+            {/* <div className="captcha-section">
               <label className="captcha-item">
                 <input
                   type="checkbox"
@@ -252,13 +255,13 @@ const LoginPage = ({ onClose }) => {
                 />
                 <span className="kal-label">I'm not a robot</span>
               </label>
-            </div>
+            </div> */}
 
-            <button type="submit" className="login-button">
+            <button type="submit" className="login-button" disabled={!isRobotChecked}>
               Login
             </button>
 
-            <div id="recaptcha-container"></div>
+            {/* <div id="recaptcha-container"></div> */}
           </form>
 
           {activeTab === 'otp' ? (

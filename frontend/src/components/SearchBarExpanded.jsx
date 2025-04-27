@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FiClock } from 'react-icons/fi';
 import '../styles/Searchbar.css';
-import RecentSection from "./RecentSection";
+import RecentSection from './RecentSection';
 import foodImage from '../assets/Food.png';
 import hotelImage from '../assets/Hotel.png';
 import placesImage from '../assets/Place.png';
@@ -17,6 +17,16 @@ const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predict
     { name: 'Event', image: eventImage, bgColor: '#FFCDD2' },
   ];
 
+  const handleCategoryClick = (catName) => {
+    if (category === catName) {
+      // If the clicked category is already selected, unselect it
+      setCategory('');
+    } else {
+      // Otherwise, set the selected category
+      setCategory(catName);
+    }
+  };
+
   return (
     <>
       <div className="searchbar-expanded">
@@ -28,7 +38,7 @@ const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predict
               style={{
                 backgroundColor: category === cat.name ? cat.bgColor : '#f0f0f0',
               }}
-              onClick={() => setCategory(cat.name)}
+              onClick={() => handleCategoryClick(cat.name)}
             >
               <div className="category-icon">
                 <img src={cat.image} alt={cat.name} className="category-image" />
@@ -43,7 +53,7 @@ const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predict
         <div className="search-history">
           {searchTerm.trim() === '' ? (
             <>
-              {history.map((item, index) => (
+              {history.slice(0,5).map((item, index) => (
                 <div key={index} className="history-item" onClick={() => onHistoryClick(item)}>
                   <FiClock className="history-icon" />
                   <span>{item}</span>
@@ -78,7 +88,7 @@ const SearchBarExpanded = ({ category, setCategory, history, searchTerm, predict
       </div>
 
       {/* Slide-in RecentSection */}
-      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} />
+      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} />
     </>
   );
 };

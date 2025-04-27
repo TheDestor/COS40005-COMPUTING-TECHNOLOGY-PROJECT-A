@@ -31,7 +31,7 @@ const HomePage = () => {
 
   const handleSearch = (term) => {
     if (!term.trim()) return;
-    setSearchHistory(prev => [term, ...prev.filter(item => item !== term)].slice(0, 5));
+    setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
   };
 
   // Show bookmark if state passed from navigation

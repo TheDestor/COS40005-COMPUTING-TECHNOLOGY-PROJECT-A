@@ -60,11 +60,6 @@ const SearchBar = ({ setSelectedPlace, onSearch, history }) => {
     if (!term.trim()) return;
     onSearch(term); // Use parent's handler
     setSearchTerm('');
-
-    setSearchHistory((prevHistory) => {
-      const updated = [term, ...prevHistory.filter((t) => t !== term)];
-      return updated.slice(0, 10); // Limit to last 10
-    });
   };
 
   const handleClear = () => setSearchTerm('');
@@ -79,6 +74,36 @@ const SearchBar = ({ setSelectedPlace, onSearch, history }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Speech Recognition Setup
+  const handleMicClick = () => {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      alert('Speech recognition not supported in your browser.');
+      return;
+    }
+
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US'; // Set the language (you can change this if needed)
+    recognition.continuous = false; // Single result mode
+    recognition.interimResults = false; // Do not show interim results
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setSearchTerm(transcript);
+      handleSearch(transcript); // Optionally trigger search on result
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error', event);
+      alert('Sorry, there was an error with the microphone.');
+    };
+
+    recognition.onend = () => {
+      console.log('Speech recognition ended');
+    };
+  };
 
   return (
     <div ref={ref} className={`searchbar-wrapper ${isExpanded ? 'expanded' : ''}`}>
@@ -99,7 +124,7 @@ const SearchBar = ({ setSelectedPlace, onSearch, history }) => {
             <>
               {searchTerm && <FiX className="icon-button" onClick={handleClear} />}
               {searchTerm && <div className="divider2" />}
-              <FiMic className="icon-button" />
+              <FiMic className="icon-button" onClick={handleMicClick} />
             </>
           )}
         <FiSearch className="icon-button" onClick={() => handleSearch(searchTerm)} />

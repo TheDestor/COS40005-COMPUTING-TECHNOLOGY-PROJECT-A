@@ -26,11 +26,11 @@ const MenuNavbar = ({ onLoginClick }) => {
 
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
-    { name: 'Major Town', icon: <FaLocationDot />, path: '/major-town' },
-    { name: 'Homestay', icon: <FaBed />, path: '/Homestay' },
-    { name: 'Museum', icon: <FaUniversity />, path: '/museum' },
-    { name: 'National Park', icon: <FaMountain />, path: '/national-park' },
-    { name: 'Airport', icon: <FaPlaneDeparture />, path: '/airport' },
+    { name: 'Major Town', icon: <FaLocationDot />, path: 'major-town' },
+    { name: 'Homestay', icon: <FaBed />, path: '/category/homestay' },
+    { name: 'Museum', icon: <FaUniversity />, path: '/category/museum' },
+    { name: 'National Park', icon: <FaMountain />, path: '/category/national-park' },
+    { name: 'Airport', icon: <FaPlaneDeparture />, path: '/category/airport' },
     { name: 'Beach', icon: <FaUmbrellaBeach />, path: '/beach' },
     { name: 'Hospital', icon: <FaHospital />, path: '/hospital' },
     { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }

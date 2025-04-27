@@ -29,12 +29,13 @@ const MajorTownPage = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
+  const [visibleItems, setVisibleItems] = useState(12);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const endpoint = getEndpointByCategory(category);
-        const response = await fetch(`${"http://localhost:5050/locations/"}/${endpoint}`);
+        const response = await fetch(`${"/api/locations/"}/${endpoint}`);
         
         if (!response.ok) { // Check for HTTP errors
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -54,9 +55,13 @@ const MajorTownPage = () => {
     fetchData();
   }, [category]);
 
+  useEffect(() => {
+    setVisibleItems(12);
+  }, [category, searchQuery, sortOrder]);
+
   const getEndpointByCategory = (currentCategory) => {
     const endpoints = {
-      'major-towns': '',
+      'major-towns': 'divisions',
       'homestays': 'homestays',
       'museums': 'attractions?type=museum',
       'national-parks': 'attractions?type=national-park',
@@ -86,10 +91,15 @@ const MajorTownPage = () => {
   };
 
   const processDivisions = (divisions) => {
-    return (divisions || []).map(division => ({
+    if (!Array.isArray(divisions)) {
+      console.error('Invalid divisions data:', divisions);
+      return [];
+    }
+    
+    return divisions.map(division => ({
       name: division?.name || 'Unknown Division',
       slug: division?.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      desc: `Explore ${division?.name || 'this division'}'s unique culture`,
+      desc: division?.description || `Explore ${division?.name}'s unique culture`,
       image: categoryImages[division?.name] || defaultImage
     }));
   };
@@ -208,33 +218,52 @@ const MajorTownPage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredData.map((item, index) => (
-          <div 
-            className="card-wrapper" 
-            key={index}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img src={item.image} alt={item.name} />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
-                <div className="desc-scroll">
-                  <p>{item.desc}</p>
-                </div>
-                <div className="button-container">
-                  <Link 
-                    to={`/details/${category}/${item.slug}`} 
-                    className="explore-btn"
-                  >
-                    Explore
-                  </Link>
+        {filteredData
+          .slice(0, visibleItems)
+          .map((item, index) => (
+            <div 
+              className="card-wrapper" 
+              key={index}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                <img src={item.image} alt={item.name} />
+                <div className="card-content">
+                  <h3>{highlightMatch(item.name)}</h3>
+                  <div className="rating">⭐⭐⭐⭐⭐</div>
+                  <div className="desc-scroll">
+                    <p>{item.desc}</p>
+                  </div>
+                  <div className="button-container">
+                    <Link 
+                      to={`/details/${category}/${item.slug}`} 
+                      className="explore-btn"
+                    >
+                      Explore
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
+
+      {filteredData.length > visibleItems && (
+        <div className="pagination-controls100">
+          <button 
+            className="show-more-btn100"
+            onClick={() => setVisibleItems(prev => prev + 12)}
+          >
+            Show More (+12)
+          </button>
+          <button
+            className="show-all-btn100"
+            onClick={() => setVisibleItems(filteredData.length)}
+          >
+            Show All
+          </button>
+        </div>
+      )}
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       <Footer />
