@@ -7,7 +7,9 @@ const locationSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     latitude: { type: Number, required: true, trim: true },
     longitude: { type: Number, required: true, trim: true },
-    url: { type: String, trim: true }
+    url: { type: String, trim: true },
+    description: {type: String, trim: true },
+    image: {type: String, trim: true }
 });
 
 export const locationModel = mongoose.model('locations', locationSchema);
