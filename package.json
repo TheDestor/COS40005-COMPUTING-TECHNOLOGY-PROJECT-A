@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "d3": "^7.9.0",
-    "ky": "^1.8.1",
-    "react-google-recaptcha": "^3.1.0",
-    "topojson-client": "^3.1.0"
-  }
-}

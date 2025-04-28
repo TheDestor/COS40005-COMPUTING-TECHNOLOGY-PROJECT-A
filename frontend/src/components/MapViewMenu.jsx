@@ -6,7 +6,7 @@ import {
 import { FaLocationDot } from "react-icons/fa6";
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'; // FontAwesome Icons
 import '../styles/MapViewMenu.css';
-import axios from 'axios';
+import ky from 'ky';
 
 const MapViewMenu = ({ onSelect, activeOption}) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -37,12 +37,12 @@ const MapViewMenu = ({ onSelect, activeOption}) => {
     setSelectedMenu(itemName);
     if (itemName) {
       try {
-        const response = await axios.get(`/api/locations?type=${encodeURIComponent(itemName)}`);
-        console.log(`Fetched ${itemName} Data:`, response.data);
+        const response = await ky.get(`/api/locations?type=${encodeURIComponent(itemName)}`).json();
+        console.log(`Fetched ${itemName} Data:`, response);
 
         // Trigger parent to update
         if (onMenuSelect) {
-          onMenuSelect(itemName, response.data);
+          onMenuSelect(itemName, response);
         }
       } catch (error) {
         console.error(`Error fetching ${itemName}:`, error);

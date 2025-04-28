@@ -9,7 +9,7 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import '../styles/MenuNavbar.css';
 import logo from '../assets/SarawakTourismLogo.png'; 
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
-import axios from 'axios';
+import ky from 'ky';
 
 const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -42,12 +42,12 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
     if (item.isFetchOnly) {
       setSelectedMenu(item.name);
       try {
-        const response = await axios.get(`/api/locations?type=${encodeURIComponent(item.name)}`);
-        console.log(`Fetched ${item.name} Data:`, response.data);
+        const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
+        console.log(`Fetched ${item.name} Data:`, response);
 
         // Trigger parent to update
         if (onMenuSelect) {
-          onMenuSelect(item.name, response.data);
+          onMenuSelect(item.name, response);
         }
 
         // You can now set this data into state if you want to display it
