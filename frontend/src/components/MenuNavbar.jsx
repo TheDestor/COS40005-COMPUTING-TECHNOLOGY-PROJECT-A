@@ -9,11 +9,13 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import '../styles/MenuNavbar.css';
 import logo from '../assets/SarawakTourismLogo.png'; 
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
+import axios from 'axios';
 
-const MenuNavbar = ({ onLoginClick }) => {
+const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
+  const [selectedMenu, setSelectedMenu] = useState('');
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -26,15 +28,34 @@ const MenuNavbar = ({ onLoginClick }) => {
 
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
-    { name: 'Major Town', icon: <FaLocationDot />, path: 'major-town' },
-    { name: 'Homestay', icon: <FaBed />, path: '/category/homestay' },
-    { name: 'Museum', icon: <FaUniversity />, path: '/category/museum' },
-    { name: 'National Park', icon: <FaMountain />, path: '/category/national-park' },
-    { name: 'Airport', icon: <FaPlaneDeparture />, path: '/category/airport' },
-    { name: 'Beach', icon: <FaUmbrellaBeach />, path: '/beach' },
-    { name: 'Hospital', icon: <FaHospital />, path: '/hospital' },
-    { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
+    { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
+    { name: 'Homestay', icon: <FaBed />, isFetchOnly: true },
+    { name: 'Museum', icon: <FaUniversity />, isFetchOnly: true },
+    { name: 'National Park', icon: <FaMountain />, isFetchOnly: true },
+    { name: 'Airport', icon: <FaPlaneDeparture />, isFetchOnly: true },
+    { name: 'Beach', icon: <FaUmbrellaBeach />, isFetchOnly: true },
+    { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
+    { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
   ];
+
+  const handleMenuClick = async (item) => {
+    if (item.isFetchOnly) {
+      setSelectedMenu(item.name);
+      try {
+        const response = await axios.get(`/api/locations?type=${encodeURIComponent(item.name)}`);
+        console.log(`Fetched ${item.name} Data:`, response.data);
+
+        // Trigger parent to update
+        if (onMenuSelect) {
+          onMenuSelect(item.name, response.data);
+        }
+
+        // You can now set this data into state if you want to display it
+      } catch (error) {
+        console.error(`Error fetching ${item.name}:`, error);
+      }
+    }
+  };
 
   const currentPath = location.pathname;
 
@@ -46,27 +67,43 @@ const MenuNavbar = ({ onLoginClick }) => {
 
     <div className="menu-wrapper">
         <div className="menu-container2">
-        {menuItems.map((item) => {
-            const isActive = currentPath === item.path;
-            return (
-            <Link
+          {menuItems.map((item) => {
+            const isActive = selectedMenu === item.name || (!item.isFetchOnly && currentPath === item.path);
+
+            return item.isFetchOnly ? (
+              <div
+                key={item.name}
+                className={`menu-item3 ${isActive ? 'active' : ''}`}
+                onClick={() => handleMenuClick(item)}
+              >
+                <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
+                  <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
+                    {item.icon}
+                  </span>
+                </div>
+                <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
+                  {item.name}
+                </span>
+              </div>
+            ) : (
+              <Link
                 key={item.name}
                 to={item.path}
                 className={`menu-item3 ${isActive ? 'active' : ''}`}
-            >
+              >
                 <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
-                <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
+                  <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
                     {item.icon}
-                </span>
+                  </span>
                 </div>
                 <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
-                {item.name}
+                  {item.name}
                 </span>
-            </Link>
+              </Link>
             );
-        })}
+          })}
         </div>
-    </div>
+      </div>
     <div className="profile-container2">
         <ProfileDropdown onLoginClick={onLoginClick} />
     </div>

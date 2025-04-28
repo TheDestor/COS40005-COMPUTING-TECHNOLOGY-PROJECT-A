@@ -237,14 +237,14 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     'Seaport': seaportIcon,
   };
 
-  const travelModes = {
-    Car: 'DRIVING',
-    Bus: 'TRANSIT',
-    Walking: 'WALKING',
-    Bicycle: 'BICYCLING',
-    Motorbike: 'DRIVING',
-    Flight: 'DRIVING',
-  };
+  // const travelModes = {
+  //   Car: 'DRIVING',
+  //   Bus: 'TRANSIT',
+  //   Walking: 'WALKING',
+  //   Bicycle: 'BICYCLING',
+  //   Motorbike: 'DRIVING',
+  //   Flight: 'DRIVING',
+  // };
 
   // useEffect(() => {
   //     const fetchLocations = async () => {

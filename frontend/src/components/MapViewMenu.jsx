@@ -6,10 +6,12 @@ import {
 import { FaLocationDot } from "react-icons/fa6";
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'; // FontAwesome Icons
 import '../styles/MapViewMenu.css';
+import axios from 'axios';
 
 const MapViewMenu = ({ onSelect, activeOption}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedMenu, setSelectedMenu] = useState('');
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -21,18 +23,32 @@ const MapViewMenu = ({ onSelect, activeOption}) => {
   }, []);
 
   const menuItems = [
-    { name: 'Major Town', icon: <FaLocationDot /> }, // Location Pin
-    { name: 'Homestay', icon: <FaBed /> },     // Bed for homestay
-    { name: 'Museum', icon: <FaUniversity /> }, // University for Museum
-    { name: 'National Park', icon: <FaMountain /> }, // Mountain for National Park
-    { name: 'Airport', icon: <FaPlaneDeparture /> }, // Plane for Airport
-    { name: 'Beach', icon: <FaUmbrellaBeach /> }, // Umbrella for Beach
-    { name: 'Hospital', icon: <FaHospital /> },  // Hospital Icon
-    { name: 'Event', icon: <FaCalendarAlt /> }   // Calendar for Event
+    { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true }, // Location Pin
+    { name: 'Homestay', icon: <FaBed />, isFetchOnly: true },     // Bed for homestay
+    { name: 'Museum', icon: <FaUniversity />, isFetchOnly: true }, // University for Museum
+    { name: 'National Park', icon: <FaMountain />, isFetchOnly: true }, // Mountain for National Park
+    { name: 'Airport', icon: <FaPlaneDeparture />, isFetchOnly: true }, // Plane for Airport
+    { name: 'Beach', icon: <FaUmbrellaBeach />, isFetchOnly: true }, // Umbrella for Beach
+    { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },  // Hospital Icon
+    { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }   // Calendar for Event
   ];
 
-  const handleMenuItemClick = (name) => {
-    onSelect(name);
+  const handleMenuItemClick = async (itemName) => {
+    setSelectedMenu(itemName);
+    if (itemName) {
+      try {
+        const response = await axios.get(`/api/locations?type=${encodeURIComponent(itemName)}`);
+        console.log(`Fetched ${itemName} Data:`, response.data);
+
+        // Trigger parent to update
+        if (onMenuSelect) {
+          onMenuSelect(itemName, response.data);
+        }
+      } catch (error) {
+        console.error(`Error fetching ${itemName}:`, error);
+      }
+    }
+    onSelect(itemName); // Update selected menu
     setIsDropdownOpen(false); // Close the dropdown when an item is selected
   };
 
