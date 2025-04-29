@@ -1,6 +1,6 @@
 /* BusinessSubmissionForm.css */
 
-/* Add this to ensure the component takes full width of its container */
+/* for full width */
 body, html {
     margin: 0;
     padding: 0;
@@ -8,7 +8,7 @@ body, html {
     height: 100%;
   }
   
-  /* Make sure the parent container takes full width */
+  /* for full width */
   #root {
     width: 100%;
     display: flex;

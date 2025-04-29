@@ -241,7 +241,7 @@ const handleChange = (e) => {
         // Set initial status
         formDataToSend.append('status', 'pending');
         
-        // Mock API call (replace with actual API endpoint)
+        // Mock API call (for actual API endpoint will do it when we do backend)
         // await fetch('/api/business-submission', {
         //   method: 'POST',
         //   body: formDataToSend
