@@ -272,3 +272,14 @@
     }
   }
   
+  .password-strength {
+    font-size: 0.9rem;
+    margin-top: -10px;
+    margin-left: 6px;
+  }
+  .strength-0 { color: red; }
+  .strength-1 { color: orange; }
+  .strength-2 { color: gold; }
+  .strength-3 { color: blue; }
+  .strength-4 { color: green; }
+  

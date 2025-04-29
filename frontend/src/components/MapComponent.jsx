@@ -147,7 +147,7 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
   return null;
 }
 
-function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], selectedRoute }) {
+function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   // const [locations, setLocations] = useState([]);
