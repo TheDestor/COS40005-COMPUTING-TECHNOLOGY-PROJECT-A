@@ -10,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 5050
 connectDB(); // Establish connection to the database as soon as the backend is run
 
+app.disable("x-powered-by");
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/locations", locationRouter);
