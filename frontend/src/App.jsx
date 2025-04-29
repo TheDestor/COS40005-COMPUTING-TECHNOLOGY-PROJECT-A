@@ -21,6 +21,7 @@ import ViewAnalytics from './pages/ViewAnalytics.jsx';
 import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
+import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
 // import HomestayPage from './pages/HomestayPage.jsx';
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           <Route path="/view-inquiry" element={<ViewInquiry />} />
           <Route path="/add-event" element={<AddEventPage />} />
           <Route path="/business-management" element={<BusinessManagementPage />} />
+          <Route path="/business-submission" element={<BusinessSubmissionForm />} /> 
           {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
           {/* Add more routes as needed */}
 
