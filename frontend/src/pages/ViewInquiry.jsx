@@ -15,6 +15,7 @@ import {
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
 import '../styles/ViewInquiry.css';
+import ky from 'ky';
 
 // Import profile images
 import profile1 from '../assets/profile1.png';
@@ -37,100 +38,138 @@ const ViewInquiry = () => {
 
   // Dummy data for inquiries
   useEffect(() => {
-    const dummyInquiries = [
-      {
-        id: 1,
-        name: 'Gokul Kalla',
-        email: 'gokulkalla@gmail.com',
-        subject: 'Information about business registration',
-        message: 'Hello, I would like to know more about how to register my business on your platform. What are the requirements and associated costs? Do you have any special offers for new businesses?',
-        date: '2025-04-20T14:25:00',
-        status: 'unread',
-        priority: 'medium',
-        avatar: profile1
-      },
-      {
-        id: 2,
-        name: 'Carlos Sainz',
-        email: 'carlos.sainz@gmail.com',
-        subject: 'Technical support needed',
-        message: 'I am experiencing issues with uploading photos to my business profile. The system keeps showing an error message. I have tried different browsers but the problem persists. Can you please help me resolve this issue as soon as possible? My business ID is BUS-2023-456.',
-        date: '2025-04-19T09:12:00',
-        status: 'in-progress',
-        priority: 'high',
-        avatar: profile2
-      },
-      {
-        id: 3,
-        name: 'Kenneth',
-        email: 'kenneth@gmail.com',
-        subject: 'Feedback on recent features',
-        message: 'I wanted to share some feedback on the new booking feature. It has significantly improved my business workflow. However, I would suggest adding a calendar sync option to avoid double bookings with my existing systems. Overall, great work with the platform improvements!',
-        date: '2025-04-18T16:35:00',
-        status: 'resolved',
-        priority: 'low',
-        avatar: profile3
-      },
-      {
-        id: 4,
-        name: 'Daniel',
-        email: 'daniel@gmail.com',
-        subject: 'Complaint about review system',
-        message: 'I believe there are some fake reviews on my business profile. I have noticed several 1-star reviews from accounts with no other activity. Could you please investigate this matter? This is severely affecting my business reputation. I can provide more details if needed.',
-        date: '2025-04-17T11:20:00',
-        status: 'unread',
-        priority: 'high',
-        avatar: profile4
-      },
-      {
-        id: 5,
-        name: 'Steph',
-        email: 'steph12@gmail.com',
-        subject: 'Partnership proposal',
-        message: 'I represent a tourism board in the Sunshine Coast region. We are interested in forming a strategic partnership with your platform to promote local businesses. Could someone from your business development team contact me to discuss potential collaboration opportunities?',
-        date: '2025-04-16T14:50:00',
-        status: 'in-progress',
-        priority: 'medium',
-        avatar: profile5
-      },
-      {
-        id: 6,
-        name: 'Alvin',
-        email: 'alvin@gmail.com',
-        subject: 'Account deletion request',
-        message: 'I would like to request the deletion of my business account. I have closed my business and no longer need the listing. Please confirm when this has been completed. My business ID is BUS-2021-789.',
-        date: '2025-04-15T08:05:00',
-        status: 'resolved',
-        priority: 'low',
-        avatar: profile6
-      },
-      {
-        id: 7,
-        name: 'Gary',
-        email: 'gary@gmail.com',
-        subject: 'Issue with payment processing',
-        message: 'I attempted to pay for the premium subscription but the transaction failed multiple times. My card has sufficient funds and works on other platforms. Can you please check if there are any issues with your payment gateway? I would like to upgrade as soon as possible.',
-        date: '2025-04-14T13:15:00',
-        status: 'unread',
-        priority: 'high',
-        avatar: profile7
-      },
-      {
-        id: 8,
-        name: 'Lara Wilson',
-        email: 'lauren.wilson@gmail.com',
-        subject: 'Question about analytics feature',
-        message: 'I recently upgraded to your premium plan but I am having trouble understanding some of the analytics data. Specifically, the conversion metrics seem confusing. Could you provide some guidance or documentation on how to interpret these numbers?',
-        date: '2025-04-13T15:40:00',
-        status: 'in-progress',
-        priority: 'medium',
-        avatar: profile8
+    // const dummyInquiries = [
+    //   {
+    //     id: 1,
+    //     name: 'Gokul Kalla',
+    //     email: 'gokulkalla@gmail.com',
+    //     subject: 'Information about business registration',
+    //     message: 'Hello, I would like to know more about how to register my business on your platform. What are the requirements and associated costs? Do you have any special offers for new businesses?',
+    //     date: '2025-04-20T14:25:00',
+    //     status: 'unread',
+    //     priority: 'medium',
+    //     avatar: profile1
+    //   },
+    //   {
+    //     id: 2,
+    //     name: 'Carlos Sainz',
+    //     email: 'carlos.sainz@gmail.com',
+    //     subject: 'Technical support needed',
+    //     message: 'I am experiencing issues with uploading photos to my business profile. The system keeps showing an error message. I have tried different browsers but the problem persists. Can you please help me resolve this issue as soon as possible? My business ID is BUS-2023-456.',
+    //     date: '2025-04-19T09:12:00',
+    //     status: 'in-progress',
+    //     priority: 'high',
+    //     avatar: profile2
+    //   },
+    //   {
+    //     id: 3,
+    //     name: 'Kenneth',
+    //     email: 'kenneth@gmail.com',
+    //     subject: 'Feedback on recent features',
+    //     message: 'I wanted to share some feedback on the new booking feature. It has significantly improved my business workflow. However, I would suggest adding a calendar sync option to avoid double bookings with my existing systems. Overall, great work with the platform improvements!',
+    //     date: '2025-04-18T16:35:00',
+    //     status: 'resolved',
+    //     priority: 'low',
+    //     avatar: profile3
+    //   },
+    //   {
+    //     id: 4,
+    //     name: 'Daniel',
+    //     email: 'daniel@gmail.com',
+    //     subject: 'Complaint about review system',
+    //     message: 'I believe there are some fake reviews on my business profile. I have noticed several 1-star reviews from accounts with no other activity. Could you please investigate this matter? This is severely affecting my business reputation. I can provide more details if needed.',
+    //     date: '2025-04-17T11:20:00',
+    //     status: 'unread',
+    //     priority: 'high',
+    //     avatar: profile4
+    //   },
+    //   {
+    //     id: 5,
+    //     name: 'Steph',
+    //     email: 'steph12@gmail.com',
+    //     subject: 'Partnership proposal',
+    //     message: 'I represent a tourism board in the Sunshine Coast region. We are interested in forming a strategic partnership with your platform to promote local businesses. Could someone from your business development team contact me to discuss potential collaboration opportunities?',
+    //     date: '2025-04-16T14:50:00',
+    //     status: 'in-progress',
+    //     priority: 'medium',
+    //     avatar: profile5
+    //   },
+    //   {
+    //     id: 6,
+    //     name: 'Alvin',
+    //     email: 'alvin@gmail.com',
+    //     subject: 'Account deletion request',
+    //     message: 'I would like to request the deletion of my business account. I have closed my business and no longer need the listing. Please confirm when this has been completed. My business ID is BUS-2021-789.',
+    //     date: '2025-04-15T08:05:00',
+    //     status: 'resolved',
+    //     priority: 'low',
+    //     avatar: profile6
+    //   },
+    //   {
+    //     id: 7,
+    //     name: 'Gary',
+    //     email: 'gary@gmail.com',
+    //     subject: 'Issue with payment processing',
+    //     message: 'I attempted to pay for the premium subscription but the transaction failed multiple times. My card has sufficient funds and works on other platforms. Can you please check if there are any issues with your payment gateway? I would like to upgrade as soon as possible.',
+    //     date: '2025-04-14T13:15:00',
+    //     status: 'unread',
+    //     priority: 'high',
+    //     avatar: profile7
+    //   },
+    //   {
+    //     id: 8,
+    //     name: 'Lara Wilson',
+    //     email: 'lauren.wilson@gmail.com',
+    //     subject: 'Question about analytics feature',
+    //     message: 'I recently upgraded to your premium plan but I am having trouble understanding some of the analytics data. Specifically, the conversion metrics seem confusing. Could you provide some guidance or documentation on how to interpret these numbers?',
+    //     date: '2025-04-13T15:40:00',
+    //     status: 'in-progress',
+    //     priority: 'medium',
+    //     avatar: profile8
+    //   }
+    // ];
+
+    const fetchInquiries = async () => {
+      try {
+        const response = await ky.get("/api/dashboard/getAllInquiries").json();
+
+        if (response && response.success) {
+          const fetchedInquiries = response.inquiries;
+
+          const mappedInquiries = fetchedInquiries.map((inquiry) => ({
+            id: inquiry._id,
+            name: inquiry.email.split('@')[0],
+            email: inquiry.email,
+            subject: inquiry.topic,
+            message: inquiry.message,
+            date: inquiry.createdAt,
+            status: inquiry.status,
+            priority: 'medium',
+            avatar: profile1
+          }));
+
+          mappedInquiries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          if (mappedInquiries.length > 0) {
+            const firstInquiry = mappedInquiries[0];
+            if (firstInquiry.status === "Unread") {
+              firstInquiry.status = "in-progress";
+              mappedInquiries[0] = firstInquiry;
+              setInquiries([...mappedInquiries]);
+            }
+            setSelectedInquiry(firstInquiry);
+          } else {
+            setSelectedInquiry(null);
+          }
+        } else {
+          setInquiries([]);
+        }
+      } catch (error) {
+        console.error(error);
       }
-    ];
+    }
     
-    setInquiries(dummyInquiries);
-    // first inquiry selected by default
-    setSelectedInquiry(dummyInquiries[0]);
+    fetchInquiries();
   }, []);
 
   // readable string format of date
@@ -150,7 +189,7 @@ const ViewInquiry = () => {
     setSelectedInquiry(inquiry);
     
     // If the inquiry was unread, mark it as in-progress
-    if (inquiry.status === 'unread') {
+    if (inquiry.status === 'Unread') {
       const updatedInquiries = inquiries.map(item => {
         if (item.id === inquiry.id) {
           return { ...item, status: 'in-progress' };
@@ -167,7 +206,7 @@ const ViewInquiry = () => {
   const handleMarkResolved = (id) => {
     const updatedInquiries = inquiries.map(item => {
       if (item.id === id) {
-        return { ...item, status: 'resolved' };
+        return { ...item, status: 'Resolved' };
       }
       return item;
     });
@@ -175,7 +214,7 @@ const ViewInquiry = () => {
     setInquiries(updatedInquiries);
     
     if (selectedInquiry && selectedInquiry.id === id) {
-      setSelectedInquiry({ ...selectedInquiry, status: 'resolved' });
+      setSelectedInquiry({ ...selectedInquiry, status: 'Resolved' });
     }
   };
 
@@ -225,11 +264,11 @@ const ViewInquiry = () => {
   // Helper function to get status badge styling
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'unread':
+      case 'Unread':
         return 'status-badge-unread';
       case 'in-progress':
         return 'status-badge-progress';
-      case 'resolved':
+      case 'Resolved':
         return 'status-badge-resolved';
       default:
         return '';
@@ -301,7 +340,7 @@ const ViewInquiry = () => {
           <div className="inquiry-options">
             <div className="inquiry-statistics">
               <div className="stat">
-                <span className="stat-value">{inquiries.filter(i => i.status === 'unread').length}</span>
+                <span className="stat-value">{inquiries.filter(i => i.status === 'Unread').length}</span>
                 <span className="stat-label">Unread</span>
               </div>
               <div className="stat">
@@ -309,7 +348,7 @@ const ViewInquiry = () => {
                 <span className="stat-label">In Progress</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{inquiries.filter(i => i.status === 'resolved').length}</span>
+                <span className="stat-value">{inquiries.filter(i => i.status === 'Resolved').length}</span>
                 <span className="stat-label">Resolved</span>
               </div>
               <div className="stat">
@@ -394,7 +433,7 @@ const ViewInquiry = () => {
                       </div>
                       <div className="inquiry-status">
                         <span className={`status-badge ${getStatusBadgeClass(inquiry.status)}`}>
-                          {inquiry.status === 'in-progress' ? 'In Progress' : inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1)}
+                          {inquiry.status === 'in-progress' ? 'In Progress' : inquiry.status}
                         </span>
                         <span className={`priority-badge ${getPriorityBadgeClass(inquiry.priority)}`}>
                           {renderPriorityIcon(inquiry.priority)}
@@ -461,7 +500,7 @@ const ViewInquiry = () => {
                     <div className="meta-item">
                       <span className="meta-label">Status:</span>
                       <span className={`meta-value status-badge ${getStatusBadgeClass(selectedInquiry.status)}`}>
-                        {selectedInquiry.status === 'in-progress' ? 'In Progress' : selectedInquiry.status.charAt(0).toUpperCase() + selectedInquiry.status.slice(1)}
+                        {selectedInquiry.status === 'in-progress' ? 'In Progress' : selectedInquiry.status}
                       </span>
                     </div>
                     <div className="meta-item">
