@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -14,6 +14,25 @@ const MajorTownPage = () => {
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory, setCurrentCategory] = useState('');
+
+  // Function to fetch major towns from backend
+  const fetchMajorTowns = async () => {
+    setLoading(true);
+    try {
+      // Replace with your actual API endpoint
+      const response = await fetch('/api/locations?type=Major Town');
+      const fetchedData = await response.json();
+      handleDataFetch('Major Towns', fetchedData);
+    } catch (error) {
+      console.error('Error fetching major towns:', error);
+      setLoading(false);
+    }
+  };
+
+  // Load default data on component mount
+  useEffect(() => {
+    fetchMajorTowns();
+  }, []);
 
   const handleDataFetch = (category, fetchedData) => {
     setLoading(true);
@@ -31,7 +50,6 @@ const MajorTownPage = () => {
       name: item?.Name || item?.name || 'Unknown',
       desc: item?.description || item?.Desc || 'No description',
       slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      // image: categoryImages[item?.name] || defaultImage,
       image: item?.image || defaultImage,
     }));
   };

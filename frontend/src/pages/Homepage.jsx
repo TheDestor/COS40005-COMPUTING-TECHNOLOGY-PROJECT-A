@@ -23,7 +23,12 @@ const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Major Town');
   const [categoryData, setCategoryData] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
+  // const [locations, setLocations] = useState([]);
   const [locations, setLocations] = useState([]);
+
+  // const [mapLocations, setMapLocations] = useState([]);
+  const [infoLocations, setInfoLocations] = useState([]);
+
   const [searchHistory, setSearchHistory] = useState(() => {
     const stored = localStorage.getItem('searchHistory');
     return stored ? JSON.parse(stored) : [];
@@ -37,6 +42,63 @@ const HomePage = () => {
     if (!term.trim()) return;
     setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
   };
+
+  // tourist info fetched data
+  const handleDataFetch = (category, fetchedData) => {
+    const processed = (fetchedData || []).map(item => ({
+      id: item?.id || item?.name || Math.random(),
+      name: item?.name || item?.Name || 'Unknown',
+      description: item?.description || item?.Desc || 'No description available.',
+      image: item?.image || kuchingImage,
+    }));
+    setInfoLocations(processed);
+  };
+
+  // map component trigger data
+  // const handleMenuSelect = async (category, data) => {
+  //   setSelectedCategory(category);
+    
+  //   if (data) {
+  //     // Convert coordinates to numbers and validate
+  //     const validLocations = data
+  //       .filter(loc => !isNaN(loc.latitude) && !isNaN(loc.longitude))
+  //       .map(loc => ({
+  //         ...loc,
+  //         latitude: parseFloat(loc.latitude),
+  //         longitude: parseFloat(loc.longitude)
+  //       }));
+      
+  //     setMapLocations(validLocations);
+  //     console.log('Valid locations:', validLocations);
+  //   } else {
+  //     setMapLocations([]);
+  //   }
+  // };
+
+  const handleCategorySelect = async (category) => {
+    setSelectedCategory(category);
+    try {
+      const response = await fetch(`/api/locations?type=${category}`);
+      const data = await response.json();
+      handleDataFetch(category, data); // reuse your existing processor
+    } catch (err) {
+      console.error('Error fetching category:', err);
+      handleDataFetch(category, []); // fallback
+    }
+  };
+  
+  // const handleCategorySelect2 = async (category) => {
+  //   setSelectedCategory(category);
+  //   try {
+  //     const response = await fetch(`/api/locations?type=${category}`);
+  //     const data = await response.json();
+  //     handleMenuSelect(category, data); // reuse your existing processor
+  //   } catch (err) {
+  //     console.error('Error fetching category:', err);
+  //     handleMenuSelect(category, []); // fallback
+  //   }
+  // };
+  
 
   // Show bookmark if state passed from navigation
   useEffect(() => {
@@ -67,11 +129,6 @@ const HomePage = () => {
         history={searchHistory}
       />
 
-      {/* <MapViewMenu 
-        onSelect={handleMenuSelect} 
-        activeOption={activeOption}
-      /> */}
-
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
@@ -80,12 +137,16 @@ const HomePage = () => {
         selectedCategory={selectedCategory}
         selectedPlace={selectedPlace}
         categoryData={categoryData} 
-        locations={locations}
+        locations={setLocations}
+        // onLocationFetch={handleMenuSelect}
+        setSelectedCategory={setSelectedCategory}
       />
       
       <TouristInfoSection 
-        // showPlaces={handleMenuSelect}
-        locations={locations}
+        locations={infoLocations}
+        onDataFetch={handleDataFetch}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
       />
 
       <LeftSidebar
@@ -98,12 +159,14 @@ const HomePage = () => {
         setNearbyPlaces={setNearbyPlaces}
         onSearch={handleSearch}
         history={searchHistory}
+        setHistory={setSearchHistory}
       />
 
-      {/* <MapViewMenu 
-        onSelect={handleMenuSelect} 
-        activeOption={activeOption}
-      /> */}
+      <MapViewMenu 
+        onSelectCategory={handleCategorySelect} 
+        // onSelect={handleCategorySelect2}
+        // activeOption={activeOption}
+      />
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}

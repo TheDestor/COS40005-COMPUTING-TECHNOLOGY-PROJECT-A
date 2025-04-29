@@ -1,10 +1,27 @@
-import React from "react";
+import React, {useState} from "react";
 import "../styles/RecentSection.css";
 import { FaArrowLeft, FaMap, FaClock } from "react-icons/fa";
-// import { FaLocationDot } from "react-icons/fa6";
 import images from "../assets/Kuching.png";
 
-const RecentSection = ({ isOpen, onClose, history = [], onItemClick }) => {
+const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteItems }) => {
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  const toggleSelectItem = (item) => {
+    setSelectedItems(prev =>
+      prev.includes(item)
+        ? prev.filter(i => i !== item)
+        : [...prev, item]
+    );
+  };
+  
+  const handleDelete = () => {
+    if (onDeleteItems && selectedItems.length > 0) {
+      onDeleteItems(selectedItems);
+      setSelectedItems([]);
+    }
+  };
+  
+
   return (
     <div className={`recent-slide-container ${isOpen ? "show" : ""}`}>
       <div className="recent-header">
@@ -16,6 +33,11 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick }) => {
       <div className="recent-filters">
         <button className="filter-button2 active"><FaMap /> All</button>
       </div>
+      {selectedItems.length > 0 && (
+        <button className="delete-button33" onClick={handleDelete}>
+          Delete Selected
+        </button>
+      )}
 
       {history.length > 0 ? (
         <div className="recent-group">
@@ -31,7 +53,11 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick }) => {
                 <span className="title">{item}</span>
                 <span className="category">Search</span>
               </div>
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={selectedItems.includes(item)}
+                onChange={() => toggleSelectItem(item)}
+              />
             </div>
           ))}
         </div>

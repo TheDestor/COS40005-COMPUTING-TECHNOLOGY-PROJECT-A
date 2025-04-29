@@ -500,7 +500,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           selectedCategory={selectedCategory}
         />
 
-        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} onRoutesCalculated={(data) => console.log(data)}/>
+        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/>
       </Map>
     </APIProvider>
   );

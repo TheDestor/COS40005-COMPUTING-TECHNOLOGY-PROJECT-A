@@ -5,6 +5,18 @@ import RegisterImage from '../assets/Kuching.png';
 import ky from 'ky';
 import { toast } from "react-toastify";
 
+const validatePassword = (password) => {
+  const minLength = 8;
+  const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$/;  // Example: At least 1 uppercase, 1 digit, and 1 special char
+  if (password.length < minLength) {
+    return "Password must be at least 8 characters long.";
+  }
+  if (!regex.test(password)) {
+    return "Password must include at least one uppercase letter, one number, and one special character.";
+  }
+  return null;
+};
+
 const handleKeyDown = (e) => {
   if (e.key === 'Enter') {
     e.preventDefault(); // Prevent form submission

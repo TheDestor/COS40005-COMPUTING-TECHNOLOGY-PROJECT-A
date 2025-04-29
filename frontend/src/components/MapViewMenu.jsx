@@ -8,8 +8,8 @@ import '../styles/MapViewMenu.css';
 import ky from 'ky';
 import defaultImage from '../assets/Kuching.png';
 
-const MapViewMenu = ({ onSelect, activeOption }) => {
-  const [selectedMenu, setSelectedMenu] = useState('');
+const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
+  const [selectedMenu, setSelectedMenu] = useState(activeOption || '');
 
   const menuItems = [
     { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
@@ -38,26 +38,32 @@ const MapViewMenu = ({ onSelect, activeOption }) => {
         }));
 
         if (onSelect) onSelect(item.name, formattedData);
+        if (onSelectCategory) onSelectCategory(item.name, formattedData);
       } catch (error) {
         console.error(`Error fetching ${item.name}:`, error);
       }
     } else {
       if (onSelect) onSelect(item.name);
+      if (onSelectCategory) onSelectCategory(item.name);
     }
   };
 
   useEffect(() => {
-    const defaultItem = menuItems.find(item => item.name === 'Major Town');
-    if (defaultItem) {
-      handleMenuItemClick(defaultItem);
+    if (!activeOption) {
+      const defaultItem = menuItems.find(item => item.name === 'Major Town');
+      if (defaultItem) {
+        handleMenuItemClick(defaultItem);
+      }
+    } else {
+      setSelectedMenu(activeOption);
     }
-  }, []);
+  }, [activeOption]);
 
   return (
     <div className="mapview-container">
       <div className="menu-container">
         {menuItems.map((item) => {
-          const isActive = activeOption === item.name;
+          const isActive = activeOption === item.name || selectedMenu === item.name;
 
           return (
             <button

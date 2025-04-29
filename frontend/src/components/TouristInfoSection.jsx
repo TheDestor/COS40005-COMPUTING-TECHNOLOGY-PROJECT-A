@@ -5,23 +5,10 @@ import kuchingImage from '../assets/Kuching.png';
 import { Link } from 'react-router-dom';
 import MapViewMenu from './MapViewMenu';
 
-const TouristInfoSection = ({ showPlaces }) => {
+const TouristInfoSection = ({ locations, onDataFetch, selectedCategory, setselectedMenu }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [containerStyle, setContainerStyle] = useState({ top: '60px' });
-  const [locations, setLocations] = useState([]);
-
-  // Handle data fetched from MapViewMenu
-  const handleDataFetch = (category, fetchedData) => {
-    const processed = (fetchedData || []).map(item => ({
-      id: item?.id || item?.name || Math.random(), // fallback for unique key
-      name: item?.name || item?.Name || 'Unknown',
-      description: item?.description || item?.Desc || 'No description available.',
-      image: item?.image || kuchingImage,
-    }));
-
-    setLocations(processed);
-  };
-
+  
   useEffect(() => {
     const updatePosition = () => {
       const navbar = document.querySelector('.navbar');
@@ -48,7 +35,7 @@ const TouristInfoSection = ({ showPlaces }) => {
       style={containerStyle}
     >
       {/* Render MapViewMenu and pass the handler */}
-      <MapViewMenu onSelect={handleDataFetch} />
+      {/* <MapViewMenu onSelectCategory={onDataFetch} /> */}
       
       <div className="collapse-toggle" onClick={toggleCollapse}>
         {isCollapsed ? <FiChevronLeft /> : <FiChevronRight />}

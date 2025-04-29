@@ -28,7 +28,7 @@ function debounce(func, delay) {
   };
 }
 
-const LeftSidebar = ({ onSearch, history }) => {
+const LeftSidebar = ({ onSearch, history, setHistory }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -69,6 +69,10 @@ const LeftSidebar = ({ onSearch, history }) => {
       }
     };
   }, []);
+
+  const handleDeleteItems = (itemsToDelete) => {
+    setHistory(prev => prev.filter(item => !itemsToDelete.includes(item)));
+  };
 
   const handleRoutesCalculated = (routesData) => {
     setSegmentedRoutes(routesData.routes);
@@ -179,8 +183,8 @@ const LeftSidebar = ({ onSearch, history }) => {
     // }
   
     // ✨ Validate both start and end are Malaysia
-    const isStartMalaysia = await validateLocationIsInMalaysia(startingPoint);
-    const isDestMalaysia = await validateLocationIsInMalaysia(destination);
+    // const isStartMalaysia = await validateLocationIsInMalaysia(startingPoint);
+    // const isDestMalaysia = await validateLocationIsInMalaysia(destination);
   
     // if (!isStartMalaysia || !isDestMalaysia) {
     //   alert('Starting point and destination must be inside Malaysia.');
@@ -283,25 +287,25 @@ const LeftSidebar = ({ onSearch, history }) => {
   }, []);
   
 
-  const validateLocationIsInMalaysia = async (address) => {
-    const geocoder = new window.google.maps.Geocoder();
-    return new Promise((resolve) => {
-      geocoder.geocode({ address }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const countryComponent = results[0].address_components.find(component => 
-            component.types.includes('country')
-          );
-          if (countryComponent && countryComponent.short_name === 'MY') {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        } else {
-          resolve(false);
-        }
-      });
-    });
-  };
+  // const validateLocationIsInMalaysia = async (address) => {
+  //   const geocoder = new window.google.maps.Geocoder();
+  //   return new Promise((resolve) => {
+  //     geocoder.geocode({ address }, (results, status) => {
+  //       if (status === 'OK' && results[0]) {
+  //         const countryComponent = results[0].address_components.find(component => 
+  //           component.types.includes('country')
+  //         );
+  //         if (countryComponent && countryComponent.short_name === 'MY') {
+  //           resolve(true);
+  //         } else {
+  //           resolve(false);
+  //         }
+  //       } else {
+  //         resolve(false);
+  //       }
+  //     });
+  //   });
+  // };
 
   return (
     <>
@@ -458,11 +462,11 @@ const LeftSidebar = ({ onSearch, history }) => {
       </APIProvider>
 
       {/* Slide-in RecentSection */}
-      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} onItemClick={onSearch} />
+      <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} onItemClick={onSearch} onDeleteItems={handleDeleteItems} />
       {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated} selectedRoute={routes[selectedRouteIndex]} />
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}  routes={routes} />
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );
