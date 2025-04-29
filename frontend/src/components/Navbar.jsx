@@ -33,9 +33,9 @@ const NavigationBar = ({ onLoginClick, activeOption, onMenuChange, setSelectedPl
         </div>
       </div>
 
-      <div className="center-section">
+      {/* <div className="center-section">
         <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} />
-      </div>
+      </div> */}
 
       <div className="top-right-section">
         <div className="right-content">

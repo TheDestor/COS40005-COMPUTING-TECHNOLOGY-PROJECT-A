@@ -8,6 +8,8 @@ import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 // import MapViewMenu from '../components/MapViewMenu.jsx';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import defaultImage from '../assets/Kuching.png';
+import MapViewMenu from '../components/MapViewMenu.jsx';
 
 const HomePage = () => {
   const location = useLocation();
@@ -19,15 +21,17 @@ const HomePage = () => {
   const [addDestinations, setAddDestinations] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Major Town');
+  const [categoryData, setCategoryData] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
+  const [locations, setLocations] = useState([]);
   const [searchHistory, setSearchHistory] = useState(() => {
-      const stored = localStorage.getItem('searchHistory');
-      return stored ? JSON.parse(stored) : [];
-    });
+    const stored = localStorage.getItem('searchHistory');
+    return stored ? JSON.parse(stored) : [];
+  });
   
-    useEffect(() => {
-      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-    }, [searchHistory]);
+  useEffect(() => {
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+  }, [searchHistory]);
 
   const handleSearch = (term) => {
     if (!term.trim()) return;
@@ -63,6 +67,11 @@ const HomePage = () => {
         history={searchHistory}
       />
 
+      {/* <MapViewMenu 
+        onSelect={handleMenuSelect} 
+        activeOption={activeOption}
+      /> */}
+
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
@@ -70,9 +79,14 @@ const HomePage = () => {
         nearbyPlaces={nearbyPlaces}
         selectedCategory={selectedCategory}
         selectedPlace={selectedPlace}
+        categoryData={categoryData} 
+        locations={locations}
       />
       
-      <TouristInfoSection />
+      <TouristInfoSection 
+        // showPlaces={handleMenuSelect}
+        locations={locations}
+      />
 
       <LeftSidebar
         startingPoint={startingPoint}
@@ -85,6 +99,11 @@ const HomePage = () => {
         onSearch={handleSearch}
         history={searchHistory}
       />
+
+      {/* <MapViewMenu 
+        onSelect={handleMenuSelect} 
+        activeOption={activeOption}
+      /> */}
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}

@@ -115,7 +115,7 @@ const SearchBar = ({ setSelectedPlace, onSearch, history }) => {
           ref={inputRef}
           type="text"
           className="searchbar-input"
-          placeholder="Search for airport, homestay"
+          placeholder="Search for homestay"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchTerm)}

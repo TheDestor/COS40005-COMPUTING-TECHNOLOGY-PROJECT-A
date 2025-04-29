@@ -15,7 +15,7 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
-  const [selectedMenu, setSelectedMenu] = useState('');
+  const [selectedMenu, setSelectedMenu] = useState('Major Town');
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -56,6 +56,14 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
       }
     }
   };
+
+  // useEffect(() => {
+  //   const defaultItem = menuItems.find(item => item.name === 'Major Town');
+  //   if (defaultItem) {
+  //     handleMenuClick(defaultItem);
+  //   }
+  // }, []);
+  
 
   const currentPath = location.pathname;
 

@@ -5,21 +5,6 @@ import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/MajorTownPage.css';
 import defaultImage from '../assets/Kuching.png';
-import kuchingImg from '../assets/Kuching.png';
-import bintuluImg from '../assets/Bintulu.png';
-import miriImg from '../assets/Miri.png';
-import limbangImg from '../assets/Limbang.png';
-import kapitImg from '../assets/Kapit.png';
-import sibuImg from '../assets/Sibu.png';
-
-const categoryImages = {
-  'Kuching': kuchingImg,
-  'Bintulu': bintuluImg,
-  'Miri': miriImg,
-  'Limbang': limbangImg,
-  'Kapit': kapitImg,
-  'Sibu': sibuImg,
-};
 
 const MajorTownPage = () => {
   const [data, setData] = useState([]);

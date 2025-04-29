@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort, FaBookmark, FaLayerGroup } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
@@ -18,6 +18,16 @@ const travelModes = {
   Flight: 'TRANSIT',    // flights not directly supported, fallback to TRANSIT
 };
 
+function debounce(func, delay) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+}
+
 const LeftSidebar = ({ onSearch, history }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
@@ -36,9 +46,33 @@ const LeftSidebar = ({ onSearch, history }) => {
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [segmentedRoutes, setSegmentedRoutes] = useState([]);
+  const debouncedVehicleClick = useRef(null);
+
+  useEffect(() => {
+    // Initialize the debounced function once
+    debouncedVehicleClick.current = debounce(() => {
+      handleVehicleClick('Car');
+    }, 1000); // 1 second
+  }, []);
+
+  useEffect(() => {
+    if (startingPoint.trim() && destination.trim()) {
+      debouncedVehicleClick.current();
+    }
+  }, [startingPoint, destination]);
+
+  useEffect(() => {
+    return () => {
+      // Clear timeout if component unmounts
+      if (debouncedVehicleClick.current) {
+        clearTimeout(debouncedVehicleClick.current);
+      }
+    };
+  }, []);
 
   const handleRoutesCalculated = (routesData) => {
     setSegmentedRoutes(routesData.routes);
+    setSelectedRouteIndex(0);
   };
 
   const toggleLayersPanel = () => {
@@ -139,19 +173,19 @@ const LeftSidebar = ({ onSearch, history }) => {
   // };
 
   const handleVehicleClick = async (vehicle) => {
-    if (!startingPoint.trim() || !destination.trim()) {
-      alert('You need to fill in your starting point and destination first');
-      return;
-    }
+    // if (!startingPoint.trim() || !destination.trim()) {
+    //   alert('You need to fill in your starting point and destination first');
+    //   return;
+    // }
   
     // ✨ Validate both start and end are Malaysia
     const isStartMalaysia = await validateLocationIsInMalaysia(startingPoint);
     const isDestMalaysia = await validateLocationIsInMalaysia(destination);
   
-    if (!isStartMalaysia || !isDestMalaysia) {
-      alert('Starting point and destination must be inside Malaysia.');
-      return;
-    }
+    // if (!isStartMalaysia || !isDestMalaysia) {
+    //   alert('Starting point and destination must be inside Malaysia.');
+    //   return;
+    // }
   
     setSelectedVehicle(vehicle);
   
@@ -173,6 +207,10 @@ const LeftSidebar = ({ onSearch, history }) => {
   
       setRoutes(response.routes);
       setSelectedRouteIndex(0);
+
+      geocodeAddress(destination, (coords) => {
+        fetchNearbyPlaces(coords);
+      });
     } catch (error) {
       console.error('Error fetching directions:', error);
       alert('Failed to get directions. Please check your inputs and try again.');
@@ -264,7 +302,6 @@ const LeftSidebar = ({ onSearch, history }) => {
       });
     });
   };
-  
 
   return (
     <>
@@ -395,13 +432,7 @@ const LeftSidebar = ({ onSearch, history }) => {
                   
                   <hr />
 
-                  <div className="explore-nearby-text" onClick={() => {
-                    if (destination) {
-                      geocodeAddress(destination, (coords) => {
-                        fetchNearbyPlaces(coords); 
-                      });
-                    }
-                  }}>🔍 Explore Nearby</div>
+                  <div className="explore-nearby-text">🔍 Explore Nearby</div>
 
                   {/* Nearby Places List */}
                   {nearbyPlaces.length > 0 && (
@@ -431,7 +462,7 @@ const LeftSidebar = ({ onSearch, history }) => {
       {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}/>
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated} selectedRoute={routes[selectedRouteIndex]} />
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );

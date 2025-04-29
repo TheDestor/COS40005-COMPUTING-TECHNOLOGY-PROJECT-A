@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, Marker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef, ControlPosition, MapControl } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import aeroplaneIcon from '../assets/aeroplane.png';
@@ -8,85 +8,20 @@ import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 import townIcon from '../assets/town.png';
 import seaportIcon from '../assets/seaport.png';
-import sibu from '../assets/Sibu.png';
-import kuching from '../assets/Kuching.png';
-import miri from '../assets/Miri.png';
-import bintulu from '../assets/Bintulu.png';
-import sarikei from '../assets/Sarikei.png';
-import sriAman from '../assets/SriAman.png';
-import betong from '../assets/Betong.png';
-import kapit from '../assets/Kapit.png';
-import mukah from '../assets/Mukah.png';
-import limbang from '../assets/Limbang.png';
-import serian from '../assets/Serian.png';
-import kotaSamarahan from '../assets/KotaSamarahan.png';
-import ky from 'ky';
-
-const townCoordinates = { 
-  'Kuching': { lat: 1.5535, lng: 110.3593 },
-  'Sibu': { lat: 2.2870, lng: 111.8320 },
-  'Mukah': { lat: 2.8988, lng: 112.0914 },
-  'Serian': { lat: 1.2020, lng: 110.3952 },
-  'Bintulu': { lat: 3.1707, lng: 113.0360 },
-  'Betong': { lat: 1.4075, lng: 111.5400 },
-  'Kota Samarahan': { lat: 1.4591, lng: 110.4883 },
-  'Miri': { lat: 4.3993, lng: 113.9914 },
-  'Kapit': { lat: 2.0167, lng: 112.9333 },
-  'Sri Aman': { lat: 1.2389, lng: 111.4636 },
-  'Sarikei': { lat: 2.1271, lng: 111.5182 },
-  'Limbang': { lat: 4.7500, lng: 115.0000 },
-};
-
-const townData = {
-  Kuching: {
-    attractions: ["Sarawak Cultural Village", "Kuching Waterfront", "Bako National Park"],
-    image: kuching
-  },
-  Miri: {
-    attractions: ["Niah Caves", "Canada Hill", "Coco Cabana"],
-    image: miri
-  },
-  Sibu: {
-    attractions: ["Sibu Central Market", "Bukit Aup", "Wong Nai Siong Memorial Park"],
-    image: sibu
-  },
-  Bintulu: {
-    attractions: ["Tanjung Batu Beach", "Similajau National Park", "Tumbina Zoo"],
-    image: bintulu
-  },
-  Sarikei: {
-    attractions: ["Sarikei Pineapple Statue", "Central Market", "Sebangkoi Park"],
-    image: sarikei
-  },
-  "Sri Aman": {
-    attractions: ["Fort Alice", "Sri Aman Waterfront", "Benak Festival"],
-    image: sriAman
-  },
-  Betong: {
-    attractions: ["Betong Town Square", "Lichok Longhouse", "Sebetan River"],
-    image: betong
-  },
-  Kapit: {
-    attractions: ["Fort Sylvia", "Belaga Longhouses", "Rejang River"],
-    image: kapit
-  },
-  Mukah: {
-    attractions: ["Kaul Festival", "Mukah Beach", "Tellian Village"],
-    image: mukah
-  },
-  Limbang: {
-    attractions: ["Limbang Museum", "Taman Tasik Bukit Mas", "Border to Brunei"],
-    image: limbang
-  },
-  Serian: {
-    attractions: ["Ranchan Waterfall", "Tebakang Market", "Tebedu Border Post"],
-    image: serian
-  },
-  "Kota Samarahan": {
-    attractions: ["UNIMAS Campus", "Aiman Mall", "Samarahan Expressway Viewpoint"],
-    image: kotaSamarahan
-  }
-};
+// import sibu from '../assets/Sibu.png';
+// import kuching from '../assets/Kuching.png';
+// import miri from '../assets/Miri.png';
+// import bintulu from '../assets/Bintulu.png';
+// import sarikei from '../assets/Sarikei.png';
+// import sriAman from '../assets/SriAman.png';
+// import betong from '../assets/Betong.png';
+// import kapit from '../assets/Kapit.png';
+// import mukah from '../assets/Mukah.png';
+// import limbang from '../assets/Limbang.png';
+// import serian from '../assets/Serian.png';
+// import kotaSamarahan from '../assets/KotaSamarahan.png';
+// import ky from 'ky';
+import MapViewMenu from './MapViewMenu';
 
 const containerStyle = {
   position: 'absolute',
@@ -101,7 +36,7 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function Directions({ startingPoint={startingPoint}, destination={destination}, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory }) {
+function Directions({ startingPoint, destination, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory, onRoutesCalculated }) {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
@@ -111,7 +46,7 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
   const selected = routes[routesIndex];
   const leg = selected?.legs[0];
   const [isRoutesLoaded, setIsRoutesLoaded] = useState(false);
-  
+
   useEffect(() => {
     if (routesLibrary) setIsRoutesLoaded(true);
   }, [routesLibrary]);
@@ -140,8 +75,18 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
         // Convert addresses to coordinates if needed
         const geocode = async (input) => {
           if (typeof input === 'string') {
+            if (!input.trim() || input.trim().length < 3) {
+              console.warn('Skipping geocode for short input:', input);
+              return null; // Or throw if you want to abort
+            }
+
             const geocoder = new window.google.maps.Geocoder();
             const results = await geocoder.geocode({ address: input });
+
+            if (!results.results || results.results.length === 0) {
+              throw new Error('No geocoding results for: ' + input);
+            }
+            
             return results.results[0].geometry.location;
           }
           return input;
@@ -166,6 +111,7 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
         });
 
         directionsRenderer.setDirections(response);
+        setRoutes(response.routes);
 
         // Pass segmented routes data up to parent
         if (onRoutesCalculated) {
@@ -201,11 +147,46 @@ function Directions({ startingPoint={startingPoint}, destination={destination}, 
   return null;
 }
 
-function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
+function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], selectedRoute }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const [locations, setLocations] = useState([]);
+  // const [locations, setLocations] = useState([]);
   const map = useMap();
+  const [markerRef, setMarkerRef] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locations, setLocations] = useState([]);
+  const [activeOption, setActiveOption] = useState('');
+
+  // Add this function to handle menu selections
+  const handleMenuSelect = async (category, data) => {
+    setActiveOption(category);
+    
+    if (data) {
+      // Convert coordinates to numbers and validate
+      const validLocations = data
+        .filter(loc => !isNaN(loc.latitude) && !isNaN(loc.longitude))
+        .map(loc => ({
+          ...loc,
+          latitude: parseFloat(loc.latitude),
+          longitude: parseFloat(loc.longitude)
+        }));
+      
+      setLocations(validLocations);
+      console.log('Valid locations:', validLocations);
+    } else {
+      setLocations([]);
+    }
+  };
+
+  const handleMarkerClick = (location) => {
+    setSelectedLocation(location);
+    
+    // Pan to marker position
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.panTo({ lat: location.latitude, lng: location.longitude });
+      mapInstanceRef.current.setZoom(14);
+    }
+  };
 
   // Still in progress (do for autocomplete place)
   useEffect(() => {
@@ -236,87 +217,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     'National Park': parkIcon,
     'Seaport': seaportIcon,
   };
-
-  // const travelModes = {
-  //   Car: 'DRIVING',
-  //   Bus: 'TRANSIT',
-  //   Walking: 'WALKING',
-  //   Bicycle: 'BICYCLING',
-  //   Motorbike: 'DRIVING',
-  //   Flight: 'DRIVING',
-  // };
-
-  // useEffect(() => {
-  //     const fetchLocations = async () => {
-  //       try {
-  //         const response = await axios.get("http://localhost:5050/locations/");
-  //           const allFetchedLocations = response.data;
-    
-  //           const isValidLocation = (loc) => {
-  //             const lat = loc.latitude;
-  //             const lng = loc.longitude;
-  //             return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-  //           };
-  //           const validLocations = allFetchedLocations.filter(isValidLocation);
-  //           const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
-    
-  //           if (invalidLocations.length > 0) {
-  //             console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
-  //             invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
-  //           } else {
-  //             console.log("All fetched locations have valid coordinates.");
-  //           }
-
-  //           setLocations(validLocations);
-  //           console.log(`Fetched ${validLocations.length} valid locations from API`);
-  //           }catch (error) {
-  //             console.error("Error fetching locations:", error);
-  //             setLocations([]); // Clear on error
-  //           }
-  //       };
-
-  //       fetchLocations();
-  //     }, []);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await ky.get("/api/locations/").json();
-        const allFetchedLocations = response;
-  
-        const isValidLocation = (loc) => {
-          const lat = loc.latitude;
-          const lng = loc.longitude;
-          return typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
-        };
-  
-        const validLocations = allFetchedLocations.filter(isValidLocation);
-        const invalidLocations = allFetchedLocations.filter(loc => !isValidLocation(loc));
-  
-        if (invalidLocations.length > 0) {
-          console.warn(`Found ${invalidLocations.length} invalid location(s) out of ${allFetchedLocations.length}. They will not be displayed:`);
-          invalidLocations.forEach((loc, index) => console.warn(` - Invalid Item ${index}:`, loc));
-        } else {
-          console.log("All fetched locations have valid coordinates.");
-        }
-  
-        // ✅ Filter locations by selectedCategory
-        const filteredLocations = selectedCategory
-        ? validLocations.filter((loc) => loc.type.toLowerCase() === selectedCategory.toLowerCase())
-        : validLocations;
-  
-        console.log(`Fetched ${filteredLocations.length} ${selectedCategory || 'All'} locations from API`);
-        console.log('locations', filteredLocations);
-
-        setLocations(filteredLocations);
-      } catch (error) {
-        console.error("Error fetching locations:", error);
-        setLocations([]); // Clear on error
-      }
-    };
-  
-    fetchLocations();
-  }, [selectedCategory]); 
 
   useEffect(() => {
     console.log('Updated locations:', locations);
@@ -491,7 +391,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         }}
         style={containerStyle}
         defaultCenter={center}
-        defaultZoom={7.5}
+        defaultZoom={7}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
         // mapId='DEMO_MAP_ID'
@@ -499,15 +399,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
         
-      {/* {locations.map((loc) => (
-        <AdvancedMarker
-          key={loc.id}
-          position={{ lat: loc.latitude, lng: loc.longitude }}
-          title={loc.name}
-        >
-          <img src={categoryIcons[loc.type] || townIcon} alt={loc.type} style={{ width: '30px', height: '30px'}} />
-        </AdvancedMarker>
-      ))}; */}
 
       {/* Locations based on type (render issue) */}
       {locations.map((loc) => (
@@ -515,18 +406,25 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           key={loc.id}
           position={{ lat: loc.latitude, lng: loc.longitude }}
           title={loc.name}
+          onClick={() => handleMarkerClick(loc)}
+          ref={setMarkerRef}
         >
-          {/* <img 
+          <img 
             src={categoryIcons[loc.type] || townIcon} 
             alt={loc.type} 
-            style={{ width: '30px', height: '30px' }} 
-          /> */}
+            style={{ 
+              width: '30px', 
+              height: '30px',
+              cursor: 'pointer',
+              transform: selectedLocation?.id === loc.id ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.2s ease'
+            }} 
+          />
         </AdvancedMarker>
       ))}
 
-
       {/* Temporary markers for major towns */}
-      {Object.entries(townCoordinates).map(([townName, coords]) => {
+      {/* {Object.entries(townCoordinates).map(([townName, coords]) => {
         const info = townData[townName];
         if (!info) return null; // skip if no town info
 
@@ -538,7 +436,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             townInfo={info}
           />
         );
-      })}
+      })} */}
 
       {/* {selectedPlace && selectedPlace.geometry?.location && (
         <AdvancedMarker
@@ -601,6 +499,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           nearbyPlaces={nearbyPlaces}
           selectedCategory={selectedCategory}
         />
+
+        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} onRoutesCalculated={(data) => console.log(data)}/>
       </Map>
     </APIProvider>
   );
