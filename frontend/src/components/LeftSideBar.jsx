@@ -5,6 +5,7 @@ import RecentSection from './RecentSection';
 import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 import MapComponent from './MapComponent';
+import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
@@ -235,6 +236,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
     if (isExpanded) setIsExpanded(false);
     if (showRecent) setShowRecent(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
+    if (showLayersPanel) setShowLayersPanel(false);
     setShowBusiness((prev) => !prev);
   };
 
@@ -465,6 +467,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} onItemClick={onSearch} onDeleteItems={handleDeleteItems} />
       {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
+      <BusinessSubmissionForm  isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
       <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}  routes={routes} />
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

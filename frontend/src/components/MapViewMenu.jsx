@@ -10,6 +10,7 @@ import defaultImage from '../assets/Kuching.png';
 
 const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
   const [selectedMenu, setSelectedMenu] = useState(activeOption || '');
+  const [locationsData, setLocationsData] = useState([]);
 
   const menuItems = [
     { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
@@ -22,31 +23,60 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
     { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
   ];
 
+  // const handleMenuItemClick = async (item) => {
+  //   setSelectedMenu(item.name);
+  //   if (item.isFetchOnly) {
+  //     try {
+  //       const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
+  //       console.log(`Fetched ${item.name} Data:`, response);
+
+  //       // Ensure the backend response contains latitude/longitude
+  //       const formattedData = response.map(location => ({
+  //         ...location, // Include all properties from the response
+  //         coordinates: [location.latitude, location.longitude] || 'No Coordinates',
+  //         image: location.image || defaultImage, // Ensure image field is populated, fallback to defaultImage
+  //         description: location.description || 'No description available.',
+  //       }));
+
+  //       if (onSelect) onSelect(item.name, formattedData);
+  //       if (onSelectCategory) onSelectCategory(item.name, formattedData);
+  //     } catch (error) {
+  //       console.error(`Error fetching ${item.name}:`, error);
+  //     }
+  //   } else {
+  //     if (onSelect) onSelect(item.name);
+  //     if (onSelectCategory) onSelectCategory(item.name);
+  //   }
+  // };
+
   const handleMenuItemClick = async (item) => {
     setSelectedMenu(item.name);
     if (item.isFetchOnly) {
       try {
         const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
-        console.log(`Fetched ${item.name} Data:`, response);
-
-        // Ensure the backend response contains latitude/longitude
         const formattedData = response.map(location => ({
-          ...location, // Include all properties from the response
+          ...location,
           coordinates: [location.latitude, location.longitude] || 'No Coordinates',
-          image: location.image || defaultImage, // Ensure image field is populated, fallback to defaultImage
+          image: location.image || defaultImage,
           description: location.description || 'No description available.',
         }));
 
+        setLocationsData(formattedData);
         if (onSelect) onSelect(item.name, formattedData);
-        if (onSelectCategory) onSelectCategory(item.name, formattedData);
+        if (onSelectCategory && typeof onSelectCategory === 'function') {
+          onSelectCategory(item.name, formattedData);
+        }
       } catch (error) {
         console.error(`Error fetching ${item.name}:`, error);
       }
     } else {
       if (onSelect) onSelect(item.name);
-      if (onSelectCategory) onSelectCategory(item.name);
+      if (onSelectCategory && typeof onSelectCategory === 'function') {
+        onSelectCategory(item.name);
+      }
     }
-  };
+  }
+  
 
   useEffect(() => {
     if (!activeOption) {
@@ -64,11 +94,11 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
       <div className="menu-container">
         {menuItems.map((item) => {
           const isActive = activeOption === item.name || selectedMenu === item.name;
-
+          
           return (
             <button
               key={item.name}
-              className="menu-item2"
+              className={`menu-item2 ${isActive ? 'active' : ''}`}
               onClick={() => handleMenuItemClick(item)}
             >
               <div className={`icon-container ${isActive ? 'active-icon-container' : ''}`}>

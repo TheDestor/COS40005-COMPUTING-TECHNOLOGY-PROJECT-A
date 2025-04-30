@@ -1,0 +1,131 @@
+.info-window-card {
+    position: relative;
+    height: 500px;
+    width: 300px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    padding: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    z-index: 10;
+  }
+  
+  .info-image {
+    width: 260px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .info-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .rating {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .rating svg {
+    margin-left: 4px;
+  }
+  
+  .info-tabs {
+    display: flex;
+    gap: 12px;
+    margin: 10px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #888;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+  }
+  
+  .info-tabs .active {
+    color: #000;
+    border-bottom: 2px solid #000;
+  }
+  
+  .info-desc {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #444;
+  }
+  
+  .info-link {
+    display: block;
+    font-size: 13px;
+    color: #1e90ff;
+    word-break: break-all;
+    margin-bottom: 8px;
+    text-decoration: none;
+  }
+  
+  .info-open {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  
+  .info-actions {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  
+  .book-btn {
+    background-color: #1e90ff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .book-btn:hover {
+    background-color: #0f75d3;
+  }
+  
+  .info-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #555;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+  }
+  
+  .info-footer span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .info-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+  }
+  
+  .info-close:hover {
+    color: #333;
+  }
+  

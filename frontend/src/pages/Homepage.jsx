@@ -24,7 +24,7 @@ const HomePage = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
   // const [locations, setLocations] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [mapLocations, setMapLocations] = useState([]);
 
   // const [mapLocations, setMapLocations] = useState([]);
   const [infoLocations, setInfoLocations] = useState([]);
@@ -75,17 +75,44 @@ const HomePage = () => {
   //   }
   // };
 
-  const handleCategorySelect = async (category) => {
+  const handleCategorySelect = async (category, data = null) => {
     setSelectedCategory(category);
+    
     try {
-      const response = await fetch(`/api/locations?type=${category}`);
-      const data = await response.json();
-      handleDataFetch(category, data); // reuse your existing processor
-    } catch (err) {
-      console.error('Error fetching category:', err);
-      handleDataFetch(category, []); // fallback
+      // If data isn't provided, fetch it
+      const responseData = data || await (await fetch(`/api/locations?type=${category}`)).json();
+      
+      // Process for map markers
+      const processedLocations = responseData.map(item => ({
+        id: item.id || Math.random().toString(),
+        name: item.name || 'Unknown',
+        latitude: parseFloat(item.latitude),
+        longitude: parseFloat(item.longitude),
+        type: category // Important: Set the type to current category
+      }));
+      
+      setMapLocations(processedLocations);
+      
+      // Process for tourist info (if needed)
+      const infoData = responseData.map(item => ({
+        id: item.id || Math.random().toString(),
+        name: item.name || 'Unknown',
+        description: item.description || 'No description',
+        image: item.image || defaultImage
+      }));
+      setInfoLocations(infoData);
+      
+    } catch (error) {
+      console.error('Error:', error);
+      setMapLocations([]);
+      setInfoLocations([]);
     }
   };
+
+  // Set default category on first load
+  useEffect(() => {
+    handleCategorySelect('Major Town');
+  }, []);
   
   // const handleCategorySelect2 = async (category) => {
   //   setSelectedCategory(category);
@@ -137,9 +164,12 @@ const HomePage = () => {
         selectedCategory={selectedCategory}
         selectedPlace={selectedPlace}
         categoryData={categoryData} 
-        locations={setLocations}
+        locations={mapLocations}
         // onLocationFetch={handleMenuSelect}
         setSelectedCategory={setSelectedCategory}
+        onSelectCategory={handleCategorySelect} 
+        // onSelect={handleCategorySelect}
+        activeOption={selectedCategory}
       />
       
       <TouristInfoSection 
@@ -162,11 +192,11 @@ const HomePage = () => {
         setHistory={setSearchHistory}
       />
 
-      <MapViewMenu 
+      {/* <MapViewMenu 
         onSelectCategory={handleCategorySelect} 
-        // onSelect={handleCategorySelect2}
-        // activeOption={activeOption}
-      />
+        // onSelect={handleCategorySelect}
+        activeOption={selectedCategory}
+      /> */}
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}

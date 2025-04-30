@@ -26,6 +26,8 @@
     "react-select": "^5.10.1",
     "react-switch": "^7.1.0",
     "react-toastify": "^11.0.5",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^1.8.11",
     "topojson-client": "^3.1.0",
     "zxcvbn": "^4.4.2"
   },

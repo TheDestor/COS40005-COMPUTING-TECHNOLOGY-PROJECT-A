@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fa';
 import '../styles/BusinessSubmissionForm.css';
 
-const BusinessSubmissionForm = () => {
+const BusinessSubmissionForm = ({ isOpen, onClose}) => {
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -790,12 +790,19 @@ const renderReviewStep = () => {
     );
   };
 
+  if (!isOpen) return null;
+
   return (
+    
+    <div className="business-submission-overlay">
     <div className="business-submission-container">
       <div className="business-submission-form-wrapper">
         <div className="form-header">
           <h2>Business Submission Form</h2>
           <p>Complete the form below to add your business to our directory</p>
+          <button className="close-button" onClick={onClose}>
+          &times; {/* This is the multiplication sign (X) */}
+          </button>
         </div>
         
         {submitSuccess ? (
@@ -812,6 +819,7 @@ const renderReviewStep = () => {
         )}
       </div>
     </div>
+  </div>
   );
 };
 

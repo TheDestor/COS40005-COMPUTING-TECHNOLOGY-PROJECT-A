@@ -22,6 +22,7 @@ import seaportIcon from '../assets/seaport.png';
 // import kotaSamarahan from '../assets/KotaSamarahan.png';
 // import ky from 'ky';
 import MapViewMenu from './MapViewMenu';
+import CustomInfoWindow from './CustomInfoWindow';
 
 const containerStyle = {
   position: 'absolute',
@@ -148,7 +149,7 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
 }
 
 function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
-  const mapRef = useRef(null);
+  const mapRef = useRef();
   const mapInstanceRef = useRef(null);
   // const [locations, setLocations] = useState([]);
   const map = useMap();
@@ -238,147 +239,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     map.fitBounds(bounds);
   }, [map, locations]);
 
-  const MarkerWithInfoWindow = ({ position, townName, townInfo }) => {
-    const [markerRef, marker] = useAdvancedMarkerRef();
-    const [infoWindowShown, setInfoWindowShown] = useState(false);
-  
-    const handleOpen = () => setInfoWindowShown(true);
-    const handleClose = () => setInfoWindowShown(false);
-  
-    return (
-      <>
-        <AdvancedMarker
-          ref={markerRef}
-          position={position}
-          onClick={handleOpen}
-          onMouseOut={handleClose}
-          title={townName}
-        >
-          <img
-            src={townInfo?.image}
-            alt={townName}
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "50%",
-              border: "2px solid white",
-              boxShadow: "0 0 8px rgba(0,0,0,0.4)",
-              transition: "transform 0.3s ease",
-              cursor: "pointer"
-            }}
-            onMouseOver={e => (e.currentTarget.style.transform = "scale(1.1)")}
-            onMouseOut={e => (e.currentTarget.style.transform = "scale(1)")}
-          />
-        </AdvancedMarker>
-  
-        {infoWindowShown && townInfo && (
-          <InfoWindow anchor={marker} onCloseClick={handleClose}>
-          <div
-            style={{
-              maxWidth: "300px",
-              borderRadius: "14px",
-              overflow: "hidden",
-              fontFamily: "'Segoe UI', sans-serif",
-              backgroundColor: "#fff",
-            }}
-          >
-            <div style={{ position: "relative", width: "100%", height: "160px", overflow: "hidden", padding:"0px 15px 0px 2px" }}>
-              <img
-                src={townInfo?.image}
-                alt={townName}
-                style={{
-                  width: "250px",
-                  height: "150px",
-                  objectFit: "cover",
-                  borderRadius: "10px"
-                }}
-              />
-            </div>
-        
-            {/* Text Content */}
-            <div style={{ padding: "14px 16px", position: "relative" }}>
-              <h3
-                style={{
-                  fontSize: "18px",
-                  margin: "0 0 6px",
-                  color: "#2c3e50",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                <FaMapMarkerAlt color="#e74c3c" />
-                {townName}
-              </h3>
-        
-              <p style={{ fontWeight: "600", marginTop: "10px", marginBottom: "6px" }}>
-                Top Attractions:
-              </p>
-        
-              <ul
-                style={{
-                  maxHeight: "90px",
-                  overflowY: "auto",
-                  margin: 0,
-                  paddingLeft: "20px",
-                  lineHeight: "1.5",
-                  fontSize: "14px"
-                }}
-              >
-                {townInfo.attractions.map((place, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      color: "#34495e",
-                      marginBottom: "4px",
-                      transition: "color 0.2s ease",
-                      cursor: "pointer"
-                    }}
-                    onMouseOver={e => (e.currentTarget.style.color = "#e67e22")}
-                    onMouseOut={e => (e.currentTarget.style.color = "#34495e")}
-                  >
-                    {place}
-                  </li>
-                ))}
-              </ul>
-        
-              {/* Learn More CTA bottom right */}
-              <div
-                style={{
-                  marginTop: "12px",
-                  display: "flex",
-                  justifyContent: "flex-end"
-                }}
-              >
-                <Link
-                  to={'/major-town'}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    color: "#fff",
-                    background: "linear-gradient(to right, #3498db, #2980b9)",
-                    borderRadius: "6px",
-                    padding: "8px 12px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                    transition: "background 0.3s ease"
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = "#1c6ea4")}
-                  onMouseOut={e => (e.currentTarget.style.background = "linear-gradient(to right, #3498db, #2980b9)")}
-                >
-                  Learn More <FaExternalLinkAlt size={12} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </InfoWindow>        
-        )}
-      </>
-    );
-  };
   
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI' libraries={['places']}>
@@ -499,6 +359,22 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           nearbyPlaces={nearbyPlaces}
           selectedCategory={selectedCategory}
         />
+
+        {selectedLocation && (
+          <InfoWindow
+            position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude }}
+            onCloseClick={() => setSelectedLocation(null)}
+          >
+            <CustomInfoWindow 
+              location={{
+                name: selectedLocation.name,
+                image: selectedLocation.image || 'default-image.jpg',
+                description: selectedLocation.description || "No description available.",
+              }} 
+              onCloseClick={() => setSelectedLocation(null)}
+            />
+          </InfoWindow>
+        )}
 
         <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/>
       </Map>

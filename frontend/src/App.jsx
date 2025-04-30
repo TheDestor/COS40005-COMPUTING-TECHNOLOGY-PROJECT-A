@@ -14,7 +14,7 @@ import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import SystemAdminpage from './pages/SystemAdminpage.jsx';
 import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
-import MajorTownPage from './pages/MajorTownPage.jsx';
+import CategoryPage from './pages/CategoryPage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 import ViewAnalytics from './pages/ViewAnalytics.jsx';
@@ -40,7 +40,7 @@ function App() {
           <Route path="/system-admin" element={<SystemAdminpage />} />
           <Route path="/profile-settings" element={<ProfileSettingPage />} />
           <Route path="/bookmark" element={<BookmarkPage />} />
-          <Route path="/major-town" element={<MajorTownPage />} />
+          <Route path="/category" element={<CategoryPage />} />
           {/* <Route path="/homestay" element={<HomestayPage />} /> */}
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/review" element={<ReviewPage />} />

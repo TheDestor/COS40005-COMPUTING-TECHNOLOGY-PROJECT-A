@@ -6,7 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/MajorTownPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const MajorTownPage = () => {
+const CategoryPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -170,4 +170,4 @@ const MajorTownPage = () => {
   );
 };
 
-export default MajorTownPage;
+export default CategoryPage;

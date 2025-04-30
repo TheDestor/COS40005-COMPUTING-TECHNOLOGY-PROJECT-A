@@ -46,7 +46,7 @@ const ReviewPage = () => {
 
   return (
     <>
-      <div className="review-container">
+      <div className="review-container2">
         <div className="review-summary">
           <div className="tab-header">
             <span className="tab">Overview</span>
