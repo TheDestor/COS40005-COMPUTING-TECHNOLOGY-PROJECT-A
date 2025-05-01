@@ -59,6 +59,7 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
           coordinates: [location.latitude, location.longitude] || 'No Coordinates',
           image: location.image || defaultImage,
           description: location.description || 'No description available.',
+          url: location.url || 'No url provided',
         }));
 
         setLocationsData(formattedData);

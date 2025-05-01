@@ -1,10 +1,31 @@
-// CustomInfoWindow.jsx
-import React from 'react';
-import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt } from "react-icons/fa";
+import React, { useState } from 'react';
+import {
+  FaStar,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaShareAlt,
+  FaSave
+} from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
 
 const CustomInfoWindow = ({ location, onCloseClick }) => {
+  const [activeFooter, setActiveFooter] = useState('Directions');
+  const [showFullDesc, setShowFullDesc] = useState(false);
+
   if (!location) return null;
+
+  const footerItems = [
+    { icon: <FaMapMarkerAlt />, label: 'Directions' },
+    { icon: <FaSave />, label: 'Save' },
+    { icon: <FaPhoneAlt />, label: 'Phone' },
+    { icon: <FaShareAlt />, label: 'Share' }
+  ];
+
+  const handleFooterClick = (label) => {
+    setActiveFooter(label);
+    // Optional: trigger action based on label
+    console.log(`${label} clicked`);
+  };
 
   return (
     <div className="info-window-card">
@@ -12,42 +33,60 @@ const CustomInfoWindow = ({ location, onCloseClick }) => {
 
       <div className="info-header">
         <h3>{location.name}</h3>
-        <p className="rating">
-          5.0 <FaStar color="gold" /> (100)
+        <p className="rating51">
+          5.0 <FaStar color="#ffc107" /> (100)
         </p>
       </div>
 
       <div className="info-tabs">
-        <span className="active">Overview</span>
-        <span>Reviews</span>
+        <span className="active-tab">Overview</span>
+        <span className="inactive-tab">Reviews</span>
       </div>
 
-      <p className="info-desc">{location.description}</p>
+      <p className="info-desc">
+        {showFullDesc
+          ? location.description
+          : location.description.slice(0, 100) + (location.description.length > 100 ? '...' : '')}
+        {location.description.length > 100 && (
+          <span
+            className="read-more-toggle"
+            onClick={() => setShowFullDesc(!showFullDesc)}
+          >
+            {showFullDesc ? ' Show less' : ' Read more'}
+          </span>
+        )}
+      </p>
 
       <a
-        href={location.website}
+        href={location.url}
         target="_blank"
         rel="noopener noreferrer"
         className="info-link"
       >
-        {location.name}
+        {new URL(location.url).hostname}
       </a>
 
-      <p className="info-open">
-        Opens at <strong>{location.name}</strong>
-      </p>
-
       <div className="info-actions">
-        <button className="book-btn">Book Now!</button>
+        <p className="info-open">
+          <span className="open-status">Opens at</span> 12:00am
+        </p>
+        <button className="book-btn">Explore Now!</button>
       </div>
 
       <div className="info-footer">
-        <span><FaMapMarkerAlt /> Directions</span>
-        <span><FaPhoneAlt /> Phone</span>
-        <span><FaShareAlt /> Share</span>
+        {footerItems.map((item) => (
+          <span
+            key={item.label}
+            className={`footer-item ${
+              activeFooter === item.label ? 'active' : ''
+            }`}
+            onClick={() => handleFooterClick(item.label)}
+          >
+            <span className="footer-icon">{item.icon}</span>
+            {item.label}
+          </span>
+        ))}
       </div>
-
-      {/* <button onClick={onCloseClick} className="info-close">×</button> */}
     </div>
   );
 };

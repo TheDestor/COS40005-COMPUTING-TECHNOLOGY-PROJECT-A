@@ -8,19 +8,6 @@ import museumIcon from '../assets/museum.png';
 import parkIcon from '../assets/national_park.png';
 import townIcon from '../assets/town.png';
 import seaportIcon from '../assets/seaport.png';
-// import sibu from '../assets/Sibu.png';
-// import kuching from '../assets/Kuching.png';
-// import miri from '../assets/Miri.png';
-// import bintulu from '../assets/Bintulu.png';
-// import sarikei from '../assets/Sarikei.png';
-// import sriAman from '../assets/SriAman.png';
-// import betong from '../assets/Betong.png';
-// import kapit from '../assets/Kapit.png';
-// import mukah from '../assets/Mukah.png';
-// import limbang from '../assets/Limbang.png';
-// import serian from '../assets/Serian.png';
-// import kotaSamarahan from '../assets/KotaSamarahan.png';
-// import ky from 'ky';
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
 
@@ -189,7 +176,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     }
   };
 
-  // Still in progress (do for autocomplete place)
   useEffect(() => {
     if (
       selectedPlace &&
@@ -370,6 +356,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 name: selectedLocation.name,
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
+                url: selectedLocation.url || 'No URL provided',
               }} 
               onCloseClick={() => setSelectedLocation(null)}
             />
