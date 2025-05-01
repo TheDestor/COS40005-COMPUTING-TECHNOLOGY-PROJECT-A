@@ -449,13 +449,13 @@ svg {
   overflow: visible;
 }
 
-/* Make sure charts are responsive */
+/* Making sure charts responsive */
 .viz-content svg {
   max-width: 100%;
   height: auto;
 }
 
-/* Make axis lines and ticks more subtle */
+
 .x-axis path,
 .y-axis path,
 .x-axis line,
@@ -702,7 +702,7 @@ svg {
   position: relative;
 }
 
-/* Add fade effect to truncated text */
+
 .review-content:after {
   content: "";
   position: absolute;
@@ -723,7 +723,6 @@ svg {
   gap: 8px;
 }
 
-/* Professional approve button styling */
 .approve-btn {
   background-color: #f0fdf4;
   color: #15803d;
@@ -732,8 +731,8 @@ svg {
 }
 
 .approve-btn:hover {
-  background-color: #16a34a; /* Darker green background */
-  color: #ffffff; /* White text for contrast */
+  background-color: #16a34a; 
+  color: #ffffff; 
   border-color: #15803d;
   transform: translateY(-1px);
   box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
@@ -754,8 +753,8 @@ svg {
 }
 
 .reject-btn:hover {
-  background-color: #dc2626; /* Darker red background */
-  color: #ffffff; /* White text for contrast */
+  background-color: #dc2626; 
+  color: #ffffff; 
   border-color: #b91c1c;
   transform: translateY(-1px);
   box-shadow: 0 2px 5px rgba(220, 38, 38, 0.2);
@@ -767,7 +766,7 @@ svg {
   color: #ffffff;
 }
 
-/* Add icons to buttons for better visual cues */
+
 .approve-btn::before,
 .reject-btn::before {
   font-family: "Font Awesome 5 Free", sans-serif;

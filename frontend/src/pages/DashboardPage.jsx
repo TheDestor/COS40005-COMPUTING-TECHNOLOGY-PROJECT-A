@@ -78,7 +78,7 @@ const DashboardPage = () => {
     };
   }, []);
 
-  // Create Business Participation chart (donut chart)
+  // Business Participation chart (donut chart)
   const createBusinessParticipationChart = () => {
     const container = d3.select(businessParticipationChartRef.current);
     container.selectAll("*").remove(); // Clear previous chart if any
@@ -86,7 +86,7 @@ const DashboardPage = () => {
     const containerWidth = businessParticipationChartRef.current.clientWidth;
     const containerHeight = 340; // Fixed height for consistency
     
-    // Create a proper wrapper element to hold both SVG and indicators
+    // wrapper element to hold both SVG and indicators
     const chartWrapper = container
       .append("div")
       .attr("class", "chart-wrapper")
@@ -898,8 +898,6 @@ const renderStarRating = (rating) => {
             <div className="viz-content" ref={userEngagementChartRef}></div>
           </div>
         </div>
-        
-        {/* Add the Users List Section right HERE, before the closing div of dashboard-content */}
         {/* Users List Section */}
         <div className="dashboard-section">
           <div className="section-header">
