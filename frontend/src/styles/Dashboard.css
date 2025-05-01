@@ -349,7 +349,7 @@
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.03);
   min-height: 400px;
-  height: 450px;
+  height: 500px;
 }
 
 .visualization-card:hover {
@@ -383,6 +383,27 @@
   position: relative;
 }
 
+/* Chart wrapper and layout fixes */
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.chart-section, .donut-section {
+  position: relative;
+  height: 100%;
+}
+
+.indicators-section {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 20px;
+}
+
 /* Chart tooltip styles */
 .chart-tooltip {
   position: absolute;
@@ -398,42 +419,29 @@
   transition: opacity 0.2s ease;
 }
 
-/* Position relative helper */
-.position-relative {
-  position: relative;
+/* Legend positioning */
+.legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  border-radius: 4px;
+  z-index: 5;
 }
 
 /* Business Participation Chart specific styles */
-.business-indicators {
-  position: absolute;
-  top: 50px;
-  right: 30px;
-  width: 40%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  z-index: 5;
-}
-
-.business-indicators > div {
-  background-color: white;
-}
-
 .business-legend {
   position: absolute;
-  bottom: 20px;
+  bottom: 10px;
   left: 0;
   width: 100%;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   flex-wrap: wrap;
+  gap: 20px;
   padding: 0 20px;
   z-index: 5;
-}
-
-/* Fix for user engagement chart */
-.dashboard-visualizations .visualization-card:first-child .viz-content {
-  height: 350px;
 }
 
 /* D3 specific fixes */
@@ -465,6 +473,152 @@ svg {
   stroke-width: 0;
 }
 
+/* Total users text positioning */
+.total-users-text {
+  font-size: 26px;
+  font-weight: bold;
+  fill: #1e293b;
+}
+
+.total-users-label {
+  font-size: 14px;
+  fill: #6b7280;
+}
+
+/* Users List Styles */
+.dashboard-section {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  padding: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  font-size: 18px;
+  color: #1e293b;
+  margin: 0;
+}
+
+.view-all-btn {
+  background-color: transparent;
+  color: #4f46e5;
+  border: 1px solid #4f46e5;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-all-btn:hover {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.users-list-container {
+  overflow-x: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.users-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.users-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.inactive {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.view-btn {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.view-btn:hover {
+  background-color: #93c5fd;
+}
+
+.edit-btn {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.edit-btn:hover {
+  background-color: #e5e7eb;
+}
+
 /* To make dashboard area adjusts to sidebar */
 @media (max-width: 1200px) {
   .dashboard-visualizations {
@@ -474,6 +628,21 @@ svg {
   .visualization-card {
     height: auto;
     min-height: 450px;
+  }
+  
+  .chart-wrapper {
+    flex-direction: column;
+  }
+  
+  .chart-section, 
+  .donut-section,
+  .indicators-section {
+    width: 100% !important;
+  }
+  
+  .indicators-section {
+    padding-left: 0;
+    margin-top: 20px;
   }
 }
 
@@ -485,14 +654,6 @@ svg {
   
   .stat-cards-container {
     gap: 16px;
-  }
-  
-  .business-indicators {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 100%;
-    margin-top: 10px;
   }
 }
 
@@ -530,9 +691,24 @@ svg {
     width: 100%;
   }
   
-  .business-legend {
+  .legend {
     position: relative;
-    margin-top: 10px;
-    bottom: auto;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .dashboard-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-bar {
+    width: 100%;
   }
 }

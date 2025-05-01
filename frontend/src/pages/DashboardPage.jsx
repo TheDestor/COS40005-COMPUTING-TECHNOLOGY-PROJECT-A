@@ -3,34 +3,49 @@ import { FaSearch, FaBell, FaEnvelope, FaMapMarkerAlt, FaChartLine, FaEnvelopeOp
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
 import * as d3 from 'd3';
+import profile1 from '../assets/profile1.png';
+import profile2 from '../assets/profile2.png';
+import profile3 from '../assets/profile3.png';
+import profile4 from '../assets/profile4.png';
+import profile5 from '../assets/profile5.png';
 
 const DashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const userEngagementChartRef = useRef(null);
   const businessParticipationChartRef = useRef(null);
+  const userEngagementChartRef = useRef(null);
   
-  // Dummy data for user engagement
-  const userEngagementData = [
-    { month: 'Jan', inactive: 65, active: 0, signup: 0 },
-    { month: 'Feb', inactive: 120, active: 0, signup: 0 },
-    { month: 'Mar', inactive: 0, active: 180, signup: 0 },
-    { month: 'Apr', inactive: 75, active: 0, signup: 0 },
-    { month: 'May', inactive: 95, active: 0, signup: 0 },
-    { month: 'Jun', inactive: 350, active: 0, signup: 0 },
-    { month: 'Jul', inactive: 80, active: 0, signup: 0 },
-    { month: 'Aug', inactive: 110, active: 0, signup: 0 },
-    { month: 'Sep', inactive: 55, active: 0, signup: 0 },
-    { month: 'Oct', inactive: 0, active: 0, signup: 250 },
-    { month: 'Nov', inactive: 85, active: 0, signup: 0 },
-    { month: 'Dec', inactive: 100, active: 0, signup: 0 }
-  ];
-
   // Dummy data for business participation
   const businessParticipationData = {
     activePercentage: 82.3,
     inactivePercentage: 17.7,
     dailyInteractionGrowth: 18,
     weeklyListingsGrowth: 14
+  };
+  
+  // Dummy data for user engagement bar chart
+  const userEngagementData = {
+    totalUsers: 1500,
+    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    series: [
+      {
+        name: 'Active Users',
+        values: [800, 1000, 1100, 1200, 1300, 1400],
+        color: '#4f46e5' // Indigo
+      },
+      {
+        name: 'Inactive Users',
+        values: [300, 280, 260, 240, 200, 180],
+        color: '#9ca3af' // Gray
+      },
+      {
+        name: 'New Signups',
+        values: [120, 180, 210, 240, 280, 350],
+        color: '#10b981' // Emerald
+      }
+    ],
+    growthRate: 25.2,
+    activeRate: '78%',
+    retentionRate: '92%'
   };
   
   // Handler for card clicks that can be connected to navigation later
@@ -42,12 +57,11 @@ const DashboardPage = () => {
   // Initialize D3 charts after component mounts and window resize
   useEffect(() => {
     const renderCharts = () => {
-      if (userEngagementChartRef.current) {
-        createUserEngagementChart();
-      }
-      
       if (businessParticipationChartRef.current) {
         createBusinessParticipationChart();
+      }
+      if (userEngagementChartRef.current) {
+        createUserEngagementBarChart();
       }
     };
 
@@ -62,323 +76,6 @@ const DashboardPage = () => {
       window.removeEventListener('resize', renderCharts);
     };
   }, []);
-
-  // Create User Engagement chart using D3
-const createUserEngagementChart = () => {
-  const container = d3.select(userEngagementChartRef.current);
-  container.selectAll("*").remove(); // Clear previous chart if any
-  
-  const containerWidth = userEngagementChartRef.current.clientWidth;
-  const margin = { top: 40, right: 40, bottom: 70, left: 50 };
-  const width = containerWidth - margin.left - margin.right;
-  const height = 280 - margin.top - margin.bottom;
-  
-  // Create SVG element with proper dimensions and margin handling
-  const svg = container
-    .append("svg")
-    .attr("width", containerWidth)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-  
-  // Create scales
-  const x = d3.scaleBand()
-    .domain(userEngagementData.map(d => d.month))
-    .range([0, width])
-    .padding(0.4);
-  
-    const y = d3.scaleLinear()
-    .domain([0, d3.max(userEngagementData, d => Math.max(d.inactive, d.active, d.signup))])
-    .range([height, 0]);
-  
-  // Add x-axis with styling
-  svg.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x))
-    .selectAll("text")
-    .style("text-anchor", "middle")
-    .style("font-size", "12px")
-    .style("fill", "#6b7280");
-  
-  // Add subtle y-axis gridlines
-  svg.append("g")
-    .attr("class", "grid")
-    .call(d3.axisLeft(y)
-      .tickSize(-width)
-      .tickFormat("")
-    )
-    .style("stroke-opacity", 0.1);
-  
-  // Add y-axis with styling
-  svg.append("g")
-    .attr("class", "y-axis")
-    .call(d3.axisLeft(y).ticks(5))
-    .selectAll("text")
-    .style("font-size", "12px")
-    .style("fill", "#6b7280");
-  
-  // Create tooltip with fixed positioning
-  const tooltip = d3.select("body")
-    .append("div")
-    .attr("class", "chart-tooltip")
-    .style("opacity", 0)
-    .style("position", "absolute")
-    .style("padding", "10px")
-    .style("background", "rgba(30, 41, 59, 0.9)")
-    .style("color", "#fff")
-    .style("border-radius", "6px")
-    .style("font-size", "12px")
-    .style("pointer-events", "none")
-    .style("z-index", 999)
-    .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)");
-
-  // Helper function to determine bar color
-  const getBarColor = (d) => {
-    if (d.active > 0) return "#4ade80"; // Active Users - Green
-    if (d.signup > 0) return "#ec4899"; // New Signups - Pink
-    return "#a78bfa";  // Inactive Users - Purple
-  };
-
-  // Helper function to determine value
-  const getBarValue = (d) => {
-    let value;
-    if (d.active > 0) value = d.active;
-    else if (d.signup > 0) value = d.signup;
-    else value = d.inactive;
-    
-    console.log(`Month: ${d.month}, Value: ${value}`);
-    return value;
-  };
-
-  // Helper function to determine label for tooltip
-  const getBarLabel = (d) => {
-    if (d.active > 0) return "Active Users";
-    if (d.signup > 0) return "New Signups";
-    return "Inactive Users";
-  };
-
-  // Add bar animation transition duration
-  const transitionDuration = 800;
-
-  // Create bars with animations and improved interactions
-  svg.selectAll(".bar")
-    .data(userEngagementData)
-    .enter()
-    .append("rect")
-    .attr("class", "bar")
-    .attr("x", d => x(d.month))
-    .attr("width", x.bandwidth())
-    .attr("y", height) // Start from bottom for animation
-    .attr("height", 0) // Start with zero height for animation
-    .attr("rx", 4) // Rounded corners
-    .attr("ry", 4)
-    .attr("fill", d => getBarColor(d))
-    // Add hover interaction
-    .on("mouseover", function(event, d) {
-      // Highlight the bar
-      d3.select(this)
-        .transition()
-        .duration(200)
-        .attr("opacity", 0.8)
-        .attr("stroke", "#2c3345")
-        .attr("stroke-width", 2);
-      
-      // Show tooltip with fixed positioning relative to mouse
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.9);
-      
-      tooltip.html(`
-        <div style="font-weight: bold; margin-bottom: 5px;">${d.month}</div>
-        <div>${getBarLabel(d)}: ${getBarValue(d)}</div>
-      `)
-      .style("left", `${event.pageX + 15}px`)
-      .style("top", `${event.pageY - 40}px`);
-    })
-    .on("mouseout", function() {
-      // Reset bar styling
-      d3.select(this)
-        .transition()
-        .duration(500)
-        .attr("opacity", 1)
-        .attr("stroke-width", 0);
-      
-      // Hide tooltip
-      tooltip.transition()
-        .duration(500)
-        .style("opacity", 0);
-    })
-    // Animate the bars on load
-    .transition()
-    .duration(transitionDuration)
-    .delay((d, i) => i * 50)
-    .attr("y", d => y(getBarValue(d)))
-    .attr("height", d => height - y(getBarValue(d)));
-
-  // Add data point indicators for special months with animations
-  const dataPoints = [
-    { month: "Mar", value: 180, label: "180" },
-    { month: "Jun", value: 350, label: "350" },
-    { month: "Oct", value: 250, label: "250" }
-  ];
-
-  // Add markers with animations
-  dataPoints.forEach((point, i) => {
-    // Add circle indicators
-    svg.append("circle")
-      .attr("cx", x(point.month) + x.bandwidth() / 2)
-      .attr("cy", y(point.value) - 15)
-      .attr("r", 0) // Start with radius 0 for animation
-      .attr("fill", "#fff")
-      .attr("stroke", "#3b82f6")
-      .attr("stroke-width", 2)
-      .transition()
-      .duration(transitionDuration)
-      .delay(transitionDuration + i * 100)
-      .attr("r", 5); // Grow to final radius
-
-    // Add label background
-    svg.append("rect")
-      .attr("x", x(point.month) + x.bandwidth() / 2 - 25)
-      .attr("y", y(point.value) - 40)
-      .attr("width", 50)
-      .attr("height", 24)
-      .attr("rx", 12)
-      .attr("ry", 12)
-      .attr("fill", "#1e293b")
-      .attr("opacity", 0) // Start invisible
-      .transition()
-      .duration(transitionDuration)
-      .delay(transitionDuration + i * 100)
-      .attr("opacity", 1); // Fade in
-
-    // Add label text
-    svg.append("text")
-      .attr("x", x(point.month) + x.bandwidth() / 2)
-      .attr("y", y(point.value) - 25)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "#fff")
-      .attr("opacity", 0) // Start invisible
-      .text(point.label)
-      .transition()
-      .duration(transitionDuration)
-      .delay(transitionDuration + i * 100 + 200)
-      .attr("opacity", 1); // Fade in
-  });
-
-  // Add title with animation
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", -margin.top / 2)
-    .attr("text-anchor", "middle")
-    .attr("font-size", "24px")
-    .attr("font-weight", "bold")
-    .attr("fill", "#1e293b")
-    .attr("opacity", 0) // Start invisible
-    .text("1500")
-    .transition()
-    .duration(transitionDuration)
-    .attr("opacity", 1); // Fade in
-    
-  // Add subtitle
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", -margin.top / 2 + 25)
-    .attr("text-anchor", "middle")
-    .attr("font-size", "14px")
-    .attr("fill", "#6b7280")
-    .attr("opacity", 0) // Start invisible
-    .text("Total Users")
-    .transition()
-    .duration(transitionDuration)
-    .delay(200)
-    .attr("opacity", 1); // Fade in
-
-  // Add legend with better positioning and layout
-  const legendData = [
-    { label: "Inactive Users", color: "#a78bfa" },
-    { label: "Active Users", color: "#4ade80" },
-    { label: "New Signups", color: "#ec4899" }
-  ];
-
-  const legendWidth = width / legendData.length;
-  
-  const legend = svg.append("g")
-    .attr("transform", `translate(0, ${height + 30})`);
-
-  legendData.forEach((item, i) => {
-    const legendItem = legend.append("g")
-      .attr("transform", `translate(${i * legendWidth}, 0)`)
-      .style("cursor", "pointer")
-      .on("mouseover", function() {
-        // Highlight bars of this type
-        svg.selectAll(".bar")
-          .transition()
-          .duration(200)
-          .attr("opacity", d => {
-            if ((item.label === "Inactive Users" && d.inactive > 0) ||
-                (item.label === "Active Users" && d.active > 0) ||
-                (item.label === "New Signups" && d.signup > 0)) {
-              return 1;
-            }
-            return 0.2;
-          });
-        
-        // Highlight legend item
-        d3.select(this).select("rect")
-          .transition()
-          .duration(200)
-          .attr("stroke", "#3b82f6")
-          .attr("stroke-width", 2);
-      })
-      .on("mouseout", function() {
-        // Reset all bars
-        svg.selectAll(".bar")
-          .transition()
-          .duration(500)
-          .attr("opacity", 1);
-        
-        // Reset legend item
-        d3.select(this).select("rect")
-          .transition()
-          .duration(200)
-          .attr("stroke", "none");
-      });
-
-    // Legend color box
-    legendItem.append("rect")
-      .attr("width", 14)
-      .attr("height", 14)
-      .attr("rx", 2)
-      .attr("ry", 2)
-      .attr("fill", item.color)
-      .attr("opacity", 0) // Start invisible
-      .transition()
-      .duration(transitionDuration)
-      .delay(transitionDuration + i * 100)
-      .attr("opacity", 1); // Fade in
-
-    // Legend text
-    legendItem.append("text")
-      .attr("x", 20)
-      .attr("y", 12)
-      .attr("font-size", "12px")
-      .attr("fill", "#6b7280")
-      .text(item.label)
-      .attr("opacity", 0) // Start invisible
-      .transition()
-      .duration(transitionDuration)
-      .delay(transitionDuration + i * 100 + 100)
-      .attr("opacity", 1); // Fade in
-  });
-  
-  // Add event listener to remove tooltip when component unmounts
-  return () => {
-    tooltip.remove();
-  };
-};
 
   // Create Business Participation chart (donut chart)
   const createBusinessParticipationChart = () => {
@@ -434,17 +131,6 @@ const createUserEngagementChart = () => {
       { name: "Inactive", value: businessParticipationData.inactivePercentage, color: "#e4e4e7" }
     ];
     
-    // Create pie chart with animation
-    const pie = d3.pie()
-      .value(d => d.value)
-      .sort(null)
-      .padAngle(0.03);
-    
-    // Define arcs with animation settings
-    const arc = d3.arc()
-      .innerRadius(radius * 0.6)
-      .outerRadius(radius);
-    
     // Create tooltip for donut chart
     const tooltip = container
       .append("div")
@@ -459,6 +145,17 @@ const createUserEngagementChart = () => {
       .style("pointer-events", "none")
       .style("z-index", 10)
       .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)");
+    
+    // Create pie chart with animation
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null)
+      .padAngle(0.03);
+    
+    // Define arcs with animation settings
+    const arc = d3.arc()
+      .innerRadius(radius * 0.6)
+      .outerRadius(radius);
     
     // Add animation transition duration
     const transitionDuration = 1000;
@@ -682,6 +379,343 @@ const createUserEngagementChart = () => {
         .text(item.label);
     });
   };
+
+  // Create User Engagement Bar Chart
+const createUserEngagementBarChart = () => {
+  const container = d3.select(userEngagementChartRef.current);
+  container.selectAll("*").remove(); // Clear previous chart if any
+  
+  const containerWidth = userEngagementChartRef.current.clientWidth;
+  const containerHeight = 340; // Fixed height for consistency
+  
+  // Create a proper wrapper element to hold both SVG and indicators
+  const chartWrapper = container
+    .append("div")
+    .attr("class", "chart-wrapper")
+    .style("position", "relative")
+    .style("width", "100%")
+    .style("height", "100%")
+    .style("display", "flex");
+  
+  // Create left section for bar chart (70% width)
+  const chartSection = chartWrapper
+    .append("div")
+    .attr("class", "chart-section")
+    .style("width", "70%")
+    .style("height", "100%")
+    .style("position", "relative");
+  
+  // Create right section for indicators (30% width)
+  const indicatorsSection = chartWrapper
+    .append("div")
+    .attr("class", "indicators-section")
+    .style("width", "30%")
+    .style("height", "100%")
+    .style("display", "flex")
+    .style("flex-direction", "column")
+    .style("justify-content", "center")
+    .style("padding-left", "20px");
+  
+  // Create tooltip for bar chart
+  const tooltip = container
+    .append("div")
+    .attr("class", "chart-tooltip")
+    .style("opacity", 0)
+    .style("position", "absolute")
+    .style("padding", "10px")
+    .style("background", "rgba(30, 41, 59, 0.9)")
+    .style("color", "#fff")
+    .style("border-radius", "6px")
+    .style("font-size", "12px")
+    .style("pointer-events", "none")
+    .style("z-index", 10)
+    .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)");
+  
+  // Set margins and dimensions
+  const margin = { top: 50, right: 20, bottom: 40, left: 50 };
+  const width = chartSection.node().clientWidth - margin.left - margin.right;
+  const height = containerHeight - margin.top - margin.bottom;
+  
+  // Add animation transition duration
+  const transitionDuration = 1000;
+  
+  // Create SVG for bar chart
+  const svg = chartSection
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+  
+  // Create scales
+  const x = d3.scaleBand()
+    .domain(userEngagementData.months)
+    .range([0, width])
+    .padding(0.2);
+  
+  // Calculate the max value summing all series values for each month
+  const maxStackedValue = userEngagementData.months.map((month, i) => {
+    return userEngagementData.series.reduce((sum, series) => sum + series.values[i], 0);
+  });
+  
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(maxStackedValue) * 1.1])
+    .range([height, 0]);
+  
+  // Add X axis with animation
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .attr("class", "x-axis")
+    .style("font-size", "12px")
+    .style("color", "#6b7280")
+    .call(d3.axisBottom(x))
+    .attr("opacity", 0)
+    .transition()
+    .duration(transitionDuration)
+    .attr("opacity", 1);
+  
+  // Add Y axis with animation
+  svg.append("g")
+    .attr("class", "y-axis")
+    .style("font-size", "12px")
+    .style("color", "#6b7280")
+    .call(d3.axisLeft(y).ticks(5).tickFormat(d => {
+      if (d >= 1000) {
+        return `${d/1000}k`;
+      }
+      return d;
+    }))
+    .attr("opacity", 0)
+    .transition()
+    .duration(transitionDuration)
+    .attr("opacity", 1);
+  
+  // Add grid lines with animation
+  svg.append("g")
+    .attr("class", "grid")
+    .attr("opacity", 0)
+    .call(d3.axisLeft(y)
+      .tickSize(-width)
+      .tickFormat("")
+      .ticks(5))
+    .selectAll("line")
+    .style("stroke", "#e5e7eb")
+    .style("stroke-opacity", "0.5")
+    .style("stroke-dasharray", "5,5");
+  
+  svg.select(".grid")
+    .transition()
+    .duration(transitionDuration)
+    .attr("opacity", 0.5);
+  
+  // Total user count text at the top - REPOSITIONED
+  const chartTitle = svg.append("g")
+    .attr("class", "chart-title")
+    .attr("transform", `translate(${width/2}, -30)`)
+    .style("text-anchor", "middle");
+  
+  chartTitle.append("text")
+    .attr("class", "total-users-text")
+    .attr("y", 0)
+    .attr("font-size", "24px")
+    .attr("font-weight", "bold")
+    .attr("fill", "#1e293b")
+    .attr("opacity", 0)
+    .text(`${userEngagementData.totalUsers}`)
+    .transition()
+    .duration(transitionDuration)
+    .attr("opacity", 1);
+  
+  chartTitle.append("text")
+    .attr("class", "total-users-label")
+    .attr("y", 20)
+    .attr("font-size", "14px")
+    .attr("fill", "#6b7280")
+    .attr("opacity", 0)
+    .text("Total Users")
+    .transition()
+    .duration(transitionDuration)
+    .delay(200)
+    .attr("opacity", 1);
+  
+  // Group the data to create stacked bars
+  const stackedData = [];
+  
+  userEngagementData.months.forEach((month, i) => {
+    let y0 = 0; // Starting y position for each stack
+    
+    const monthData = { month };
+    
+    userEngagementData.series.forEach(series => {
+      const value = series.values[i];
+      monthData[series.name] = value;
+      monthData[`${series.name}_y0`] = y0;
+      monthData[`${series.name}_y1`] = y0 + value;
+      y0 += value;
+    });
+    
+    stackedData.push(monthData);
+  });
+  
+  // Create stacked bars with animation
+  userEngagementData.series.forEach(series => {
+    svg.selectAll(`.bar-${series.name.replace(/\s+/g, '-').toLowerCase()}`)
+      .data(stackedData)
+      .enter()
+      .append("rect")
+      .attr("class", `bar-${series.name.replace(/\s+/g, '-').toLowerCase()}`)
+      .attr("x", d => x(d.month))
+      .attr("width", x.bandwidth())
+      .attr("y", height) // Start from the bottom
+      .attr("height", 0) // Start with height 0
+      .attr("fill", series.color)
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+      .on("mouseover", function(event, d) {
+        // Highlight bar segment
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("opacity", 0.8);
+        
+        // Show tooltip
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", 0.9);
+        
+        tooltip.html(`
+          <div style="font-weight: bold; margin-bottom: 5px;">${d.month}</div>
+          <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${series.color}; margin-right: 8px;"></div>
+            <div>${series.name}: <b>${d[series.name].toLocaleString()}</b></div>
+          </div>
+        `)
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY - 40}px`);
+      })
+      .on("mouseout", function() {
+        // Reset bar segment
+        d3.select(this)
+          .transition()
+          .duration(500)
+          .attr("opacity", 1);
+        
+        // Hide tooltip
+        tooltip.transition()
+          .duration(500)
+          .style("opacity", 0);
+      })
+      .transition()
+      .duration(transitionDuration)
+      .delay((d, i) => i * 100)
+      .attr("y", d => y(d[`${series.name}_y1`]))
+      .attr("height", d => y(d[`${series.name}_y0`]) - y(d[`${series.name}_y1`]));
+  });
+  
+  // Create legend - MOVED TO TOP-RIGHT CORNER
+  const legendContainer = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${width - 320}, -90)`)
+    .style("opacity", 0);
+  
+  // Add legend items with animation
+  userEngagementData.series.forEach((series, i) => {
+    const legend = legendContainer.append("g")
+      .attr("transform", `translate(0, ${i * 20})`);
+    
+    legend.append("rect")
+      .attr("width", 12)
+      .attr("height", 12)
+      .attr("rx", 2)
+      .attr("ry", 2)
+      .attr("fill", series.color);
+    
+    legend.append("text")
+      .attr("x", 20)
+      .attr("y", 10)
+      .style("font-size", "11px")
+      .style("fill", "#6b7280")
+      .text(series.name);
+  });
+  
+  // Animate legend
+  legendContainer.transition()
+    .duration(800)
+    .delay(transitionDuration)
+    .style("opacity", 1);
+  
+  // Helper function to create stat indicator elements
+  const createStatIndicator = (data, index) => {
+    const indicator = indicatorsSection.append("div")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("gap", "12px")
+      .style("margin-bottom", "20px")
+      .style("opacity", "0") // Start invisible for animation
+      .style("transform", "translateY(20px)"); // Start with offset for animation
+    
+    // Run animation
+    indicator.transition()
+      .duration(800)
+      .delay(transitionDuration + index * 200)
+      .style("opacity", "1")
+      .style("transform", "translateY(0)");
+    
+    // Circle indicator
+    const circle = indicator.append("div")
+      .style("width", "40px")
+      .style("height", "40px")
+      .style("border-radius", "50%")
+      .style("background-color", `${data.color}20`)
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("justify-content", "center")
+      .style("flex-shrink", "0")
+      .style("box-shadow", "0 2px 8px rgba(0, 0, 0, 0.1)");
+    
+    circle.append("span")
+      .style("color", data.color)
+      .style("font-size", data.icon === "↗" ? "20px" : "18px")
+      .html(data.icon);
+    
+    // Text content
+    const textContent = indicator.append("div")
+      .style("display", "flex")
+      .style("flex-direction", "column");
+    
+    textContent.append("div")
+      .style("font-size", "16px")
+      .style("font-weight", "bold")
+      .style("color", "#1e293b")
+      .text(data.value);
+    
+    textContent.append("div")
+      .style("font-size", "12px")
+      .style("color", "#6b7280")
+      .text(data.label);
+  };
+  
+  // Create stat indicators with staggered animations
+  const statsData = [
+    { label: "Monthly Growth", value: `+${userEngagementData.growthRate}%`, color: "#818cf8", icon: "↗" },
+    { label: "Active Rate", value: userEngagementData.activeRate, color: "#4f46e5", icon: "👤" },
+    { label: "Retention Rate", value: userEngagementData.retentionRate, color: "#10b981", icon: "↩" }
+  ];
+  
+  statsData.forEach((stat, i) => {
+    createStatIndicator(stat, i);
+  });
+};
+
+// Add this after your userEngagementData object
+const usersList = [
+  { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
+  { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
+  { id: 3, name: "Alvin", email: "alvin@gmail.com", status: "Active", lastLogin: "5 minutes ago", image: profile3 },
+  { id: 4, name: "Gary", email: "gary@gmail.com", status: "Active", lastLogin: "1 day ago", image: profile4 },
+  { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
+];
+
   
   return (
     <div className="dashboard-container">
@@ -786,21 +820,65 @@ const createUserEngagementChart = () => {
           </div>
         </div>
         
-        {/* Data Visualisation Section */}
-        <div className="dashboard-visualizations">
-          <div className="visualization-card">
-            <div className="viz-header">
-              <h3>User Engagement</h3>
-            </div>
-            <div className="viz-content" ref={userEngagementChartRef}></div>
-          </div>
-          
+        {/* Data Visualisation Section - Business Participation + User Engagement Charts */}
+        <div className="dashboard-visualizations">          
           <div className="visualization-card">
             <div className="viz-header">
               <h3>Business Participation</h3>
               <p>Percentage of Active vs. Inactive Businesses</p>
             </div>
             <div className="viz-content" ref={businessParticipationChartRef}></div>
+          </div>
+          
+          <div className="visualization-card">
+            <div className="viz-header">
+              <h3>User Engagement Trends</h3>
+              <p>Monthly metrics showing platform engagement</p>
+            </div>
+            <div className="viz-content" ref={userEngagementChartRef}></div>
+          </div>
+        </div>
+        
+        {/* Add the Users List Section right HERE, before the closing div of dashboard-content */}
+        {/* Users List Section */}
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h3>Recent Users</h3>
+            <button className="view-all-btn">View All</button>
+          </div>
+          <div className="users-list-container">
+            <table className="users-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map(user => (
+                  <tr key={user.id}>
+                    <td className="user-cell">
+                      <img src={user.image} alt={user.name} className="user-avatar" />
+                      <span>{user.name}</span>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>
+                      <span className={`status-badge ${user.status.toLowerCase()}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td>{user.lastLogin}</td>
+                    <td className="actions-cell">
+                      <button className="action-btn view-btn">View</button>
+                      <button className="action-btn edit-btn">Edit</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
