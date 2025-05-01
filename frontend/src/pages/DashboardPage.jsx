@@ -696,7 +696,7 @@ const createUserEngagementBarChart = () => {
       .text(data.label);
   };
   
-  // Create stat indicators with staggered animations
+  // staggered animations
   const statsData = [
     { label: "Monthly Growth", value: `+${userEngagementData.growthRate}%`, color: "#818cf8", icon: "↗" },
     { label: "Active Rate", value: userEngagementData.activeRate, color: "#4f46e5", icon: "👤" },
@@ -708,7 +708,7 @@ const createUserEngagementBarChart = () => {
   });
 };
 
-// Add this after your userEngagementData object
+// Dummy Data for Users List
 const usersList = [
   { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
   { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
@@ -721,8 +721,8 @@ const usersList = [
 const pendingReviews = [
   {
     id: 1,
-    author: "Sarah Johnson",
-    business: "Coastal Breeze Resort",
+    author: "Gokul",
+    business: "Damai Beach Resort",
     rating: 4,
     content: "Beautiful location and friendly staff. The rooms were clean but a little outdated. Would recommend for a peaceful getaway.",
     date: "2025-04-30",
@@ -730,8 +730,8 @@ const pendingReviews = [
   },
   {
     id: 2,
-    author: "Michael Chen",
-    business: "Mountain View Adventure Tours",
+    author: "Kenneth",
+    business: "Bangoh Dam",
     rating: 5,
     content: "Absolutely incredible experience! Our guide was knowledgeable and safety-conscious. The views were breathtaking and the equipment was top-notch.",
     date: "2025-05-01",
@@ -739,8 +739,8 @@ const pendingReviews = [
   },
   {
     id: 3, 
-    author: "Elena Rodriguez",
-    business: "Urban Eats Bistro",
+    author: "Alvin",
+    business: "Korean Cafe",
     rating: 2,
     content: "Disappointing experience. Long wait times and food was served cold. The ambiance was nice but doesn't make up for poor service.",
     date: "2025-05-01",
@@ -748,8 +748,8 @@ const pendingReviews = [
   },
   {
     id: 4,
-    author: "David Kim",
-    business: "Sunrise Yoga Studio",
+    author: "Daniel",
+    business: "Meditation Center",
     rating: 5,
     content: "Transformative experience! The instructor was attentive and provided great modifications for all skill levels. Studio was clean and peaceful.",
     date: "2025-05-02",
@@ -757,10 +757,10 @@ const pendingReviews = [
   }
 ];
 
-// Add these functions to the DashboardPage component
+// These are for Review Manage
 const handleReviewAction = (reviewId, action) => {
   console.log(`Review ${reviewId} ${action}`);
-  // Here you would handle the API call to approve/reject the review
+  // This Part can use to handle the API call to approve/reject the review
   // For now, we'll just log the action
 };
 
@@ -809,7 +809,7 @@ const renderStarRating = (rating) => {
           </div>
         </div>
         
-        {/* Enhanced Interactive Stat Cards Section */}
+        {/* Stat Cards Section */}
         <div className="stat-cards-container">
           <div 
             className="stat-card" 
