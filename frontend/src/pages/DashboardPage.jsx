@@ -9,6 +9,7 @@ import profile3 from '../assets/profile3.png';
 import profile4 from '../assets/profile4.png';
 import profile5 from '../assets/profile5.png';
 
+
 const DashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const businessParticipationChartRef = useRef(null);
@@ -716,6 +717,65 @@ const usersList = [
   { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
 ];
 
+// Sample data for reviews pending approval
+const pendingReviews = [
+  {
+    id: 1,
+    author: "Sarah Johnson",
+    business: "Coastal Breeze Resort",
+    rating: 4,
+    content: "Beautiful location and friendly staff. The rooms were clean but a little outdated. Would recommend for a peaceful getaway.",
+    date: "2025-04-30",
+    userImage: profile3
+  },
+  {
+    id: 2,
+    author: "Michael Chen",
+    business: "Mountain View Adventure Tours",
+    rating: 5,
+    content: "Absolutely incredible experience! Our guide was knowledgeable and safety-conscious. The views were breathtaking and the equipment was top-notch.",
+    date: "2025-05-01",
+    userImage: profile1
+  },
+  {
+    id: 3, 
+    author: "Elena Rodriguez",
+    business: "Urban Eats Bistro",
+    rating: 2,
+    content: "Disappointing experience. Long wait times and food was served cold. The ambiance was nice but doesn't make up for poor service.",
+    date: "2025-05-01",
+    userImage: profile4
+  },
+  {
+    id: 4,
+    author: "David Kim",
+    business: "Sunrise Yoga Studio",
+    rating: 5,
+    content: "Transformative experience! The instructor was attentive and provided great modifications for all skill levels. Studio was clean and peaceful.",
+    date: "2025-05-02",
+    userImage: profile2
+  }
+];
+
+// Add these functions to the DashboardPage component
+const handleReviewAction = (reviewId, action) => {
+  console.log(`Review ${reviewId} ${action}`);
+  // Here you would handle the API call to approve/reject the review
+  // For now, we'll just log the action
+};
+
+const renderStarRating = (rating) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      stars.push(<span key={i} className="star filled">★</span>);
+    } else {
+      stars.push(<span key={i} className="star">☆</span>);
+    }
+  }
+  return <div className="star-rating">{stars}</div>;
+};
+
   
   return (
     <div className="dashboard-container">
@@ -879,6 +939,61 @@ const usersList = [
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Pending Reviews Section */}
+          <div className="dashboard-section">
+            <div className="section-header">
+              <h3>Pending Reviews</h3>
+              <button className="view-all-btn">View All Reviews</button>
+            </div>
+            <div className="reviews-list-container">
+              <table className="reviews-table">
+                <thead>
+                  <tr>
+                    <th>Reviewer</th>
+                    <th>Business</th>
+                    <th>Rating</th>
+                    <th>Review Content</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingReviews.map(review => (
+                    <tr key={review.id}>
+                      <td className="reviewer-cell">
+                        <img src={review.userImage} alt={review.author} className="user-avatar" />
+                        <span>{review.author}</span>
+                      </td>
+                      <td>{review.business}</td>
+                      <td>{renderStarRating(review.rating)}</td>
+                      <td>
+                        <div className="review-content">
+                          {review.content}
+                        </div>
+                      </td>
+                      <td>{new Date(review.date).toLocaleDateString()}</td>
+                      <td className="review-actions-cell">
+                        <div className="review-action">
+                          <button 
+                            className="action-btn approve-btn"
+                            onClick={() => handleReviewAction(review.id, 'approved')}
+                          >
+                            Approve
+                          </button>
+                          <button 
+                            className="action-btn reject-btn"
+                            onClick={() => handleReviewAction(review.id, 'rejected')}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

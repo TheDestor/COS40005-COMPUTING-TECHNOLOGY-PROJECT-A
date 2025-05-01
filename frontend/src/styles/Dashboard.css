@@ -593,12 +593,18 @@ svg {
 }
 
 .action-btn {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.3px;
 }
 
 .view-btn {
@@ -617,6 +623,284 @@ svg {
 
 .edit-btn:hover {
   background-color: #e5e7eb;
+}
+
+/* Reviews Table Styles */
+.reviews-list-container {
+  overflow-x: auto;
+  margin-bottom: 10px;
+}
+
+.reviews-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reviews-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+}
+
+.reviews-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #1e293b;
+  vertical-align: top;
+}
+
+.reviews-table tr:last-child td {
+  border-bottom: none;
+}
+
+.reviews-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Reviewer cell styling */
+.reviewer-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 150px;
+}
+
+/* Star rating styling */
+.star-rating {
+  display: flex;
+  align-items: center;
+}
+
+.star {
+  color: #d1d5db;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.star.filled {
+  color: #f59e0b;
+}
+
+/* Review content styling */
+.review-content {
+  max-width: 300px;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  font-size: 13px;
+  position: relative;
+}
+
+/* Add fade effect to truncated text */
+.review-content:after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30%;
+  height: 1.4em;
+  background: linear-gradient(to right, rgba(255, 255, 255, 1));
+}
+
+/* Review action buttons */
+.review-action-cell {
+  min-width: 170px;
+}
+
+.review-action {
+  display: flex;
+  gap: 8px;
+}
+
+/* Professional approve button styling */
+.approve-btn {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+  transition: all 0.2s ease;
+}
+
+.approve-btn:hover {
+  background-color: #16a34a; /* Darker green background */
+  color: #ffffff; /* White text for contrast */
+  border-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+}
+
+.approve-btn:active {
+  transform: translateY(0);
+  background-color: #15803d;
+  color: #ffffff;
+}
+
+/* Professional reject button styling */
+.reject-btn {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  transition: all 0.2s ease;
+}
+
+.reject-btn:hover {
+  background-color: #dc2626; /* Darker red background */
+  color: #ffffff; /* White text for contrast */
+  border-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.2);
+}
+
+.reject-btn:active {
+  transform: translateY(0);
+  background-color: #b91c1c;
+  color: #ffffff;
+}
+
+/* Add icons to buttons for better visual cues */
+.approve-btn::before,
+.reject-btn::before {
+  font-family: "Font Awesome 5 Free", sans-serif;
+  font-weight: 900;
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+.approve-btn::before {
+  content: "\f00c"; /* check mark icon */
+}
+
+.reject-btn::before {
+  content: "\f00d"; /* times icon */
+}
+
+/* Focus states for accessibility */
+.approve-btn:focus,
+.reject-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Disabled states */
+.approve-btn:disabled,
+.reject-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Handle smaller screens */
+@media (max-width: 576px) {
+  .action-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+  
+  .approve-btn::before,
+  .reject-btn::before {
+    margin-right: 4px;
+  }
+}
+
+/* Tooltip for buttons on hover */
+.action-btn {
+  position: relative;
+}
+
+.action-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 8px;
+  border-radius: 4px;
+  background-color: #1e293b;
+  color: white;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 100;
+}
+
+.action-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .review-content {
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .review-content {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .reviews-table {
+    display: block;
+  }
+  
+  .reviews-table thead {
+    display: none;
+  }
+  
+  .reviews-table tbody {
+    display: block;
+  }
+  
+  .reviews-table tr {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+  }
+  
+  .reviews-table tr:last-child {
+    border-bottom: none;
+  }
+  
+  .reviews-table td {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: none;
+  }
+  
+  .reviews-table td:before {
+    content: attr(data-label);
+    width: 120px;
+    font-weight: 500;
+    color: #6b7280;
+  }
+  
+  .review-content {
+    max-width: 100%;
+  }
+  
+  .review-action {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
 }
 
 /* To make dashboard area adjusts to sidebar */
