@@ -2,14 +2,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import aeroplaneIcon from '../assets/aeroplane.png';
-import homestayIcon from '../assets/homestay.png';
-import museumIcon from '../assets/museum.png';
-import parkIcon from '../assets/national_park.png';
-import townIcon from '../assets/town.png';
+import aeroplaneIcon from '../assets/airport.gif';
+import homestayIcon from '../assets/homestay.gif';
+import museumIcon from '../assets/museum.gif';
+import parkIcon from '../assets/nationalpark.gif';
+import townIcon from '../assets/majortown.gif';
 import seaportIcon from '../assets/seaport.png';
+import beachIcon from '../assets/beach.gif';
+import eventIcon from '../assets/event.gif';
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
+import ReviewPage from '../pages/ReviewPage';
 
 const containerStyle = {
   position: 'absolute',
@@ -144,6 +147,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locations, setLocations] = useState([]);
   const [activeOption, setActiveOption] = useState('');
+  const [showReviewPage, setShowReviewPage] = useState(false);
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -202,7 +206,9 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     'Airport': aeroplaneIcon,
     'Museum': museumIcon,
     'National Park': parkIcon,
+    'Beach': beachIcon,
     'Seaport': seaportIcon,
+    'Event': eventIcon,
   };
 
   useEffect(() => {
@@ -262,43 +268,13 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               width: '30px', 
               height: '30px',
               cursor: 'pointer',
+              borderRadius: '999px',
               transform: selectedLocation?.id === loc.id ? 'scale(1.2)' : 'scale(1)',
               transition: 'transform 0.2s ease'
             }} 
           />
         </AdvancedMarker>
       ))}
-
-      {/* Temporary markers for major towns */}
-      {/* {Object.entries(townCoordinates).map(([townName, coords]) => {
-        const info = townData[townName];
-        if (!info) return null; // skip if no town info
-
-        return (
-          <MarkerWithInfoWindow
-            key={townName}
-            position={coords}
-            townName={townName}
-            townInfo={info}
-          />
-        );
-      })} */}
-
-      {/* {selectedPlace && selectedPlace.geometry?.location && (
-        <AdvancedMarker
-          position={{
-            lat: selectedPlace.geometry.location.lat(),
-            lng: selectedPlace.geometry.location.lng(),
-          }}
-          title={selectedPlace.name}
-        >
-          <img
-            src={categoryIcons[getPlaceType(selectedPlace.types)] || townIcon}
-            alt="Selected Place"
-            style={{ width: '36px', height: '36px' }}
-          />
-        </AdvancedMarker>
-      )} */}
   
         {/* Nearby Places */}
         {nearbyPlaces.filter((place) => {
@@ -346,21 +322,34 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           selectedCategory={selectedCategory}
         />
 
-        {selectedLocation && (
+        {selectedLocation && !showReviewPage && (
           <InfoWindow
-            position={{ lat: selectedLocation.latitude, lng: selectedLocation.longitude }}
-            onCloseClick={() => setSelectedLocation(null)}
+            position={{
+              lat: selectedLocation.latitude,
+              lng: selectedLocation.longitude,
+            }}
+            onCloseClick={() => {
+              setSelectedLocation(null);
+              setShowReviewPage(false); // Also hide review if it was open
+            }}
           >
-            <CustomInfoWindow 
+            <CustomInfoWindow
               location={{
                 name: selectedLocation.name,
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
                 url: selectedLocation.url || 'No URL provided',
-              }} 
+              }}
               onCloseClick={() => setSelectedLocation(null)}
+              onShowReview={() => setShowReviewPage(true)} // 👈 this is key
             />
           </InfoWindow>
+        )}
+
+        {showReviewPage && selectedLocation && (
+          <div className="review-overlay-wrapper">
+            <ReviewPage onClose={() => setShowReviewPage(false)} />
+          </div>
         )}
 
         <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/>

@@ -5,7 +5,7 @@ import { FiThumbsUp, FiShare2 } from 'react-icons/fi';
 import { MdOutlineRateReview } from "react-icons/md";
 import WriteReviewForm from '../components/WriteReviewForm';
 
-const ReviewPage = () => {
+const ReviewPage = ({ onClose }) => {
   const [likedReviews, setLikedReviews] = useState({});
   const [showForm, setShowForm] = useState(false);
 
@@ -51,6 +51,10 @@ const ReviewPage = () => {
           <div className="tab-header">
             <span className="tab">Overview</span>
             <span className="tab active">Reviews</span>
+            <button className="close-review-btn" onClick={onClose}>
+  Close
+</button>
+
           </div>
 
           <div className="rating-box">

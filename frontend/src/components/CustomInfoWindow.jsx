@@ -4,11 +4,11 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaShareAlt,
-  FaSave
+  FaBookmark
 } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
 
-const CustomInfoWindow = ({ location, onCloseClick }) => {
+const CustomInfoWindow = ({ location, onCloseClick, onShowReview  }) => {
   const [activeFooter, setActiveFooter] = useState('Directions');
   const [showFullDesc, setShowFullDesc] = useState(false);
 
@@ -16,7 +16,7 @@ const CustomInfoWindow = ({ location, onCloseClick }) => {
 
   const footerItems = [
     { icon: <FaMapMarkerAlt />, label: 'Directions' },
-    { icon: <FaSave />, label: 'Save' },
+    { icon: <FaBookmark />, label: 'Save' },
     { icon: <FaPhoneAlt />, label: 'Phone' },
     { icon: <FaShareAlt />, label: 'Share' }
   ];
@@ -40,7 +40,7 @@ const CustomInfoWindow = ({ location, onCloseClick }) => {
 
       <div className="info-tabs">
         <span className="active-tab">Overview</span>
-        <span className="inactive-tab">Reviews</span>
+        <span className="inactive-tab" onClick={onShowReview}>Reviews</span>
       </div>
 
       <p className="info-desc">
