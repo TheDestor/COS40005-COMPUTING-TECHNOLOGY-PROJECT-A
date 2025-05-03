@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaSort, FaBookmark, FaLayerGroup } from 'react-icons/fa';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
@@ -9,6 +9,7 @@ import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
+import { AuthContext } from '../context/AuthContext.jsx';
 
 const travelModes = {
   Car: 'DRIVING',
@@ -48,6 +49,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [segmentedRoutes, setSegmentedRoutes] = useState([]);
   const debouncedVehicleClick = useRef(null);
+  const { openRecent } = useContext(AuthContext);
 
   useEffect(() => {
     // Initialize the debounced function once

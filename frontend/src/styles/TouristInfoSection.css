@@ -6,7 +6,7 @@
   width: 300px;
   position: fixed;
   right: 0;
-  top: var(--navbar-height, 60px);
+  margin-top: 12px;
   bottom: 0;
   padding: 20px;
   color: #333;

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import ky from "ky";
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "./AuthContext";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../firebase";
 
 // AuthProvider component manages authentication state and provides it to children components via AuthContext.
 export const AuthProvider = ({ children }) => {
@@ -163,6 +165,24 @@ export const AuthProvider = ({ children }) => {
         });
     }, []);
 
+    function setUpRecaptcha(identifier) {
+    if (!auth) {
+        console.error("Firebase auth is undefined!");
+        return;
+    }
+    console.log(auth);
+    
+    const recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {},
+        
+    );
+    recaptchaVerifier.render();
+    return signInWithPhoneNumber(auth, identifier, recaptchaVerifier);
+}
+
+
     // The value object provided to the AuthContext.Consumer components.
     // It includes the authentication state and functions to modify it.
     const value = {
@@ -172,7 +192,8 @@ export const AuthProvider = ({ children }) => {
         isLoading,
         login,
         logout,
-        updateUserContext
+        updateUserContext,
+        setUpRecaptcha
     };
 
     // Render the AuthContext.Provider, passing the 'value' object.

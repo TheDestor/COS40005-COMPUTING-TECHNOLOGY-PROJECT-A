@@ -2,8 +2,12 @@
 /* CSS for ProfileDropdown component */
 
 .profile-dropdown {
-  position: relative;
-  display: inline-block;
+  position: fixed;
+  display: inline-block; 
+  z-index: 1000;
+  right: 20px;
+  /* transform: translateX(-50%); */
+  top: 15px;
 }
 
 .profile-button {
@@ -27,6 +31,7 @@
 
 .dropdown-menu {
   position: absolute;
+  /* z-index: 9999; */
   right: 0;
   top: 50px;
   background-color: #f6f0fa;

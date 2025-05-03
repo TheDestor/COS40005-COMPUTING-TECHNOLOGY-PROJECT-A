@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -8,6 +8,7 @@ import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { AuthContext } from '../context/AuthContext.jsx';
 import ReCAPTCHA from "react-google-recaptcha";
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
@@ -15,11 +16,13 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setUpRecaptcha } = useAuth();
+  // const { setUpRecaptcha } = useContext(AuthContext);
 
   const [activeTab, setActiveTab] = useState('otp');
   const [otp, setOtp] = useState('');
   const [isRobotChecked, setIsRobotChecked] = useState(false);
+  const [confirmObj, setConfirmObj] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [loadingOtp, setLoadingOtp] = useState(false);
@@ -60,96 +63,128 @@ const LoginPage = ({ onClose }) => {
     toast.error(msg, { position: 'bottom-right' });
   };
 
-  const handleSendOtp = async () => {
-    if (!identifier) {
-      handleError('Please enter your phone number.');
-      return;
-    }
+  // const handleSendOtp = async () => {
+  //   if (!identifier) {
+  //     handleError('Please enter your phone number.');
+  //     return;
+  //   }
 
-    if (!/^\+?\d{10,15}$/.test(identifier)) {
-      handleError('Enter a valid phone number with country code (e.g., +60)');
-      return;
-    }
+  //   if (!/^\+?\d{10,15}$/.test(identifier)) {
+  //     handleError('Enter a valid phone number with country code (e.g., +60)');
+  //     return;
+  //   }
 
-    setLoadingOtp(true);
+  //   setLoadingOtp(true);
 
-    try {
-      if (!window.recaptchaVerifier) {
-        // Initialize RecaptchaVerifier
-        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-          size: 'invisible',
-          callback: (response) => {
-            // Handle success here (if needed)
-          },
-          'expired-callback': () => {
-            // Handle expiration here (if needed)
-          }
-        }, auth);
+  //   try {
+  //     if (!window.recaptchaVerifier) {
+  //       // Initialize RecaptchaVerifier
+  //       window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+  //         size: 'invisible',
+  //         callback: (response) => {
+  //           // Handle success here (if needed)
+  //         },
+  //         'expired-callback': () => {
+  //           // Handle expiration here (if needed)
+  //         }
+  //       }, auth);
 
-        // Only disable app verification for testing in development mode
-        if (process.env.NODE_ENV === 'development') {
-          window.recaptchaVerifier.verifyForTesting = true;
-        }
+  //       // Only disable app verification for testing in development mode
+  //       if (process.env.NODE_ENV === 'development') {
+  //         window.recaptchaVerifier.verifyForTesting = true;
+  //       }
 
-        // Render reCAPTCHA
-        await window.recaptchaVerifier.render();
-      }
+  //       // Render reCAPTCHA
+  //       await window.recaptchaVerifier.render();
+  //     }
 
-      // Send OTP
-      const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
-      setConfirmationResult(result);
-      handleSuccess('OTP sent successfully!');
-      setOtpSent(true);
-    } catch (error) {
-      console.error('🔥 OTP Error:', error.message);
-      handleError(`Error sending OTP: ${error.message}`);
-    }
+  //     // Send OTP
+  //     const result = await signInWithPhoneNumber(auth, identifier, window.recaptchaVerifier);
+  //     setConfirmationResult(result);
+  //     handleSuccess('OTP sent successfully!');
+  //     setOtpSent(true);
+  //   } catch (error) {
+  //     console.error('🔥 OTP Error:', error.message);
+  //     handleError(`Error sending OTP: ${error.message}`);
+  //   }
 
-    setLoadingOtp(false);
-  };
+  //   setLoadingOtp(false);
+  // };
+
+  // const handleVerifyOtp = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!confirmationResult) {
+  //     handleError('Please request an OTP first.');
+  //     return;
+  //   }
+
+  //   try {
+  //     const result = await confirmationResult.confirm(otp);
+  //     const user = result.user;
+
+  //     const token = await user.getIdToken();
+
+  //     const response = await fetch('http://localhost:5050/auth/firebase-login', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ token }),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (data.success) {
+  //       handleSuccess('Logged in via OTP!');
+  //       onClose();
+  //       navigate('/');
+  //     } else {
+  //       handleError(data.message || 'Backend login failed.');
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     handleError('Invalid OTP. Please try again.');
+  //   }
+  // };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-
-    if (!confirmationResult) {
-      handleError('Please request an OTP first.');
-      return;
-    }
-
+  
+    if (!otp || otp.trim() === "") return handleError("Please enter the OTP.");
+    if (!confirmObj) return handleError("Please click 'Send' to receive the OTP first.");
+  
     try {
-      const result = await confirmationResult.confirm(otp);
-      const user = result.user;
-
-      const token = await user.getIdToken();
-
-      const response = await fetch('http://localhost:5050/auth/firebase-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        handleSuccess('Logged in via OTP!');
-        onClose();
-        navigate('/');
-      } else {
-        handleError(data.message || 'Backend login failed.');
-      }
+      await confirmObj.confirm(otp);
+      handleSuccess("OTP verified!");
+      onClose();
+      navigate("/");
     } catch (error) {
-      console.error(error);
-      handleError('Invalid OTP. Please try again.');
+      handleError(error.message || "Invalid OTP.");
     }
+  };
+  
+
+  const getOTP = async (e) => {
+    e.preventDefault();
+
+    if (identifier === "" || identifier === undefined) return handleError("Please enter a valid Phone NUMBER!!!");
+    try{
+      const response = await setUpRecaptcha(identifier);
+      console.log(response);
+      setConfirmObj(response);
+      handleSuccess("OTP sent!");
+    }catch (error){
+      handleError(error.message || "Failed to send OTP.");
+    }
+    console.log(identifier); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isRobotChecked) {
-      handleError('Please verify the captcha.');
-      return;
-    }
+    // if (!isRobotChecked) {
+    //   handleError('Please verify the captcha.');
+    //   return;
+    // }
 
     if (activeTab === 'otp') {
       handleVerifyOtp(e);
@@ -160,7 +195,7 @@ const LoginPage = ({ onClose }) => {
     if (result.success) {
       handleSuccess(result.message || 'Login successful!');
       setFormData({ identifier: '', password: '' });
-      setIsRobotChecked(false);
+      // setIsRobotChecked(false);
       onClose();
     } else {
       handleError(result.message || 'Login failed. Please check credentials.');
@@ -217,7 +252,7 @@ const LoginPage = ({ onClose }) => {
                   <button
                     type="button"
                     className="send-button-inside"
-                    onClick={handleSendOtp}
+                    onClick={getOTP}
                     disabled={loadingOtp}
                   >
                     {loadingOtp ? 'Sending...' : 'Send'}
@@ -243,21 +278,11 @@ const LoginPage = ({ onClose }) => {
               </div>
             )}
 
-            <ReCAPTCHA sitekey="6LfCWiYrAAAAAO8XpIB9MNNt56rK7eNgShDxDcTR" onChange={(e) => setIsRobotChecked(e ? true : false)} />
+            <div id="recaptcha-container" />
+            {/* <ReCAPTCHA sitekey="6LfCWiYrAAAAAO8XpIB9MNNt56rK7eNgShDxDcTR" onChange={(e) => setIsRobotChecked(e ? true : false)} /> */}
 
-            {/* <div className="captcha-section">
-              <label className="captcha-item">
-                <input
-                  type="checkbox"
-                  checked={isRobotChecked}
-                  onChange={(e) => setIsRobotChecked(e.target.checked)}
-                  required
-                />
-                <span className="kal-label">I'm not a robot</span>
-              </label>
-            </div> */}
-
-            <button type="submit" className="login-button" disabled={!isRobotChecked}>
+            {/* <button type="submit" className="login-button" disabled={!isRobotChecked}> */}
+            <button type="submit" className="login-button">
               Login
             </button>
 

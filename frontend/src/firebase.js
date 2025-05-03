@@ -3,18 +3,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBL0GRlf__rQxNvj0L487qtP0Y6HuCjIkU",
-    authDomain: "fyp-42059.firebaseapp.com",
-    databaseURL: "https://fyp-42059-default-rtdb.firebaseio.com",
-    projectId: "fyp-42059",
-    storageBucket: "fyp-42059.firebasestorage.app",
-    messagingSenderId: "630536636805",
-    appId: "1:630536636805:web:e5ef16ba4bd06d08469cec",
-    measurementId: "G-QHBHZ8NNV2"
-  };
+  apiKey: "AIzaSyBnVOG3aa4qcZUID6giAr1U_3Qtg4WSEUs",
+  authDomain: "fyp-firebase-7f53f.firebaseapp.com",
+  projectId: "fyp-firebase-7f53f",
+  storageBucket: "fyp-firebase-7f53f.firebasestorage.app",
+  messagingSenderId: "731449111938",
+  appId: "1:731449111938:web:acddafc9b8314df6e74b9b",
+  measurementId: "G-H2PYF83NCY"
+};
 
 // Initialize with explicit settings
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-export { app, auth };
+export {auth,app};
