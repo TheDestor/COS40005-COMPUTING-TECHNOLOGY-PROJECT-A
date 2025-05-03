@@ -7,7 +7,7 @@ const firebaseConfig = {
     authDomain: "fyp-42059.firebaseapp.com",
     databaseURL: "https://fyp-42059-default-rtdb.firebaseio.com",
     projectId: "fyp-42059",
-    storageBucket: "fyp-42059.appspot.com",
+    storageBucket: "fyp-42059.firebasestorage.app",
     messagingSenderId: "630536636805",
     appId: "1:630536636805:web:e5ef16ba4bd06d08469cec",
     measurementId: "G-QHBHZ8NNV2"
