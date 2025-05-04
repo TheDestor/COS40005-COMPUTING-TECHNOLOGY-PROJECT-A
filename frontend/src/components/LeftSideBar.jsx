@@ -144,56 +144,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
     });
   };
 
-  // const handleVehicleClick = async (vehicle) => {
-  //   if (!startingPoint.trim() || !destination.trim()) {
-  //     alert('You need to fill in your starting point and destination first');
-  //     return;
-  //   }
-  //   setSelectedVehicle(vehicle);
-
-  //   if (vehicle === 'Flight' && isLocalDestination) {
-  //     alert('Flight mode is not available for local destinations');
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   setSelectedVehicle(vehicle);
-
-  //   try {
-  //     const directionsService = new window.google.maps.DirectionsService();
-  //     const response = await directionsService.route({
-  //       origin: startingPoint,
-  //       destination: destination,
-  //       // addDestinations: addDestinations,
-  //       travelMode: travelModes[vehicle],
-  //       provideRouteAlternatives: true,
-  //     });
-      
-  //     setRoutes(response.routes);
-  //     setSelectedRouteIndex(0);
-  //   } catch (error) {
-  //     console.error('Error fetching directions:', error);
-  //     alert('Failed to get directions. Please check your inputs and try again.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleVehicleClick = async (vehicle) => {
-    // if (!startingPoint.trim() || !destination.trim()) {
-    //   alert('You need to fill in your starting point and destination first');
-    //   return;
-    // }
-  
-    // ✨ Validate both start and end are Malaysia
-    // const isStartMalaysia = await validateLocationIsInMalaysia(startingPoint);
-    // const isDestMalaysia = await validateLocationIsInMalaysia(destination);
-  
-    // if (!isStartMalaysia || !isDestMalaysia) {
-    //   alert('Starting point and destination must be inside Malaysia.');
-    //   return;
-    // }
-  
     setSelectedVehicle(vehicle);
   
     if (vehicle === 'Flight') {
@@ -311,6 +262,16 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
   //   });
   // };
 
+  useEffect(() => {
+  console.log('Updated starting point:', startingPoint);
+  console.log('Updated destination:', destination);
+}, [startingPoint, destination]);
+
+useEffect(() => {
+  console.log('Selected route index changed:', selectedRouteIndex);
+}, [selectedRouteIndex]);
+
+
   return (
     <>
       {/* Collapsed Sidebar */}
@@ -417,7 +378,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
                   <div 
                     key={index} 
                     className={`route-item ${index === selectedRouteIndex ? 'active-route' : ''}`}
-                    onClick={() => setSelectedRouteIndex(index)}
+                    onClick={() => {setSelectedRouteIndex(index)}}
                   >
                     <div><strong>{route.summary}</strong></div>
                     <div className="route-details">
@@ -471,7 +432,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <BusinessSubmissionForm  isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>
-      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}  routes={routes} />
+      <MapComponent startingPoint={startingPoint} destination={destination} mapType={mapType} nearbyPlaces={nearbyPlaces} selectedCategory={selectedCategory} selectedVehicle={travelModes[selectedVehicle]} addDestinations={addDestinations} onRoutesCalculated={handleRoutesCalculated}  routes={routes} selectedRouteIndex={selectedRouteIndex}/>
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </>
   );

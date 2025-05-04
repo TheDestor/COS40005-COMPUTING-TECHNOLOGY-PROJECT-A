@@ -39,10 +39,14 @@ const SearchBar = ({ setSelectedPlace, onSearch, history }) => {
     placesService.getDetails(
       {
         placeId,
-        fields: ['name', 'geometry', 'formatted_address']
+        fields: ['name', 'geometry', 'formatted_address', 'photos']
       },
       (place) => {
         if (!place || !place.geometry) return;
+
+        const photoUrl = place.photos && place.photos[0]
+        ? place.photos[0].getUrl({ maxWidth: 200, maxHeight: 200 })
+        : null; // You can adjust the size as per your needs
   
         setSelectedPlace(place);
         handleSearch(description);

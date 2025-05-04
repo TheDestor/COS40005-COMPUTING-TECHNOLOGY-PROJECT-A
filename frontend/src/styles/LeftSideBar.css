@@ -339,7 +339,7 @@
 .add-destination:hover {
   color:#0056b3;
   background-color: #e8f0fe;
-  border: none;
+  /* border: none; */
 }
 
 /* Animations */

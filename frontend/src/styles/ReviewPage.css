@@ -13,16 +13,14 @@
     animation: slideInFromLeft 0.4s ease-out forwards;
   }  
   
-  .tab-header {
+  .tab-header2 {
     display: flex;
-    gap: 12px;
     border-bottom: 1px solid #ccc;
     margin-bottom: 16px;
-
   }
   
   .tab {
-    padding: 8px 16px;
+    padding: 8px 10px;
     cursor: pointer;
     margin-left: 2rem;
     color: #666;
@@ -85,7 +83,7 @@
     overflow: hidden;
   }
   
-  .bar {
+  .bar2 {
     height: 100%;
     background-color: #ffc107;
   }
@@ -111,7 +109,7 @@
     margin: 4px 0;
   }
   
-  .star {
+  .star2 {
     color: #ffc107;
     margin-right: 2px;
   }
@@ -122,29 +120,36 @@
   }
   
   .write-review-btn {
-    display: block;
-    margin: 16px auto 0 auto; /* center horizontally */
+    display: flex; /* Flex to align icon and text */
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Space between icon and text */
+    margin: 16px auto 0 auto;
     background-color: white;
     color: #007bff;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px; /* Increased for better visibility */
+    font-weight: 500;
     transition: background-color 0.3s;
     border-radius: 999px;
     border: 1px solid #007bff;
+    padding: 10px 20px; /* Better spacing */
+    text-align: center;
   }
   
   .write-review-btn:hover {
     background-color: #007bff;
     color: white;
     border: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
   }
   
   .icon5 {
-    font-size: 16px;
-    padding: 0 4px;
+    font-size: 20px; /* Balanced icon size */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+  
   .review-list {
     margin-top: 24px;
   }
@@ -166,7 +171,7 @@
     margin-right: 12px;
   }
   
-  .review-content {
+  .review-content2 {
     flex: 1;
   }
   
@@ -264,18 +269,21 @@
     transition: transform 0.3s ease;
   }
   
-  .close-review-btn {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    background-color: #ff5c5c;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    z-index: 10001;
-  }
+.close-review-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 24px; /* Adjust the size of the icon */
+  color: #ff5c5c;
+  cursor: pointer;
+  z-index: 1001; /* Ensure it's above other elements */
+  transition: color 0.3s ease;
+}
+
+.close-review-btn:hover {
+  color: #e02f2f; /* Darker red on hover */
+}
+
+  
   
   
