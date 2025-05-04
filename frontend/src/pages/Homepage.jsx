@@ -10,6 +10,7 @@ import defaultImage from '../assets/Kuching.png';
 import SearchBar from '../components/Searchbar.jsx';
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
 import WeatherDateTime from '../components/WeatherDateTime.jsx';
+import MapViewMenu from '../components/MapViewMenu.jsx'
 
 const HomePage = () => {
   const location = useLocation();
@@ -115,19 +116,6 @@ const HomePage = () => {
     handleCategorySelect('Major Town');
   }, []);
   
-  // const handleCategorySelect2 = async (category) => {
-  //   setSelectedCategory(category);
-  //   try {
-  //     const response = await fetch(`/api/locations?type=${category}`);
-  //     const data = await response.json();
-  //     handleMenuSelect(category, data); // reuse your existing processor
-  //   } catch (err) {
-  //     console.error('Error fetching category:', err);
-  //     handleMenuSelect(category, []); // fallback
-  //   }
-  // };
-  
-
   // Show bookmark if state passed from navigation
   useEffect(() => {
     if (location.state?.openBookmark) {
