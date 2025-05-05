@@ -1,5 +1,6 @@
 import { contactUsModel } from "../models/ContactUsModel.js";
 import { userModel } from "../models/UserModel.js";
+import { put } from "@vercel/blob"
 
 // @desc Update user profile information
 // @route POST /updateUserProfile
@@ -91,6 +92,17 @@ export const updatePassword = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "An internal server error occurred while updating the password.", success: false });
+    }
+}
+
+export const updateAvatar = async (req, res) => {
+    try {
+        const file = req.file;
+        res.status(200).json({ message: "Test success", success: true });
+        console.log(file);
+    } catch (error) {
+        res.status(500).json({ message: "Test failed", success: true });
+        console.error(error);
     }
 }
 
