@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.5.3",
+    "@vercel/blob": "^1.0.1",
     "@vis.gl/react-google-maps": "^1.5.2",
     "d3": "^7.9.0",
     "firebase": "^10.14.1",
