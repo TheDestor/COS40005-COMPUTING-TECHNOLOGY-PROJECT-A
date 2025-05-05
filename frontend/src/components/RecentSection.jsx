@@ -32,12 +32,12 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
 
       <div className="recent-filters">
         <button className="filter-button2 active"><FaMap /> All</button>
+        {selectedItems.length > 0 && (
+          <button className="delete-button33" onClick={handleDelete}>
+            Delete
+          </button>
+        )}
       </div>
-      {selectedItems.length > 0 && (
-        <button className="delete-button33" onClick={handleDelete}>
-          Delete Selected
-        </button>
-      )}
 
       {history.length > 0 ? (
         <div className="recent-group">

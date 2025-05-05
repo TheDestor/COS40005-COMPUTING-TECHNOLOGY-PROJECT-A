@@ -55,36 +55,78 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     // Check the users authentication status on initial load
+    // const checkAuthStatus = useCallback(async () => {
+    //     console.log("Checking auth status");
+    //     setIsLoading(true);
+    //     try {
+    //         // Request a new access token from the refresh endpoint
+    //         const response = await ky.get(
+    //             "/api/auth/refresh",
+    //             { credentials: 'include' }
+    //         ).json();
+    //         // Logging
+    //         console.log("AuthProvider: Refresh response", response);
+    //         processToken(response.accessToken); // Call the helper function to set user info
+    //         console.log("AuthProvider: Refresh successful.");
+    //     } catch (error) {
+    //         // Log error
+    //         const status = error.response?.status;
+    //         if (status === 401 || status === 403) {
+    //             console.log("If you are not logged in. This error can be safely ignored.");
+    //         } else {
+    //             console.error("AuthProvider: Refresh API error:", error.response?.data || error.message);
+    //         }
+
+    //         // Reset auth state to logged out
+    //         setIsLoggedIn(false);
+    //         setUser(null);
+    //         setAccessToken(null);
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // }, [processToken]);
     const checkAuthStatus = useCallback(async () => {
         console.log("Checking auth status");
         setIsLoading(true);
-        try {
-            // Request a new access token from the refresh endpoint
-            const response = await ky.get(
-                "/api/auth/refresh",
-                { credentials: 'include' }
-            ).json();
-            // Logging
-            console.log("AuthProvider: Refresh response", response);
-            processToken(response.accessToken); // Call the helper function to set user info
-            console.log("AuthProvider: Refresh successful.");
-        } catch (error) {
-            // Log error
-            const status = error.response?.status;
-            if (status === 401 || status === 403) {
-                console.log("If you are not logged in. This error can be safely ignored.");
-            } else {
-                console.error("AuthProvider: Refresh API error:", error.response?.data || error.message);
+    
+        const maxRetries = 3;
+        const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+    
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await ky.get("/api/auth/refresh", {
+                    credentials: 'include',
+                }).json();
+    
+                console.log("AuthProvider: Refresh response", response);
+                processToken(response.accessToken);
+                console.log("AuthProvider: Refresh successful.");
+                return; // Success: exit function
+            } catch (error) {
+                const status = error.response?.status;
+                const message = await error.response?.text();
+    
+                if (status === 401 || status === 403) {
+                    console.log("User not authenticated. This can be safely ignored.");
+                    break; // Don't retry unauthorized
+                }
+    
+                if (attempt < maxRetries) {
+                    console.warn(`Retry attempt ${attempt} failed. Retrying...`, message);
+                    await delay(1000 * Math.pow(2, attempt)); // exponential backoff: 2s, 4s, 8s...
+                } else {
+                    console.error("AuthProvider: Refresh API failed after retries:", message || error.message);
+                }
             }
-
-            // Reset auth state to logged out
-            setIsLoggedIn(false);
-            setUser(null);
-            setAccessToken(null);
-        } finally {
-            setIsLoading(false);
         }
+    
+        // If we reach here, all attempts failed — reset auth state
+        setIsLoggedIn(false);
+        setUser(null);
+        setAccessToken(null);
+        setIsLoading(false);
     }, [processToken]);
+    
 
     // Run auth status check when the auth provider mounts
     useEffect(() => {

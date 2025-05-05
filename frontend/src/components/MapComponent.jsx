@@ -10,6 +10,7 @@ import townIcon from '../assets/majortown.gif';
 import seaportIcon from '../assets/seaport.png';
 import beachIcon from '../assets/beach.gif';
 import eventIcon from '../assets/event.gif';
+import restaurantIcon from '../assets/restaurant.png';
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
@@ -27,72 +28,69 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
-function Directions({ startingPoint, destination, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory, onRoutesCalculated }) {
+function Directions({ startingPoint, destination, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory, onRoutesCalculated, selectedRouteIndex, route }) {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
-  const [directionsRenderer, setDirectionsRenderer] = useState(null);
+  // const [directionsRenderer, setDirectionsRenderer] = useState(null);
   const [routes, setRoutes] = useState([]);
   const [routesIndex, setRoutesIndex] = useState(0);
   const selected = routes[routesIndex];
   const leg = selected?.legs[0];
   const [isRoutesLoaded, setIsRoutesLoaded] = useState(false);
 
+  const routeRenderersRef = useRef([]);
+
   useEffect(() => {
-    if (routesLibrary) setIsRoutesLoaded(true);
+    console.log("Selected Route Index123:", selectedRouteIndex);
+  }, [selectedRouteIndex]);
+
+  useEffect(() => {
+    if (routesLibrary) {
+      setIsRoutesLoaded(true);
+      setDirectionsService(new routesLibrary.DirectionsService());
+    }
   }, [routesLibrary]);
 
   useEffect(() => {
-    if(!routesLibrary || !map) return;
-
-    const newService = new routesLibrary.DirectionsService();
-    const newRenderer = new routesLibrary.DirectionsRenderer({ map });
-
-    setDirectionsService(newService);
-    setDirectionsRenderer(newRenderer);
-
     return () => {
-      // Cleanup the renderer when the component unmounts or remounts
-      newRenderer.setMap(null);
+      routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
+      routeRenderersRef.current = [];
     };
-  }, [routesLibrary, map])
+  }, []);
 
-  // Fetch and render directions
+  const geocode = async (input) => {
+    if (typeof input === 'string') {
+      if (!input.trim() || input.trim().length < 3) {
+        console.warn('Skipping geocode for short input:', input);
+        return null;
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
+      const results = await geocoder.geocode({ address: input });
+
+      if (!results.results || results.results.length === 0) {
+        throw new Error('No geocoding results for: ' + input);
+      }
+
+      return results.results[0].geometry.location;
+    }
+    return input;
+  };
+
   useEffect(() => {
-    if (!directionsService || !directionsRenderer) return;
-
+    if (!directionsService || !map) return;
+  
     const getRoutes = async () => {
       try {
-        // Convert addresses to coordinates if needed
-        const geocode = async (input) => {
-          if (typeof input === 'string') {
-            if (!input.trim() || input.trim().length < 3) {
-              console.warn('Skipping geocode for short input:', input);
-              return null; // Or throw if you want to abort
-            }
-
-            const geocoder = new window.google.maps.Geocoder();
-            const results = await geocoder.geocode({ address: input });
-
-            if (!results.results || results.results.length === 0) {
-              throw new Error('No geocoding results for: ' + input);
-            }
-            
-            return results.results[0].geometry.location;
-          }
-          return input;
-        };
-
         const origin = await geocode(startingPoint);
         const dest = await geocode(destination);
-
-        // Geocode additional destinations
         const waypoints = await Promise.all(
           addDestinations.map(async (addDest) => ({
             location: await geocode(addDest)
           }))
         );
-
+  
         const response = await directionsService.route({
           origin: origin,
           destination: dest,
@@ -100,11 +98,32 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
           travelMode: selectedVehicle,
           provideRouteAlternatives: true,
         });
-
-        directionsRenderer.setDirections(response);
+  
         setRoutes(response.routes);
-
-        // Pass segmented routes data up to parent
+  
+        // Clear previous route renderers
+        routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
+        routeRenderersRef.current = [];
+  
+        // Render all route alternatives with the proper styling
+        response.routes.forEach((route, index) => {
+          const renderer = new routesLibrary.DirectionsRenderer({
+            map,
+            directions: response,
+            routeIndex: index,
+            suppressMarkers: false,
+            polylineOptions: {
+              strokeColor: index === selectedRouteIndex ? '#0057e7' : '	#a7cdf2', // Highlight the selected route
+              strokeOpacity: index === selectedRouteIndex ? 1 : 0.5,
+              strokeWeight: index === selectedRouteIndex ? 8 : 6,
+            },
+          });
+  
+          // Store the renderer in ref for cleanup later
+          routeRenderersRef.current.push(renderer);
+        });
+  
+        // Callback with structured data
         if (onRoutesCalculated) {
           onRoutesCalculated({
             routes: response.routes.map(route => ({
@@ -114,31 +133,121 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
                 start: leg.start_address,
                 end: leg.end_address,
                 duration: leg.duration.text,
-                distance: leg.distance.text
+                distance: leg.distance.text,
               }))
             }))
           });
         }
+  
       } catch (error) {
         console.error('Directions error:', error);
       }
     };
-
+  
     getRoutes();
-  }, [directionsService, directionsRenderer, startingPoint, destination, addDestinations, selectedVehicle]);
+  }, [directionsService, startingPoint, destination, addDestinations, selectedVehicle, map, selectedRouteIndex]);
+  
+  // useEffect(() => {
+  //   if (routesLibrary) setIsRoutesLoaded(true);
+  // }, [routesLibrary]);
+
+  // useEffect(() => {
+  //   if(!routesLibrary || !map) return;
+
+  //   const newService = new routesLibrary.DirectionsService();
+  //   const newRenderer = new routesLibrary.DirectionsRenderer({ map });
+
+  //   setDirectionsService(newService);
+  //   setDirectionsRenderer(newRenderer);
+
+  //   return () => {
+  //     // Cleanup the renderer when the component unmounts or remounts
+  //     newRenderer.setMap(null);
+  //   };
+  // }, [routesLibrary, map])
+
+  // // Fetch and render directions
+  // useEffect(() => {
+  //   if (!directionsService || !directionsRenderer) return;
+
+  //   const getRoutes = async () => {
+  //     try {
+  //       // Convert addresses to coordinates if needed
+  //       const geocode = async (input) => {
+  //         if (typeof input === 'string') {
+  //           if (!input.trim() || input.trim().length < 3) {
+  //             console.warn('Skipping geocode for short input:', input);
+  //             return null; // Or throw if you want to abort
+  //           }
+
+  //           const geocoder = new window.google.maps.Geocoder();
+  //           const results = await geocoder.geocode({ address: input });
+
+  //           if (!results.results || results.results.length === 0) {
+  //             throw new Error('No geocoding results for: ' + input);
+  //           }
+            
+  //           return results.results[0].geometry.location;
+  //         }
+  //         return input;
+  //       };
+
+  //       const origin = await geocode(startingPoint);
+  //       const dest = await geocode(destination);
+
+  //       // Geocode additional destinations
+  //       const waypoints = await Promise.all(
+  //         addDestinations.map(async (addDest) => ({
+  //           location: await geocode(addDest)
+  //         }))
+  //       );
+
+  //       const response = await directionsService.route({
+  //         origin: origin,
+  //         destination: dest,
+  //         waypoints: waypoints,
+  //         travelMode: selectedVehicle,
+  //         provideRouteAlternatives: true,
+  //       });
+
+  //       directionsRenderer.setDirections(response);
+  //       setRoutes(response.routes);
+
+  //       // Pass segmented routes data up to parent
+  //       if (onRoutesCalculated) {
+  //         onRoutesCalculated({
+  //           routes: response.routes.map(route => ({
+  //             ...route,
+  //             optimizedOrder: route.waypoint_order,
+  //             segments: route.legs.map(leg => ({
+  //               start: leg.start_address,
+  //               end: leg.end_address,
+  //               duration: leg.duration.text,
+  //               distance: leg.distance.text
+  //             }))
+  //           }))
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error('Directions error:', error);
+  //     }
+  //   };
+
+  //   getRoutes();
+  // }, [directionsService, directionsRenderer, startingPoint, destination, addDestinations, selectedVehicle]);
   
 
-  useEffect(() => {
-    if(!directionsRenderer) return;
+  // useEffect(() => {
+  //   if(!directionsRenderer) return;
 
-    directionsRenderer.setRouteIndex(routesIndex);
-  }, [routesIndex, directionsRenderer]);
+  //   directionsRenderer.setRouteIndex(routesIndex);
+  // }, [routesIndex, directionsRenderer]);
 
-  if(!leg) return null;
-  return null;
+  // if(!leg) return null;
+  // return null;
 }
 
-function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[] }) {
+function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes }) {
   const mapRef = useRef();
   const mapInstanceRef = useRef(null);
   // const [locations, setLocations] = useState([]);
@@ -209,6 +318,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     'Beach': beachIcon,
     'Seaport': seaportIcon,
     'Event': eventIcon,
+    'Restaurant': restaurantIcon,
   };
 
   useEffect(() => {
@@ -221,6 +331,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     if (types?.includes('lodging')) return "Homestay";
     if (types?.includes('museum')) return "Museum";
     if (types?.includes('park')) return "National Park";
+    if(types?.includes('restaurant')) return "Restaurant";
     return 'Other';
   };
 
@@ -292,6 +403,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             if (types?.includes('lodging')) return "Homestay";
             if (types?.includes('museum')) return "Museum";
             if (types?.includes('park')) return "National Park";
+            if(types?.includes('restaurant')) return "Restaurant";
             return 'Other';
           };
 
@@ -320,6 +432,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           selectedVehicle={selectedVehicle}
           nearbyPlaces={nearbyPlaces}
           selectedCategory={selectedCategory}
+          selectedRouteIndex={selectedRouteIndex}
         />
 
         {selectedLocation && !showReviewPage && (
