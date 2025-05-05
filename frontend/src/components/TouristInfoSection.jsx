@@ -44,7 +44,7 @@ const TouristInfoSection = ({ locations, onDataFetch, selectedCategory, setselec
       <div className="info-content">
         <div className="discover-more-container">
           <span className="discover-more">Discover more?</span>
-          <Link to="/category" className="show-more">Show more</Link>
+          <Link to="/major-towns" className="show-more">Show more</Link>
         </div>
 
         <div className="items-list">

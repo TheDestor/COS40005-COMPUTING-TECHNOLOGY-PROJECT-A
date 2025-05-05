@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
-import '../styles/MajorTownPage.css';
+import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const CategoryPage = () => {
+const MajorTownPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -94,7 +94,7 @@ const CategoryPage = () => {
 
   return (
     <div className="category-page">
-      <MenuNavbar onLoginClick={handleLoginClick} onMenuSelect={handleDataFetch} />
+      <MenuNavbar />
 
       <div className="hero-banner">
         <div className="hero-overlay">
@@ -170,4 +170,4 @@ const CategoryPage = () => {
   );
 };
 
-export default CategoryPage;
+export default MajorTownPage;

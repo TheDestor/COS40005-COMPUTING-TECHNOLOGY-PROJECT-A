@@ -43,7 +43,7 @@ const WriteReviewForm = ({ onClose, location, user }) => {
   const handlePost = () => {
     const failAndDisable = (message) => {
       toast.error(message, {
-        position: 'bottom-center',
+        position: 'bottom-right',
         autoClose: 2000, 
       });
       setPostDisabled(true);
@@ -70,7 +70,7 @@ const WriteReviewForm = ({ onClose, location, user }) => {
     console.log({ rating, reviewText, files });
   
     toast.success('Review submitted successfully!', {
-      position: 'bottom-center',
+      position: 'bottom-right',
       autoClose: 2000,
       zIndex: 9999, 
     });

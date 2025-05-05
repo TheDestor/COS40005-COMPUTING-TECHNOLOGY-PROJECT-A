@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import BookmarkDetail from './BookmarkDetail';
+// import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
 import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft } from 'react-icons/fa';
 import { MdOutlineFavoriteBorder } from 'react-icons/md';
@@ -21,51 +21,51 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
     }
   }, [isOpen, auth, showLoginOverlay, onClose]);
 
-  const sections = [
-    {
-      key: "want-to-go",
-      title: "Want to go",
-      icon: FaRegFlag,
-      count: 3,
-      places: [
-        {
-          title: "Petrosains Playsmart Kuching",
-          rating: 4.7,
-          reviews: 237,
-          category: "Science museum",
-          image: petrosainsImg
-        },
-        {
-          title: "Borneo Cultural Museum",
-          rating: 4.7,
-          reviews: 237,
-          category: "Museum",
-          image: borneoImg
-        },
-        {
-          title: "The Ranee Museum",
-          rating: 4.7,
-          reviews: 237,
-          category: "Museum",
-          image: raneeImg
-        }
-      ]
-    },
-    {
-      key: "favourites",
-      title: "Favourites",
-      icon: MdOutlineFavoriteBorder,
-      count: 3,
-      places: []
-    },
-    {
-      key: "starred-places",
-      title: "Starred places",
-      icon: FaRegStar,
-      count: 2,
-      places: []
-    }
-  ];
+  // const sections = [
+  //   {
+  //     key: "want-to-go",
+  //     title: "Want to go",
+  //     icon: FaRegFlag,
+  //     count: 3,
+  //     places: [
+  //       {
+  //         title: "Petrosains Playsmart Kuching",
+  //         rating: 4.7,
+  //         reviews: 237,
+  //         category: "Science museum",
+  //         image: petrosainsImg
+  //       },
+  //       {
+  //         title: "Borneo Cultural Museum",
+  //         rating: 4.7,
+  //         reviews: 237,
+  //         category: "Museum",
+  //         image: borneoImg
+  //       },
+  //       {
+  //         title: "The Ranee Museum",
+  //         rating: 4.7,
+  //         reviews: 237,
+  //         category: "Museum",
+  //         image: raneeImg
+  //       }
+  //     ]
+  //   },
+  //   {
+  //     key: "favourites",
+  //     title: "Favourites",
+  //     icon: MdOutlineFavoriteBorder,
+  //     count: 3,
+  //     places: []
+  //   },
+  //   {
+  //     key: "starred-places",
+  //     title: "Starred places",
+  //     icon: FaRegStar,
+  //     count: 2,
+  //     places: []
+  //   }
+  // ];
 
   const HeaderWithLogo = ({ title, count, Icon }) => (
     <div className="header-with-logo">
@@ -79,14 +79,6 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
 
   return (
     <div className={`bookmark-panel ${isOpen ? "hidden" : ""}`}>
-      {selectedSection !== null ? (
-        <BookmarkDetail
-          title={sections[selectedSection].title}
-          places={sections[selectedSection].places}
-          onClose={() => setSelectedSection(null)}
-        />
-      ) : (
-        <>
           <div className="bookmark-header">
             <div className="bookmark-title">
               <FaRegBookmark className="bookmark-icon" />
@@ -96,7 +88,7 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
           </div>
 
           <div className="bookmark-sections">
-            {sections.map((section, index) => (
+            {/* {sections.map((section, index) => (
               <div
                 key={index}
                 className="bookmark-section-card"
@@ -108,10 +100,8 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
                   Icon={section.icon}
                 />
               </div>
-            ))}
+            ))} */}
           </div>
-        </>
-      )}
     </div>
   );
 };

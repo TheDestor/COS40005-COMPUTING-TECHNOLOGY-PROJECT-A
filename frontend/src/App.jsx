@@ -14,7 +14,7 @@ import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import SystemAdminpage from './pages/SystemAdminpage.jsx';
 import BookmarkPage from './pages/Bookmarkpage.jsx';
 import './App.css';
-import CategoryPage from './pages/CategoryPage.jsx';
+import MajorTownPage from './pages/MajorTownPage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
 import DashboardPage from './pages/DashboardPage';
 import ViewAnalytics from './pages/ViewAnalytics.jsx';
@@ -22,7 +22,12 @@ import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
 import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
-// import HomestayPage from './pages/HomestayPage.jsx';
+import HomestayPage from './pages/HomestayPage.jsx';
+import MuseumPage from './pages/MuseumPage.jsx';
+import NationalParkPage from './pages/NationalParkPage.jsx';
+import AirportPage from './pages/AirportPage.jsx';
+import BeachPage from './pages/BeachPage.jsx';
+import CategoryDetailsPage from './pages/CategoryDetailsPage.jsx';
 
 function App() {
 
@@ -40,8 +45,13 @@ function App() {
           <Route path="/system-admin" element={<SystemAdminpage />} />
           <Route path="/profile-settings" element={<ProfileSettingPage />} />
           <Route path="/bookmark" element={<BookmarkPage />} />
-          <Route path="/category" element={<CategoryPage />} />
-          {/* <Route path="/homestay" element={<HomestayPage />} /> */}
+          <Route path="/major-towns" element={<MajorTownPage />} />
+          <Route path="/homestay" element={<HomestayPage />} />
+          <Route path="/museum" element={<MuseumPage />} />
+          <Route path="/national-parks" element={<NationalParkPage />} />
+          <Route path="/airport" element={<AirportPage />} />
+          <Route path="/beach" element={<BeachPage />} />
+          <Route path="/category/:categoryName" element={<CategoryDetailsPage />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />

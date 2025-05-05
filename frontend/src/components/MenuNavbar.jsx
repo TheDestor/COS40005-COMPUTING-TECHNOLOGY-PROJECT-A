@@ -15,7 +15,7 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
-  const [selectedMenu, setSelectedMenu] = useState('Major Town');
+  const [selectedMenu, setSelectedMenu] = useState('');
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -28,34 +28,34 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
 
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
-    { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
-    { name: 'Homestay', icon: <FaBed />, isFetchOnly: true },
-    { name: 'Museum', icon: <FaUniversity />, isFetchOnly: true },
-    { name: 'National Park', icon: <FaMountain />, isFetchOnly: true },
-    { name: 'Airport', icon: <FaPlaneDeparture />, isFetchOnly: true },
-    { name: 'Beach', icon: <FaUmbrellaBeach />, isFetchOnly: true },
-    { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
+    { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' },
+    { name: 'Homestay', icon: <FaBed />, path: '/homestay' },
+    { name: 'Museum', icon: <FaUniversity />, path: '/museum' },
+    { name: 'National Park', icon: <FaMountain />, path: '/national-parks' },
+    { name: 'Airport', icon: <FaPlaneDeparture />, path: '/airport' },
+    { name: 'Beach', icon: <FaUmbrellaBeach />, path: '/beach' },
+    // { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
     { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
   ];
 
-  const handleMenuClick = async (item) => {
-    if (item.isFetchOnly) {
-      setSelectedMenu(item.name);
-      try {
-        const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
-        console.log(`Fetched ${item.name} Data:`, response);
+  // const handleMenuClick = async (item) => {
+  //   if (item.isFetchOnly) {
+  //     setSelectedMenu(item.name);
+  //     try {
+  //       const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
+  //       console.log(`Fetched ${item.name} Data:`, response);
 
-        // Trigger parent to update
-        if (onMenuSelect) {
-          onMenuSelect(item.name, response);
-        }
+  //       // Trigger parent to update
+  //       if (onMenuSelect) {
+  //         onMenuSelect(item.name, response);
+  //       }
 
-        // You can now set this data into state if you want to display it
-      } catch (error) {
-        console.error(`Error fetching ${item.name}:`, error);
-      }
-    }
-  };
+  //       // You can now set this data into state if you want to display it
+  //     } catch (error) {
+  //       console.error(`Error fetching ${item.name}:`, error);
+  //     }
+  //   }
+  // };
 
   // useEffect(() => {
   //   const defaultItem = menuItems.find(item => item.name === 'Major Town');
