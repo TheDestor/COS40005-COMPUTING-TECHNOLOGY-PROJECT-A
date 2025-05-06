@@ -1,6 +1,6 @@
 import { contactUsModel } from "../models/ContactUsModel.js";
 import { userModel } from "../models/UserModel.js";
-import { put } from "@vercel/blob"
+import { del, put } from "@vercel/blob"
 
 // @desc Update user profile information
 // @route POST /updateUserProfile
@@ -96,13 +96,56 @@ export const updatePassword = async (req, res) => {
 }
 
 export const updateAvatar = async (req, res) => {
+    const userId = req.user;
+    const file = req.file;
     try {
-        const file = req.file;
-        res.status(200).json({ message: "Test success", success: true });
-        console.log(file);
+        const user = await userModel.findById(userId).select('avatarUrl');
+        if (user && user.avatarUrl) {
+            try {
+                await del(user.avatarUrl);
+            } catch (error) {
+                console.warn(`Failed to delete old blob: ${user.avatarUrl}`, error);
+            }
+        }
+
+        const blob = await put(file.originalname, file.buffer, {
+            access: 'public',
+            addRandomSuffix: true,
+            token: process.env.BLOB_READ_WRITE_TOKEN
+        })
+        console.log(blob);
+        await userModel.findByIdAndUpdate(
+            userId,
+            { avatarUrl: blob.url },
+        )
+        res.status(200).json({ message: "Avatar uploaded successfully", url: blob.url, success: true });
+        
     } catch (error) {
-        res.status(500).json({ message: "Test failed", success: true });
         console.error(error);
+        res.status(500).json({ message: "An error occured while uploading the file", success: false });
+    }
+}
+
+export const removeAvatar = async (req, res) => {
+    const userId = req.user;
+    try {
+        const user = await userModel.findById(userId).select('avatarUrl');
+        if (user && user.avatarUrl) {
+            try {
+                await del(user.avatarUrl);
+                await userModel.findByIdAndUpdate(
+                    userId,
+                    { avatarUrl: null },
+                )
+                res.status(200).json({ message: "Avatar deleted successfully", success: true });
+            } catch (error) {
+                console.warn(`Failed to delete old blob: ${user.avatarUrl}`, error);
+                res.status(500).json({ message: "An error occured while deleting the file", success: false });
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An error occured while deleting the file", success: false });
     }
 }
 

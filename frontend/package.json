@@ -19,6 +19,7 @@
     "jwt-decode": "^4.0.0",
     "ky": "^1.8.1",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.507.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-google-recaptcha": "^3.1.0",
@@ -30,6 +31,7 @@
     "react-toastify": "^11.0.5",
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.11",
+    "recharts": "^2.15.3",
     "topojson-client": "^3.1.0",
     "zxcvbn": "^4.4.2"
   },

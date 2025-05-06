@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import '../styles/ProfileSettingpage.css';
 import Navbar from '../components/MenuNavbar.jsx';
 import { MdPerson, MdSecurity, MdNotificationsNone, MdSubscriptions, MdOutlinePhoto, MdDelete } from 'react-icons/md';
@@ -78,10 +78,11 @@ const customStyles = {
   }),
 };
 
-const AvatarModal = ({ onClose, onSave, accessToken }) => {
+const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }) => {
   const [activeTab, setActiveTab] = useState('avatar');
-  const [selectedAvatar, setSelectedAvatar] = useState(null);
-  const [selectedFile, setSelectedFIle] = useState(null);
+  const [selectedLocalPath, setSelectedLocalPath] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const avatars = Array.from({ length: 15 }, (_, i) => `src/assets/avatar${i + 1}.png`);
 
@@ -89,28 +90,83 @@ const AvatarModal = ({ onClose, onSave, accessToken }) => {
     const file = e.target.files[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setSelectedAvatar(imageUrl);
+      setPreviewUrl(imageUrl);
+      setSelectedFile(file);
+      setSelectedLocalPath(null);
     }
-    setSelectedFIle(file);
   };
 
-  const handleSave = async () => {
-    const formData = new FormData();
-    formData.append('avatar', selectedFile)
+  const handlePredefinedAvatarSelect = async (localPath) => {
+    setSelectedLocalPath(localPath);
+    setPreviewUrl(localPath);
+    setSelectedFile(null);
 
     try {
-      const response = await ky.post("/api/user/updateAvatar",
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-          body: formData
-        }
-      );
-
-      console.log(response);
+      const response = await fetch(localPath);
+      if (!response.ok) throw new Error(`Failed to fetch avatar: ${response.statusText}`);
+      const blob = await response.blob();
+      const fileName = localPath.substring(localPath.lastIndexOf('/') + 1);
+      const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+      setSelectedFile(file);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching predefined avatar:", error);
+      setSelectedFile(null);
+      setPreviewUrl(null);
     }
   }
+
+  // const handleSave = async () => {
+  //   const formData = new FormData();
+  //   formData.append('avatar', selectedFile)
+
+  //   try {
+  //     const response = await ky.post("/api/user/updateAvatar",
+  //       {
+  //         headers: { 'Authorization': `Bearer ${accessToken}` },
+  //         body: formData
+  //       }
+  //     );
+
+  //     console.log(response);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+
+  const handleSave = useCallback(async () => {
+    const formData = new FormData();
+    formData.append('avatar', selectedFile);
+
+    try {
+      const response = await ky.post(
+        "/api/user/updateAvatar",
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          body: formData,
+        }
+      ).json();
+
+      if (response.url) {
+        onUploadSuccess(response.url);
+        onClose();
+      } else {
+        console.log("Upload failed no URL hsa been returned");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+  }, [selectedFile, accessToken, onUploadSuccess, onClose]);
+
+  React.useEffect(() => {
+    const isObjectURL = previewUrl && previewUrl.startsWith('blob:');
+    return () => {
+      if (isObjectURL) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const currentDisplayImage = previewUrl || currentAvatarUrl || UserImage
 
   return (
     <div className="modal-overlay">
@@ -129,8 +185,8 @@ const AvatarModal = ({ onClose, onSave, accessToken }) => {
                   key={i}
                   src={src}
                   alt={`avatar-${i}`}
-                  className={`avatar-img ${selectedAvatar === src ? 'selected' : ''}`}
-                  onClick={() => setSelectedAvatar(src)}
+                  className={`avatar-img ${selectedLocalPath === src ? 'selected' : ''}`}
+                  onClick={() => handlePredefinedAvatarSelect(src)}
                 />
               ))}
             </div>
@@ -142,24 +198,25 @@ const AvatarModal = ({ onClose, onSave, accessToken }) => {
             <div className="upload-section">
               <input
                 type="file"
+                id="avatar-upload-input"
                 accept="image/png, image/jpeg, image/jpg"
                 onChange={handleFileChange}
               />
-              {selectedAvatar && (
-                <img
-                  src={selectedAvatar}
-                  alt="Uploaded Preview"
-                  className="avatar-img selected"
-                  style={{ width: '100px', height: '100px', marginTop: '1rem' }}
-                />
-              )}
+              <label htmlFor="avatar-upload-input">
+                Choose File
+              </label>
+              <img
+                src={currentDisplayImage}
+                alt="Avatar Preview"
+                style={{ width: '100px', height: '100px', marginTop: '1rem' }}
+              />
             </div>
           )}
         </div>
 
         <div className="modal-actions">
           <button onClick={onClose} className="cancel-btn2">Cancel</button>
-          <button onClick={handleSave} className="save-btn" disabled={!selectedAvatar}>Save</button>
+          <button onClick={handleSave} className="save-btn" disabled={!selectedFile}>Save</button>
         </div>
       </div>
     </div>
@@ -260,11 +317,39 @@ const ProfileSettingsPage = () => {
     }
   }
 
+  const handleAvatarUploadSuccess = useCallback((newAvatarUrl) => {
+    if (updateUserContext) {
+      updateUserContext({ ...user, avatarUrl: newAvatarUrl });
+    }
+    setShowPhotoModal(false);
+  }, [updateUserContext, user]);
+
+  const handleRemoveAvatar = async () => {
+    if (window.confirm("Are you sure you want to remove your profile picture?")) {
+      try {
+        const response = await ky.post(
+          "/api/user/removeAvatar",
+          { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        ).json();
+  
+        if (response.success) {
+          updateUserContext({avatarUrl: null});
+          console.log("Avatar removed successfully");
+        } else {
+          console.log(response.message || "Failed to remove avatar.");
+        }
+      } catch (error) {
+        console.error("Error removing avatar:", error);
+      }
+    }
+  }
+
   const renderContent = () => {
     switch (activeSection) {
       case 'account':
 
         const currentSelectValue = countryOptions.find(option => option.value === selectedCountry.name);
+        const displayAvatar = user?.avatarUrl || UserImage;
 
         return (
           <div className="profile-section">
@@ -278,14 +363,14 @@ const ProfileSettingsPage = () => {
             </div>
             <div className="profile-row">
               <div className="profile-picture">
-                <img src={UserImage} alt="Profile" />
+                <img src={displayAvatar} alt="Profile" />
               </div>
               <div className="picture-buttons">
                 <button className="change-btn" onClick={() => setShowPhotoModal(true)}>
                   <MdOutlinePhoto /> Change
                 </button>
 
-                <button className="remove-btn"><MdDelete /> Remove</button>
+                <button className="remove-btn" onClick={handleRemoveAvatar} disabled={!user?.avatarUrl}><MdDelete /> Remove</button>
               </div>
               <div className="field-group nationality-group">
                 <label>Nationality</label>
@@ -388,11 +473,8 @@ const ProfileSettingsPage = () => {
       {showPhotoModal && (
         <AvatarModal
           onClose={() => setShowPhotoModal(false)}
-          onSave={(avatar) => {
-            console.log("Avatar selected:", avatar);
-            setShowPhotoModal(false);
-            // You can set profile picture state here
-          }}
+          onUploadSuccess={handleAvatarUploadSuccess}
+          currentAvatarUrl={user.avatarUrl || UserImage}
           accessToken={accessToken}
         />
       )}

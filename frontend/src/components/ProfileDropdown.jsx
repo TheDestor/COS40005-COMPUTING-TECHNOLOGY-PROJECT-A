@@ -4,6 +4,7 @@ import { FaUser } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/ProfileDropdown.css';
+import defaultUserImage from "../assets/Kuching.png";
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 
 const ProfileDropdown = ({ onLoginClick }) => {
@@ -18,7 +19,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
     setIsOpen(false);
   };
 
-  const profileImage = 'https://i.pravatar.cc/150?img=3';
+  const profileImage = user?.avatarUrl || defaultUserImage;
   const displayName = user?.firstName || 'Guest';
 
   const profileIcon = isLoggedIn ? (

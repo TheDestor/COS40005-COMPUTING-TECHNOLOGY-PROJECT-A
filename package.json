@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@vercel/blob": "^1.0.1",
-    "lucide-react": "^0.503.0",
-    "recharts": "^2.15.3",
-    "zxcvbn": "^4.4.2"
-  }
-}
