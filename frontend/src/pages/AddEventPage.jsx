@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaCamera } from 'react-icons/fa';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import Sidebar from '../components/Sidebar';
+import ky from 'ky';
 import '../styles/AddEventPage.css';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const AddEventPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +25,7 @@ const AddEventPage = () => {
   const [showCalendar, setShowCalendar] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const fileInputRef = useRef(null);
@@ -31,6 +34,17 @@ const AddEventPage = () => {
   
   const locations = ['Sarawak Cultural Village', 'Damai Beach', 'Kuching Waterfront'];
   const eventTypes = ['Festival', 'Workshop', 'Business Meetup'];
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const currentImage = uploadedImage;
+    return () => {
+      if (currentImage && currentImage.startsWith('blob:')) {
+        URL.revokeObjectURL(currentImage);
+      }
+    }
+  }, [uploadedImage]);
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -68,13 +82,11 @@ const AddEventPage = () => {
   };
 
   const handleImageUpload = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const imageFile = e.target.files[0];
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        setUploadedImage(fileReader.result);
-      };
-      fileReader.readAsDataURL(imageFile);
+    if (e.target.files && e.target.files[0]) { 
+      const file = e.target.files[0];
+      setImageFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setUploadedImage(objectUrl);
     }
   };
 
@@ -96,6 +108,10 @@ const AddEventPage = () => {
     setRegistrationRequired('No');
     setSelectedDate(null);
     setUploadedImage(null);
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const getDaysInMonth = (year, month) => {
@@ -180,21 +196,47 @@ const AddEventPage = () => {
     return selectedDate.toLocaleDateString('en-US', options);
   };
 
-  const publishEvent = () => {
-    // We will typically send the event data to our backend here later
-    const eventData = {
-      name: eventName,
-      description: eventDescription,
-      location: selectedLocation,
-      eventType: selectedEventType,
-      targetAudience: targetAudience,
-      otherAudience: otherAudience,
-      registrationRequired: registrationRequired,
-      date: selectedDate,
-      image: uploadedImage
-    };
-    console.log('Publishing event:', eventData);
-    // After successful submission, we might clear the form or navigate elsewhere
+  const publishEvent = async () => {
+    const formData = new FormData();
+
+    formData.append('name', eventName);
+    formData.append('description', eventDescription);
+    formData.append('location', selectedLocation);
+    formData.append('eventType', selectedEventType);
+    const selectedAudiences = [];
+    if (targetAudience.tourist) {
+      selectedAudiences.push('Tourist');
+    }
+    if (targetAudience.localBusiness) {
+      selectedAudiences.push('Local Business');
+    }
+    if (targetAudience.other && otherAudience.trim() !== '') {
+      selectedAudiences.push(otherAudience.trim());
+    }
+    formData.append('targetAudience', JSON.stringify(selectedAudiences));
+    formData.append('registrationRequired', registrationRequired);
+    formData.append('date', selectedDate);
+    formData.append('image', imageFile);
+    
+    try {
+      const response = await ky.post(
+        "/api/event/addEvent",
+        {
+          headers: { 'Authorization': `Bearer ${user?.accessToken}` },
+          body: formData
+        }
+      ).json();
+
+      console.log(response);
+      clearForm();
+    } catch (error) {
+      try {
+        const errorData = await error.response.json();
+        console.error(errorData);
+      } catch (error) {
+        console.error(error);
+      }
+    }
   };
 
   const saveAsDraft = () => {
@@ -400,8 +442,8 @@ const AddEventPage = () => {
                     </button>
                   </div>
                   <div className="calendar-weekdays">
-                    {weekdays.map((day) => (
-                      <div key={day} className="calendar-weekday">{day}</div>
+                    {weekdays.map((day, index) => (
+                      <div key={index} className="calendar-weekday">{day}</div>
                     ))}
                   </div>
                   <div className="calendar-days">

@@ -1,13 +1,19 @@
 import express from "express";
-import connectDB from "../config/mongodb.js";
+import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import authRouter from "../routes/AuthRoutes.js";
 import userRouter from "../routes/UserRoutes.js";
 import locationRouter from "../routes/LocationRoutes.js";
 import dashboardRouter from "../routes/DashboardRoutes.js";
+import eventRouter from "../routes/EventRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5050
+
+const connectDB = async () => {
+    mongoose.connection.on('connected', () => console.log("Database Connected"));
+    await mongoose.connect(process.env.MONGO_URI);
+};
 connectDB(); // Establish connection to the database as soon as the backend is run
 
 app.disable("x-powered-by");
@@ -17,6 +23,7 @@ app.use("/api/locations", locationRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/event", eventRouter);
 
 // Start the express server on this port
 app.listen(PORT, () => {

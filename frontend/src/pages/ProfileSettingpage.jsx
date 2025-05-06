@@ -122,24 +122,6 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
     }
   }
 
-  // const handleSave = async () => {
-  //   const formData = new FormData();
-  //   formData.append('avatar', selectedFile)
-
-  //   try {
-  //     const response = await ky.post("/api/user/updateAvatar",
-  //       {
-  //         headers: { 'Authorization': `Bearer ${accessToken}` },
-  //         body: formData
-  //       }
-  //     );
-
-  //     console.log(response);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
-
   const handleSave = useCallback(async () => {
     const formData = new FormData();
     formData.append('avatar', selectedFile);

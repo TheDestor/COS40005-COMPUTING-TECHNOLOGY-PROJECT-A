@@ -108,12 +108,16 @@ export const updateAvatar = async (req, res) => {
             }
         }
 
-        const blob = await put(file.originalname, file.buffer, {
-            access: 'public',
-            addRandomSuffix: true,
-            token: process.env.BLOB_READ_WRITE_TOKEN
-        })
-        console.log(blob);
+        try {
+            const blob = await put(file.originalname, file.buffer, {
+                access: 'public',
+                addRandomSuffix: true,
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            })
+            console.log(blob);
+        } catch (uploadError) {
+            console.error("Error uploading to Vercel Blob:", uploadError);
+        }
         await userModel.findByIdAndUpdate(
             userId,
             { avatarUrl: blob.url },
