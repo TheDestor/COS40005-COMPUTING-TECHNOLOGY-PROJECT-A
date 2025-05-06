@@ -88,11 +88,18 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file.size < 4.5 * 1024 * 1024) {
       const imageUrl = URL.createObjectURL(file);
       setPreviewUrl(imageUrl);
       setSelectedFile(file);
       setSelectedLocalPath(null);
+    } else {
+      alert("Image cannot exceed 4.5MB");
+      e.target.value = null;
+      setPreviewUrl(currentAvatarUrl || UserImage);
+      setSelectedFile(null);
+      setSelectedLocalPath(null);
+      return;
     }
   };
 
@@ -157,7 +164,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
     }
   }, [selectedFile, accessToken, onUploadSuccess, onClose]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const isObjectURL = previewUrl && previewUrl.startsWith('blob:');
     return () => {
       if (isObjectURL) {
@@ -166,7 +173,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
     };
   }, [previewUrl]);
 
-  const currentDisplayImage = previewUrl || currentAvatarUrl || UserImage
+  const displayPreviewImage = previewUrl || currentAvatarUrl || UserImage
 
   return (
     <div className="modal-overlay">
@@ -205,11 +212,14 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
               <label htmlFor="avatar-upload-input">
                 Choose File
               </label>
-              <img
-                src={currentDisplayImage}
-                alt="Avatar Preview"
-                style={{ width: '100px', height: '100px', marginTop: '1rem' }}
-              />
+              <p style={{ color: 'black' }}>Max file size: 4.5MB</p>
+              {displayPreviewImage && (
+                <img
+                  src={displayPreviewImage}
+                  alt="Avatar Preview"
+                  style={{ width: '100px', height: '100px', marginTop: '1rem', borderRadius: '50%', objectFit: 'cover' }}
+                />
+              )}
             </div>
           )}
         </div>
