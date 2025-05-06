@@ -7,10 +7,11 @@ export const getAllInquiries = async (req, res) => {
     try {
         const inquiries = await contactUsModel.find();
 
-        if (!inquiries) {
-            return res.status(401).json({ message: "Failed to fetch inquiries", success: false })
-        } else {
+        if (inquiries) {
             return res.status(200).json({ message: "Inquiries fetched successfully", success: true, inquiries });
+            
+        } else {
+            return res.status(401).json({ message: "Failed to fetch inquiries", success: false })
         }
     } catch (error) {
         console.log(error);

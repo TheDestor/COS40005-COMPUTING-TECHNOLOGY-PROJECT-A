@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addEvent } from "../controllers/EventController.js";
+import { addEvent, getAllEvents } from "../controllers/EventController.js";
 import multer from "multer";
 
 const eventRouter = Router();
@@ -18,5 +18,6 @@ const upload = multer({
 
 
 eventRouter.post("/addEvent", upload.single('image'), addEvent);
+eventRouter.get("/getAllEvents", getAllEvents);
 
 export default eventRouter;
