@@ -1,0 +1,175 @@
+/* CategoryDetailsPage.css */
+.details-page {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .town-overview {
+    background: white;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 1200px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .overlay-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .text-content h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .overview-text {
+    line-height: 1.8;
+    color: #34495e;
+    margin-bottom: 2rem;
+  }
+  
+  .quick-facts {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+  }
+  
+  .quick-facts h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+  }
+  
+  .quick-facts ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .quick-facts li {
+    margin-bottom: 0.5rem;
+    color: #7f8c8d;
+  }
+  
+  .image-content {
+    position: relative;
+  }
+  
+  .image-content img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  .attractions-section {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .attractions-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+  
+  .attractions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  
+  .attraction-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .attraction-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .attraction-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .attraction-info {
+    padding: 1.5rem;
+  }
+  
+  .attraction-info h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+  
+  .attraction-type {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .attraction-desc {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+  
+  .official-site-btn {
+    display: inline-block;
+    background: #3498db;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.3s ease;
+  }
+  
+  .official-site-btn:hover {
+    background: #2980b9;
+  }
+  
+  @media (max-width: 768px) {
+    .overlay-container {
+      grid-template-columns: 1fr;
+    }
+    
+    .image-content img {
+      height: 300px;
+    }
+    
+    .attractions-section {
+      padding: 1rem;
+    }
+  }
+  
+  .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }

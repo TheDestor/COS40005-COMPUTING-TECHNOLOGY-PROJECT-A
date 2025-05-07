@@ -40,10 +40,16 @@ const HomePage = () => {
     localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
   }, [searchHistory]);
 
+  // const handleSearch = (term) => {
+  //   if (!term.trim()) return;
+  //   setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
+  // };
   const handleSearch = (term) => {
+    console.log('handleSearch triggered with:', term); // <== DEBUG
     if (!term.trim()) return;
     setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
   };
+  
 
   // tourist info fetched data
   const handleDataFetch = (category, fetchedData) => {
@@ -136,11 +142,16 @@ const HomePage = () => {
 
   return (
     <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
-      <SearchBar
+      {/* <SearchBar
         onSearch={handleSearch} 
         setSelectedPlace={setSelectedPlace} 
         history={searchHistory}
+      /> */}
+      <SearchBar
+        onSearch={handleSearch} 
+        setSelectedPlace={setSelectedPlace} 
       />
+
 
       <ProfileDropdown onLoginClick={handleLoginClick} />
 
@@ -148,14 +159,6 @@ const HomePage = () => {
         currentTown={currentTown}
         setCurrentTown={setCurrentTown}
       />
-      {/* <Navbar 
-        onLoginClick={handleLoginClick}
-        activeOption={selectedCategory}
-        onMenuChange={setSelectedCategory}
-        setSelectedPlace={setSelectedPlace}
-        onSearch={handleSearch}
-        history={searchHistory}
-      /> */}
 
       <MapComponent 
         startingPoint={startingPoint} 

@@ -45,12 +45,14 @@ const MajorTownPage = () => {
     setLoading(false);
   };
 
-  const processData = (items, category) => {
-    return (items || []).map(item => ({
-      name: item?.Name || item?.name || 'Unknown',
-      desc: item?.description || item?.Desc || 'No description',
-      slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      image: item?.image || defaultImage,
+  const processData = (items) => {
+    return items.map(item => ({
+      name: item.division,
+      desc: item.description,
+      slug: item.slug || item.division // Keep original casing
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]/g, ''),
+      image: item.image || defaultImage,
     }));
   };
 
@@ -143,7 +145,7 @@ const MajorTownPage = () => {
                     <p>{item.desc}</p>
                   </div>
                   <div className="button-container">
-                    <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
+                    <Link to={`/towns/${item.slug}`} className="explore-btn">
                       Explore
                     </Link>
                   </div>

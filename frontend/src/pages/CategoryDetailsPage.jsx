@@ -1,122 +1,143 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
-import '../styles/CategoryDetailsPage.css'; // New CSS file
+import '../styles/CategoryDetailsPage.css';
 import defaultImage from '../assets/Kuching.png';
+// Add at the top with other imports
+import { Link } from 'react-router-dom';
 
 const CategoryDetailsPage = () => {
-  // Reuse all the same state and logic from AirportPage
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [townData, setTownData] = useState(null);
+  const [attractions, setAttractions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
-  const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('');
+  const { slug } = useParams();
 
-  // Reuse existing fetch logic
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/locations?type=ImageGrid');
-      const fetchedData = await response.json();
-      handleDataFetch('Image Grid', fetchedData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchTownDetails = async () => {
+      try {
+        const res = await fetch(`/api/locations?division=${slug.toUpperCase}`);
+        if (!res.ok) throw new Error('Failed to fetch locations');
+        const data = await res.json();
+  
+        // Extract the specific town data
+        const town = data.find(
+          (item) => item.division === slug && item.division.toUpperCase() === slug.toUpperCase()
+        );
+  
+        // Extract the attractions for that town
+        const filteredAttractions = data.filter(
+          (item) =>
+            item.type === 'attractions' &&
+            item.division.toUpperCase() === slug.toUpperCase()
+        );
+  
+        if (!town) throw new Error('Town not found');
+  
+        setTownData({
+          name: town.division,
+          division: town.division,
+          description: town.description,
+          image: town.image,
+          population: town.population || 'Data not available',
+          area: town.area || 'Data not available',
+        });
+  
+        setAttractions(filteredAttractions);
+      } catch (err) {
+        console.error(err);
+        setTownData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchTownDetails();
+  }, [slug]);
 
-  useEffect(() => { fetchData(); }, []);
-
-  // Reuse existing data processing
-  const handleDataFetch = (category, fetchedData) => {
-    /* Same implementation as AirportPage */
-  };
-
-  const processData = (items, category) => {
-    /* Same implementation as AirportPage */
-  };
-
-  // Reuse existing helper functions
+  if (!loading && !townData) {
+    return (
+      <div className="error-container">
+        <MenuNavbar />
+        <div className="error-content">
+          <h2>404 - Town Not Found</h2>
+          <p>The town "{slug}" doesn't exist in our records.</p>
+          <Link to="/towns" className="return-button">
+            Browse All Towns
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
-  const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
-
-  const highlightMatch = (name) => {
-    /* Same implementation as AirportPage */
-  };
-
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      /* Same sorting logic as AirportPage */
-    });
 
   if (loading) {
-    /* Same loading spinner as AirportPage */
+    return (
+      <div className="loading-spinner">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="image-grid-page">
+    <div className="details-page">
       <MenuNavbar />
 
-      {/* Same hero banner section */}
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'Category'}</h1>
-          <p>Exploring {currentCategory || 'Sarawak'}</p>
+          <h1>{townData?.name?.toUpperCase() || 'Town Details'}</h1>
+          <p>Exploring {townData?.name || 'Sarawak'}</p>
         </div>
       </div>
 
-      {/* Same search and sort section */}
-      <div className="search-section">
-        <div className="search-container">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder={`Search ${currentCategory}...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      <div className="town-overview">
+        <div className="overlay-container">
+          <div className="text-content">
+            <h2>About {townData?.name}</h2>
+            <p className="overview-text">{townData?.description}</p>
+            <div className="quick-facts">
+              <h3>Quick Facts</h3>
+              <ul>
+                <li><strong>Division:</strong> {townData?.division}</li>
+                <li><strong>Population:</strong> {townData?.population}</li>
+                <li><strong>Area:</strong> {townData?.area}</li>
+              </ul>
+            </div>
           </div>
-          <button className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`} onClick={handleSortToggle}>
-            {/* Same sort button content */}
-          </button>
+          <div className="image-content">
+            <img src={townData?.image || defaultImage} alt={townData?.name} />
+          </div>
         </div>
       </div>
 
-      {/* Modified grid section */}
-      <div className="image-grid-container">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div className="image-grid-item" key={index}>
-            <Link to={`/details/${currentCategory}/${item.slug}`}>
-              <div className="image-wrapper">
-                <img src={item.image} alt={item.name} />
-                <div className="image-overlay">
-                  <h3 className="image-title">{highlightMatch(item.name)}</h3>
-                </div>
+      <div className="attractions-section">
+        <h2>Top Attractions in {townData?.name}</h2>
+        <div className="attractions-grid">
+          {attractions.map((attraction, index) => (
+            <div className="attraction-card" key={index}>
+              <img src={attraction.image || defaultImage} alt={attraction.name} />
+              <div className="attraction-info">
+                <h3>{attraction.name}</h3>
+                <p className="attraction-type">{attraction.type}</p>
+                <p className="attraction-desc">{attraction.description}</p>
+                <a
+                  href={attraction.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="official-site-btn"
+                >
+                  Official Site
+                </a>
               </div>
-            </Link>
-          </div>
-        ))}
-      </div>
-
-      {/* Same pagination controls */}
-      {filteredData.length > visibleItems && (
-        <div className="pagination-controls100">
-          <button className="show-more-btn100" onClick={() => setVisibleItems(prev => prev + 12)}>
-            Show More (+12)
-          </button>
-          <button className="show-all-btn100" onClick={() => setVisibleItems(filteredData.length)}>
-            Show All
-          </button>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       <Footer />

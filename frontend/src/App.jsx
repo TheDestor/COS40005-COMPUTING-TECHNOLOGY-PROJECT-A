@@ -51,7 +51,7 @@ function App() {
           <Route path="/national-parks" element={<NationalParkPage />} />
           <Route path="/airport" element={<AirportPage />} />
           <Route path="/beach" element={<BeachPage />} />
-          <Route path="/category/:categoryName" element={<CategoryDetailsPage />} />
+          <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />

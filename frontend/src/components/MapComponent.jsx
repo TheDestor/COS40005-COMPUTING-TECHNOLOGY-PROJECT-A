@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef, Marker } from '@vis.gl/react-google-maps';
 import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import aeroplaneIcon from '../assets/airport.gif';
@@ -289,25 +289,25 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     }
   };
 
-  useEffect(() => {
-    if (
-      selectedPlace &&
-      selectedPlace.geometry &&
-      typeof selectedPlace.geometry.location.lat === 'function'
-    ) {
-      const lat = selectedPlace.geometry.location.lat();
-      const lng = selectedPlace.geometry.location.lng();
+  // useEffect(() => {
+  //   if (
+  //     selectedPlace &&
+  //     selectedPlace.geometry &&
+  //     typeof selectedPlace.geometry.location.lat === 'function'
+  //   ) {
+  //     const lat = selectedPlace.geometry.location.lat();
+  //     const lng = selectedPlace.geometry.location.lng();
   
-      // Log the coordinates
-      console.log("Selected Place Coordinates:", { lat, lng });
+  //     // Log the coordinates
+  //     console.log("Selected Place Coordinates:", { lat, lng });
   
-      // Pan the map to the selected place
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.panTo({ lat, lng });
-        mapInstanceRef.current.setZoom(14);
-      }
-    }
-  }, [selectedPlace]);
+  //     // Pan the map to the selected place
+  //     if (mapInstanceRef.current) {
+  //       mapInstanceRef.current.panTo({ lat, lng });
+  //       mapInstanceRef.current.setZoom(14);
+  //     }
+  //   }
+  // }, [selectedPlace]);
   
   const categoryIcons = {
     'Major Town': townIcon,
@@ -323,8 +323,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
 
   useEffect(() => {
     console.log('Updated locations:', locations);
-  }, [locations]);  
-  
+  }, [locations]);    
 
   const getPlaceType = (types) => {
     if (types?.includes('airport')) return "Airport";
@@ -342,16 +341,32 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     map.fitBounds(bounds);
   }, [map, locations]);
 
+  useEffect(() => {
+    console.log('MapComponent received selectedPlace:', selectedPlace);
+  }, [selectedPlace]);
+
+  useEffect(() => {
+    if (selectedPlace && mapInstanceRef.current) {
+      const lat = Number(selectedPlace.latitude);
+      const lng = Number(selectedPlace.longitude);
+      console.log("Panning to selectedPlace in useEffect:", { lat, lng });
+  
+      mapInstanceRef.current.panTo({ lat, lng });
+      mapInstanceRef.current.setZoom(15);
+    }
+  }, [selectedPlace]);
   
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI' libraries={['places']}>
       <Map
         ref={(map) => {
           if (map) {
+            console.log("Map initialized");
             mapRef.current = map;
-            mapInstanceRef.current = map.map; 
+            mapInstanceRef.current = map.map;
           }
         }}
+      
         style={containerStyle}
         defaultCenter={center}
         defaultZoom={7}
@@ -388,7 +403,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
       ))}
   
         {/* Nearby Places */}
-        {nearbyPlaces.filter((place) => {
+          {nearbyPlaces.filter((place) => {
           
           const type = getPlaceType(place.types);
           return selectedCategory === 'All' || type === selectedCategory;
@@ -424,6 +439,27 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             </AdvancedMarker>
           );
         })}
+
+        {/* Search bar marker */}
+        {selectedPlace &&
+          !isNaN(Number(selectedPlace.latitude)) &&
+          !isNaN(Number(selectedPlace.longitude)) && (() => {
+            const lat = Number(selectedPlace.latitude);
+            const lng = Number(selectedPlace.longitude);
+            return (
+              <AdvancedMarker
+                key={`selected-place-${lat}-${lng}`}
+                position={{ lat, lng }}
+                title={selectedPlace.name || 'Selected Place'}
+              >
+                <img
+                  src={seaportIcon} // Ensure this icon is imported
+                  alt="Search Marker"
+                  style={{ width: '36px', height: '36px' }}
+                />
+              </AdvancedMarker>
+            );
+          })()}
 
         <Directions 
           startingPoint={startingPoint}
@@ -465,7 +501,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           </div>
         )}
 
-        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/>
+        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
       </Map>
     </APIProvider>
   );
