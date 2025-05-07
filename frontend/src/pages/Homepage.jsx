@@ -141,7 +141,8 @@ const HomePage = () => {
   };
 
   return (
-    <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
+    // <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
+    <>
       {/* <SearchBar
         onSearch={handleSearch} 
         setSelectedPlace={setSelectedPlace} 
@@ -204,7 +205,8 @@ const HomePage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
-      </APIProvider>
+      {/* // </APIProvider> */}
+      </>
   );
 };
 

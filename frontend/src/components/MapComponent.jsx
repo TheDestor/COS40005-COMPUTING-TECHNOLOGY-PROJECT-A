@@ -250,13 +250,16 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
 function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes }) {
   const mapRef = useRef();
   const mapInstanceRef = useRef(null);
-  // const [locations, setLocations] = useState([]);
+  const [mapInstance, setMapInstance] = useState(null);
   const map = useMap();
+
   const [markerRef, setMarkerRef] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locations, setLocations] = useState([]);
   const [activeOption, setActiveOption] = useState('');
   const [showReviewPage, setShowReviewPage] = useState(false);
+
+  // const [pendingPanTo, setPendingPanTo] = useState(null);
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -345,16 +348,31 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     console.log('MapComponent received selectedPlace:', selectedPlace);
   }, [selectedPlace]);
 
-  useEffect(() => {
-    if (selectedPlace && mapInstanceRef.current) {
-      const lat = Number(selectedPlace.latitude);
-      const lng = Number(selectedPlace.longitude);
-      console.log("Panning to selectedPlace in useEffect:", { lat, lng });
+  // useEffect(() => {
+  //   console.log('Debug values:', {
+  //     selectedPlace: !!selectedPlace, // Should be true
+  //     mapInstanceRef: !!mapInstanceRef.current, // Check if this is false
+  //     coordinatesValid: selectedPlace ? 
+  //       !isNaN(selectedPlace.latitude) && !isNaN(selectedPlace.longitude) 
+  //       : null
+  //   });
   
-      mapInstanceRef.current.panTo({ lat, lng });
-      mapInstanceRef.current.setZoom(15);
-    }
-  }, [selectedPlace]);
+  //   if (selectedPlace && mapInstanceRef.current) {
+  //     // ... existing pan logic ...
+  //     mapInstanceRef.current.panTo({
+  //       lat: Number(selectedPlace.latitude),
+  //       lng: Number(selectedPlace.longitude)
+  //     });
+  //     mapInstanceRef.current.setZoom(15);
+  //   }
+  // }, [selectedPlace]);
+
+  useEffect(() => {
+    console.log('Map loading status:', {
+      selectedPlace: !!selectedPlace,
+      mapInstance: !!map
+    });
+  }, [selectedPlace, map]);
   
   return (
     <APIProvider apiKey='AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI' libraries={['places']}>
@@ -364,6 +382,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             console.log("Map initialized");
             mapRef.current = map;
             mapInstanceRef.current = map.map;
+          } else {
+            console.log("Map failed");
           }
         }}
       
@@ -403,8 +423,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
       ))}
   
         {/* Nearby Places */}
-          {nearbyPlaces.filter((place) => {
-          
+        {nearbyPlaces.filter((place) => {
           const type = getPlaceType(place.types);
           return selectedCategory === 'All' || type === selectedCategory;
         })
@@ -441,25 +460,35 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         })}
 
         {/* Search bar marker */}
-        {selectedPlace &&
-          !isNaN(Number(selectedPlace.latitude)) &&
-          !isNaN(Number(selectedPlace.longitude)) && (() => {
-            const lat = Number(selectedPlace.latitude);
-            const lng = Number(selectedPlace.longitude);
-            return (
-              <AdvancedMarker
-                key={`selected-place-${lat}-${lng}`}
-                position={{ lat, lng }}
-                title={selectedPlace.name || 'Selected Place'}
-              >
-                <img
-                  src={seaportIcon} // Ensure this icon is imported
-                  alt="Search Marker"
-                  style={{ width: '36px', height: '36px' }}
-                />
-              </AdvancedMarker>
-            );
-          })()}
+        {selectedPlace && (
+          <AdvancedMarker
+            key={`search-marker-${selectedPlace.id}`}
+            position={{
+              lat: Number(selectedPlace.latitude),
+              lng: Number(selectedPlace.longitude)
+            }}
+            title={selectedPlace.name}
+          >
+            <div style={{
+              width: 40,
+              height: 40,
+              background: '#4285F4',
+              borderRadius: '50%',
+              border: '2px solid white',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+              transform: 'translate(-50%, -100%)'
+            }}>
+              <div style={{
+                color: 'white',
+                fontSize: '1.2rem',
+                textAlign: 'center',
+                lineHeight: '40px'
+              }}>
+                📍
+              </div>
+            </div>
+          </AdvancedMarker>
+        )}
 
         <Directions 
           startingPoint={startingPoint}

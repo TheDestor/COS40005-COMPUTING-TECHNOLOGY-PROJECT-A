@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
@@ -14,37 +14,61 @@ const CategoryDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const { slug } = useParams();
+  const location = useLocation();
+  const passedTown = location.state?.town;
 
   useEffect(() => {
-    const fetchTownDetails = async () => {
+  const loadData = async () => {
+    if (passedTown) {
+      // Use data from state
+      setTownData({
+        name: passedTown.name,
+        division: passedTown.division,
+        description: passedTown.desc,
+        image: passedTown.image,
+        population: passedTown.population || 'Data not available',
+        area: passedTown.area || 'Data not available',
+      });
+
+      // Still fetch attractions if needed
       try {
-        const res = await fetch(`/api/locations?division=${slug.toUpperCase}`);
-        if (!res.ok) throw new Error('Failed to fetch locations');
+        const res = await fetch(`/api/locations?division=${passedTown.division}`);
         const data = await res.json();
-  
-        // Extract the specific town data
-        const town = data.find(
-          (item) => item.division === slug && item.division.toUpperCase() === slug.toUpperCase()
-        );
-  
-        // Extract the attractions for that town
         const filteredAttractions = data.filter(
           (item) =>
-            item.type === 'attractions' &&
-            item.division.toUpperCase() === slug.toUpperCase()
+            item.category === 'attractions' &&
+            item.division.toLowerCase() === passedTown.division.toLowerCase()
         );
-  
+        setAttractions(filteredAttractions);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    } else {
+      // Fallback: load everything from slug if no state passed
+      try {
+        const res = await fetch(`/api/locations?division=${slug}`);
+        if (!res.ok) throw new Error('Failed to fetch locations');
+        const data = await res.json();
+        const town = data.find(
+          (item) =>
+            item.category === 'town' &&
+            item.division.toLowerCase() === slug.toLowerCase()
+        );
+        const filteredAttractions = data.filter(
+          (item) =>
+            item.category === 'attractions' &&
+            item.division.toLowerCase() === slug.toLowerCase()
+        );
         if (!town) throw new Error('Town not found');
-  
         setTownData({
-          name: town.division,
-          division: town.division,
-          description: town.description,
-          image: town.image,
-          population: town.population || 'Data not available',
-          area: town.area || 'Data not available',
+          name: passedTown.name,
+          division: passedTown.division,
+          description: passedTown.description,
+          image: passedTown.image,
+          population: passedTown.population || 'Data not available',
+          area: passedTown.area || 'Data not available',
         });
-  
         setAttractions(filteredAttractions);
       } catch (err) {
         console.error(err);
@@ -52,10 +76,11 @@ const CategoryDetailsPage = () => {
       } finally {
         setLoading(false);
       }
-    };
-  
-    fetchTownDetails();
-  }, [slug]);
+    }
+  };
+
+  loadData();
+}, [slug, passedTown]);
 
   if (!loading && !townData) {
     return (
@@ -103,7 +128,7 @@ const CategoryDetailsPage = () => {
             <div className="quick-facts">
               <h3>Quick Facts</h3>
               <ul>
-                <li><strong>Division:</strong> {townData?.division}</li>
+                <li><strong>Division:</strong> {townData?.name}</li>
                 <li><strong>Population:</strong> {townData?.population}</li>
                 <li><strong>Area:</strong> {townData?.area}</li>
               </ul>

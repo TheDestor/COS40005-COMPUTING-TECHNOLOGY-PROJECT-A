@@ -19,12 +19,22 @@ const MajorTownPage = () => {
   const fetchMajorTowns = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/locations?type=Major Town');
-      const fetchedData = await response.json();
-      handleDataFetch('Major Towns', fetchedData);
+      // Fetch major towns
+      const townsResponse = await fetch('/api/locations?type=Major Town');
+      const townsData = await townsResponse.json();
+
+      // Special fetch for Kuching division
+      const kuchingResponse = await fetch('/api/locations?division=Kuching');
+      const kuchingData = await kuchingResponse.json();
+
+      // Combine and deduplicate data
+      const combinedData = [...townsData, ...kuchingData].filter(
+        (v, i, a) => a.findIndex(t => t.division === v.division) === i
+      );
+
+      handleDataFetch('Major Towns & Divisions', combinedData);
     } catch (error) {
-      console.error('Error fetching major towns:', error);
+      console.error('Error fetching data:', error);
       setLoading(false);
     }
   };
@@ -49,10 +59,15 @@ const MajorTownPage = () => {
     return items.map(item => ({
       name: item.division,
       desc: item.description,
-      slug: item.slug || item.division // Keep original casing
+      slug: item.slug || item.division
+        .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^\w-]/g, ''),
       image: item.image || defaultImage,
+      // Add additional fields needed for details page
+      population: item.population,
+      area: item.area,
+      type: item.type // Preserve the type information
     }));
   };
 
@@ -145,7 +160,7 @@ const MajorTownPage = () => {
                     <p>{item.desc}</p>
                   </div>
                   <div className="button-container">
-                    <Link to={`/towns/${item.slug}`} className="explore-btn">
+                    <Link to={`/towns/${item.slug}`} state={{ town: item, division: item.name, type: item.type }} className="explore-btn">
                       Explore
                     </Link>
                   </div>

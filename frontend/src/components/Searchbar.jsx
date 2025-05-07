@@ -197,6 +197,7 @@ const SearchBar = ({ onSearch, setSelectedPlace }) => {
           name: result.formatted_address,
           latitude: location.lat,
           longitude: location.lng,
+          id: result.place_id
         };
         console.log("Location found:", place);
 
