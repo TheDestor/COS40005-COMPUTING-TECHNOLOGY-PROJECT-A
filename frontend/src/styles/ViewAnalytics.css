@@ -293,7 +293,7 @@ cursor: pointer;
 }
 
 
-.chart-container {
+.BPchart-container {
   position: relative;
   display: flex;
   justify-content: center;
@@ -312,7 +312,6 @@ cursor: pointer;
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom:25px ;
 }
 
 .stat-icon {
