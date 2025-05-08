@@ -15,6 +15,7 @@ import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
 import '../styles/MapComponent.css';
 import SearchBar from './Searchbar';
+import SearchHandler from './SearchHandler';
 
 const containerStyle = {
   position: 'absolute',
@@ -29,8 +30,62 @@ const containerStyle = {
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
 
+function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
+  const map = useMap('e57efe6c5ed679ba');
+
+  const handleMarkerClick = (location) => {
+    setSelectedLocation(location);
+
+    if (!map) {
+      console.warn('Map is not ready yet.');
+      return;
+    }
+
+    map.panTo({ lat: location.latitude, lng: location.longitude });
+    map.setZoom(10);
+  };
+
+  const categoryIcons = {
+    'Major Town': townIcon,
+    'Homestay': homestayIcon,
+    'Airport': aeroplaneIcon,
+    'Museum': museumIcon,
+    'National Park': parkIcon,
+    'Beach': beachIcon,
+    'Seaport': seaportIcon,
+    'Event': eventIcon,
+    'Restaurant': restaurantIcon,
+  };
+
+  return (
+    <>
+      {locations.map((loc) => (
+        <AdvancedMarker
+          key={loc.id}
+          position={{ lat: loc.latitude, lng: loc.longitude }}
+          title={loc.name}
+          onClick={() => handleMarkerClick(loc)}
+        >
+          <img 
+            src={categoryIcons[loc.type] || townIcon} 
+            alt={loc.type} 
+            style={{ 
+              width: '30px', 
+              height: '30px',
+              cursor: 'pointer',
+              borderRadius: '999px',
+              transform: selectedLocation?.id === loc.id ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.2s ease'
+            }} 
+          />
+        </AdvancedMarker>
+      ))}
+    </>
+  );
+}
+
 function Directions({ startingPoint, destination, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory, onRoutesCalculated, selectedRouteIndex, route }) {
-  const map = useMap();
+  const map = useMap('e57efe6c5ed679ba');
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
   // const [directionsRenderer, setDirectionsRenderer] = useState(null);
@@ -149,10 +204,10 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
   }, [directionsService, startingPoint, destination, addDestinations, selectedVehicle, map, selectedRouteIndex]);
 }
 
-function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes }) {
+function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes, setShowRecent, showRecent }) {
   const mapRef = useRef();
   const mapInstanceRef = useRef(null);
-  const map = useMap(); 
+  const map = useMap('e57efe6c5ed679ba'); 
 
   const [markerRef, setMarkerRef] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -162,17 +217,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const { addBookmark } = UseBookmarkContext();
 
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
+  const [searchInfoOpen, setSearchInfoOpen] = useState(false);
 
-  const handleSearchPlaceSelected = (place) => {
-    setSelectedSearchPlace(place);
-
-    if (map && place.latitude && place.longitude) {
-      const position = { lat: place.latitude, lng: place.longitude };
-
-      map.panTo(position);  
-      map.setZoom(17);        
-    }
-  };
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
     setActiveOption(category);
@@ -194,27 +240,30 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     }
   };
 
-  const handleMarkerClick = (location) => {
-    setSelectedLocation(location);
-    
-    // Pan to marker position
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.panTo({ lat: location.latitude, lng: location.longitude });
-      mapInstanceRef.current.setZoom(14);
-    }
-  };
+  // const handleMarkerClick = (location) => {
+  //   setSelectedLocation(location);
   
-  const categoryIcons = {
-    'Major Town': townIcon,
-    'Homestay': homestayIcon,
-    'Airport': aeroplaneIcon,
-    'Museum': museumIcon,
-    'National Park': parkIcon,
-    'Beach': beachIcon,
-    'Seaport': seaportIcon,
-    'Event': eventIcon,
-    'Restaurant': restaurantIcon,
-  };
+  //   if (!map) {
+  //     console.warn('Map is not ready yet.');
+  //     return;
+  //   }
+  
+  //   map.panTo({ lat: location.latitude, lng: location.longitude });
+  //   map.setZoom(15);
+  // };
+  
+  
+  // const categoryIcons = {
+  //   'Major Town': townIcon,
+  //   'Homestay': homestayIcon,
+  //   'Airport': aeroplaneIcon,
+  //   'Museum': museumIcon,
+  //   'National Park': parkIcon,
+  //   'Beach': beachIcon,
+  //   'Seaport': seaportIcon,
+  //   'Event': eventIcon,
+  //   'Restaurant': restaurantIcon,
+  // };
 
   useEffect(() => {
     console.log('Updated locations:', locations);
@@ -266,12 +315,19 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         gestureHandling={'greedy'}
         disableDefaultUI={true}
         // mapId='DEMO_MAP_ID'
+        id="e57efe6c5ed679ba"
         mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
       >
+
+      <MarkerManager 
+        locations={locations} 
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+      />
         
       {/* Locations based on type */}
-      {locations.map((loc) => (
+      {/* {locations.map((loc) => (
         <AdvancedMarker
           key={loc.id}
           position={{ lat: loc.latitude, lng: loc.longitude }}
@@ -292,7 +348,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             }} 
           />
         </AdvancedMarker>
-      ))}
+      ))} */}
   
         {/* Nearby Places */}
         {nearbyPlaces.filter((place) => {
@@ -317,7 +373,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           const icon = categoryIcons[type];
 
           return (
-            <AdvancedMarker
+            <AdvancedMarker 
               key={place.place_id}
               position={{ lat, lng }}
               title={`Nearby: ${place.name}`}
@@ -332,19 +388,18 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         })}
 
         {/* Search bar marker */}
-        <SearchBar onPlaceSelected={handleSearchPlaceSelected} />
-          {selectedSearchPlace && (
-          <AdvancedMarker
-          position={{
-            lat: selectedSearchPlace.latitude,
-            lng: selectedSearchPlace.longitude
-          }}
-          title={selectedSearchPlace.name}
-        >
-          <div className="search-marker-container">
-            <div className="search-marker-icon">📍</div>
-          </div>
-        </AdvancedMarker>        
+        <SearchBar onPlaceSelected={setSelectedSearchPlace} setShowRecent={setShowRecent}/>
+        {selectedSearchPlace && (
+          <>
+            <SearchHandler selectedSearchPlace={selectedSearchPlace} />
+            <AdvancedMarker
+              position={{
+                lat: selectedSearchPlace.latitude,
+                lng: selectedSearchPlace.longitude
+              }}
+              title={selectedSearchPlace.name}
+            />
+          </>
         )}
 
         {/* Direction services */}
@@ -366,7 +421,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             }}
             onCloseClick={() => {
               setSelectedLocation(null);
-              setShowReviewPage(false); // Also hide review if it was open
+              setShowReviewPage(false);
             }}
           >
             <CustomInfoWindow

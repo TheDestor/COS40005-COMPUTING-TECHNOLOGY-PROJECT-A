@@ -48,9 +48,9 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
               className="recent-item"
               onClick={() => onItemClick(item)} // Click on item to trigger search
             >
-              <img src={images} alt={item} />
+              <img src={images} alt={item.name} />
               <div className="item-info">
-                <span className="title">{item}</span>
+                <span className="title">{item.name}</span>
                 <span className="category">Search</span>
               </div>
               <input

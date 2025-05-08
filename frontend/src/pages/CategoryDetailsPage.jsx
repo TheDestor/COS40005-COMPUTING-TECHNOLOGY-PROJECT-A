@@ -23,7 +23,7 @@ const CategoryDetailsPage = () => {
         const divisionName = passedTown?.division || slug;
         
         // Fetch all locations for the division
-        const response = await fetch(`/api/locations?division=${divisionName}`);
+        const response = await fetch(`/api/locations`);
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
 
@@ -131,16 +131,28 @@ const CategoryDetailsPage = () => {
                 </div>
                 <p className="location-desc">{item.description}</p>
                 <div className="location-actions">
-                  {item.url && (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="official-site-btn"
-                    >
-                      Official Site
-                    </a>
-                  )}
+                <Link
+                to={{
+                  // Fix encoding and add URL-safe formatting
+                  pathname: `/discover/${encodeURIComponent(item.name.replace(/\s+/g, '-').toLowerCase())}`,
+                  state: { 
+                    location: {
+                      ...item,
+                      name: item.name || 'Unnamed Location',
+                      type: item.type || 'General Location',
+                      description: item.description || item.desc || 'No description available',
+                      image: item.image || defaultImage,
+                      coordinates: item.coordinates || [0, 0], // Ensure array format
+                      population: item.population || 'N/A',
+                      area: item.area || 'N/A',
+                      climate: item.climate || 'Tropical'
+                    }
+                  }
+                }}
+                className="explore-btn"
+              >
+                Explore
+              </Link>
                   {item.coordinates && (
                     <button className="map-btn">
                       View on Map

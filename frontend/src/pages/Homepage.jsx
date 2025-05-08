@@ -5,12 +5,9 @@ import LoginPage from './Loginpage.jsx';
 import MapComponent from '../components/MapComponent.jsx';
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { APIProvider } from '@vis.gl/react-google-maps';
 import defaultImage from '../assets/Kuching.png';
-// import SearchBar from '../components/Searchbar.jsx';
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
 import WeatherDateTime from '../components/WeatherDateTime.jsx';
-import MapViewMenu from '../components/MapViewMenu.jsx'
 
 const HomePage = () => {
   const location = useLocation();
@@ -24,32 +21,12 @@ const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Major Town');
   const [categoryData, setCategoryData] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  // const [locations, setLocations] = useState([]);
+
   const [mapLocations, setMapLocations] = useState([]);
   const [currentTown, setCurrentTown] = useState('Kuching');
+  const [showRecent, setShowRecent] = useState(false);
 
-  // const [mapLocations, setMapLocations] = useState([]);
   const [infoLocations, setInfoLocations] = useState([]);
-
-  const [searchHistory, setSearchHistory] = useState(() => {
-    const stored = localStorage.getItem('searchHistory');
-    return stored ? JSON.parse(stored) : [];
-  });
-  
-  useEffect(() => {
-    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-  }, [searchHistory]);
-
-  // const handleSearch = (term) => {
-  //   if (!term.trim()) return;
-  //   setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
-  // };
-  const handleSearch = (term) => {
-    console.log('handleSearch triggered with:', term); // <== DEBUG
-    if (!term.trim()) return;
-    setSearchHistory(prev => [term, ...prev.filter(item => item !== term)]);
-  };
-  
 
   // tourist info fetched data
   const handleDataFetch = (category, fetchedData) => {
@@ -61,27 +38,6 @@ const HomePage = () => {
     }));
     setInfoLocations(processed);
   };
-
-  // map component trigger data
-  // const handleMenuSelect = async (category, data) => {
-  //   setSelectedCategory(category);
-    
-  //   if (data) {
-  //     // Convert coordinates to numbers and validate
-  //     const validLocations = data
-  //       .filter(loc => !isNaN(loc.latitude) && !isNaN(loc.longitude))
-  //       .map(loc => ({
-  //         ...loc,
-  //         latitude: parseFloat(loc.latitude),
-  //         longitude: parseFloat(loc.longitude)
-  //       }));
-      
-  //     setMapLocations(validLocations);
-  //     console.log('Valid locations:', validLocations);
-  //   } else {
-  //     setMapLocations([]);
-  //   }
-  // };
 
   const handleCategorySelect = async (category, data = null) => {
     setSelectedCategory(category);
@@ -141,19 +97,7 @@ const HomePage = () => {
   };
 
   return (
-    // <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
     <>
-      {/* <SearchBar
-        onSearch={handleSearch} 
-        setSelectedPlace={setSelectedPlace} 
-        history={searchHistory}
-      /> */}
-      {/* <SearchBar
-        onSearch={handleSearch} 
-        setSelectedPlace={setSelectedPlace} 
-      /> */}
-
-
       <ProfileDropdown onLoginClick={handleLoginClick} />
 
       <WeatherDateTime
@@ -170,11 +114,11 @@ const HomePage = () => {
         selectedPlace={selectedPlace}
         categoryData={categoryData} 
         locations={mapLocations}
-        // onLocationFetch={handleMenuSelect}
         setSelectedCategory={setSelectedCategory}
         onSelectCategory={handleCategorySelect} 
-        // onSelect={handleCategorySelect}
         activeOption={selectedCategory}
+        setShowRecent={setShowRecent}
+        showRecent={showRecent}
       />
       
       <TouristInfoSection 
@@ -192,20 +136,12 @@ const HomePage = () => {
         setDestination={setDestination}
         setAddDestinations={setAddDestinations}
         setNearbyPlaces={setNearbyPlaces}
-        onSearch={handleSearch}
-        history={searchHistory}
-        setHistory={setSearchHistory}
+        showRecent={showRecent}
+        setShowRecent={setShowRecent}
       />
-
-      {/* <MapViewMenu 
-        onSelectCategory={handleCategorySelect} 
-        // onSelect={handleCategorySelect}
-        activeOption={selectedCategory}
-      /> */}
 
       {showLogin && <LoginPage onClose={closeLogin} />}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
-      {/* // </APIProvider> */}
       </>
   );
 };

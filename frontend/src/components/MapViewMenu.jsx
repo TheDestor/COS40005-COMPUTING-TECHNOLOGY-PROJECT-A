@@ -19,7 +19,7 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
     { name: 'National Park', icon: <FaMountain />, isFetchOnly: true },
     { name: 'Airport', icon: <FaPlaneDeparture />, isFetchOnly: true },
     { name: 'Beach', icon: <FaUmbrellaBeach />, isFetchOnly: true },
-    { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
+    // { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
     { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
   ];
 

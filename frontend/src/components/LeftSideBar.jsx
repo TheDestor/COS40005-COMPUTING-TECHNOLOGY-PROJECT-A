@@ -30,12 +30,12 @@ function debounce(func, delay) {
   };
 }
 
-const LeftSidebar = ({ onSearch, history, setHistory }) => {
+const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
-  const [showRecent, setShowRecent] = useState(false);
+  // const [showRecent, setShowRecent] = useState(false);
   const [showBusiness, setShowBusiness] = useState(false);
   const [showBookmarkpage, setShowBookmarkpage] = useState(false);
   const [showLayersPanel, setShowLayersPanel] = useState(false);
@@ -240,27 +240,6 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
   
     return () => clearInterval(interval);
   }, []);
-  
-
-  // const validateLocationIsInMalaysia = async (address) => {
-  //   const geocoder = new window.google.maps.Geocoder();
-  //   return new Promise((resolve) => {
-  //     geocoder.geocode({ address }, (results, status) => {
-  //       if (status === 'OK' && results[0]) {
-  //         const countryComponent = results[0].address_components.find(component => 
-  //           component.types.includes('country')
-  //         );
-  //         if (countryComponent && countryComponent.short_name === 'MY') {
-  //           resolve(true);
-  //         } else {
-  //           resolve(false);
-  //         }
-  //       } else {
-  //         resolve(false);
-  //       }
-  //     });
-  //   });
-  // };
 
   useEffect(() => {
   console.log('Updated starting point:', startingPoint);
@@ -428,7 +407,6 @@ useEffect(() => {
 
       {/* Slide-in RecentSection */}
       <RecentSection isOpen={showRecent} onClose={() => setShowRecent(false)} history={history} onItemClick={onSearch} onDeleteItems={handleDeleteItems} />
-      {/* <BusinessSection isOpen={showBusiness} onClose={() => setShowBusiness(false)} /> */}
       <BookmarkPage isOpen={showBookmarkpage} onClose={() => setShowBookmarkpage(false)} showLoginOverlay={openLoginOverlay}/>
       <BusinessSubmissionForm  isOpen={showBusiness} onClose={() => setShowBusiness(false)} />
       <MapLayer isOpen={showLayersPanel} onClose={() => setShowLayersPanel(false)} onMapTypeChange={(type) => setMapType(type)} onCategoryChange={(category) => setSelectedCategory(category)}/>

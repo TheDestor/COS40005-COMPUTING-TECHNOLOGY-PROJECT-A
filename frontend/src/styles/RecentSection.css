@@ -9,7 +9,7 @@
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
     border-radius: 0; /* remove rounded corners if full screen */
     overflow-y: auto;
-    z-index: 1000; /* make sure it's on top */
+    z-index: 1500; /* make sure it's on top */
   }
   
   .recent-slide-container {

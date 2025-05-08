@@ -1,0 +1,92 @@
+/* Discover Page Specific Additions */
+.details-page .division-locations-section h2 {
+    text-align: center;
+    margin: 2rem 0;
+    font-size: 2rem;
+    color: #2c3e50;
+  }
+  
+  .explore-btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background-color: #27ae60;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .explore-btn:hover {
+    background-color: #219a52;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .map-btn {
+    padding: 0.6rem 1.2rem;
+    background-color: #2980b9;
+    color: white;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+  }
+  
+  .map-btn:hover {
+    background-color: #2471a3;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .location-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
+  }
+  
+  /* Enhanced Quick Facts */
+  .quick-facts {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .quick-facts h3 {
+    color: #27ae60;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .quick-facts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .quick-facts li {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e0e0e0;
+    color: #4a4a4a;
+  }
+  
+  .quick-facts li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  /* Image Enhancements */
+  .image-content img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }

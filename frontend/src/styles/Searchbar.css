@@ -6,11 +6,13 @@
   transform: translateX(-50%);
   z-index: 999;
   background-color: #f2ecf7;
-  border-radius: 30px;
+  border-radius: 999px;
   padding: 4px 16px;
   display: flex;
+  margin: 0 auto;
   align-items: center;
   width: fit-content;
+  animation: fadeInSlide 0.5s ease-in-out;
 }
 
 .styled-searchbar-input {
@@ -19,7 +21,19 @@
   background: transparent;
   font-size: 14px;
   color: #3d3842;
-  width: 200px;
+  width: 250px;
+  padding-right: 80px;
+}
+
+.styled-searchbar-input:focus {
+  /* background-color: rgba(255, 255, 255, 0.4); */
+  border-radius: 10px;
+  padding-left: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+.styled-searchbar-container.focused {
+  border-radius: 10px 10px 0px 0px; 
 }
 
 .styled-searchbar-input::placeholder {
@@ -27,11 +41,31 @@
   font-weight: 400;
 }
 
-.styled-search-icon {
-  font-size: 18px;
-  color: #3d3842;
-  margin-left: 10px;
+.styled-search-icon,
+.styled-mic-icon,
+.styled-clear-icon {
+  position: absolute;
+  right: 10px;
+  color: #555;
+  font-size: 1.2rem;
   cursor: pointer;
+  transition: color 0.2s;
+}
+
+.styled-mic-icon {
+  right: 40px;
+}
+
+.styled-clear-icon {
+  right: 70px;
+}
+
+.styled-search-icon:hover,
+.styled-mic-icon:hover,
+.styled-clear-icon:hover {
+  transform: scale(1.2);
+  /* color: #007BFF; */
+  color: #6c63ff;
 }
 
 .searchbar-logo {
@@ -41,24 +75,146 @@
   object-fit: contain;
 }
 
-/* Style the autocomplete dropdown container */
-.gmnoprint .gm-style .pac-container {
-  background-color: #fff; /* Set background color */
-  border-radius: 5px; /* Rounded corners for suggestions */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
-  max-height: 250px; /* Limit height */
-  overflow-y: auto; /* Allow scrolling */
-  font-family: Arial, sans-serif;
+/* ===== Autocomplete Dropdown Styles ===== */
+.pac-container {
+  margin-top: 14px !important;
+  background-color: #f2ecf7 !important;
+  border-radius: 0px !important;
+  z-index: 1000 !important;
+  font-family: 'Arial', sans-serif;
   font-size: 14px;
-  z-index: 1000; /* Make sure the dropdown stays above other content */
+  box-shadow: none !important; /* Removes the shadow */
 }
 
-/* Optional: Style for individual suggestions */
-.gmnoprint .gm-style .pac-item {
-  padding: 10px;
+/* Individual suggestion item */
+.pac-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
   cursor: pointer;
 }
 
-.gmnoprint .gm-style .pac-item:hover {
-  background-color: #f0f0f0; /* Hover effect */
+/* Hover effect on suggestion */
+.pac-item:hover {
+  background-color: #f2f2f2;
+}
+
+/* Highlighted text inside suggestions */
+.pac-item-query {
+  font-weight: bold;
+  color: #333 !important;
+}
+
+.icon-wrapper {
+  position: absolute;
+  right: 40px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Icons */
+.styled-mic-icon,
+.styled-clear-icon {
+  display: none;
+}
+
+.expanded .styled-mic-icon,
+.expanded .styled-clear-icon {
+  display: inline-block;
+}
+
+/* Recent dropdown */
+.recent-dropdown5 {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0px 0px 10px 10px;
+
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 10;
+  background-color: #f2ecf7;
+}
+
+.recent-title5 {
+  padding: 8px 12px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #555;
+  border-bottom: 1px solid #eee;
+  background: #f9f9f9;
+}
+
+.recent-item5 {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  position: relative;
+  padding-left: 20px;
+}
+
+.recent-item5:hover {
+  background-color: #ede6f3;
+}
+
+.recent-item5::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background-color: #6c63ff;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.recent-item5:hover::before {
+  opacity: 1;
+}
+
+.recent-icon5 {
+  margin-right: 8px;
+  color: #777;
+}
+
+.recent-more5 {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #007BFF;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  text-align: center;
+  background-color: #f2ecf7;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.recent-more5:hover {
+  background-color: #e0dbf0;
+  transform: scale(1.01);
+}
+
+/* Highlighted item style */
+.recent-item5.highlighted {
+  background-color: #dcd4ff;
+  font-weight: bold;
+  color: #333;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(-50%);
+  }
 }
