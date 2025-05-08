@@ -30,6 +30,7 @@ import AirportPage from './pages/AirportPage.jsx';
 import BeachPage from './pages/BeachPage.jsx';
 import CategoryDetailsPage from './pages/CategoryDetailsPage.jsx';
 import ManageLocation from './pages/ManageLocation.jsx';
+import ManageReviews from './pages/ManageReviews.jsx';
 
 function App() {
 
@@ -64,6 +65,7 @@ function App() {
             <Route path="/business-management" element={<BusinessManagementPage />} />
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
             <Route path="/manage-location" element={<ManageLocation />} />
+            <Route path="/manage-reviews" element={<ManageReviews />} />
             {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
             {/* Add more routes as needed */}
           </Routes>
