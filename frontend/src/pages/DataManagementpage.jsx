@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import '../styles/DataManagementpage.css';
 import BackupConfigurationModal from "../components/BackupConfigmodal.jsx";
-import { FaDatabase } from "react-icons/fa";
+import { FaDatabase, FaUsers, FaUserClock, FaUserCheck } from "react-icons/fa";
 import { FaDownload, FaTrash, FaCog, FaPlay } from "react-icons/fa";
 
 const backups = [
@@ -29,17 +29,78 @@ const backups = [
 ];
 
 const DataManagementPage = () => {
-    const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const [currentUsers, setCurrentUsers] = useState(0);
+  const [todayUsers, setTodayUsers] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
 
-    const handleSaveConfig = (config) => {
-        console.log("Backup Config Saved:", config);
-        // Save config to server or state
-      };
+  // Simulate real-time data updates
+  useEffect(() => {
+    // Initial values
+    setCurrentUsers(42);
+    setTodayUsers(128);
+    setTotalUsers(5243);
+
+    // Simulate real-time changes
+    const interval = setInterval(() => {
+      // Random fluctuations for demo purposes
+      setCurrentUsers(prev => {
+        const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+        return Math.max(35, prev + change); // Don't go below 35
+      });
+      
+      setTodayUsers(prev => prev + Math.floor(Math.random() * 3));
+      setTotalUsers(prev => prev + Math.floor(Math.random() * 2));
+    }, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSaveConfig = (config) => {
+    console.log("Backup Config Saved:", config);
+    // Save config to server or state
+  };
 
   return (
     <div className="content-section2">
       <h2><FaDatabase /> Data Management</h2>
       
+      {/* User Statistics Cards */}
+      <div className="user-stats-container">
+        <div className="stat-card">
+          <div className="stat-icon current-users">
+            <FaUsers />
+          </div>
+          <div className="stat-content">
+            <h3>Current Users</h3>
+            <p className="stat-number">{currentUsers}</p>
+            <p className="stat-description">Active right now</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon today-users">
+            <FaUserClock />
+          </div>
+          <div className="stat-content">
+            <h3>Today's Users</h3>
+            <p className="stat-number">{todayUsers}</p>
+            <p className="stat-description">Visited today</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon total-users">
+            <FaUserCheck />
+          </div>
+          <div className="stat-content">
+            <h3>Total Users</h3>
+            <p className="stat-number">{totalUsers}</p>
+            <p className="stat-description">Since launch</p>
+          </div>
+        </div>
+      </div>
+
       <div className="backup-controls">
         <button className="run-backup"><FaPlay /> Run Backup Now</button>
         <button className="configure" onClick={() => setShowConfig(true)}><FaCog /> Configure</button>
@@ -90,4 +151,3 @@ const DataManagementPage = () => {
 };
 
 export default DataManagementPage;
-
