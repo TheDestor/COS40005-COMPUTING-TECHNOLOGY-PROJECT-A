@@ -125,20 +125,22 @@ const ManageLocation = () => {
     const matchesSearchQuery =
       location.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getTimeAgo(location.lastUpdated).toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.status.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
+      const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
 
-    const locationDate = new Date(location.lastUpdated);
-    let matchesDateRange = true;
-    if (startDate && endDate) {
-      const adjustedEndDate = new Date(endDate);
-      adjustedEndDate.setHours(23, 59, 59, 999);
-      matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
-    }
-
-    return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
-  });
+      const locationDate = new Date(location.lastUpdated);
+      let matchesDateRange = true;
+      if (startDate && endDate) {
+        const adjustedEndDate = new Date(endDate);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+        matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
+      }
+    
+      return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
+    });
+    
 
   const handleDelete = (id) => {
     setLocations(prev => prev.filter(loc => loc.id !== id));
