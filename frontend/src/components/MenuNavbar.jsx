@@ -35,7 +35,7 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
     { name: 'Airport', icon: <FaPlaneDeparture />, path: '/airport' },
     { name: 'Beach', icon: <FaUmbrellaBeach />, path: '/beach' },
     // { name: 'Hospital', icon: <FaHospital />, isFetchOnly: true },
-    { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
+    { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
   ];
 
   // const handleMenuClick = async (item) => {

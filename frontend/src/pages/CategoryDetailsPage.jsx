@@ -5,12 +5,11 @@ import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/CategoryDetailsPage.css';
 import defaultImage from '../assets/Kuching.png';
-// Add at the top with other imports
 import { Link } from 'react-router-dom';
 
 const CategoryDetailsPage = () => {
   const [townData, setTownData] = useState(null);
-  const [attractions, setAttractions] = useState([]);
+  const [divisionItems, setDivisionItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const { slug } = useParams();
@@ -18,85 +17,48 @@ const CategoryDetailsPage = () => {
   const passedTown = location.state?.town;
 
   useEffect(() => {
-  const loadData = async () => {
-    if (passedTown) {
-      // Use data from state
-      setTownData({
-        name: passedTown.name,
-        division: passedTown.division,
-        description: passedTown.desc,
-        image: passedTown.image,
-        population: passedTown.population || 'Data not available',
-        area: passedTown.area || 'Data not available',
-      });
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const divisionName = passedTown?.division || slug;
+        
+        // Fetch all locations for the division
+        const response = await fetch(`/api/locations?division=${divisionName}`);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const data = await response.json();
 
-      // Still fetch attractions if needed
-      try {
-        const res = await fetch(`/api/locations?division=${passedTown.division}`);
-        const data = await res.json();
-        const filteredAttractions = data.filter(
-          (item) =>
-            item.category === 'attractions' &&
-            item.division.toLowerCase() === passedTown.division.toLowerCase()
+        // Find the main town information
+        const townInfo = data.find(item => 
+          item.type === 'Major Town' && 
+          item.division.toLowerCase() === divisionName.toLowerCase()
+        ) || data[0];
+
+        // Filter out the main town from other locations
+        const otherItems = data.filter(item => 
+          item._id !== townInfo?._id && 
+          item.division.toLowerCase() === divisionName.toLowerCase()
         );
-        setAttractions(filteredAttractions);
-      } catch (err) {
-        console.error(err);
-      }
-      setLoading(false);
-    } else {
-      // Fallback: load everything from slug if no state passed
-      try {
-        const res = await fetch(`/api/locations?division=${slug}`);
-        if (!res.ok) throw new Error('Failed to fetch locations');
-        const data = await res.json();
-        const town = data.find(
-          (item) =>
-            item.category === 'town' &&
-            item.division.toLowerCase() === slug.toLowerCase()
-        );
-        const filteredAttractions = data.filter(
-          (item) =>
-            item.category === 'attractions' &&
-            item.division.toLowerCase() === slug.toLowerCase()
-        );
-        if (!town) throw new Error('Town not found');
+
         setTownData({
-          name: passedTown.name,
-          division: passedTown.division,
-          description: passedTown.description,
-          image: passedTown.image,
-          population: passedTown.population || 'Data not available',
-          area: passedTown.area || 'Data not available',
+          name: townInfo?.division,
+          description: townInfo?.description || townInfo?.desc,
+          image: townInfo?.image || defaultImage,
+          population: townInfo?.population || 'Data not available',
+          area: townInfo?.area || 'Data not available',
+          climate: townInfo?.climate || 'Tropical',
         });
-        setAttractions(filteredAttractions);
-      } catch (err) {
-        console.error(err);
-        setTownData(null);
+
+        setDivisionItems(otherItems);
+      } catch (error) {
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
-    }
-  };
+    };
 
-  loadData();
-}, [slug, passedTown]);
+    loadData();
+  }, [slug, passedTown]);
 
-  if (!loading && !townData) {
-    return (
-      <div className="error-container">
-        <MenuNavbar />
-        <div className="error-content">
-          <h2>404 - Town Not Found</h2>
-          <p>The town "{slug}" doesn't exist in our records.</p>
-          <Link to="/towns" className="return-button">
-            Browse All Towns
-          </Link>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
@@ -109,55 +71,82 @@ const CategoryDetailsPage = () => {
     );
   }
 
+  if (!townData) {
+    return (
+      <div className="error-container">
+        <MenuNavbar />
+        <div className="error-content">
+          <h2>404 - Division Not Found</h2>
+          <p>The division "{slug}" doesn't exist in our records.</p>
+          <Link to="/towns" className="return-button">
+            Browse All Towns
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="details-page">
       <MenuNavbar />
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{townData?.name?.toUpperCase() || 'Town Details'}</h1>
-          <p>Exploring {townData?.name || 'Sarawak'}</p>
+          <h1>{townData.name.toUpperCase()}</h1>
+          <p>Exploring {townData.name}</p>
         </div>
       </div>
 
       <div className="town-overview">
         <div className="overlay-container">
           <div className="text-content">
-            <h2>About {townData?.name}</h2>
-            <p className="overview-text">{townData?.description}</p>
+            <h2>About {townData.name}</h2>
+            <p className="overview-text">{townData.description}</p>
             <div className="quick-facts">
               <h3>Quick Facts</h3>
               <ul>
-                <li><strong>Division:</strong> {townData?.name}</li>
-                <li><strong>Population:</strong> {townData?.population}</li>
-                <li><strong>Area:</strong> {townData?.area}</li>
+                <li><strong>Population:</strong> {townData.population}</li>
+                <li><strong>Area:</strong> {townData.area}</li>
+                <li><strong>Climate:</strong> {townData.climate}</li>
               </ul>
             </div>
           </div>
           <div className="image-content">
-            <img src={townData?.image || defaultImage} alt={townData?.name} />
+            <img src={townData.image} alt={townData.name} />
           </div>
         </div>
       </div>
 
-      <div className="attractions-section">
-        <h2>Top Attractions in {townData?.name}</h2>
-        <div className="attractions-grid">
-          {attractions.map((attraction, index) => (
-            <div className="attraction-card" key={index}>
-              <img src={attraction.image || defaultImage} alt={attraction.name} />
-              <div className="attraction-info">
-                <h3>{attraction.name}</h3>
-                <p className="attraction-type">{attraction.type}</p>
-                <p className="attraction-desc">{attraction.description}</p>
-                <a
-                  href={attraction.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="official-site-btn"
-                >
-                  Official Site
-                </a>
+      <div className="division-locations-section">
+        <h2>Discover {townData.name}</h2>
+        <div className="locations-grid">
+          {divisionItems.map((item, index) => (
+            <div className="location-card" key={index}>
+              <img src={item.image || defaultImage} alt={item.name} />
+              <div className="location-info">
+                <div className="location-header">
+                  <h3>{item.name}</h3>
+                  <span className="location-type">{item.type}</span>
+                </div>
+                <p className="location-desc">{item.description}</p>
+                <div className="location-actions">
+                  {item.url && (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="official-site-btn"
+                    >
+                      Official Site
+                    </a>
+                  )}
+                  {item.coordinates && (
+                    <button className="map-btn">
+                      View on Map
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

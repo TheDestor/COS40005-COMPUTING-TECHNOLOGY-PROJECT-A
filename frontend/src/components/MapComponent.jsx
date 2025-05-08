@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AdvancedMarker, APIProvider, Map, useMapsLibrary, useMap, InfoWindow, useAdvancedMarkerRef, Marker } from '@vis.gl/react-google-maps';
-import { FaUsers, FaMapMarkerAlt, FaExternalLinkAlt } from "react-icons/fa";
-import { Link } from "react-router-dom";
 import aeroplaneIcon from '../assets/airport.gif';
 import homestayIcon from '../assets/homestay.gif';
 import museumIcon from '../assets/museum.gif';
@@ -15,6 +13,8 @@ import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
+import '../styles/MapComponent.css';
+import SearchBar from './Searchbar';
 
 const containerStyle = {
   position: 'absolute',
@@ -147,112 +147,12 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
   
     getRoutes();
   }, [directionsService, startingPoint, destination, addDestinations, selectedVehicle, map, selectedRouteIndex]);
-  
-  // useEffect(() => {
-  //   if (routesLibrary) setIsRoutesLoaded(true);
-  // }, [routesLibrary]);
-
-  // useEffect(() => {
-  //   if(!routesLibrary || !map) return;
-
-  //   const newService = new routesLibrary.DirectionsService();
-  //   const newRenderer = new routesLibrary.DirectionsRenderer({ map });
-
-  //   setDirectionsService(newService);
-  //   setDirectionsRenderer(newRenderer);
-
-  //   return () => {
-  //     // Cleanup the renderer when the component unmounts or remounts
-  //     newRenderer.setMap(null);
-  //   };
-  // }, [routesLibrary, map])
-
-  // // Fetch and render directions
-  // useEffect(() => {
-  //   if (!directionsService || !directionsRenderer) return;
-
-  //   const getRoutes = async () => {
-  //     try {
-  //       // Convert addresses to coordinates if needed
-  //       const geocode = async (input) => {
-  //         if (typeof input === 'string') {
-  //           if (!input.trim() || input.trim().length < 3) {
-  //             console.warn('Skipping geocode for short input:', input);
-  //             return null; // Or throw if you want to abort
-  //           }
-
-  //           const geocoder = new window.google.maps.Geocoder();
-  //           const results = await geocoder.geocode({ address: input });
-
-  //           if (!results.results || results.results.length === 0) {
-  //             throw new Error('No geocoding results for: ' + input);
-  //           }
-            
-  //           return results.results[0].geometry.location;
-  //         }
-  //         return input;
-  //       };
-
-  //       const origin = await geocode(startingPoint);
-  //       const dest = await geocode(destination);
-
-  //       // Geocode additional destinations
-  //       const waypoints = await Promise.all(
-  //         addDestinations.map(async (addDest) => ({
-  //           location: await geocode(addDest)
-  //         }))
-  //       );
-
-  //       const response = await directionsService.route({
-  //         origin: origin,
-  //         destination: dest,
-  //         waypoints: waypoints,
-  //         travelMode: selectedVehicle,
-  //         provideRouteAlternatives: true,
-  //       });
-
-  //       directionsRenderer.setDirections(response);
-  //       setRoutes(response.routes);
-
-  //       // Pass segmented routes data up to parent
-  //       if (onRoutesCalculated) {
-  //         onRoutesCalculated({
-  //           routes: response.routes.map(route => ({
-  //             ...route,
-  //             optimizedOrder: route.waypoint_order,
-  //             segments: route.legs.map(leg => ({
-  //               start: leg.start_address,
-  //               end: leg.end_address,
-  //               duration: leg.duration.text,
-  //               distance: leg.distance.text
-  //             }))
-  //           }))
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('Directions error:', error);
-  //     }
-  //   };
-
-  //   getRoutes();
-  // }, [directionsService, directionsRenderer, startingPoint, destination, addDestinations, selectedVehicle]);
-  
-
-  // useEffect(() => {
-  //   if(!directionsRenderer) return;
-
-  //   directionsRenderer.setRouteIndex(routesIndex);
-  // }, [routesIndex, directionsRenderer]);
-
-  // if(!leg) return null;
-  // return null;
 }
 
 function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes }) {
   const mapRef = useRef();
   const mapInstanceRef = useRef(null);
-  const [mapInstance, setMapInstance] = useState(null);
-  const map = useMap();
+  const map = useMap(); 
 
   const [markerRef, setMarkerRef] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -261,8 +161,18 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [showReviewPage, setShowReviewPage] = useState(false);
   const { addBookmark } = UseBookmarkContext();
 
-  // const [pendingPanTo, setPendingPanTo] = useState(null);
+  const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
 
+  const handleSearchPlaceSelected = (place) => {
+    setSelectedSearchPlace(place);
+
+    if (map && place.latitude && place.longitude) {
+      const position = { lat: place.latitude, lng: place.longitude };
+
+      map.panTo(position);  
+      map.setZoom(17);        
+    }
+  };
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
     setActiveOption(category);
@@ -293,26 +203,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
       mapInstanceRef.current.setZoom(14);
     }
   };
-
-  // useEffect(() => {
-  //   if (
-  //     selectedPlace &&
-  //     selectedPlace.geometry &&
-  //     typeof selectedPlace.geometry.location.lat === 'function'
-  //   ) {
-  //     const lat = selectedPlace.geometry.location.lat();
-  //     const lng = selectedPlace.geometry.location.lng();
-  
-  //     // Log the coordinates
-  //     console.log("Selected Place Coordinates:", { lat, lng });
-  
-  //     // Pan the map to the selected place
-  //     if (mapInstanceRef.current) {
-  //       mapInstanceRef.current.panTo({ lat, lng });
-  //       mapInstanceRef.current.setZoom(14);
-  //     }
-  //   }
-  // }, [selectedPlace]);
   
   const categoryIcons = {
     'Major Town': townIcon,
@@ -350,25 +240,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     console.log('MapComponent received selectedPlace:', selectedPlace);
   }, [selectedPlace]);
 
-  // useEffect(() => {
-  //   console.log('Debug values:', {
-  //     selectedPlace: !!selectedPlace, // Should be true
-  //     mapInstanceRef: !!mapInstanceRef.current, // Check if this is false
-  //     coordinatesValid: selectedPlace ? 
-  //       !isNaN(selectedPlace.latitude) && !isNaN(selectedPlace.longitude) 
-  //       : null
-  //   });
-  
-  //   if (selectedPlace && mapInstanceRef.current) {
-  //     // ... existing pan logic ...
-  //     mapInstanceRef.current.panTo({
-  //       lat: Number(selectedPlace.latitude),
-  //       lng: Number(selectedPlace.longitude)
-  //     });
-  //     mapInstanceRef.current.setZoom(15);
-  //   }
-  // }, [selectedPlace]);
-
   useEffect(() => {
     console.log('Map loading status:', {
       selectedPlace: !!selectedPlace,
@@ -399,8 +270,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
         
-
-      {/* Locations based on type (render issue) */}
+      {/* Locations based on type */}
       {locations.map((loc) => (
         <AdvancedMarker
           key={loc.id}
@@ -462,36 +332,22 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         })}
 
         {/* Search bar marker */}
-        {selectedPlace && (
+        <SearchBar onPlaceSelected={handleSearchPlaceSelected} />
+          {selectedSearchPlace && (
           <AdvancedMarker
-            key={`search-marker-${selectedPlace.id}`}
-            position={{
-              lat: Number(selectedPlace.latitude),
-              lng: Number(selectedPlace.longitude)
-            }}
-            title={selectedPlace.name}
-          >
-            <div style={{
-              width: 40,
-              height: 40,
-              background: '#4285F4',
-              borderRadius: '50%',
-              border: '2px solid white',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-              transform: 'translate(-50%, -100%)'
-            }}>
-              <div style={{
-                color: 'white',
-                fontSize: '1.2rem',
-                textAlign: 'center',
-                lineHeight: '40px'
-              }}>
-                📍
-              </div>
-            </div>
-          </AdvancedMarker>
+          position={{
+            lat: selectedSearchPlace.latitude,
+            lng: selectedSearchPlace.longitude
+          }}
+          title={selectedSearchPlace.name}
+        >
+          <div className="search-marker-container">
+            <div className="search-marker-icon">📍</div>
+          </div>
+        </AdvancedMarker>        
         )}
 
+        {/* Direction services */}
         <Directions 
           startingPoint={startingPoint}
           destination={destination}

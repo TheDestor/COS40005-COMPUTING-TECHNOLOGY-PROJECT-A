@@ -6,7 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const MajorTownPage = () => {
+const MuseumPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -15,22 +15,23 @@ const MajorTownPage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory, setCurrentCategory] = useState('');
 
-  // Fetch all locations and filter for Major Towns
-  const fetchAllLocations = async () => {
+  // Function to fetch major towns from backend
+  const fetchMuseums = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/locations');
-      const allData = await response.json();
-      const majorTowns = allData.filter(item => item.type === 'Major Town');
-      handleDataFetch('Major Towns', majorTowns);
+      // Replace with your actual API endpoint
+      const response = await fetch('/api/events');
+      const fetchedData = await response.json();
+      handleDataFetch('Museums', fetchedData);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching Homestay:', error);
       setLoading(false);
     }
   };
 
+  // Load default data on component mount
   useEffect(() => {
-    fetchAllLocations();
+    fetchMuseums();
   }, []);
 
   const handleDataFetch = (category, fetchedData) => {
@@ -39,21 +40,17 @@ const MajorTownPage = () => {
     setSearchQuery('');
     setSortOrder('default');
 
-    const processed = processData(fetchedData);
+    const processed = processData(fetchedData, category);
     setData(processed);
     setLoading(false);
   };
 
-  const processData = (items) => {
-    return items.map(item => ({
-      ...item,
-      name: item.division,
-      desc: item.description,
-      slug: item.slug || item.division
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w-]/g, ''),
-      image: item.image || defaultImage
+  const processData = (items, category) => {
+    return (items || []).map(item => ({
+      name: item?.Name || item?.name || 'Unknown',
+      desc: item?.description || item?.Desc || 'No description',
+      slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+      image: item?.image || defaultImage,
     }));
   };
 
@@ -101,7 +98,7 @@ const MajorTownPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'MAJOR TOWNS'}</h1>
+          <h1>{currentCategory.toUpperCase() || 'Category'}</h1>
           <p>Exploring {currentCategory || 'Sarawak'}</p>
         </div>
       </div>
@@ -146,15 +143,7 @@ const MajorTownPage = () => {
                     <p>{item.desc}</p>
                   </div>
                   <div className="button-container">
-                    <Link 
-                      to={`/towns/${item.slug}`} 
-                      state={{ 
-                        town: item,
-                        division: item.name,
-                        type: item.type
-                      }} 
-                      className="explore-btn"
-                    >
+                    <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
                       Explore
                     </Link>
                   </div>
@@ -181,4 +170,4 @@ const MajorTownPage = () => {
   );
 };
 
-export default MajorTownPage;
+export default MuseumPage;

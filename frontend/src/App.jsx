@@ -29,6 +29,7 @@ import NationalParkPage from './pages/NationalParkPage.jsx';
 import AirportPage from './pages/AirportPage.jsx';
 import BeachPage from './pages/BeachPage.jsx';
 import CategoryDetailsPage from './pages/CategoryDetailsPage.jsx';
+import Eventpage from './pages/EventPage.jsx'
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="/national-parks" element={<NationalParkPage />} />
             <Route path="/airport" element={<AirportPage />} />
             <Route path="/beach" element={<BeachPage />} />
+            <Route path="/event" element={<Eventpage />} />
             <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/review" element={<ReviewPage />} />

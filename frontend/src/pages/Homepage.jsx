@@ -7,7 +7,7 @@ import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import defaultImage from '../assets/Kuching.png';
-import SearchBar from '../components/Searchbar.jsx';
+// import SearchBar from '../components/Searchbar.jsx';
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
 import WeatherDateTime from '../components/WeatherDateTime.jsx';
 import MapViewMenu from '../components/MapViewMenu.jsx'
@@ -148,10 +148,10 @@ const HomePage = () => {
         setSelectedPlace={setSelectedPlace} 
         history={searchHistory}
       /> */}
-      <SearchBar
+      {/* <SearchBar
         onSearch={handleSearch} 
         setSelectedPlace={setSelectedPlace} 
-      />
+      /> */}
 
 
       <ProfileDropdown onLoginClick={handleLoginClick} />

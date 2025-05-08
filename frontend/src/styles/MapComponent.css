@@ -8,3 +8,23 @@
     pointer-events: all;
   }
   
+  .search-marker-container {
+    width: 40px;
+    height: 40px;
+    background: none;
+    border-radius: 50%;
+    /* border: 2px solid white; */
+    /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
+    transform: translate(-50%, -100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .search-marker-icon {
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    line-height: 40px;
+  }
+  
