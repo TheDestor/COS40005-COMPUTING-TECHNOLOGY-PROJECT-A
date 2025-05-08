@@ -16,10 +16,10 @@
 }
 
   .dashboard-content {
-      position: relative; /* Needed for absolute positioning of children */
-      min-height: 100vh; /* Ensure it takes at least full viewport height */
-      padding-bottom: 100px; /* Space for the button */
-    }
+    position: relative; /* Needed for absolute positioning of children */
+    min-height: 100vh; /* Ensure it takes at least full viewport height */
+    padding-bottom: 100px; /* Space for the button */
+  }
 
 .ue-card {
   grid-area: user-engagement;

@@ -290,6 +290,29 @@ function OrganicTrafficChart({ onRemove }) {
         .attr("y", (d) => y(d.name) + y.bandwidth() / 2 + 5)
         .text((d) => `${d.value}%`);
     };
+
+      // Add this useEffect for handling outside clicks
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpen && !event.target.closest('.ue-menu-container')) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  // Modify your menu button to stop propagation
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen((open) => !open);
+  };
   
     useEffect(() => {
       if (mapRef.current && barRef.current) {
@@ -337,7 +360,7 @@ function OrganicTrafficChart({ onRemove }) {
               <div className="ue-menu-container">
                 <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}>⋮</button>
                 {menuOpen && (
-                  <div className="ue-menu-dropdown">
+                  <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                     <div className="ue-menu-item" onClick={() => setShowModal(true)}>👁 View</div>
                     <div className="ue-menu-item" onClick={handleExport}>📤 Export</div>
                     <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
@@ -514,6 +537,29 @@ function UserEngagementChart({ onRemove }) {
       });
   };
 
+    // Add this useEffect for handling outside clicks
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuOpen && !event.target.closest('.ue-menu-container')) {
+          setMenuOpen(false);
+        }
+      };
+  
+      if (menuOpen) {
+        document.addEventListener('click', handleClickOutside);
+      }
+  
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }, [menuOpen]);
+  
+    // Modify your menu button to stop propagation
+    const toggleMenu = (e) => {
+      e.stopPropagation();
+      setMenuOpen((open) => !open);
+    };
+
   useEffect(() => {
     if (ref.current) {
       drawChart(ref.current);
@@ -558,7 +604,7 @@ function UserEngagementChart({ onRemove }) {
               ⋮
             </button>
             {menuOpen && (
-              <div className="ue-menu-dropdown">
+              <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                 <div className="ue-menu-item" onClick={() => setShowModal(true)}>
                   👁 View
                 </div>
@@ -629,6 +675,29 @@ function BusinessParticipationChart({onRemove}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [visible, setVisible] = useState(true);
+
+    // Add this useEffect for handling outside clicks
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuOpen && !event.target.closest('.ue-menu-container')) {
+          setMenuOpen(false);
+        }
+      };
+  
+      if (menuOpen) {
+        document.addEventListener('click', handleClickOutside);
+      }
+  
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }, [menuOpen]);
+  
+    // Modify your menu button to stop propagation
+    const toggleMenu = (e) => {
+      e.stopPropagation();
+      setMenuOpen((open) => !open);
+    };
 
   useEffect(() => {
     drawChart(ref.current);
@@ -710,7 +779,7 @@ function BusinessParticipationChart({onRemove}) {
               ⋮
             </button>
             {menuOpen && (
-              <div className="ue-menu-dropdown">
+              <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                 <div className="ue-menu-item" onClick={() => setShowModal(true)}>
                   👁 View
                 </div>
@@ -802,6 +871,29 @@ function SessionDeviceChart({onRemove}) {
   const [visible, setVisible] = useState(true);
   const chartContainerRef = useRef();
 
+    // Add this useEffect for handling outside clicks
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuOpen && !event.target.closest('.ue-menu-container')) {
+          setMenuOpen(false);
+        }
+      };
+  
+      if (menuOpen) {
+        document.addEventListener('click', handleClickOutside);
+      }
+  
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }, [menuOpen]);
+  
+    // Modify your menu button to stop propagation
+    const toggleMenu = (e) => {
+      e.stopPropagation();
+      setMenuOpen((open) => !open);
+    };
+
   const data = [
     { label: 'Mobile', value: 47, color: '#A855F7' },
     { label: 'PC', value: 35, color: '#22C55E' },
@@ -870,7 +962,7 @@ function SessionDeviceChart({onRemove}) {
         <div className="ue-menu-container">
           <button className="ue-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>⋮</button>
           {menuOpen && (
-            <div className="ue-menu-dropdown">
+            <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
               <div className="ue-menu-item" onClick={() => setShowModal(true)}>👁 View</div>
               <div className="ue-menu-item" onClick={handleExport}>📤 Export</div>
               <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
@@ -1031,6 +1123,29 @@ function BrowserUsageChart({onRemove}) {
 
   const currentData = browserData[selectedRange];
 
+    // Add this useEffect for handling outside clicks
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuOpen && !event.target.closest('.ue-menu-container')) {
+          setMenuOpen(false);
+        }
+      };
+  
+      if (menuOpen) {
+        document.addEventListener('click', handleClickOutside);
+      }
+  
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }, [menuOpen]);
+  
+    // Modify your menu button to stop propagation
+    const toggleMenu = (e) => {
+      e.stopPropagation();
+      setMenuOpen((open) => !open);
+    };
+
   const handleRemove = () => {
     setVisible(false);
   };
@@ -1073,7 +1188,7 @@ function BrowserUsageChart({onRemove}) {
             <div className="ue-menu-container" style={{ position: "relative" }}>
               <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}>⋮</button>
               {menuOpen && (
-                <div className="ue-menu-dropdown">
+                <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div className="ue-menu-item" onClick={() => { setShowModal(true); setMenuOpen(false); }}>👁 View</div>
                   <div className="ue-menu-item" onClick={() => { handleExport(); setMenuOpen(false); }}>📤 Export</div>
                   <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
@@ -1262,6 +1377,29 @@ const dataSets = {
     { day: "Dec", value: 1650 },
   ],
 };
+
+  // Add this useEffect for handling outside clicks
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpen && !event.target.closest('.ue-menu-container')) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  // Modify your menu button to stop propagation
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen((open) => !open);
+  };
 
 const handleExport = () => {
   const svg = chartRef.current;
