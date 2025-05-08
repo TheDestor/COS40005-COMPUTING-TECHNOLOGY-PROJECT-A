@@ -4,7 +4,7 @@ import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import Sidebar from '../components/Sidebar';
 import ky from 'ky';
 import '../styles/AddEventPage.css';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 const AddEventPage = () => {
   const [searchQuery, setSearchQuery] = useState('');

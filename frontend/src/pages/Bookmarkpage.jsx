@@ -7,12 +7,14 @@ import petrosainsImg from '../assets/petrosains.jpg';
 import borneoImg from '../assets/borneo.jpg';
 import raneeImg from '../assets/ranee.jpg';
 import LoginPage from './Loginpage';
-import { useAuth } from '../context/AuthContext'; // adjust if needed
+import { useAuth } from '../context/AuthProvider.jsx'; // adjust if needed
+import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 
 
 const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
   const [selectedSection, setSelectedSection] = useState(null);
   const auth = useAuth();
+  const { bookmarks } = UseBookmarkContext();
 
   useEffect(() => {
     if (isOpen && (!auth || !auth.user)) {
@@ -82,12 +84,19 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
           <div className="bookmark-header">
             <div className="bookmark-title">
               <FaRegBookmark className="bookmark-icon" />
-              My Bookmark
+              My Bookmarks
             </div>
             <span className="bookmark-close" onClick={onClose}><FaArrowLeft /></span>
           </div>
 
-          <div className="bookmark-sections">
+      <div className="bookmark-sections">
+        {bookmarks.map((bookmark) => (
+          <div key={bookmark.name}>
+            <div>
+              <h4>{bookmark.name}</h4>
+            </div>
+          </div>
+        ))}
             {/* {sections.map((section, index) => (
               <div
                 key={index}

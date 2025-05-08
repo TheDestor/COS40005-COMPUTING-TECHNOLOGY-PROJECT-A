@@ -14,6 +14,7 @@ import restaurantIcon from '../assets/restaurant.png';
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
+import { UseBookmarkContext } from '../context/BookmarkProvider';
 
 const containerStyle = {
   position: 'absolute',
@@ -258,6 +259,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [locations, setLocations] = useState([]);
   const [activeOption, setActiveOption] = useState('');
   const [showReviewPage, setShowReviewPage] = useState(false);
+  const { addBookmark } = UseBookmarkContext();
 
   // const [pendingPanTo, setPendingPanTo] = useState(null);
 
@@ -518,6 +520,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 description: selectedLocation.description || "No description available.",
                 url: selectedLocation.url || 'No URL provided',
               }}
+              addBookmark={addBookmark}
               onCloseClick={() => setSelectedLocation(null)}
               onShowReview={() => setShowReviewPage(true)} // 👈 this is key
             />

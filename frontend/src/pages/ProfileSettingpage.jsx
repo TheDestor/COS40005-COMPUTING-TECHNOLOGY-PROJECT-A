@@ -7,7 +7,7 @@ import Select from 'react-select';
 import ChangeNewPassword from './ChangeNewPassword.jsx';
 import PushNotificationPage from './PushNotificationpage.jsx';
 import PushSubscriptionPage from './PushSuscriptionpage.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthProvider.jsx';
 import ky from 'ky';
 
 const naCountryObject = { name: 'N/A', code: 'NA', flag: null };

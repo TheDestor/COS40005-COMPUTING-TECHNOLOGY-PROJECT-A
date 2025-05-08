@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider.jsx';
+import { BookmarkProvider } from './context/BookmarkProvider.jsx';
 import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
 import ContactUs from './pages/ContactUs.jsx';
@@ -33,38 +34,39 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/register" element={<UserRegistration />} />
-          <Route path="/business-register" element={<BusinessRegistration />} />
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/footer" element={<Footer />} />
-          <Route path="/forget-password" element={<ForgetPassword />} />
-          <Route path="/settings" element={<SettingPage />} />
-          <Route path="/system-admin" element={<SystemAdminpage />} />
-          <Route path="/profile-settings" element={<ProfileSettingPage />} />
-          <Route path="/bookmark" element={<BookmarkPage />} />
-          <Route path="/major-towns" element={<MajorTownPage />} />
-          <Route path="/homestay" element={<HomestayPage />} />
-          <Route path="/museum" element={<MuseumPage />} />
-          <Route path="/national-parks" element={<NationalParkPage />} />
-          <Route path="/airport" element={<AirportPage />} />
-          <Route path="/beach" element={<BeachPage />} />
-          <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/review" element={<ReviewPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/view-analytics" element={<ViewAnalytics />} />
-          <Route path="/view-inquiry" element={<ViewInquiry />} />
-          <Route path="/add-event" element={<AddEventPage />} />
-          <Route path="/business-management" element={<BusinessManagementPage />} />
-          <Route path="/business-submission" element={<BusinessSubmissionForm />} /> 
-          {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
-          {/* Add more routes as needed */}
-
-        </Routes>
-      </Router>
+      <BookmarkProvider>
+        <Router>
+          <Routes>
+            <Route path="/register" element={<UserRegistration />} />
+            <Route path="/business-register" element={<BusinessRegistration />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/footer" element={<Footer />} />
+            <Route path="/forget-password" element={<ForgetPassword />} />
+            <Route path="/settings" element={<SettingPage />} />
+            <Route path="/system-admin" element={<SystemAdminpage />} />
+            <Route path="/profile-settings" element={<ProfileSettingPage />} />
+            <Route path="/bookmark" element={<BookmarkPage />} />
+            <Route path="/major-towns" element={<MajorTownPage />} />
+            <Route path="/homestay" element={<HomestayPage />} />
+            <Route path="/museum" element={<MuseumPage />} />
+            <Route path="/national-parks" element={<NationalParkPage />} />
+            <Route path="/airport" element={<AirportPage />} />
+            <Route path="/beach" element={<BeachPage />} />
+            <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/review" element={<ReviewPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/view-analytics" element={<ViewAnalytics />} />
+            <Route path="/view-inquiry" element={<ViewInquiry />} />
+            <Route path="/add-event" element={<AddEventPage />} />
+            <Route path="/business-management" element={<BusinessManagementPage />} />
+            <Route path="/business-submission" element={<BusinessSubmissionForm />} />
+            {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
+            {/* Add more routes as needed */}
+          </Routes>
+        </Router>
+      </BookmarkProvider>
     </AuthProvider>
   );
 }

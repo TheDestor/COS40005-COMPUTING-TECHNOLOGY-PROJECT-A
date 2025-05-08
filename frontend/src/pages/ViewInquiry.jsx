@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaSearch, 
-  FaBell, 
-  FaEnvelope, 
-  FaFilter, 
-  FaEllipsisV, 
-  FaTrash, 
-  FaCheck, 
+import {
+  FaSearch,
+  FaBell,
+  FaEnvelope,
+  FaFilter,
+  FaEllipsisV,
+  FaTrash,
+  FaCheck,
   FaReply,
   FaExclamationTriangle,
   FaStar,
@@ -131,7 +131,7 @@ const ViewInquiry = () => {
 
     const fetchInquiries = async () => {
       try {
-        const response = await ky.get("/api/dashboard/getAllInquiries").json();
+        const response = await ky.get("/api/inquiry/getAllInquiries").json();
 
         if (response && response.success) {
           const fetchedInquiries = response.inquiries;
@@ -168,15 +168,15 @@ const ViewInquiry = () => {
         console.error(error);
       }
     }
-    
+
     fetchInquiries();
   }, []);
 
   // readable string format of date
   const formatDate = (dateString) => {
-    const options = { 
-      year: 'numeric', 
-      month: 'short', 
+    const options = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -187,7 +187,7 @@ const ViewInquiry = () => {
   // Function to handle inquiry selection
   const handleSelectInquiry = (inquiry) => {
     setSelectedInquiry(inquiry);
-    
+
     // If the inquiry was unread, mark it as in-progress
     if (inquiry.status === 'Unread') {
       const updatedInquiries = inquiries.map(item => {
@@ -196,7 +196,7 @@ const ViewInquiry = () => {
         }
         return item;
       });
-      
+
       setInquiries(updatedInquiries);
       setSelectedInquiry({ ...inquiry, status: 'in-progress' });
     }
@@ -210,9 +210,9 @@ const ViewInquiry = () => {
       }
       return item;
     });
-    
+
     setInquiries(updatedInquiries);
-    
+
     if (selectedInquiry && selectedInquiry.id === id) {
       setSelectedInquiry({ ...selectedInquiry, status: 'Resolved' });
     }
@@ -222,7 +222,7 @@ const ViewInquiry = () => {
   const handleDeleteInquiry = (id) => {
     const updatedInquiries = inquiries.filter(item => item.id !== id);
     setInquiries(updatedInquiries);
-    
+
     // If the deleted inquiry was selected, select the first one from the updated list
     if (selectedInquiry && selectedInquiry.id === id) {
       setSelectedInquiry(updatedInquiries.length > 0 ? updatedInquiries[0] : null);
@@ -233,31 +233,31 @@ const ViewInquiry = () => {
   const handleSubmitReply = (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    
+
     // WE CAN USE THIS FOR BACKEND PURPOSE
     console.log(`Reply to inquiry #${selectedInquiry.id}:`, replyText);
-    
+
     // Mark as resolved
     handleMarkResolved(selectedInquiry.id);
-    
+
     // Reset reply field
     setReplyText('');
-    
+
     // Show success message (we might use a toast notification)
     alert("Reply sent successfully!");
   };
 
   // Filter inquiries based on search query and filters
   const filteredInquiries = inquiries.filter(inquiry => {
-    const matchesSearch = 
+    const matchesSearch =
       inquiry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.message.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStatus = filterStatus === 'all' || inquiry.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || inquiry.priority === filterPriority;
-    
+
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
@@ -334,7 +334,7 @@ const ViewInquiry = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="inquiry-content">
           {/* Filters and options */}
           <div className="inquiry-options">
@@ -356,21 +356,21 @@ const ViewInquiry = () => {
                 <span className="stat-label">Total</span>
               </div>
             </div>
-            
+
             <div className="inquiry-filters">
               <div className="filter-dropdown-container">
-                <button 
+                <button
                   className="filter-button"
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
                 >
                   <FaFilter /> Filter
                 </button>
-                
+
                 {showFilterMenu && (
                   <div className="filter-dropdown">
                     <div className="filter-group">
                       <label>Status:</label>
-                      <select 
+                      <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
                       >
@@ -380,10 +380,10 @@ const ViewInquiry = () => {
                         <option value="resolved">Resolved</option>
                       </select>
                     </div>
-                    
+
                     <div className="filter-group">
                       <label>Priority:</label>
-                      <select 
+                      <select
                         value={filterPriority}
                         onChange={(e) => setFilterPriority(e.target.value)}
                       >
@@ -393,8 +393,8 @@ const ViewInquiry = () => {
                         <option value="low">Low</option>
                       </select>
                     </div>
-                    
-                    <button 
+
+                    <button
                       className="clear-filters"
                       onClick={() => {
                         setFilterStatus('all');
@@ -408,13 +408,13 @@ const ViewInquiry = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="inquiry-container">
             {/* Left panel - Inquiry list */}
             <div className="inquiry-list">
               {filteredInquiries.length > 0 ? (
                 filteredInquiries.map(inquiry => (
-                  <div 
+                  <div
                     key={inquiry.id}
                     className={`inquiry-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'unread' ? 'unread' : ''}`}
                     onClick={() => handleSelectInquiry(inquiry)}
@@ -449,7 +449,7 @@ const ViewInquiry = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Right panel - Selected inquiry detail */}
             {selectedInquiry ? (
               <div className="inquiry-detail">
@@ -461,16 +461,16 @@ const ViewInquiry = () => {
                       <p className="detail-email">{selectedInquiry.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="inquiry-actions">
-                    <button 
+                    <button
                       className={`inquiry-action-btn resolve-btn ${selectedInquiry.status === 'resolved' ? 'disabled' : ''}`}
                       onClick={() => handleMarkResolved(selectedInquiry.id)}
                       disabled={selectedInquiry.status === 'resolved'}
                     >
                       <FaCheck /> {selectedInquiry.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
                     </button>
-                    <button 
+                    <button
                       className="inquiry-action-btn delete-btn"
                       onClick={() => handleDeleteInquiry(selectedInquiry.id)}
                     >
@@ -486,7 +486,7 @@ const ViewInquiry = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="inquiry-detail-content">
                   <div className="inquiry-meta">
                     <div className="meta-item">
@@ -511,14 +511,14 @@ const ViewInquiry = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="inquiry-message">
                     <h4>Message:</h4>
                     <div className="message-body">
                       {selectedInquiry.message}
                     </div>
                   </div>
-                  
+
                   <div className="inquiry-reply">
                     <h4>Reply:</h4>
                     <form onSubmit={handleSubmitReply}>
@@ -529,8 +529,8 @@ const ViewInquiry = () => {
                         disabled={selectedInquiry.status === 'resolved'}
                       ></textarea>
                       <div className="reply-actions">
-                        <button 
-                          type="submit" 
+                        <button
+                          type="submit"
                           className="send-reply-btn"
                           disabled={selectedInquiry.status === 'resolved' || !replyText.trim()}
                         >

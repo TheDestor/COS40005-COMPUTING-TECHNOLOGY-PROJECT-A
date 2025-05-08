@@ -9,7 +9,7 @@ import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
 import { AdvancedMarker, APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
-import { AuthContext } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 const travelModes = {
   Car: 'DRIVING',
@@ -49,7 +49,7 @@ const LeftSidebar = ({ onSearch, history, setHistory }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [segmentedRoutes, setSegmentedRoutes] = useState([]);
   const debouncedVehicleClick = useRef(null);
-  const { openRecent } = useContext(AuthContext);
+  const { openRecent } = useAuth();
 
   useEffect(() => {
     // Initialize the debounced function once

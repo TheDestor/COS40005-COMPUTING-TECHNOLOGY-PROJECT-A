@@ -18,3 +18,16 @@ export const getAllInquiries = async (req, res) => {
         return res.status(500).json({ message: "An internal server error has occured while trying to fetch all inquiries", success: false });
     }
 }
+
+export const updateInquiry = async (req, res) => {
+    try {
+        const { inquiryId } = req.body;
+
+        const inquiry = await contactUsModel.findById(inquiryId);
+
+        
+    }
+    catch (error) {
+
+    }
+}

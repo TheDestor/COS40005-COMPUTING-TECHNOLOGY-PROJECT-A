@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import authRouter from "../routes/AuthRoutes.js";
 import userRouter from "../routes/UserRoutes.js";
 import locationRouter from "../routes/LocationRoutes.js";
-import dashboardRouter from "../routes/DashboardRoutes.js";
+import inquiryRouter from "../routes/InquiryRoutes.js";
 import eventRouter from "../routes/EventRoutes.js";
 import townRoutes from "../routes/townRoutes.js";
 
@@ -23,7 +23,7 @@ app.use(cookieParser());
 app.use("/api/locations", locationRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
-app.use("/api/dashboard", dashboardRouter);
+app.use("/api/inquiry", inquiryRouter);
 app.use("/api/event", eventRouter);
 app.use("/api/towns", townRoutes);
 

@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
 
-const CustomInfoWindow = ({ location, onCloseClick, onShowReview  }) => {
+const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark }) => {
   const [activeFooter, setActiveFooter] = useState('Directions');
   const [showFullDesc, setShowFullDesc] = useState(false);
 
@@ -23,7 +23,17 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview  }) => {
 
   const handleFooterClick = (label) => {
     setActiveFooter(label);
-    // Optional: trigger action based on label
+    
+    if (label === "Save") {
+      const bookmarkData = {
+        name: location.name,
+        image: location.image,
+        description: location.description,
+        url: location.url
+      }
+      addBookmark(bookmarkData);
+      console.log(bookmarkData);
+    }
     console.log(`${label} clicked`);
   };
 

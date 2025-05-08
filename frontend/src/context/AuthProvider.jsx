@@ -1,9 +1,18 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, createContext, useContext } from "react";
 import ky from "ky";
 import { jwtDecode } from "jwt-decode";
-import { AuthContext } from "./AuthContext";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../firebase";
+
+const AuthContext = createContext(null);
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+}
 
 // AuthProvider component manages authentication state and provides it to children components via AuthContext.
 export const AuthProvider = ({ children }) => {

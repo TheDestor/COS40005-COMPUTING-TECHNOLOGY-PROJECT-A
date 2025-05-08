@@ -3,7 +3,7 @@ import "../styles/ChangeNewPassword.css";
 import Switch from "react-switch";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/AuthProvider.jsx";
 import ky from "ky";
 
 const getPasswordStrength = (password) => {

@@ -7,11 +7,10 @@ import { toast } from 'react-toastify';
 import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
-import { AuthContext } from '../context/AuthContext.jsx';
 import ReCAPTCHA from "react-google-recaptcha";
 
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { useAuth } from '../context/AuthProvider.jsx';
 // import { auth } from '../firebaseConfig.js';
 
 const LoginPage = ({ onClose }) => {

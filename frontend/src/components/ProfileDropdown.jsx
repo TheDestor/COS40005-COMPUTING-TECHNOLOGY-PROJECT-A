@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark } from 'react-icons/fi';
 import { FaUser } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
