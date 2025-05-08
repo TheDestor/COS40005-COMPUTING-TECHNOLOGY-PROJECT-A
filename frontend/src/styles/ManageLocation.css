@@ -85,6 +85,25 @@
     font-size: 14px;
     color: #495057;
   }
+
+  .add-location-button {
+    background-color: #a064db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+    margin-right: 10px;
+  }
+  
+  .add-location-button:hover {
+    background-color: #8000a7;
+  }
   
   /* Filter Dropdown */
   .filter-dropdown-ml {
@@ -129,7 +148,39 @@
     height: 100%; 
   }
   
-  
+  /* Status select dropdown styling */
+.status-select {
+  width: 100%;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  color: #333;
+  transition: border-color 0.3s;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Option styling */
+.status-select option {
+  padding: 8px;
+}
+
+/* Active option */
+.status-select option[value="Active"] {
+  color: #4CAF50;
+}
+
+/* Inactive option */
+.status-select option[value="Inactive"] {
+  color: #f44336;
+}
   /* Download Button */
   .download-button {
     flex: 1 1 0px;
@@ -463,3 +514,4 @@
 .delete-button:hover {
   background-color: #ffcfcf;
 }
+

@@ -355,7 +355,7 @@ function OrganicTrafficChart({ onRemove }) {
               <select className="time-dropdown" value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
                 <option value="week">Week</option>
                 <option value="month">Month</option>
-                <option value="year">Year</option>
+                <option value="year">Year</option>  
               </select>
               <div className="ue-menu-container">
                 <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}>⋮</button>
@@ -793,7 +793,7 @@ function BusinessParticipationChart({onRemove}) {
         </div>
 
         <div className="chart-and-stats">
-          <div className="chart-container">
+          <div className="BPchart-container">
             <svg ref={ref}></svg>
             <div className="chart-center-text">
               <div className="percentage">82.3%</div>

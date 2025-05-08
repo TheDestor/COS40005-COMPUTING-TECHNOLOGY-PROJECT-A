@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaDownload } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import * as d3 from 'd3';
 import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import '../styles/ManageLocation.css';
 
@@ -24,6 +23,45 @@ const MapPreview = ({ coordinates }) => {
     </div>
   );
 };
+
+const getTimeAgo = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  
+  let interval = Math.floor(seconds / 31536000);
+  if (interval >= 1) {
+    return interval === 1 ? '1 year ago' : `${interval} years ago`;
+  }
+  
+  interval = Math.floor(seconds / 2592000);
+  if (interval >= 1) {
+    return interval === 1 ? '1 month ago' : `${interval} months ago`;
+  }
+  
+  interval = Math.floor(seconds / 604800);
+  if (interval >= 1) {
+    return interval === 1 ? '1 week ago' : `${interval} weeks ago`;
+  }
+  
+  interval = Math.floor(seconds / 86400);
+  if (interval >= 1) {
+    return interval === 1 ? '1 day ago' : `${interval} days ago`;
+  }
+  
+  interval = Math.floor(seconds / 3600);
+  if (interval >= 1) {
+    return interval === 1 ? '1 hour ago' : `${interval} hours ago`;
+  }
+  
+  interval = Math.floor(seconds / 60);
+  if (interval >= 1) {
+    return interval === 1 ? '1 minute ago' : `${interval} minutes ago`;
+  }
+  
+  return 'Just now';
+};
+
 
 const ManageLocation = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +107,16 @@ const ManageLocation = () => {
       externalLink: '',
       lastUpdated: '2025-04-15 11:30:00',
     },
+
+    {
+      id: '#LOC345',
+      name: 'Sin Chong Choon',
+      status: 'Active',
+      coordinates: '1.5026362248161327, 110.34716280284839',
+      description: 'Nice breakfast and lunch place',
+      externalLink: '',
+      lastUpdated: '2025-05-08 11:35:00',
+    },
   ]);
 
   const getStatusClass = (status) => status === 'Active' ? 'status-active' : 'status-inactive';
@@ -77,20 +125,22 @@ const ManageLocation = () => {
     const matchesSearchQuery =
       location.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getTimeAgo(location.lastUpdated).toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.status.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
+      const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
 
-    const locationDate = new Date(location.lastUpdated);
-    let matchesDateRange = true;
-    if (startDate && endDate) {
-      const adjustedEndDate = new Date(endDate);
-      adjustedEndDate.setHours(23, 59, 59, 999);
-      matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
-    }
-
-    return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
-  });
+      const locationDate = new Date(location.lastUpdated);
+      let matchesDateRange = true;
+      if (startDate && endDate) {
+        const adjustedEndDate = new Date(endDate);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+        matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
+      }
+    
+      return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
+    });
+    
 
   const handleDelete = (id) => {
     setLocations(prev => prev.filter(loc => loc.id !== id));
@@ -101,9 +151,23 @@ const ManageLocation = () => {
   };
 
   const handleSaveEdit = () => {
-    setLocations(prev =>
-      prev.map(loc => (loc.id === editingLocation.id ? editingLocation : loc))
-    );
+    const finalLocation = {...editingLocation};
+    
+    // If it's a new location (has temp ID), generate a real ID
+    if (finalLocation.id.startsWith('temp-')) {
+      finalLocation.id = `#LOC${300 + locations.length + 1}`;
+      finalLocation.lastUpdated = new Date().toISOString();
+    }
+
+    setLocations(prev => {
+      // If editing existing, map through array
+      if (!editingLocation.id.startsWith('temp-')) {
+        return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
+      }
+      // If new, add to array
+      return [...prev, finalLocation];
+    });
+    
     setEditingLocation(null);
   };
 
@@ -186,6 +250,21 @@ const ManageLocation = () => {
             />
           </div>
 
+          <button 
+            className="add-location-button"
+            onClick={() => setEditingLocation({
+              id: 'temp-' + Date.now(),
+              name: '',
+              status: 'Active',
+              coordinates: '0,0',
+              description: '',
+              externalLink: '',
+              lastUpdated: new Date().toISOString()
+            })}
+          >
+            Add New Location +
+          </button>
+
           <div className="filter-dropdown-ml">
             <select
               className="status-filter"
@@ -245,12 +324,8 @@ const ManageLocation = () => {
                 </span>
               </div>
               <div className="table-cell">
-                {new Date(location.lastUpdated).toLocaleDateString('en-GB', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: '2-digit',
-                })}
-              </div>
+              {getTimeAgo(location.lastUpdated)}
+            </div>
               <div className="table-cell">
                 <button className="edit-button" onClick={() => handleEdit(location)}>Edit</button>
                 <button className="delete-button" onClick={() => handleDelete(location.id)}>Delete</button>
@@ -263,7 +338,7 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
-              <h3>Edit Location</h3>
+              <h3>{editingLocation.id.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
 
               <label>Location Name</label>
               <input
@@ -303,6 +378,17 @@ const ManageLocation = () => {
                   setEditingLocation({ ...editingLocation, externalLink: e.target.value })
                 }
               />
+
+              <label>Status</label>
+              <select className="status-select" 
+                value={editingLocation.status}
+                onChange={(e) =>
+                  setEditingLocation({ ...editingLocation, status: e.target.value })
+                }
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
 
               <label>Map Preview</label>
               <MapPreview coordinates={editingLocation.coordinates} />
