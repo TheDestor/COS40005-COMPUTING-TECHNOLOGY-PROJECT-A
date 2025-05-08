@@ -85,6 +85,25 @@
     font-size: 14px;
     color: #495057;
   }
+
+  .add-location-button {
+    background-color: #a064db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+    margin-right: 10px;
+  }
+  
+  .add-location-button:hover {
+    background-color: #8000a7;
+  }
   
   /* Filter Dropdown */
   .filter-dropdown-ml {
@@ -463,3 +482,4 @@
 .delete-button:hover {
   background-color: #ffcfcf;
 }
+

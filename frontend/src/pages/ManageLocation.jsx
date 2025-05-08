@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaDownload } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import * as d3 from 'd3';
 import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import '../styles/ManageLocation.css';
 
@@ -101,9 +100,23 @@ const ManageLocation = () => {
   };
 
   const handleSaveEdit = () => {
-    setLocations(prev =>
-      prev.map(loc => (loc.id === editingLocation.id ? editingLocation : loc))
-    );
+    const finalLocation = {...editingLocation};
+    
+    // If it's a new location (has temp ID), generate a real ID
+    if (finalLocation.id.startsWith('temp-')) {
+      finalLocation.id = `#LOC${300 + locations.length + 1}`;
+      finalLocation.lastUpdated = new Date().toISOString();
+    }
+
+    setLocations(prev => {
+      // If editing existing, map through array
+      if (!editingLocation.id.startsWith('temp-')) {
+        return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
+      }
+      // If new, add to array
+      return [...prev, finalLocation];
+    });
+    
     setEditingLocation(null);
   };
 
@@ -186,6 +199,21 @@ const ManageLocation = () => {
             />
           </div>
 
+          <button 
+            className="add-location-button"
+            onClick={() => setEditingLocation({
+              id: 'temp-' + Date.now(),
+              name: '',
+              status: 'Active',
+              coordinates: '0,0',
+              description: '',
+              externalLink: '',
+              lastUpdated: new Date().toISOString()
+            })}
+          >
+            Add New Location +
+          </button>
+
           <div className="filter-dropdown-ml">
             <select
               className="status-filter"
@@ -263,7 +291,7 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
-              <h3>Edit Location</h3>
+              <h3>{editingLocation.id.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
 
               <label>Location Name</label>
               <input
@@ -303,6 +331,17 @@ const ManageLocation = () => {
                   setEditingLocation({ ...editingLocation, externalLink: e.target.value })
                 }
               />
+
+              <label>Status</label>
+              <select
+                value={editingLocation.status}
+                onChange={(e) =>
+                  setEditingLocation({ ...editingLocation, status: e.target.value })
+                }
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
 
               <label>Map Preview</label>
               <MapPreview coordinates={editingLocation.coordinates} />
