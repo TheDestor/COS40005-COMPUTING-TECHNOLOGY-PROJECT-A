@@ -19,7 +19,6 @@
       position: relative; /* Needed for absolute positioning of children */
       min-height: 100vh; /* Ensure it takes at least full viewport height */
       padding-bottom: 100px; /* Space for the button */
-      min-width:1140px;
     }
 
 .ue-card {

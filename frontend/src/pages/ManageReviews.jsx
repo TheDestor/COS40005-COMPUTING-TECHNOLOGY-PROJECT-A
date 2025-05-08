@@ -152,7 +152,7 @@ const ManageReviews = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      <div className="dashboard-content">
+      <div className="MRdashboard-content">
         <div className="dashboard-header">
           <div className="TitleMR">
             <h3>Manage Reviews</h3>
