@@ -33,6 +33,7 @@ import Eventpage from './pages/EventPage.jsx'
 import ManageLocation from './pages/ManageLocation.jsx';
 import ManageReviews from './pages/ManageReviews.jsx';
 import DiscoverPlaces from './pages/DiscoverPlaces.jsx';
+import ErrorPage from './pages/ErrorPage.jsx';
 
 function App() {
 
@@ -69,7 +70,8 @@ function App() {
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
             <Route path="/manage-location" element={<ManageLocation />} />
             <Route path="/manage-reviews" element={<ManageReviews />} />
-            <Route path="/discover/:name" element={<DiscoverPlaces />} />
+            <Route path="/discover/:slug" element={<DiscoverPlaces />} />
+            <Route path="/error" element={<ErrorPage />} />
             {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
             {/* Add more routes as needed */}
           </Routes>

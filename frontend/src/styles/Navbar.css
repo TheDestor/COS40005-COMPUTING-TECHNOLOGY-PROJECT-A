@@ -1,7 +1,7 @@
 /* ----------------------------------- */
 /*  GENERAL LAYOUT STYLES              */
 /* ----------------------------------- */
-.navbar {
+/* .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,7 +19,7 @@
 .navbar .left-section,
 .navbar .center-section,
 .navbar .top-right-section {
-  pointer-events: all; /* Ensure interactive elements inside navbar are still clickable */
+  pointer-events: all;
 }
 
 .left-section {
@@ -33,7 +33,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* flex: 1; */
 }
 
 .top-right-section {
@@ -49,7 +48,7 @@
 
 .search-container {
   margin-left: 0;
-}
+} */
 
 /* ----------------------------------- */
 /*  LOGO STYLING                       */
@@ -161,7 +160,7 @@
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   padding: 16px 20px;
-  z-index: 1000;
+  z-index: 9999;
   animation: fadeIn 0.3s ease-in-out;
   max-height: 250px;
   overflow-y: auto;
@@ -248,9 +247,6 @@
 }
 
 .arrow.up {
-  transform: rotate(-120deg); /* up arrow */
+  transform: rotate(-360deg); 
 }
 
-.arrow.down {
-  transform: rotate(120deg); /* down arrow */
-}

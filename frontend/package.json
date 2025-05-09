@@ -20,6 +20,7 @@
     "jwt-decode": "^4.0.0",
     "ky": "^1.8.1",
     "leaflet": "^1.9.4",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.507.0",
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",

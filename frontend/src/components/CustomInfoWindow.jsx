@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
-import {
-  FaStar,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaShareAlt,
-  FaBookmark
-} from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthProvider.jsx';
 
-const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark }) => {
-  const [activeFooter, setActiveFooter] = useState('Directions');
+const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, onOpenLoginModal }) => {
+  const [activeFooter, setActiveFooter] = useState('');
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [isFooterDisabled, setIsFooterDisabled] = useState(false);
+  const auth = useAuth();
 
   if (!location) return null;
 
@@ -22,20 +20,38 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark })
   ];
 
   const handleFooterClick = (label) => {
+    if (isFooterDisabled) return; // prevent if already disabled
+  
+    setIsFooterDisabled(true); // disable footer
+    setTimeout(() => setIsFooterDisabled(false), 3000); // enable after 3 seconds
+  
     setActiveFooter(label);
-    
+  
     if (label === "Save") {
-      const bookmarkData = {
-        name: location.name,
-        image: location.image,
-        description: location.description,
-        url: location.url
+      if (auth && auth.user) {
+        const bookmarkData = {
+          name: location.name,
+          image: location.image,
+          description: location.description,
+          url: location.url
+        };
+        addBookmark(bookmarkData);
+        toast.success("Bookmark saved successfully!");
+        console.log(bookmarkData);
+      } else {
+        onOpenLoginModal?.();
+        toast.warn("Please log in to save bookmarks.");
+        setActiveFooter('');
       }
-      addBookmark(bookmarkData);
-      console.log(bookmarkData);
+    } else {
+      toast.info(`${label} feature is still in development.`);
+      setActiveFooter('');
     }
+  
     console.log(`${label} clicked`);
   };
+  
+  
 
   return (
     <div className="info-window-card">
@@ -87,10 +103,9 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark })
         {footerItems.map((item) => (
           <span
             key={item.label}
-            className={`footer-item ${
-              activeFooter === item.label ? 'active' : ''
-            }`}
+            className={`footer-item ${activeFooter === item.label ? 'active' : ''} ${isFooterDisabled ? 'disabled' : ''}`}
             onClick={() => handleFooterClick(item.label)}
+            style={{ pointerEvents: isFooterDisabled ? 'none' : 'auto', opacity: isFooterDisabled ? 0.5 : 1 }}
           >
             <span className="footer-icon">{item.icon}</span>
             {item.label}

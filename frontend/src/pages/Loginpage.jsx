@@ -161,7 +161,6 @@ const LoginPage = ({ onClose }) => {
     }
   };
   
-
   const getOTP = async (e) => {
     e.preventDefault();
 

@@ -63,7 +63,6 @@
             <div className="tab-header2">
               <span className="tab" onClick={onClose}>Overview</span>
               <span className="tab active">Reviews</span>
-              <FaArrowLeft className="close-review-btn" onClick={onClose}/>
             </div>
 
             <div className="rating-box">

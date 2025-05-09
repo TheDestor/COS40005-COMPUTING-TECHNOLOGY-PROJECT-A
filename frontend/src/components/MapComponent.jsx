@@ -16,6 +16,9 @@ import { UseBookmarkContext } from '../context/BookmarkProvider';
 import '../styles/MapComponent.css';
 import SearchBar from './Searchbar';
 import SearchHandler from './SearchHandler';
+import WeatherDateTime from './WeatherDateTime';
+import { townCoordinates } from '../townCoordinates';
+import LoginModal from '../pages/Loginpage';
 
 const containerStyle = {
   position: 'absolute',
@@ -218,6 +221,16 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
 
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
   const [searchInfoOpen, setSearchInfoOpen] = useState(false);
+  const [currentTown, setCurrentTown] = useState('Kuching');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    const coordinates = townCoordinates[currentTown];
+    if (map && coordinates) {
+      map.panTo({ lat: coordinates.lat, lng: coordinates.lon });
+      map.setZoom(10); // or any zoom level you prefer
+    }
+  }, [currentTown, map]);
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -240,30 +253,21 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     }
   };
 
-  // const handleMarkerClick = (location) => {
-  //   setSelectedLocation(location);
-  
-  //   if (!map) {
-  //     console.warn('Map is not ready yet.');
-  //     return;
-  //   }
-  
-  //   map.panTo({ lat: location.latitude, lng: location.longitude });
-  //   map.setZoom(15);
-  // };
-  
-  
-  // const categoryIcons = {
-  //   'Major Town': townIcon,
-  //   'Homestay': homestayIcon,
-  //   'Airport': aeroplaneIcon,
-  //   'Museum': museumIcon,
-  //   'National Park': parkIcon,
-  //   'Beach': beachIcon,
-  //   'Seaport': seaportIcon,
-  //   'Event': eventIcon,
-  //   'Restaurant': restaurantIcon,
-  // };
+  const handleTownChange = (town) => {
+    setCurrentTown(town);
+  };
+   
+  const categoryIcons = {
+    'Major Town': townIcon,
+    'Homestay': homestayIcon,
+    'Airport': aeroplaneIcon,
+    'Museum': museumIcon,
+    'National Park': parkIcon,
+    'Beach': beachIcon,
+    'Seaport': seaportIcon,
+    'Event': eventIcon,
+    'Restaurant': restaurantIcon,
+  };
 
   useEffect(() => {
     console.log('Updated locations:', locations);
@@ -433,7 +437,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               }}
               addBookmark={addBookmark}
               onCloseClick={() => setSelectedLocation(null)}
-              onShowReview={() => setShowReviewPage(true)} // 👈 this is key
+              onShowReview={() => setShowReviewPage(true)}
+              onOpenLoginModal={() => setShowLoginModal(true)}
             />
           </InfoWindow>
         )}
@@ -443,8 +448,9 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             <ReviewPage onClose={() => setShowReviewPage(false)} />
           </div>
         )}
-
+        <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
         <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
+        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
       </Map>
     </APIProvider>
   );

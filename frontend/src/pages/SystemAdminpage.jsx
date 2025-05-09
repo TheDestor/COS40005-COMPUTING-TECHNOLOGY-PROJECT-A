@@ -7,7 +7,7 @@ import {
   FaDatabase,
   FaShieldAlt
 } from 'react-icons/fa';
-import Navbar from '../components/MenuNavbar.jsx';
+// import Navbar from '../components/MenuNavbar.jsx';
 import UserManagementPage from '../pages/UserManagementpage.jsx';
 import SystemAdminDashboard from '../pages/SystemAdminDashboard.jsx';
 import DataManagementPage from './DataManagementpage.jsx';
@@ -51,7 +51,7 @@ const SystemAdminPage = () => {
 
   return (
     <div>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="admin-container">
         <div className="sidebar2">
           <div className="user-profile2">

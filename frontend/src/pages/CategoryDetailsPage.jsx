@@ -23,6 +23,7 @@ const CategoryDetailsPage = () => {
         const divisionName = passedTown?.division || slug;
         
         // Fetch all locations for the division
+        // const response = await fetch(`/api/locations?name=${slug}`);
         const response = await fetch(`/api/locations`);
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
@@ -123,29 +124,34 @@ const CategoryDetailsPage = () => {
         <div className="locations-grid">
           {divisionItems.map((item, index) => (
             <div className="location-card" key={index}>
-              <img src={item.image || defaultImage} alt={item.name} />
-              <div className="location-info">
-                <div className="location-header">
-                  <h3>{item.name}</h3>
-                  <span className="location-type">{item.type}</span>
+            <img src={item.image || defaultImage} alt={item.name} />
+            <div className="location-info">
+              <div className="location-header">
+                <h3>{item.name}</h3>
+                <span className="location-type">{item.type}</span>
+              </div>
+              <p className="location-desc">{item.description}</p>
+          
+              {item.coordinates && (
+                <div className="coordinates">
+                  <p><strong>Lat:</strong> {item.lat}</p>
+                  <p><strong>Lng:</strong> {item.lng}</p>
                 </div>
-                <p className="location-desc">{item.description}</p>
-                <div className="location-actions">
-                <Link
+              )}
+          
+              <div className="location-actions">
+              <Link
                 to={{
-                  // Fix encoding and add URL-safe formatting
-                  pathname: `/discover/${encodeURIComponent(item.name.replace(/\s+/g, '-').toLowerCase())}`,
-                  state: { 
+                  pathname: `/discover/${encodeURIComponent(item.slug || item.name)}`,
+                  state: {
                     location: {
-                      ...item,
-                      name: item.name || 'Unnamed Location',
-                      type: item.type || 'General Location',
-                      description: item.description || item.desc || 'No description available',
-                      image: item.image || defaultImage,
-                      coordinates: item.coordinates || [0, 0], // Ensure array format
-                      population: item.population || 'N/A',
-                      area: item.area || 'N/A',
-                      climate: item.climate || 'Tropical'
+                      name: item.name,
+                      description: item.description,
+                      coordinates: {
+                        lat: item.coordinates?.lat,
+                        lng: item.coordinates?.lng
+                      },
+                      image: item.image
                     }
                   }
                 }}
@@ -153,14 +159,9 @@ const CategoryDetailsPage = () => {
               >
                 Explore
               </Link>
-                  {item.coordinates && (
-                    <button className="map-btn">
-                      View on Map
-                    </button>
-                  )}
-                </div>
               </div>
             </div>
+          </div>
           ))}
         </div>
       </div>

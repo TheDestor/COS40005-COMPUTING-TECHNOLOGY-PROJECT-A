@@ -7,7 +7,6 @@ import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/Kuching.png';
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
-import WeatherDateTime from '../components/WeatherDateTime.jsx';
 
 const HomePage = () => {
   const location = useLocation();
@@ -23,7 +22,6 @@ const HomePage = () => {
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   const [mapLocations, setMapLocations] = useState([]);
-  const [currentTown, setCurrentTown] = useState('Kuching');
   const [showRecent, setShowRecent] = useState(false);
 
   const [infoLocations, setInfoLocations] = useState([]);
@@ -99,11 +97,6 @@ const HomePage = () => {
   return (
     <>
       <ProfileDropdown onLoginClick={handleLoginClick} />
-
-      <WeatherDateTime
-        currentTown={currentTown}
-        setCurrentTown={setCurrentTown}
-      />
 
       <MapComponent 
         startingPoint={startingPoint} 

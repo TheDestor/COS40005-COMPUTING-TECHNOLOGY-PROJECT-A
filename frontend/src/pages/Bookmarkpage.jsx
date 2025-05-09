@@ -7,7 +7,7 @@ import petrosainsImg from '../assets/petrosains.jpg';
 import borneoImg from '../assets/borneo.jpg';
 import raneeImg from '../assets/ranee.jpg';
 import LoginPage from './Loginpage';
-import { useAuth } from '../context/AuthProvider.jsx'; // adjust if needed
+import { useAuth } from '../context/AuthProvider.jsx';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 
 
@@ -22,52 +22,6 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
       if (onClose) onClose(); // close the bookmark panel
     }
   }, [isOpen, auth, showLoginOverlay, onClose]);
-
-  // const sections = [
-  //   {
-  //     key: "want-to-go",
-  //     title: "Want to go",
-  //     icon: FaRegFlag,
-  //     count: 3,
-  //     places: [
-  //       {
-  //         title: "Petrosains Playsmart Kuching",
-  //         rating: 4.7,
-  //         reviews: 237,
-  //         category: "Science museum",
-  //         image: petrosainsImg
-  //       },
-  //       {
-  //         title: "Borneo Cultural Museum",
-  //         rating: 4.7,
-  //         reviews: 237,
-  //         category: "Museum",
-  //         image: borneoImg
-  //       },
-  //       {
-  //         title: "The Ranee Museum",
-  //         rating: 4.7,
-  //         reviews: 237,
-  //         category: "Museum",
-  //         image: raneeImg
-  //       }
-  //     ]
-  //   },
-  //   {
-  //     key: "favourites",
-  //     title: "Favourites",
-  //     icon: MdOutlineFavoriteBorder,
-  //     count: 3,
-  //     places: []
-  //   },
-  //   {
-  //     key: "starred-places",
-  //     title: "Starred places",
-  //     icon: FaRegStar,
-  //     count: 2,
-  //     places: []
-  //   }
-  // ];
 
   const HeaderWithLogo = ({ title, count, Icon }) => (
     <div className="header-with-logo">

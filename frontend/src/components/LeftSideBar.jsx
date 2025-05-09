@@ -129,7 +129,7 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent 
     console.log('Fetching nearby places for:', placeType, 'at:', locationCoords);
     const request = {
       location: locationCoords,
-      radius: 2000,
+      radius: 500,
       type: placeType,
     };
 

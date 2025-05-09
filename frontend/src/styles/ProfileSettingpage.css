@@ -1,9 +1,11 @@
 .profile-settings-container {
-    display: flex;
-    height: 100vh;
-    width: 99vw;
-    font-family: 'Segoe UI', sans-serif;
-  }
+  display: flex;
+  height: calc(100vh - 80px); /* subtract the fixed navbar height */
+  margin-top: 60px;            /* push content below the fixed navbar */
+  width: 100vw;
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
 
   .sidebar50 {
     width: 270px;
@@ -172,7 +174,7 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    margin-left: 17rem;
+    margin-left: 18rem;
     min-width: 180px;
   }
 
