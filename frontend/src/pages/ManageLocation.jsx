@@ -6,14 +6,15 @@ import "react-datepicker/dist/react-datepicker.css";
 import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import '../styles/ManageLocation.css';
 
-const MapPreview = ({ coordinates }) => {
-  const [lat, lng] = coordinates.split(',').map(Number);
-
+const MapPreview = ({ latitude, longitude }) => {
   return (
     <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+      <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </div>
       <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
         <Map
-          center={{ lat, lng }}
+          center={{ lat: latitude, lng: longitude }}
           zoom={14}
           style={{ width: '100%', height: '100%' }}
           gestureHandling="none"
@@ -62,60 +63,108 @@ const getTimeAgo = (dateString) => {
   return 'Just now';
 };
 
-
 const ManageLocation = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [editingLocation, setEditingLocation] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const clearValidationError = (fieldName) => {
+    setValidationErrors(prev => {
+      const newErrors = {...prev};
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+  };
+
+  const categoryOptions = [
+    'Food & Beverages',
+    'Accommodation',
+    'Attraction'
+  ];
+
+  const typeOptions = {
+    'Food & Beverages': [
+      'Restaurant',
+      'Cafe',
+      'Street Food',
+      'Bar',
+      'Fine Dining',
+      'Others'
+    ],
+    'Accommodation': [
+      'Hotel',
+      'Resort',
+      'Homestay',
+      'Hostel',
+      'Villa',
+      'Others'
+    ],
+    'Attraction': [
+      'National Park',
+      'Museum',
+      'Beach',
+      'Cultural Site',
+      'Adventure Park',
+      'Others'
+    ]
+  };
+
+  const getCurrentTypeOptions = () => {
+    if (!editingLocation?.category) return [];
+    return typeOptions[editingLocation.category] || [];
+  };
+
+  const generateLocationId = () => {
+    const prefix = '#LOC';
+    const randomNum = Math.floor(Math.random() * 900) + 100;
+    return `${prefix}${randomNum}`;
+  };
 
   const [locations, setLocations] = useState([
     {
       id: '#LOC301',
+      category: 'Attraction',
+      type: 'National Park',
+      division: 'Kuching',
       name: 'Bako National Park',
       status: 'Active',
-      coordinates: '1.7136, 110.4583',
-      description: 'Rainforest and wildlife exploration',
-      externalLink: '',
+      latitude: 1.697763,
+      longitude: 110.407775,
+      description: 'Bako National Park is home to proboscis monkey, along with macaques',
+      url: 'https://bakonationalpark.com/',
+      image: 'https://www.example.com/bako-national-park.jpg',
       lastUpdated: '2025-03-12 14:30:00',
     },
     {
       id: '#LOC302',
+      category: 'Accommodation',
+      type: 'Lodge',
+      division: 'Kuching',
       name: 'Rainforest Lodge',
       status: 'Active',
-      coordinates: '1.5532, 110.3608',
+      latitude: 1.5532,
+      longitude: 110.3608,
       description: 'Eco-friendly jungle lodge',
-      externalLink: '',
+      url: '',
+      image: '',
       lastUpdated: '2025-03-13 09:45:00',
     },
     {
       id: '#LOC303',
+      category: 'Cultural',
+      type: 'Village',
+      division: 'Kuching',
       name: 'Cultural Village',
       status: 'Inactive',
-      coordinates: '1.5592, 110.3472',
+      latitude: 1.5592,
+      longitude: 110.3472,
       description: 'Cultural shows and heritage',
-      externalLink: '',
+      url: '',
+      image: '',
       lastUpdated: '2025-04-14 10:00:00',
-    },
-    {
-      id: '#LOC304',
-      name: 'Sunset Beach',
-      status: 'Active',
-      coordinates: '1.4356, 110.4583',
-      description: 'Guided wildlife tours with expert naturalists',
-      externalLink: '',
-      lastUpdated: '2025-04-15 11:30:00',
-    },
-
-    {
-      id: '#LOC345',
-      name: 'Sin Chong Choon',
-      status: 'Active',
-      coordinates: '1.5026362248161327, 110.34716280284839',
-      description: 'Nice breakfast and lunch place',
-      externalLink: '',
-      lastUpdated: '2025-05-08 11:35:00',
     },
   ]);
 
@@ -125,22 +174,24 @@ const ManageLocation = () => {
     const matchesSearchQuery =
       location.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getTimeAgo(location.lastUpdated).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      location.status.toLowerCase().includes(searchQuery.toLowerCase());
+      location.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      location.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      location.division.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      location.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getTimeAgo(location.lastUpdated).toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
+    const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
 
-      const locationDate = new Date(location.lastUpdated);
-      let matchesDateRange = true;
-      if (startDate && endDate) {
-        const adjustedEndDate = new Date(endDate);
-        adjustedEndDate.setHours(23, 59, 59, 999);
-        matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
-      }
-    
-      return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
-    });
-    
+    const locationDate = new Date(location.lastUpdated);
+    let matchesDateRange = true;
+    if (startDate && endDate) {
+      const adjustedEndDate = new Date(endDate);
+      adjustedEndDate.setHours(23, 59, 59, 999);
+      matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
+    }
+  
+    return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
+  });
 
   const handleDelete = (id) => {
     setLocations(prev => prev.filter(loc => loc.id !== id));
@@ -151,24 +202,38 @@ const ManageLocation = () => {
   };
 
   const handleSaveEdit = () => {
-    const finalLocation = {...editingLocation};
-    
-    // If it's a new location (has temp ID), generate a real ID
-    if (finalLocation.id.startsWith('temp-')) {
-      finalLocation.id = `#LOC${300 + locations.length + 1}`;
-      finalLocation.lastUpdated = new Date().toISOString();
+    const errors = {};
+    if (!editingLocation.category) errors.category = 'Category is required';
+    if (!editingLocation.type) errors.type = 'Type is required';
+    if (!editingLocation.division) errors.division = 'Division is required';
+    if (!editingLocation.name) errors.name = 'Location name is required';
+    if (!editingLocation.description) errors.description = 'Description is required';
+    if (!editingLocation.status) errors.status = 'Status is required';
+  
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
     }
-
+  
+    const now = new Date().toISOString();
+    const finalLocation = { 
+      ...editingLocation,
+      lastUpdated: now 
+    };
+  
+    if (finalLocation.id.startsWith('temp-')) {
+      finalLocation.id = generateLocationId();
+    }
+  
     setLocations(prev => {
-      // If editing existing, map through array
       if (!editingLocation.id.startsWith('temp-')) {
         return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
       }
-      // If new, add to array
       return [...prev, finalLocation];
     });
     
     setEditingLocation(null);
+    setValidationErrors({});
   };
 
   const downloadCSV = () => {
@@ -177,10 +242,13 @@ const ManageLocation = () => {
       return;
     }
 
-    const headers = ['Location ID', 'Name', 'Status', 'Last Updated'];
+    const headers = ['Location ID', 'Name', 'Category', 'Type', 'Division', 'Status', 'Last Updated'];
     const rows = filteredLocations.map(loc => [
       `"${loc.id}"`,
       `"${loc.name}"`,
+      `"${loc.category}"`,
+      `"${loc.type}"`,
+      `"${loc.division}"`,
       `"${loc.status}"`,
       `"${new Date(loc.lastUpdated).toLocaleDateString('en-GB', {
         year: 'numeric',
@@ -254,12 +322,17 @@ const ManageLocation = () => {
             className="add-location-button"
             onClick={() => setEditingLocation({
               id: 'temp-' + Date.now(),
+              category: '',
+              type: '',
+              division: '',
               name: '',
-              status: 'Active',
-              coordinates: '0,0',
+              status: '',
+              latitude: 0,
+              longitude: 0,
               description: '',
-              externalLink: '',
-              lastUpdated: new Date().toISOString()
+              url: '',
+              image: '',
+              lastUpdated: ''
             })}
           >
             Add New Location +
@@ -309,6 +382,9 @@ const ManageLocation = () => {
           <div className="MLtable-header">
             <div className="header-cell">Location ID</div>
             <div className="header-cell">Name</div>
+            <div className="header-cell">Category</div>
+            <div className="header-cell">Type</div>
+            <div className="header-cell">Division</div>
             <div className="header-cell">Status</div>
             <div className="header-cell">Last Updated</div>
             <div className="header-cell">Action</div>
@@ -318,14 +394,17 @@ const ManageLocation = () => {
             <div key={location.id} className="MLtable-row">
               <div className="table-cell">{location.id}</div>
               <div className="table-cell">{location.name}</div>
+              <div className="table-cell">{location.category}</div>
+              <div className="table-cell">{location.type}</div>
+              <div className="table-cell">{location.division}</div>
               <div className="table-cell">
                 <span className={`MLstatus-badge ${getStatusClass(location.status)}`}>
                   {location.status}
                 </span>
               </div>
               <div className="table-cell">
-              {getTimeAgo(location.lastUpdated)}
-            </div>
+                {getTimeAgo(location.lastUpdated)}
+              </div>
               <div className="table-cell">
                 <button className="edit-button" onClick={() => handleEdit(location)}>Edit</button>
                 <button className="delete-button" onClick={() => handleDelete(location.id)}>Delete</button>
@@ -340,58 +419,151 @@ const ManageLocation = () => {
             <div className="MLmodal-content">
               <h3>{editingLocation.id.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
 
-              <label>Location Name</label>
+              <label>Category *</label>
+              <select
+                name="category"
+                value={editingLocation.category}
+                onChange={(e) => {
+                  setEditingLocation({ 
+                    ...editingLocation, 
+                    category: e.target.value,
+                    type: ''
+                  });
+                  clearValidationError('category');
+                }}
+                className={`form-select ${validationErrors.category ? 'error-border' : ''}`}
+              >
+                <option value="">Select a category</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              {validationErrors.category && (
+                <div className="error-message">{validationErrors.category}</div>
+              )}
+
+              <label>Type *</label>
+              <select
+                name="type"
+                value={editingLocation.type}
+                onChange={(e) => {
+                  setEditingLocation({ ...editingLocation, type: e.target.value });
+                  clearValidationError('type');
+                }}
+                className={`form-select ${validationErrors.type ? 'error-border' : ''}`}
+                disabled={!editingLocation.category}
+              >
+                <option value="">Select a type</option>
+                {getCurrentTypeOptions().map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              {validationErrors.type && (
+                <div className="error-message">{validationErrors.type}</div>
+              )}
+
+              <label>Division *</label>
+              <input
+                name="division"
+                value={editingLocation.division}
+                onChange={(e) => {
+                  setEditingLocation({ ...editingLocation, division: e.target.value });
+                  clearValidationError('division');
+                }}
+                className={validationErrors.division ? 'error-border' : ''}
+              />
+              {validationErrors.division && (
+                <div className="error-message">{validationErrors.division}</div>
+              )}
+
+              <label>Location Name *</label>
               <input
                 name="name"
                 value={editingLocation.name}
-                onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, name: e.target.value })
-                }
+                onChange={(e) => {
+                  setEditingLocation({ ...editingLocation, name: e.target.value });
+                  clearValidationError('name');
+                }}
+                className={validationErrors.name ? 'error-border' : ''}
               />
+              {validationErrors.name && (
+                <div className="error-message">{validationErrors.name}</div>
+              )}
 
-              <label>Coordinates</label>
+              <label>Coordinates (Latitude, Longitude) </label>
               <input
                 name="coordinates"
-                value={editingLocation.coordinates}
-                onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, coordinates: e.target.value })
+                value={
+                  editingLocation.latitude === 0 && editingLocation.longitude === 0 
+                    ? '' 
+                    : `${editingLocation.latitude}, ${editingLocation.longitude}`
                 }
+                onChange={(e) => {
+                  const [lat, lng] = e.target.value.split(',').map(coord => parseFloat(coord.trim()));
+                  setEditingLocation({ 
+                    ...editingLocation, 
+                    latitude: isNaN(lat) ? 0 : lat,
+                    longitude: isNaN(lng) ? 0 : lng
+                  });
+                }}
+                placeholder="e.g. 1.697763, 110.407775"
               />
 
-              <label>Description</label>
+              <label>Description *</label>
               <textarea
                 name="description"
                 value={editingLocation.description}
-                onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, description: e.target.value })
-                }
+                onChange={(e) => {
+                  setEditingLocation({ ...editingLocation, description: e.target.value });
+                  clearValidationError('description');
+                }}
+                className={validationErrors.description ? 'error-border' : ''}
               />
+              {validationErrors.description && (
+                <div className="error-message">{validationErrors.description}</div>
+              )}
 
-              <label>Upload Images/Videos</label>
-              <input type="file" />
-
-              <label>External Links</label>
+              <label>Website URL</label>
               <input
-                name="externalLink"
-                value={editingLocation.externalLink || ''}
+                name="url"
+                value={editingLocation.url || ''}
                 onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, externalLink: e.target.value })
+                  setEditingLocation({ ...editingLocation, url: e.target.value })
                 }
               />
 
-              <label>Status</label>
-              <select className="status-select" 
-                value={editingLocation.status}
+              <label>Image URL</label>
+              <input
+                name="image"
+                value={editingLocation.image || ''}
                 onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, status: e.target.value })
+                  setEditingLocation({ ...editingLocation, image: e.target.value })
                 }
+              />
+
+              <label>Status *</label>
+              <select
+                className={`status-select ${validationErrors.status ? 'error-border' : ''}`}
+                value={editingLocation.status}
+                onChange={(e) => {
+                  setEditingLocation({ ...editingLocation, status: e.target.value });
+                  clearValidationError('status');
+                }}
               >
+                <option value="">Select status</option>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
               </select>
+              {validationErrors.status && (
+                <div className="error-message">{validationErrors.status}</div>
+              )}
 
               <label>Map Preview</label>
-              <MapPreview coordinates={editingLocation.coordinates} />
+              <MapPreview latitude={editingLocation.latitude} longitude={editingLocation.longitude} />
 
               <div className="modal-actions">
                 <button className="cancel-button" onClick={() => setEditingLocation(null)}>Cancel</button>
