@@ -23,32 +23,6 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory }) => {
     { name: 'Event', icon: <FaCalendarAlt />, isFetchOnly: true }
   ];
 
-  // const handleMenuItemClick = async (item) => {
-  //   setSelectedMenu(item.name);
-  //   if (item.isFetchOnly) {
-  //     try {
-  //       const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
-  //       console.log(`Fetched ${item.name} Data:`, response);
-
-  //       // Ensure the backend response contains latitude/longitude
-  //       const formattedData = response.map(location => ({
-  //         ...location, // Include all properties from the response
-  //         coordinates: [location.latitude, location.longitude] || 'No Coordinates',
-  //         image: location.image || defaultImage, // Ensure image field is populated, fallback to defaultImage
-  //         description: location.description || 'No description available.',
-  //       }));
-
-  //       if (onSelect) onSelect(item.name, formattedData);
-  //       if (onSelectCategory) onSelectCategory(item.name, formattedData);
-  //     } catch (error) {
-  //       console.error(`Error fetching ${item.name}:`, error);
-  //     }
-  //   } else {
-  //     if (onSelect) onSelect(item.name);
-  //     if (onSelectCategory) onSelectCategory(item.name);
-  //   }
-  // };
-
   const handleMenuItemClick = async (item) => {
     setSelectedMenu(item.name);
     if (item.isFetchOnly) {

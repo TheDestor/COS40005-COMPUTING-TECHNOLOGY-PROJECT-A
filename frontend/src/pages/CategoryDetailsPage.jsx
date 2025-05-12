@@ -15,6 +15,82 @@ const CategoryDetailsPage = () => {
   const { slug } = useParams();
   const location = useLocation();
   const passedTown = location.state?.town;
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('restaurant');
+
+  useEffect(() => {
+    if (passedTown) {
+      setTownData(passedTown);
+      setDivisionItems(passedTown?.division || []);
+      setLoading(false);
+    }
+  }, [passedTown]);
+
+  useEffect(() => {
+    // Only fetch places if townData exists and nearbyPlaces is empty
+    if (townData && nearbyPlaces.length === 0) {
+      const interval = setInterval(() => {
+        if (window.google?.maps?.Geocoder) {
+          clearInterval(interval);
+          // Proceed with geocoding
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ address: townData.name }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const locationCoords = results[0].geometry.location;
+              fetchNearbyPlaces(locationCoords);
+            } else {
+              console.error('Geocode failed:', status);
+            }
+          });
+        }
+      }, 500);
+      
+      return () => clearInterval(interval);
+    }
+  }, [townData, selectedCategory, nearbyPlaces]);
+
+  const fetchNearbyPlaces = (locationCoords) => {
+    const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+
+    const request = {
+      location: locationCoords,
+      radius: 5000,  // Example radius
+      type: selectedCategory.toLowerCase(),
+    };
+
+    // Perform nearbySearch using the Place service
+    service.nearbySearch(request, (results, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        const placeDetailPromises = results.map((place) => {
+          return new Promise((resolve) => {
+            // Request for details of each place
+            const detailsRequest = {
+              placeId: place.place_id,
+              fields: ['name', 'geometry', 'photos', 'formatted_address'],
+            };
+
+            service.getDetails(detailsRequest, (details, detailStatus) => {
+              if (detailStatus === window.google.maps.places.PlacesServiceStatus.OK) {
+                resolve(details);  // Successfully resolved place details
+              } else {
+                console.error('Failed to get place details:', detailStatus);
+                resolve(null);
+              }
+            });
+          });
+        });
+
+        // Wait for all place details to be fetched
+        Promise.all(placeDetailPromises).then((allDetails) => {
+          const validPlaces = allDetails.filter((place) => place !== null);
+          setNearbyPlaces(validPlaces);
+        });
+      } else {
+        console.error('Nearby search failed:', status);
+        setNearbyPlaces([]);
+      }
+    });
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -23,7 +99,6 @@ const CategoryDetailsPage = () => {
         const divisionName = passedTown?.division || slug;
         
         // Fetch all locations for the division
-        // const response = await fetch(`/api/locations?name=${slug}`);
         const response = await fetch(`/api/locations`);
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
@@ -50,6 +125,18 @@ const CategoryDetailsPage = () => {
         });
 
         setDivisionItems(otherItems);
+
+        // Geocode town and fetch nearby places
+        if (townInfo?.division && window.google?.maps?.Geocoder) {
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ address: townInfo.division }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              fetchNearbyPlaces(results[0].geometry.location);
+            } else {
+              console.error('Geocode failed:', status);
+            }
+          });
+        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -147,12 +234,11 @@ const CategoryDetailsPage = () => {
                     location: {
                       name: item.name,
                       description: item.description,
-                      coordinates: {
-                        lat: item.coordinates?.lat,
-                        lng: item.coordinates?.lng
-                      },
+                      coordinates: [item.coordinates?.lng, item.coordinates?.lat],
                       image: item.image
-                    }
+                    },
+                    // nearbyPlaces
+                    selectedCategory // pass selected category to DiscoverPlaces
                   }
                 }}
                 className="explore-btn"

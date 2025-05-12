@@ -59,9 +59,11 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
       <div className="info-header">
         <h3>{location.name}</h3>
-        <p className="rating51">
-          5.0 <FaStar color="#ffc107" /> (100)
-        </p>
+        {location.rating && (
+          <p className="rating51">
+            {location.rating.toFixed(1)} <FaStar color="#ffc107" />
+          </p>
+        )}
       </div>
 
       <div className="info-tabs">
@@ -93,9 +95,17 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       </a>
 
       <div className="info-actions">
-        <p className="info-open">
-          <span className="open-status">Opens at</span> 12:00am
-        </p>
+        {location.openNowText && (
+          <p className="info-open-status" style={{ color: location.openNowText.includes('Open') ? 'green' : 'red' }}>
+            {location.open24Hours ? 'Open 24 hours' : location.openNowText}
+          </p>
+        )}
+
+        {location.holidayNotice && (
+          <p className="holiday-notice" style={{ color: 'orange' }}>
+            {location.holidayNotice}
+          </p>
+        )}
         <button className="book-btn">Explore Now!</button>
       </div>
 

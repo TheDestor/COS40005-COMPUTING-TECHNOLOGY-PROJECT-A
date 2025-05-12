@@ -10,6 +10,7 @@ import beachIcon from '../assets/beach.gif';
 import eventIcon from '../assets/event.gif';
 import restaurantIcon from '../assets/restaurant.png';
 import MapViewMenu from './MapViewMenu';
+import MapViewTesting from './MapViewTesting';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
@@ -32,6 +33,7 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
+// const center = { lat: 1.5533, lng: 110.3592 };
 
 function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
   const map = useMap('e57efe6c5ed679ba');
@@ -48,15 +50,26 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
     map.setZoom(10);
   };
 
+  // const categoryIcons = {
+  //   'Major Town': townIcon,
+  //   'Homestay': homestayIcon,
+  //   'Airport': aeroplaneIcon,
+  //   'Museum': museumIcon,
+  //   'National Park': parkIcon,
+  //   'Beach': beachIcon,
+  //   'Seaport': seaportIcon,
+  //   'Event': eventIcon,
+  //   'Restaurant': restaurantIcon,
+  // };
   const categoryIcons = {
     'Major Town': townIcon,
-    'Homestay': homestayIcon,
-    'Airport': aeroplaneIcon,
-    'Museum': museumIcon,
-    'National Park': parkIcon,
-    'Beach': beachIcon,
-    'Seaport': seaportIcon,
-    'Event': eventIcon,
+    'Accommodations': homestayIcon,
+    'Food': aeroplaneIcon,
+    'Attractions': museumIcon,
+    'Shpoppings': parkIcon,
+    'Leisures': beachIcon,
+    'Tour Guides': seaportIcon,
+    'Events': eventIcon,
     'Restaurant': restaurantIcon,
   };
 
@@ -257,15 +270,27 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     setCurrentTown(town);
   };
    
+  // const categoryIcons = {
+  //   'Major Town': townIcon,
+  //   'Homestay': homestayIcon,
+  //   'Airport': aeroplaneIcon,
+  //   'Museum': museumIcon,
+  //   'National Park': parkIcon,
+  //   'Beach': beachIcon,
+  //   'Seaport': seaportIcon,
+  //   'Event': eventIcon,
+  //   'Restaurant': restaurantIcon,
+  // };
+
   const categoryIcons = {
     'Major Town': townIcon,
-    'Homestay': homestayIcon,
-    'Airport': aeroplaneIcon,
-    'Museum': museumIcon,
-    'National Park': parkIcon,
-    'Beach': beachIcon,
-    'Seaport': seaportIcon,
-    'Event': eventIcon,
+    'Accommodation': homestayIcon,
+    'Food': aeroplaneIcon,
+    'Attractions': museumIcon,
+    'Shoppings': parkIcon,
+    'Leisures': beachIcon,
+    'Tour Guides': seaportIcon,
+    'Events': eventIcon,
     'Restaurant': restaurantIcon,
   };
 
@@ -324,11 +349,11 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
 
-      <MarkerManager 
+      {/* <MarkerManager 
         locations={locations} 
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
-      />
+      /> */}
         
       {/* Locations based on type */}
       {/* {locations.map((loc) => (
@@ -353,6 +378,28 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           />
         </AdvancedMarker>
       ))} */}
+      {locations.map((loc, index) => (
+        <AdvancedMarker
+          key={index}
+          position={{ lat: loc.latitude, lng: loc.longitude }}
+          title={loc.name}
+          onClick={() => setSelectedLocation(loc)}
+        >
+          <img
+            src={categoryIcons[activeOption] || townIcon}
+            alt={activeOption}
+            style={{
+              width: '30px',
+              height: '30px',
+              cursor: 'pointer',
+              borderRadius: '999px',
+              transform: selectedLocation?.name === loc.name ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.2s ease'
+            }}
+          />
+        </AdvancedMarker>
+      ))}
+
   
         {/* Nearby Places */}
         {nearbyPlaces.filter((place) => {
@@ -434,6 +481,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
                 url: selectedLocation.url || 'No URL provided',
+                rating: selectedLocation.rating,
+                openNowText: selectedLocation.openNowText,
+                open24Hours: selectedLocation.open24Hours,
+                holidayNotice: selectedLocation.holidayNotice,
               }}
               addBookmark={addBookmark}
               onCloseClick={() => setSelectedLocation(null)}
@@ -449,7 +500,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           </div>
         )}
         <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
-        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
+        {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
+        <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
       </Map>
     </APIProvider>
