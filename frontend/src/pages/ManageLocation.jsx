@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import '../styles/ManageLocation.css';
+import ky from 'ky';
 
 const MapPreview = ({ coordinates }) => {
   const [lat, lng] = coordinates.split(',').map(Number);
@@ -118,6 +119,18 @@ const ManageLocation = () => {
       lastUpdated: '2025-05-08 11:35:00',
     },
   ]);
+
+  const getAllLocations = async () => {
+    try {
+      const response = await ky.get("/api/locations/").json();
+
+      console.log(response);
+    } catch (error) {
+      console.error("An error occured while trying to get all locations:", error);
+    }
+  }
+
+  getAllLocations();
 
   const getStatusClass = (status) => status === 'Active' ? 'status-active' : 'status-inactive';
 

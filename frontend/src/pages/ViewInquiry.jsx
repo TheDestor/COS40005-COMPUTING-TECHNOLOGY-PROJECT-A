@@ -143,7 +143,7 @@ const ViewInquiry = () => {
             subject: inquiry.topic,
             message: inquiry.message,
             date: inquiry.createdAt,
-            status: inquiry.status,
+            status: inquiry.status || "Unread",
             priority: 'medium',
             avatar: profile1
           }));
@@ -155,6 +155,8 @@ const ViewInquiry = () => {
             if (firstInquiry.status === "Unread") {
               firstInquiry.status = "in-progress";
               mappedInquiries[0] = firstInquiry;
+              setInquiries([...mappedInquiries]);
+            } else {
               setInquiries([...mappedInquiries]);
             }
             setSelectedInquiry(firstInquiry);
@@ -203,7 +205,27 @@ const ViewInquiry = () => {
   };
 
   // Handler for marking an inquiry as resolved
-  const handleMarkResolved = (id) => {
+  const handleMarkResolved = async (id) => {
+    try {
+      const payload = {
+        inquiryId: id,
+        action: "Resolve"
+      }
+      const response = await ky.post(
+        "/api/inquiry/updateInquiry",
+        {
+          json: payload
+        }
+      ).json();
+
+      if (response.success) {
+        console.log("test");
+      } else {
+        console.log("failed");
+      }
+    } catch (error) {
+
+    }
     const updatedInquiries = inquiries.map(item => {
       if (item.id === id) {
         return { ...item, status: 'Resolved' };

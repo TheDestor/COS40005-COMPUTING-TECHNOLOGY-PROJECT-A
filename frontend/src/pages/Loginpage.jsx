@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { replace, useLocation } from 'react-router-dom';
 import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -16,6 +17,8 @@ import { useAuth } from '../context/AuthProvider.jsx';
 const LoginPage = ({ onClose }) => {
   const navigate = useNavigate();
   const { login, setUpRecaptcha } = useAuth();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
   // const { setUpRecaptcha } = useContext(AuthContext);
 
   const [activeTab, setActiveTab] = useState('otp');
@@ -38,7 +41,9 @@ const LoginPage = ({ onClose }) => {
 
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && typeof onClose === 'function') {
+        onClose();
+      }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
@@ -61,7 +66,6 @@ const LoginPage = ({ onClose }) => {
   const handleError = (msg) => {
     toast.error(msg, { position: 'bottom-right' });
   };
-
   // const handleSendOtp = async () => {
   //   if (!identifier) {
   //     handleError('Please enter your phone number.');
@@ -147,10 +151,10 @@ const LoginPage = ({ onClose }) => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-  
+
     if (!otp || otp.trim() === "") return handleError("Please enter the OTP.");
     if (!confirmObj) return handleError("Please click 'Send' to receive the OTP first.");
-  
+
     try {
       await confirmObj.confirm(otp);
       handleSuccess("OTP verified!");
@@ -160,21 +164,21 @@ const LoginPage = ({ onClose }) => {
       handleError(error.message || "Invalid OTP.");
     }
   };
-  
+
 
   const getOTP = async (e) => {
     e.preventDefault();
 
     if (identifier === "" || identifier === undefined) return handleError("Please enter a valid Phone NUMBER!!!");
-    try{
+    try {
       const response = await setUpRecaptcha(identifier);
       console.log(response);
       setConfirmObj(response);
       handleSuccess("OTP sent!");
-    }catch (error){
+    } catch (error) {
       handleError(error.message || "Failed to send OTP.");
     }
-    console.log(identifier); 
+    console.log(identifier);
   };
 
   const handleSubmit = async (e) => {
@@ -190,14 +194,25 @@ const LoginPage = ({ onClose }) => {
       return;
     }
 
-    const result = await login(identifier, password);
-    if (result.success) {
-      handleSuccess(result.message || 'Login successful!');
-      setFormData({ identifier: '', password: '' });
-      // setIsRobotChecked(false);
-      onClose();
-    } else {
-      handleError(result.message || 'Login failed. Please check credentials.');
+    try {
+      const result = await login(identifier, password);
+      if (result.success) {
+        let navigateTo = result.redirectTo;
+        if (result.user?.role !== 'cbt_admin' && result.user?.role !== 'system_admin' && from !== "/") {
+          navigateTo = from;
+        }
+        handleSuccess(result.message || 'Login successful!');
+        setFormData({ identifier: '', password: '' });
+        // setIsRobotChecked(false);
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+        navigate(navigateTo, { replace: true });
+      } else {
+        handleError(result.message || 'Login failed. Please check credentials.');
+      }
+    } catch (error) {
+      console.error("An error occured during login:", error);
     }
   };
 

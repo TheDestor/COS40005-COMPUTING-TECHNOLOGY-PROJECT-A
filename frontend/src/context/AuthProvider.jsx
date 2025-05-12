@@ -162,9 +162,19 @@ export const AuthProvider = ({ children }) => {
             ).json();
             if (response.success) {
                 processToken(response.accessToken);
+                const decoded = jwtDecode(response.accessToken);
+                const userInfo = decoded.UserInfo;
+
+                let redirectTo = '/';
+                if (userInfo.role === "cbt_admin") {
+                    redirectTo = '/dashboard';
+                } else if (userInfo.role === "system_admin") {
+                    redirectTo = '/system-admin';
+                }
+                
                 console.log("AuthProvider: Login successful.");
                 setIsLoading(false);
-                return { success: true };
+                return { success: true, user: userInfo, redirectTo: redirectTo };
             } else {
                 console.log("AuthProvider: Login failed - API success false or no token.");
                 setIsLoading(false);

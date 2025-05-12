@@ -1,7 +1,7 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './context/AuthProvider.jsx';
+import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthProvider.jsx';
 import { BookmarkProvider } from './context/BookmarkProvider.jsx';
 import HomePage from './pages/Homepage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
@@ -33,9 +33,9 @@ import Eventpage from './pages/EventPage.jsx'
 import ManageLocation from './pages/ManageLocation.jsx';
 import ManageReviews from './pages/ManageReviews.jsx';
 import DiscoverPlaces from './pages/DiscoverPlaces.jsx';
+import ProtectedRoute from './components/ProtectedRoutes.jsx';
 
 function App() {
-
   return (
     <AuthProvider>
       <BookmarkProvider>
@@ -48,9 +48,6 @@ function App() {
             <Route path="/footer" element={<Footer />} />
             <Route path="/forget-password" element={<ForgetPassword />} />
             <Route path="/settings" element={<SettingPage />} />
-            <Route path="/system-admin" element={<SystemAdminpage />} />
-            <Route path="/profile-settings" element={<ProfileSettingPage />} />
-            <Route path="/bookmark" element={<BookmarkPage />} />
             <Route path="/major-towns" element={<MajorTownPage />} />
             <Route path="/homestay" element={<HomestayPage />} />
             <Route path="/museum" element={<MuseumPage />} />
@@ -61,17 +58,29 @@ function App() {
             <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/review" element={<ReviewPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/view-analytics" element={<ViewAnalytics />} />
-            <Route path="/view-inquiry" element={<ViewInquiry />} />
-            <Route path="/add-event" element={<AddEventPage />} />
-            <Route path="/business-management" element={<BusinessManagementPage />} />
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
-            <Route path="/manage-location" element={<ManageLocation />} />
-            <Route path="/manage-reviews" element={<ManageReviews />} />
             <Route path="/discover/:name" element={<DiscoverPlaces />} />
             {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
             {/* Add more routes as needed */}
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile-settings" element={<ProfileSettingPage />} />
+              <Route path="/bookmark" element={<BookmarkPage />} />
+            </Route>
+  
+            <Route element={<ProtectedRoute allowedRoles={["cbt_admin"]} />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/view-inquiry" element={<ViewInquiry />} />
+              <Route path="/view-analytics" element={<ViewAnalytics />} />
+              <Route path="/manage-reviews" element={<ManageReviews />} />
+              <Route path="/add-event" element={<AddEventPage />} />
+              <Route path="/business-management" element={<BusinessManagementPage />} />
+              <Route path="/manage-location" element={<ManageLocation />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
+              <Route path="/system-admin" element={<SystemAdminpage />} />
+            </Route>
           </Routes>
         </Router>
       </BookmarkProvider>
