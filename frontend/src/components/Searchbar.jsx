@@ -110,10 +110,43 @@ function SearchBar({ onPlaceSelected, setShowRecent }) {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
+    // recognition.onresult = (event) => {
+    //   const transcript = event.results[0][0].transcript;
+    //   inputRef.current.value = transcript;
+    //   inputRef.current.focus();
+    // };
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      inputRef.current.value = transcript;
-      inputRef.current.focus();
+      setInputValue(transcript); // this updates React state
+      inputRef.current.value = transcript; // update DOM input field
+    
+      // Manually trigger predictions (since input event listener won't fire automatically)
+      const autocompleteService = new window.google.maps.places.AutocompleteService();
+      autocompleteService.getPlacePredictions(
+        { input: transcript, componentRestrictions: { country: 'my' } },
+        (preds, status) => {
+          if (
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            preds?.length > 0
+          ) {
+            setPredictions(preds);
+            // Optionally auto-select the first prediction
+            fetchPlaceDetails(preds[0].place_id);
+          } else {
+            setPredictions([]);
+            // Optional fallback to text search
+            const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+            service.textSearch({ query: transcript }, (results, status) => {
+              if (
+                status === window.google.maps.places.PlacesServiceStatus.OK &&
+                results.length > 0
+              ) {
+                handlePlace(results[0]);
+              }
+            });
+          }
+        }
+      );
     };
 
     recognition.onerror = (event) => {
@@ -213,6 +246,7 @@ function SearchBar({ onPlaceSelected, setShowRecent }) {
             setInputValue('');
             inputRef.current.value = '';
             inputRef.current.focus(); 
+            onPlaceSelected(null);
           }} />
         </>
       )}

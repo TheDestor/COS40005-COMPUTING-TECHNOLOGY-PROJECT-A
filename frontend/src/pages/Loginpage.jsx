@@ -164,8 +164,7 @@ const LoginPage = ({ onClose }) => {
       handleError(error.message || "Invalid OTP.");
     }
   };
-
-
+  
   const getOTP = async (e) => {
     e.preventDefault();
 

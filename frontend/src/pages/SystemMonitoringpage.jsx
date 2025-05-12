@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import '../styles/SystemMonitoringpage.css';
-import { FaExclamationTriangle, FaDatabase, FaLock, FaGlobe, FaServer, FaCircleNotch, FaCog } from 'react-icons/fa';
+import { FaExclamationTriangle, FaDatabase, FaLock, FaGlobe, FaServer, FaCog } from 'react-icons/fa';
+import * as d3 from 'd3';
 
-// Create a non-Recharts version of the donut chart that doesn't use hooks
-const StaticPerformanceDonutChart = () => {
-  // Performance data (hardcoded as per original)
+// D3.js version of the donut chart using hooks and useEffect
+const D3PerformanceDonutChart = () => {
+  // Performance data
   const performanceValue = 82.3;
   const remainingValue = 17.7;
   
@@ -31,12 +32,86 @@ const StaticPerformanceDonutChart = () => {
   const statusColor = getStatusColor(performanceValue);
   const statusText = getStatusText(performanceValue);
 
-  // Calculate SVG parameters for the donut
-  const size = 180; // Adjusted size to fit better in the layout
-  const strokeWidth = 18;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (performanceValue / 100) * circumference;
+  // Create a reference for the SVG container
+  const svgRef = useRef(null);
+  
+  // D3 chart rendering using useEffect
+  useEffect(() => {
+    if (!svgRef.current) return;
+    
+    // Clear any existing content
+    d3.select(svgRef.current).selectAll("*").remove();
+    
+    // Chart dimensions
+    const width = 180;
+    const height = 180;
+    const margin = 10;
+    const thickness = 18;
+    
+    // Radius calculations
+    const radius = Math.min(width, height) / 2 - margin;
+    
+    // Create SVG
+    const svg = d3.select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", `translate(${width / 2}, ${height / 2})`);
+    
+    // Create arc generator
+    const arc = d3.arc()
+      .innerRadius(radius - thickness)
+      .outerRadius(radius);
+    
+    // Create pie generator
+    const pie = d3.pie()
+      .value(d => d.value)
+      .sort(null)
+      .startAngle(-Math.PI / 2)
+      .endAngle(Math.PI * 1.5);
+    
+    // Data for the donut
+    const data = [
+      { name: 'Performance', value: performanceValue },
+      { name: 'Remaining', value: remainingValue }
+    ];
+    
+    // Create donut chart
+    const path = svg.selectAll('path')
+      .data(pie(data))
+      .enter()
+      .append('path')
+      .attr('d', arc)
+      .attr('fill', (d, i) => i === 0 ? statusColor : '#f0f0f0');
+    
+    // Add animation
+    path.transition()
+      .duration(1000)
+      .attrTween('d', function(d) {
+        const interpolate = d3.interpolate({ startAngle: -Math.PI / 2, endAngle: -Math.PI / 2 }, d);
+        return function(t) {
+          return arc(interpolate(t));
+        };
+      });
+    
+    // Add text in the center
+    svg.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '-0.2em')
+      .attr('font-size', '24px')
+      .attr('font-weight', 'bold')
+      .attr('fill', statusColor)
+      .text(`${performanceValue}%`);
+    
+    svg.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '1.2em')
+      .attr('font-size', '16px')
+      .attr('font-weight', 'medium')
+      .attr('fill', statusColor)
+      .text(statusText);
+      
+  }, [performanceValue, statusColor, statusText]); // Dependencies for the effect
 
   return (
     <div className="flex flex-col items-center bg-white rounded-lg shadow-md p-4 h-full">
@@ -49,42 +124,7 @@ const StaticPerformanceDonutChart = () => {
       <div className="flex flex-row w-full">
         {/* Left side: Chart */}
         <div className="flex items-center justify-center" style={{ flex: '0 0 50%' }}>
-          <div className="relative" style={{ width: size, height: size }}>
-            {/* Background circle */}
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <circle
-                cx={size/2}
-                cy={size/2}
-                r={radius}
-                fill="none"
-                stroke="#f0f0f0"
-                strokeWidth={strokeWidth}
-              />
-              {/* Foreground circle (performance) */}
-              <circle
-                cx={size/2}
-                cy={size/2}
-                r={radius}
-                fill="none"
-                stroke={statusColor}
-                strokeWidth={strokeWidth}
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                strokeLinecap="round"
-                transform={`rotate(-90 ${size/2} ${size/2})`}
-              />
-            </svg>
-            
-            {/* Center text */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-              <div className="text-3xl font-bold" style={{ color: statusColor }}>
-                {performanceValue}%
-              </div>
-              <div className="text-lg font-medium" style={{ color: statusColor }}>
-                {statusText}
-              </div>
-            </div>
-          </div>
+          <svg ref={svgRef}></svg>
         </div>
         
         {/* Right side: Metrics */}
@@ -117,6 +157,94 @@ const StaticPerformanceDonutChart = () => {
   );
 };
 
+// D3 Resource Usage Trends Bar Chart Component
+const D3ResourceTrendsChart = () => {
+  const svgRef = useRef(null);
+  
+  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  // Generate some random data
+  const data = months.map(month => ({
+    month,
+    value: Math.random() * 50 + 10, // Random value for demo
+    highlight: month === 'MAR'
+  }));
+  
+  useEffect(() => {
+    if (!svgRef.current) return;
+    
+    // Clear any existing content
+    d3.select(svgRef.current).selectAll("*").remove();
+    
+    // Chart dimensions
+    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+    const width = svgRef.current.clientWidth - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
+    
+    // Create SVG
+    const svg = d3.select(svgRef.current)
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+    
+    // X scale
+    const x = d3.scaleBand()
+      .domain(data.map(d => d.month))
+      .range([0, width])
+      .padding(0.3);
+    
+    // Y scale
+    const y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([height, 0]);
+    
+    // Add X axis
+    svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("text-anchor", "middle")
+      .style("font-size", "12px");
+    
+    // Add Y axis
+    svg.append("g")
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d}%`))
+      .selectAll("text")
+      .style("font-size", "12px");
+    
+    // Add bars
+    svg.selectAll(".bar")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("x", d => x(d.month))
+      .attr("width", x.bandwidth())
+      .attr("y", height) // Start from bottom for animation
+      .attr("height", 0) // Start with height 0 for animation
+      .attr("fill", d => d.highlight ? "#3b82f6" : "#60a5fa")
+      .attr("rx", 4) // Rounded corners
+      .transition()
+      .duration(800)
+      .delay((d, i) => i * 100)
+      .attr("y", d => y(d.value))
+      .attr("height", d => height - y(d.value));
+    
+  }, [data]);
+  
+  return (
+    <div className="resource-trends">
+      <div className="header">
+        <h3>Resource Usage Trends</h3>
+        <span className="tag">Last 12 months</span>
+      </div>
+      <div className="w-full h-64">
+        <svg ref={svgRef} width="100%" height="100%"></svg>
+      </div>
+    </div>
+  );
+};
+
 const SystemMonitoringPage = () => {
   return (
     <div className="content-section2">
@@ -144,7 +272,7 @@ const SystemMonitoringPage = () => {
             <div className="change">12ms latency</div>
         </div>
         <div className="card2 performance">
-          <StaticPerformanceDonutChart />
+          <D3PerformanceDonutChart />
         </div>
       </div>
 
@@ -185,20 +313,7 @@ const SystemMonitoringPage = () => {
         </ul>
       </div>
 
-      <div className="resource-trends">
-        <div className="header">
-          <h3>Resource Usage Trends</h3>
-          <span className="tag">Last 12 months</span>
-        </div>
-        <div className="bar-chart">
-          {["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"].map((month, idx) => (
-            <div key={month} className="bar-wrapper">
-              <div className={`bar ${month === 'MAR' ? 'highlight' : ''}`} style={{ height: `${Math.random() * 50 + 10}%` }}></div>
-              <span>{month}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <D3ResourceTrendsChart />
     </div>
   );
 };

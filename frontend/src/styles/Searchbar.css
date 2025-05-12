@@ -2,7 +2,7 @@
 .styled-searchbar-container {
   position: absolute;
   top: 15px;
-  left: 15%;
+  left: 14%;
   transform: translateX(-50%);
   z-index: 999;
   background-color: #f2ecf7;
@@ -21,7 +21,7 @@
   background: transparent;
   font-size: 14px;
   color: #3d3842;
-  width: 250px;
+  width: 220px;
   padding-right: 80px;
 }
 

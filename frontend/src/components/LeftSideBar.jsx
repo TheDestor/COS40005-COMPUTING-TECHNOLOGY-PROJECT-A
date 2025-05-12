@@ -129,7 +129,7 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent 
     console.log('Fetching nearby places for:', placeType, 'at:', locationCoords);
     const request = {
       location: locationCoords,
-      radius: 2000,
+      radius: 500,
       type: placeType,
     };
 
@@ -171,7 +171,7 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent 
       });
     } catch (error) {
       console.error('Error fetching directions:', error);
-      alert('Failed to get directions. Please check your inputs and try again.');
+      // alert('Failed to get directions. Please check your inputs and try again.');
     } finally {
       setIsLoading(false);
     }

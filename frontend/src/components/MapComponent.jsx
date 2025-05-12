@@ -10,12 +10,16 @@ import beachIcon from '../assets/beach.gif';
 import eventIcon from '../assets/event.gif';
 import restaurantIcon from '../assets/restaurant.png';
 import MapViewMenu from './MapViewMenu';
+import MapViewTesting from './MapViewTesting';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
 import '../styles/MapComponent.css';
 import SearchBar from './Searchbar';
 import SearchHandler from './SearchHandler';
+import WeatherDateTime from './WeatherDateTime';
+import { townCoordinates } from '../townCoordinates';
+import LoginModal from '../pages/Loginpage';
 
 const containerStyle = {
   position: 'absolute',
@@ -29,6 +33,7 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
+// const center = { lat: 1.5533, lng: 110.3592 };
 
 function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
   const map = useMap('e57efe6c5ed679ba');
@@ -45,15 +50,26 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
     map.setZoom(10);
   };
 
+  // const categoryIcons = {
+  //   'Major Town': townIcon,
+  //   'Homestay': homestayIcon,
+  //   'Airport': aeroplaneIcon,
+  //   'Museum': museumIcon,
+  //   'National Park': parkIcon,
+  //   'Beach': beachIcon,
+  //   'Seaport': seaportIcon,
+  //   'Event': eventIcon,
+  //   'Restaurant': restaurantIcon,
+  // };
   const categoryIcons = {
     'Major Town': townIcon,
-    'Homestay': homestayIcon,
-    'Airport': aeroplaneIcon,
-    'Museum': museumIcon,
-    'National Park': parkIcon,
-    'Beach': beachIcon,
-    'Seaport': seaportIcon,
-    'Event': eventIcon,
+    'Accommodations': homestayIcon,
+    'Food': aeroplaneIcon,
+    'Attractions': museumIcon,
+    'Shpoppings': parkIcon,
+    'Leisures': beachIcon,
+    'Tour Guides': seaportIcon,
+    'Events': eventIcon,
     'Restaurant': restaurantIcon,
   };
 
@@ -218,6 +234,16 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
 
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
   const [searchInfoOpen, setSearchInfoOpen] = useState(false);
+  const [currentTown, setCurrentTown] = useState('Kuching');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    const coordinates = townCoordinates[currentTown];
+    if (map && coordinates) {
+      map.panTo({ lat: coordinates.lat, lng: coordinates.lon });
+      map.setZoom(10); // or any zoom level you prefer
+    }
+  }, [currentTown, map]);
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -240,19 +266,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     }
   };
 
-  // const handleMarkerClick = (location) => {
-  //   setSelectedLocation(location);
-  
-  //   if (!map) {
-  //     console.warn('Map is not ready yet.');
-  //     return;
-  //   }
-  
-  //   map.panTo({ lat: location.latitude, lng: location.longitude });
-  //   map.setZoom(15);
-  // };
-  
-  
+  const handleTownChange = (town) => {
+    setCurrentTown(town);
+  };
+   
   // const categoryIcons = {
   //   'Major Town': townIcon,
   //   'Homestay': homestayIcon,
@@ -264,6 +281,18 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   //   'Event': eventIcon,
   //   'Restaurant': restaurantIcon,
   // };
+
+  const categoryIcons = {
+    'Major Town': townIcon,
+    'Accommodation': homestayIcon,
+    'Food': aeroplaneIcon,
+    'Attractions': museumIcon,
+    'Shoppings': parkIcon,
+    'Leisures': beachIcon,
+    'Tour Guides': seaportIcon,
+    'Events': eventIcon,
+    'Restaurant': restaurantIcon,
+  };
 
   useEffect(() => {
     console.log('Updated locations:', locations);
@@ -320,11 +349,11 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
 
-      <MarkerManager 
+      {/* <MarkerManager 
         locations={locations} 
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
-      />
+      /> */}
         
       {/* Locations based on type */}
       {/* {locations.map((loc) => (
@@ -349,6 +378,28 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           />
         </AdvancedMarker>
       ))} */}
+      {locations.map((loc, index) => (
+        <AdvancedMarker
+          key={index}
+          position={{ lat: loc.latitude, lng: loc.longitude }}
+          title={loc.name}
+          onClick={() => setSelectedLocation(loc)}
+        >
+          <img
+            src={categoryIcons[activeOption] || townIcon}
+            alt={activeOption}
+            style={{
+              width: '30px',
+              height: '30px',
+              cursor: 'pointer',
+              borderRadius: '999px',
+              transform: selectedLocation?.name === loc.name ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.2s ease'
+            }}
+          />
+        </AdvancedMarker>
+      ))}
+
   
         {/* Nearby Places */}
         {nearbyPlaces.filter((place) => {
@@ -430,10 +481,15 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
                 url: selectedLocation.url || 'No URL provided',
+                rating: selectedLocation.rating,
+                openNowText: selectedLocation.openNowText,
+                open24Hours: selectedLocation.open24Hours,
+                holidayNotice: selectedLocation.holidayNotice,
               }}
               addBookmark={addBookmark}
               onCloseClick={() => setSelectedLocation(null)}
-              onShowReview={() => setShowReviewPage(true)} // 👈 this is key
+              onShowReview={() => setShowReviewPage(true)}
+              onOpenLoginModal={() => setShowLoginModal(true)}
             />
           </InfoWindow>
         )}
@@ -443,8 +499,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             <ReviewPage onClose={() => setShowReviewPage(false)} />
           </div>
         )}
-
-        <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
+        <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
+        {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
+        <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
+        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
       </Map>
     </APIProvider>
   );

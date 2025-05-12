@@ -2,14 +2,20 @@
    0. Wrapper with Logo + Menu Centered
 ============================ */
 .mapview-navbar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 10px 20px;
-    background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%);
-    box-sizing: border-box;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 80px; /* define height explicitly */
+  width: 100vw;
+  z-index: 9999;
+  background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  box-sizing: border-box;
+}
+
 
   .menu-wrapper {
     flex: 1;

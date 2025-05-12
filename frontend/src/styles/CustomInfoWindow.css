@@ -172,3 +172,17 @@
   margin-left: 6px;
 }
 
+.footer-item.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.info-open-status {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.holiday-notice {
+  font-size: 0.85rem;
+}
