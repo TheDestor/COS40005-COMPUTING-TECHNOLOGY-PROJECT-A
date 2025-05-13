@@ -228,6 +228,18 @@ const ProfileSettingsPage = () => {
   });
   const { user, accessToken, updateUserContext } = useAuth();
 
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    localStorage.setItem('profileActiveSection', section);
+  };
+
+  useEffect(() => {
+  const savedSection = localStorage.getItem('profileActiveSection');
+  if (savedSection) {
+    setActiveSection(savedSection);
+  }
+}, []);
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -453,10 +465,33 @@ const ProfileSettingsPage = () => {
       <Navbar />
       <div className="profile-settings-container">
         <div className="sidebar50">
-          <div className={`sidebar-item ${activeSection === 'account' ? 'active' : ''}`} onClick={() => setActiveSection('account')}><MdPerson className="sidebar-icon" /> Account preferences</div>
-          <div className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`} onClick={() => setActiveSection('security')}><MdSecurity className="sidebar-icon" /> Sign in & security</div>
+          <div
+            className={`sidebar-item ${activeSection === 'account' ? 'active' : ''}`}
+            onClick={() => handleSectionChange('account')}
+          >
+            <MdPerson className="sidebar-icon" /> Account preferences
+          </div>
+          <div
+            className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`}
+            onClick={() => handleSectionChange('security')}
+          >
+            <MdSecurity className="sidebar-icon" /> Sign in & security
+          </div>
+          <div
+            className={`sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`}
+            onClick={() => handleSectionChange('notifications')}
+          >
+            <MdNotificationsNone className="sidebar-icon" /> Notifications
+          </div>
+          <div
+            className={`sidebar-item ${activeSection === 'subscriptions' ? 'active' : ''}`}
+            onClick={() => handleSectionChange('subscriptions')}
+          >
+            <MdSubscriptions className="sidebar-icon" /> Subscriptions
+          </div>
+          {/* <div className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`} onClick={() => setActiveSection('security')}><MdSecurity className="sidebar-icon" /> Sign in & security</div>
           <div className={`sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`} onClick={() => setActiveSection('notifications')}><MdNotificationsNone className="sidebar-icon" /> Notifications</div>
-          <div className={`sidebar-item ${activeSection === 'subscriptions' ? 'active' : ''}`} onClick={() => setActiveSection('subscriptions')}><MdSubscriptions className="sidebar-icon" /> Subscriptions</div>
+          <div className={`sidebar-item ${activeSection === 'subscriptions' ? 'active' : ''}`} onClick={() => setActiveSection('subscriptions')}><MdSubscriptions className="sidebar-icon" /> Subscriptions</div> */}
         </div>
         <div className="main-content">
           {renderContent()}

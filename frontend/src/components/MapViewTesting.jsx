@@ -22,18 +22,18 @@ const menuItems = [
 ];
 
 const sarawakDivisions = [
-  { name: 'Kuching', latitude: 1.5533, longitude: 110.3592 },
-  { name: 'Samarahan', latitude: 1.4556, longitude: 110.4882 },
-  { name: 'Serian', latitude: 1.2966, longitude: 110.5371 },
-  { name: 'Sri Aman', latitude: 1.2400, longitude: 111.4651 },
-  { name: 'Betong', latitude: 1.3954, longitude: 111.5000 },
-  { name: 'Sarikei', latitude: 2.1256, longitude: 111.5187 },
-  { name: 'Sibu', latitude: 2.2967, longitude: 111.8250 },
-  { name: 'Mukah', latitude: 2.8985, longitude: 112.0880 },
+  { name: 'Kuching', latitude: 1.5534, longitude: 110.3594 },
+  { name: 'Samarahan', latitude: 1.4591, longitude: 110.4883 },
+  { name: 'Serian', latitude: 1.1670, longitude: 110.5665 },
+  { name: 'Sri Aman', latitude: 1.2389, longitude: 111.4636 },
+  { name: 'Betong', latitude: 1.4115, longitude: 111.5290 },
+  { name: 'Sarikei', latitude: 2.1271, longitude: 111.5182 },
+  { name: 'Sibu', latitude: 2.2870, longitude: 111.8320 },
+  { name: 'Mukah', latitude: 2.8988, longitude: 112.0914 },
   { name: 'Kapit', latitude: 2.0167, longitude: 112.9333 },
-  { name: 'Bintulu', latitude: 3.1667, longitude: 113.0333 },
-  { name: 'Miri', latitude: 4.3997, longitude: 113.9845 },
-  { name: 'Limbang', latitude: 4.7500, longitude: 115.0000 }
+  { name: 'Bintulu', latitude: 3.1707, longitude: 113.0360 },
+  { name: 'Miri', latitude: 4.4180, longitude: 114.0155 },
+  { name: 'Limbang', latitude: 4.7548, longitude: 115.0089 }
 ];
 
 

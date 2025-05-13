@@ -17,6 +17,7 @@
   transition: transform 0.3s ease-in-out, background-color 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
+  overflow-x: scroll;
 }
 
 .tourist-info-container.collapsed {
@@ -193,20 +194,107 @@
    8. REELS VIDEO SECTION
 ================================== */
 .reel-item {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reel-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .video-container {
   position: relative;
   padding-top: 177.77%; /* 16:9 aspect ratio */
+  background: #000; /* For letterboxing */
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
 }
 
 .react-player {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.reel-info {
+  padding: 12px 15px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9), #fff);
+}
+
+.caption {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: #2d2d2d;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.channel {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.channel::before {
+  content: '▶';
+  font-size: 10px;
+  color: #666;
+}
+
+/* Loading and error states */
+.loading, .error, .no-reels {
+  padding: 25px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  border-radius: 12px;
+  margin: 10px;
+  background: rgba(255,255,255,0.9);
+}
+
+.error {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.no-reels::before {
+  content: '🎥';
+  display: block;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+/* Scrollbar styling */
+.reels-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reels-content::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 3px;
+}
+
+.reels-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+.reels-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
 }

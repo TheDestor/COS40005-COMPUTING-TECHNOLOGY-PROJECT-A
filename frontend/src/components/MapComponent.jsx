@@ -34,7 +34,6 @@ const containerStyle = {
 };
 
 const center = { lat: 3.1175031, lng: 113.2648667 };
-// const center = { lat: 1.5533, lng: 110.3592 };
 
 function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
   const map = useMap('e57efe6c5ed679ba');
@@ -48,7 +47,7 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
     }
 
     map.panTo({ lat: location.latitude, lng: location.longitude });
-    map.setZoom(10);
+    map.setZoom(15);
   };
 
  const categoryIcons = {
@@ -65,7 +64,7 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
 
   return (
     <>
-      {locations.map((loc) => (
+      {/* {locations.map((loc) => (
         <AdvancedMarker
           key={loc.id}
           position={{ lat: loc.latitude, lng: loc.longitude }}
@@ -83,6 +82,27 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
               transform: selectedLocation?.id === loc.id ? 'scale(1.2)' : 'scale(1)',
               transition: 'transform 0.2s ease'
             }} 
+          />
+        </AdvancedMarker>
+      ))} */}
+      {locations.map((loc, index) => (
+        <AdvancedMarker
+          key={index}
+          position={{ lat: loc.latitude, lng: loc.longitude }}
+          title={loc.name}
+          onClick={() => handleMarkerClick(loc)}
+        >
+          <img
+            src={categoryIcons[loc.type] || townIcon}
+            alt={loc.type}
+            style={{
+              width: '30px',
+              height: '30px',
+              cursor: 'pointer',
+              borderRadius: '999px',
+              transform: selectedLocation?.name === loc.name ? 'scale(1.2)' : 'scale(1)',
+              transition: 'transform 0.2s ease'
+            }}
           />
         </AdvancedMarker>
       ))}
@@ -328,14 +348,14 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
 
-      {/* <MarkerManager 
+      <MarkerManager 
         locations={locations} 
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
-      /> */}
+      />
         
       {/* Locations based on type */}
-      {locations.map((loc, index) => (
+      {/* {locations.map((loc, index) => (
         <AdvancedMarker
           key={index}
           position={{ lat: loc.latitude, lng: loc.longitude }}
@@ -355,7 +375,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             }}
           />
         </AdvancedMarker>
-      ))}
+      ))} */}
 
   
         {/* Nearby Places */}
