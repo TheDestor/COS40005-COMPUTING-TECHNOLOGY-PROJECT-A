@@ -114,12 +114,12 @@ const HomePage = () => {
         showRecent={showRecent}
       />
       
-      <TouristInfoSection 
+      {/* <TouristInfoSection 
         locations={infoLocations}
         onDataFetch={handleDataFetch}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
-      />
+      /> */}
 
       <LeftSidebar
         startingPoint={startingPoint}

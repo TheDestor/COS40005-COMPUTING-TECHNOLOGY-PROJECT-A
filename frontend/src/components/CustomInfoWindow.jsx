@@ -95,17 +95,12 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       </a>
 
       <div className="info-actions">
-        {location.openNowText && (
+        {/* {location.openNowText && (
           <p className="info-open-status" style={{ color: location.openNowText.includes('Open') ? 'green' : 'red' }}>
             {location.open24Hours ? 'Open 24 hours' : location.openNowText}
           </p>
-        )}
-
-        {location.holidayNotice && (
-          <p className="holiday-notice" style={{ color: 'orange' }}>
-            {location.holidayNotice}
-          </p>
-        )}
+        )} */}
+        <p>Open at 12 noon </p>
         <button className="book-btn">Explore Now!</button>
       </div>
 

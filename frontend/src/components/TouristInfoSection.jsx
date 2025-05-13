@@ -1,78 +1,126 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/TouristInfoSection.css';
 import { FiChevronRight, FiChevronLeft } from 'react-icons/fi';
-import kuchingImage from '../assets/Kuching.png';
-import { Link } from 'react-router-dom';
-import MapViewMenu from './MapViewMenu';
+import ReactPlayer from 'react-player';
 
-const TouristInfoSection = ({ locations, onDataFetch, selectedCategory, setselectedMenu }) => {
+const TouristInfoSection = ({ selectedLocation }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [reels, setReels] = useState([]);
   const [containerStyle, setContainerStyle] = useState({ top: '60px' });
-  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    const updatePosition = () => {
-      const navbar = document.querySelector('.navbar');
-      if (navbar) {
-        setContainerStyle({ top: `${navbar.offsetHeight}px` });
+    const fetchReels = async () => {
+      try {
+        // console.log('Selected Location:', selectedLocation);
+        // if (!selectedLocation || selectedLocation.type !== 'Major Town') {
+        //   console.log('Not a major town or no location selected');
+        //   return;
+        // }
+
+        setLoading(true);
+        setError(null);
+        
+        const apiKey = 'AIzaSyAl79EwWjJZ9w1IFFZlT7RvzORHoA7szYY';
+        const searchQuery = `${selectedLocation.name} tourism shorts`;
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
+
+        console.log('Fetching from:', apiUrl); // Debug URL (without key)
+
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        // Handle YouTube API errors
+        if (!response.ok) {
+          const errorMessage = data.error?.message || 'Unknown YouTube API error';
+          throw new Error(`YouTube API: ${errorMessage} (status ${response.status})`);
+        }
+
+        if (!data.items) {
+          throw new Error('No videos found for this location');
+        }
+
+        const videos = data.items.map(item => ({
+          id: item.id.videoId,
+          videoUrl: `https://youtu.be/${item.id.videoId}`,
+          caption: item.snippet.title,
+          thumbnail: item.snippet.thumbnails.high?.url,
+          channel: item.snippet.channelTitle
+        }));
+
+        setReels(videos);
+      } catch (error) {
+        console.error('Full error:', error);
+        setError(error.message);
+        setReels([]); // Clear previous results on error
+      } finally {
+        setLoading(false);
       }
     };
 
+    fetchReels();
+  }, [selectedLocation]);
+
+  useEffect(() => {
+    const navbar = document.querySelector('.navbar');
+    const updatePosition = () => {
+      if (navbar) setContainerStyle({ top: `${navbar.offsetHeight}px` });
+    };
+    
     updatePosition();
     window.addEventListener('resize', updatePosition);
-
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-    };
+    return () => window.removeEventListener('resize', updatePosition);
   }, []);
 
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
     <div 
       className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
       style={containerStyle}
     >
-      {/* Render MapViewMenu and pass the handler */}
-      {/* <MapViewMenu onSelectCategory={onDataFetch} /> */}
-      
       <div className="collapse-toggle" onClick={toggleCollapse}>
         {isCollapsed ? <FiChevronLeft /> : <FiChevronRight />}
       </div>
-      
-      <div className="info-content">
-        <div className="discover-more-container">
-          <span className="discover-more">Discover more?</span>
-          <Link to="/major-towns" className="show-more">Show more</Link>
-        </div>
 
-        <div className="items-list">
-          {locations.length > 0 ? locations.map(item => (
-            <div key={item.id} className="info-item">
-              <div className="item-image">
-                <img 
-                  src={item.image || kuchingImage} // fallback if no image
-                  alt={item.name} 
-                />
-              </div>
-              <div className="item-text">
-                <h3>{item.name}</h3>
-                <p>{item.description || 'Click view more to learn about this place.'}</p>
-              </div>
-              <div className="view-more-container">
-                <button 
-                  className="view-more-btn" 
-                  // onClick={() => '/major-town'}
-                >
-                  View more
-                </button>
-              </div>
-            </div>
-          )) : (
-            <p style={{ padding: '1rem' }}>No locations loaded. Select a category to explore.</p>
-          )}
-        </div>
+      <div className="reels-content">
+        {loading && <p className="loading">Loading videos...</p>}
+        {error && <p className="error">Error: {error}</p>}
+        
+        {!loading && !error && (
+          <>
+            {reels.length > 0 ? (
+              reels.map((reel) => (
+                <div key={reel.id} className="reel-item">
+                  <div className="video-container">
+                    <ReactPlayer
+                      url={reel.videoUrl}
+                      controls
+                      width="100%"
+                      height="100%"
+                      config={{
+                        youtube: {
+                          playerVars: { 
+                            modestbranding: 1,
+                            rel: 0,
+                            playsinline: 1
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="reel-info">
+                    <p className="caption">{reel.caption}</p>
+                    {reel.channel && <p className="channel">By {reel.channel}</p>}
+                  </div>
+                </div>
+              ))
+            ) : (
+              !loading && <p className="no-reels">No videos found for this location</p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

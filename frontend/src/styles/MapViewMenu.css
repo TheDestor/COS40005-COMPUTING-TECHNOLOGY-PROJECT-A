@@ -4,7 +4,7 @@
 .mapview-container {
   position: absolute;
   top: 15px;              /* adjust vertical offset from the top */
-  left: 47.5%;
+  left: 48.5%;
   transform: translateX(-50%);
   z-index: 999;           /* make sure it appears above the map */
   width: auto;            /* or set a fixed width if needed */
@@ -43,7 +43,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px 12px;
+  padding: 12px 8px;
   cursor: pointer;
   font-size: 13px;
   color: #555;
@@ -54,6 +54,7 @@
   min-width: 64px;
   position: relative;
   transition: transform 0.2s ease, background-color 0.3s ease;
+  max-width: 90px;
 }
 
 .menu-item2:hover {
@@ -100,11 +101,39 @@
   font-size: 0.8rem;
   text-align: center;
   font-weight: 400;
-  transition: color 0.3s ease;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
   color: #555;
+  display: block;
+  width: 80px; /* Fixed width, adjust as needed */
+  height: 16px;
+  position: relative;
+}
+
+.menu-text2 span {
+  display: inline-block;
+  white-space: nowrap;
+  min-width: 100%;
+  transform: translateX(0);
+  animation: none;
+  position: absolute;
+  left: 0;
+}
+
+.menu-item2:hover .menu-text2 span {
+  animation: marquee 4s linear infinite;
+  padding-left: 20%;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Add wrapper for text */
+.menu-text-wrapper {
+  display: inline-block;
+  width: 100%;
+  vertical-align: top;
 }
 
 .menu-item2:hover .menu-text2 {

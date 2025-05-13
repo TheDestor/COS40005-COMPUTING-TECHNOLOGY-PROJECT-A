@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
   FaBed, FaUniversity, FaMountain, FaPlaneDeparture,
-  FaUmbrellaBeach, FaHospital, FaCalendarAlt
+  FaUmbrellaBeach, FaHospital, FaCalendarAlt, FaShoppingCart 
 } from 'react-icons/fa';
 import { FaLocationDot } from "react-icons/fa6";
+import { MdForest } from "react-icons/md";
+import { IoFastFood } from "react-icons/io5";
 import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/Kuching.png';
 
 // Menu items
 const menuItems = [
   { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
-  { name: 'Food', icon: <FaUniversity />, isFetchOnly: true },
+  { name: 'Attractions', icon: <MdForest />, isFetchOnly: true },
+  { name: 'Shoppings & Leisures', icon: <FaShoppingCart />, isFetchOnly: true },
+  { name: 'Food & Beverages', icon: <IoFastFood  />, isFetchOnly: true },
+  { name: 'Transportation', icon: <FaPlaneDeparture />, isFetchOnly: true },
   { name: 'Accommodation', icon: <FaBed />, isFetchOnly: true },
-  { name: 'Attractions', icon: <FaMountain />, isFetchOnly: true },
-  { name: 'Shoppings', icon: <FaPlaneDeparture />, isFetchOnly: true },
-  { name: 'Leisures', icon: <FaUmbrellaBeach />, isFetchOnly: true },
   { name: 'Tour Guides', icon: <FaHospital />, isFetchOnly: true },
   { name: 'Events', icon: <FaCalendarAlt />, isFetchOnly: true }
 ];
@@ -37,12 +39,11 @@ const sarawakDivisions = [
 
 // Categories
 const placeCategories = {
-  Transport: ['airport', 'bus_station', 'train_station', 'taxi_stand'],
+  Transportation: ['airport', 'bus_station', 'train_station', 'taxi_stand'],
   Accommodation: ['lodging', 'campground', 'homestay'],
-  Food: ['restaurant', 'cafe', 'bakery', 'meal_takeaway'],
+  'Food & Beverages': ['restaurant', 'cafe', 'bakery', 'meal_takeaway'],
   Attractions: ['tourist_attraction', 'museum', 'zoo', 'amusement_park', 'aquarium'],
-  Shoppings: ['shopping_mall', 'supermarket', 'convenience_store'],
-  Leisures: ['spa', 'gym', 'night_club', 'movie_theater', 'stadium', 'park'],
+  'Shoppings & Leisures': ['shopping_mall', 'spa', 'gym', 'night_club', 'park'],
   Events: ['festival', 'concert', 'government event'],
   'Tour Guides': ['tour guide', 'tour operator', 'travel agency'],
   'Major Town': ['city']
@@ -75,12 +76,12 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
               description: place.vicinity || 'No description available.',
               url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
               rating: place.rating || null,
-              openNowText: place.opening_hours?.isOpen() ? 'Open now' : 'Closed now',
-              open24Hours: place.opening_hours?.periods?.every(p =>
-                p.open?.time === '0000' && p.close?.time === '2359'
-              ) || false,
-              holidayNotice: place.opening_hours?.special_days?.[0]?.exceptional_hours_text || ''
+              // openNowText: place.opening_hours?.open_now ? 'Open now' : 'Closed now',
+              // open24Hours: place.opening_hours?.periods?.some(p =>
+              //   (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
+              // ) || false,
             }));
+
             setLocationsData(formatted);
             if (onSelect) onSelect(categoryName, formatted);
             if (onSelectCategory) onSelectCategory(categoryName, formatted);
@@ -118,9 +119,9 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
             description: 'Division in Sarawak, Malaysia.',
             url: `https://www.google.com/maps/search/?api=1&query=${town.latitude},${town.longitude}`,
             rating: null,
-            openNowText: '',
-            open24Hours: false,
-            holidayNotice: ''
+            // openNowText: '',
+            // open24Hours: false,
+            // holidayNotice: ''
         }));
         setLocationsData(formatted);
         if (onSelect) onSelect(item.name, formatted);
@@ -163,7 +164,9 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
                 </span>
               </div>
               <span className={`menu-text2 ${isActive ? 'active-text' : ''}`}>
-                {item.name}
+                <div className="menu-text-wrapper">
+                  <span>{item.name}</span>
+                </div>
               </span>
             </button>
           );

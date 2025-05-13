@@ -188,3 +188,25 @@
   text-decoration: underline;
   color: #0051cc;
 }
+
+/* ================================
+   8. REELS VIDEO SECTION
+================================== */
+.reel-item {
+  margin-bottom: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.video-container {
+  position: relative;
+  padding-top: 177.77%; /* 16:9 aspect ratio */
+}
+
+.react-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

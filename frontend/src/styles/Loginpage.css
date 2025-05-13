@@ -189,7 +189,7 @@
 
 .send-button-inside {
   position: absolute;
-  right: 8px;
+  right: 0.2rem;
   top: 50%;
   transform: translateY(-50%);
   height: 34px;
