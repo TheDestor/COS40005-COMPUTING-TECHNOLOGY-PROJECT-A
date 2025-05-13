@@ -8,6 +8,14 @@ import { MdForest } from "react-icons/md";
 import { IoFastFood } from "react-icons/io5";
 import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/Kuching.png';
+import ZoomHandler from './ZoomHandler';
+
+useEffect(() => {
+  if (map) {
+    window.mapRef = map;
+  }
+}, [map]);
+
 
 // Menu items
 const menuItems = [
@@ -52,6 +60,7 @@ const placeCategories = {
 const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
   const [selectedMenu, setSelectedMenu] = useState(activeOption || '');
   const [locationsData, setLocationsData] = useState([]);
+   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
 
   const fetchPlacesByCategory = (categoryName, location, radius = 50000) => {
     const entries = placeCategories[categoryName];
@@ -74,8 +83,8 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
               longitude: place.geometry?.location?.lng() || 0,
               image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
               description: place.vicinity || 'No description available.',
-              url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
-              rating: place.rating || null,
+              // url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
+              // rating: place.rating || null,
               // openNowText: place.opening_hours?.open_now ? 'Open now' : 'Closed now',
               // open24Hours: place.opening_hours?.periods?.some(p =>
               //   (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
@@ -85,6 +94,17 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
             setLocationsData(formatted);
             if (onSelect) onSelect(categoryName, formatted);
             if (onSelectCategory) onSelectCategory(categoryName, formatted);
+
+            // Only zoom if it's not Major Town
+            if (formatted.length > 0 && categoryName !== 'Major Town') {
+              if (window.mapRef) {
+                window.mapRef.panTo({
+                  lat: formatted[0].latitude,
+                  lng: formatted[0].longitude
+                });
+                window.mapRef.setZoom(14);
+              }
+            }
           }
         } else {
           console.error(`Google Places error for ${categoryName}:`, status);
@@ -108,27 +128,25 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
     setSelectedMenu(item.name);
     const centerOfKuching = new window.google.maps.LatLng(1.5533, 110.3592);
     setLocationsData([]);
+    setSelectedSearchPlace(null); // Reset selected place on new category
 
     if (item.isFetchOnly) {
       if (item.name === 'Major Town') {
         const formatted = sarawakDivisions.map(town => ({
-            name: town.name,
-            latitude: town.latitude,
-            longitude: town.longitude,
-            image: defaultImage,
-            description: 'Division in Sarawak, Malaysia.',
-            url: `https://www.google.com/maps/search/?api=1&query=${town.latitude},${town.longitude}`,
-            rating: null,
-            // openNowText: '',
-            // open24Hours: false,
-            // holidayNotice: ''
+          name: town.name,
+          latitude: town.latitude,
+          longitude: town.longitude,
+          image: defaultImage,
+          description: 'Division in Sarawak, Malaysia.',
         }));
         setLocationsData(formatted);
         if (onSelect) onSelect(item.name, formatted);
         if (onSelectCategory) onSelectCategory(item.name, formatted);
-        } else {
+      } else {
+        // Zoom to Kuching for all other categories
+        const formattedKuching = { lat: centerOfKuching.lat(), lng: centerOfKuching.lng() };
         fetchPlacesByCategory(item.name, centerOfKuching);
-        }
+      }
     } else {
       if (onSelect) onSelect(item.name);
       if (onSelectCategory) onSelectCategory(item.name);
@@ -172,8 +190,10 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
           );
         })}
       </div>
+      
+      {/* Call ZoomHandler and pass selectedSearchPlace */}
+      <ZoomHandler selectedSearchPlace={selectedSearchPlace} />
     </div>
   );
 };
-
 export default MapViewTesting;

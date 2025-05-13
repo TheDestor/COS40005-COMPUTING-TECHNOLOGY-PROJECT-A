@@ -348,13 +348,13 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         mapTypeId = {mapType}
       >
 
+      {/* Locations based on type */}
       <MarkerManager 
         locations={locations} 
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
       />
-        
-      {/* Locations based on type */}
+
       {/* {locations.map((loc, index) => (
         <AdvancedMarker
           key={index}
@@ -387,15 +387,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           const lat = place.geometry?.location?.lat();
           const lng = place.geometry?.location?.lng();
           if (!lat || !lng) return null;
-
-          const getPlaceType = (types) => {
-            if (types?.includes('airport')) return "Airport";
-            if (types?.includes('lodging')) return "Homestay";
-            if (types?.includes('museum')) return "Museum";
-            if (types?.includes('park')) return "National Park";
-            if(types?.includes('restaurant')) return "Restaurant";
-            return 'Other';
-          };
 
           const type = getPlaceType(place.types);
           const icon = categoryIcons[type];
@@ -457,8 +448,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 name: selectedLocation.name,
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
-                url: selectedLocation.url || 'No URL provided',
-                rating: selectedLocation.rating,
+                // url: selectedLocation.url || 'No URL provided',
+                // rating: selectedLocation.rating,
                 // openNowText: selectedLocation.openNowText,
                 // open24Hours: selectedLocation.open24Hours,
               }}
@@ -470,14 +461,24 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           </InfoWindow>
         )}
 
-        {showReviewPage && selectedLocation && (
+        {/* {showReviewPage && selectedLocation && (
           <div className="review-overlay-wrapper">
             <ReviewPage onClose={() => setShowReviewPage(false)} />
+          </div>
+        )} */}
+        {showReviewPage && selectedLocation && (
+          <div className="review-overlay-wrapper">
+            <ReviewPage
+              onClose={() => setShowReviewPage(false)}
+              rating={selectedLocation.rating || 0}
+              placeName={selectedLocation.name}
+              // You can also pass `selectedLocation.reviews` here if it's available
+            />
           </div>
         )}
         <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
         {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
-        <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> 
+        <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} /> 
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
         <TouristInfoSection selectedLocation={selectedLocation} />
       </Map>

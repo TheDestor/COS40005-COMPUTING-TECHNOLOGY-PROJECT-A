@@ -13,7 +13,7 @@
   z-index: 9999;
   padding-bottom: 10px;
   box-sizing: border-box;
-}
+}  
 
 .menu-icon100 {
   font-size: 20px;
@@ -53,11 +53,12 @@
   left: -330px;
   width: 300px;
   height: 100vh;
-  background-color: #d9d9d9;
+  background-color: #f5f5f5;
   transition: left 0.3s ease-in-out;
   padding: 20px;
   overflow-y: auto;
   z-index: 1000;
+  transition: left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
 .side-panel100.expanded {
@@ -79,7 +80,7 @@
 
 .transport-option {
   flex: 1;
-  background: #f5f5f5;
+  background: #d9d9d9;
   border-radius: 10px;
   padding: 10px;
   margin: 0 5px;
@@ -101,6 +102,12 @@
   font-weight: 600;
 }
 
+.transport-option:hover {
+  opacity: 1;
+  background-color: #d0eafc;
+  transform: scale(1.05);
+}
+
 /* Input Box */
 .input-container {
   display: flex;
@@ -111,12 +118,17 @@
 
 .input-box {
   flex: 1;
-  background-color: #fff;
+  background-color: #f2ecf7;
   border-radius: 10px;
   display: flex;
   align-items: center;
   padding: 8px 10px;
   gap: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+.input-box:focus-within {
+  box-shadow: 0 0 0 2px #cce5ff;
 }
 
 .input-box input {
@@ -144,6 +156,16 @@
   color: #333;
 }
 
+.input-icon:hover {
+  color: #007bff;
+  transform: scale(1.1);
+}
+
+.input-box button:hover {
+  transform: rotate(90deg) scale(1.2);
+  color: #c0392b;
+}
+
 .input-icon.red {
   color: red;
 }
@@ -168,13 +190,14 @@
 
 /* Route Info */
 .route-list {
-  padding: 10px;
+  padding: 10px 4px;
   animation: fadeIn 0.5s ease forwards;
 }
 
 /* Route Item */
 .route-item {
-  background: #fff;
+  background-color: #f2ecf7;
+  transform: translateY(-2px);
   border-radius: 10px;
   padding: 12px;
   margin-bottom: 12px;
@@ -216,6 +239,8 @@
 
 .copy-link:hover {
   transform: scale(1.1);
+  color: #0056b3;
+  text-decoration: underline;
 }
 
 /* Divider line */
@@ -249,6 +274,8 @@
   color: #007bff;
   cursor: pointer;
   transition: color 0.2s ease;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .send-directions-text:hover {
@@ -259,13 +286,9 @@
   font-weight: 600;
   margin: 15px 0 10px;
   color: #007bff;
-  cursor: pointer;
   transition: color 0.2s ease;
 }
 
-.explore-nearby-text:hover {
-  color: #0056b3;
-}
 
 /* Nearby Places */
 .nearby-places-container100 {
@@ -333,13 +356,30 @@
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
-  transition: border 0.25s;
+  /* transition: border 0.25s; */
+  transition: all 0.3s ease;
+  background-color: #f2ecf7;
 }
 
 .add-destination:hover {
   color:#0056b3;
-  background-color: #e8f0fe;
-  /* border: none; */
+  background-color: #d0eafc;
+  transform: scale(1.05);
+  border: 0px solid #e8f0fe;
+}
+
+.side-panel100::-webkit-scrollbar {
+  width: 6px;
+}
+.side-panel100::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.side-panel100::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 10px;
+}
+.side-panel100::-webkit-scrollbar-thumb:hover {
+  background: #888;
 }
 
 /* Animations */

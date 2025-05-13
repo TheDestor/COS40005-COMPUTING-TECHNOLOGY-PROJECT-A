@@ -59,11 +59,11 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
       <div className="info-header">
         <h3>{location.name}</h3>
-        {location.rating && (
+        {/* {location.rating && (
           <p className="rating51">
             {location.rating.toFixed(1)} <FaStar color="#ffc107" />
           </p>
-        )}
+        )} */}
       </div>
 
       <div className="info-tabs">
@@ -85,14 +85,14 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         )}
       </p>
 
-      <a
+      {/* <a
         href={location.url}
         target="_blank"
         rel="noopener noreferrer"
         className="info-link"
       >
         {new URL(location.url).hostname}
-      </a>
+      </a> */}
 
       <div className="info-actions">
         {/* {location.openNowText && (
