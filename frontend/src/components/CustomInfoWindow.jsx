@@ -3,11 +3,15 @@ import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark } from 'reac
 import '../styles/CustomInfoWindow.css';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthProvider.jsx';
+import SharePlace from './SharePlace'; // adjust path as needed
+
 
 const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, onOpenLoginModal }) => {
   const [activeFooter, setActiveFooter] = useState('');
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [isFooterDisabled, setIsFooterDisabled] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const auth = useAuth();
 
   if (!location) return null;
@@ -26,7 +30,13 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     setTimeout(() => setIsFooterDisabled(false), 3000); // enable after 3 seconds
   
     setActiveFooter(label);
-  
+    
+    if (label === "Share") {
+      setIsShareModalOpen(true);
+      setActiveFooter('');
+      return;
+    }
+
     if (label === "Save") {
       if (auth && auth.user) {
         const bookmarkData = {
@@ -54,6 +64,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
   
 
   return (
+    <>
     <div className="info-window-card">
       <img src={location.image} alt={location.name} className="info-image" />
 
@@ -118,6 +129,20 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         ))}
       </div>
     </div>
+    <SharePlace
+      visible={isShareModalOpen}
+      onClose={() => setIsShareModalOpen(false)}
+      location={{
+        name: location.name,
+        image: location.image,
+        description: location.description || "No address provided",
+        latitude: location.latitude || "N/A",
+        longitude: location.longitude || "N/A",
+        url: location.url || window.location.href
+      }}
+    />
+
+    </>
   );
 };
 

@@ -4,14 +4,32 @@
   align-items: center;
   background: #f3f4f6;
   min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.share-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
 }
 
 .share-box {
-  width: 360px;
   background-color: #fff;
-  border-radius: 18px;
   border: 1px solid #ddd;
+  position: relative;
+  background: white;
+  width: 90%;
+  max-width: 500px;
+  margin: 100px auto;
   padding: 20px;
+  z-index: 1001;
+  border-radius: 8px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -19,7 +37,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
 }
 
 .share-header h3 {
@@ -126,7 +143,7 @@
 }
 
 .social-icon {
-  font-size: 26px;
+  font-size: 3rem;
   cursor: pointer;
   border-radius: 50%;
   padding: 12px;

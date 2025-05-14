@@ -21,6 +21,7 @@ import WeatherDateTime from './WeatherDateTime';
 import { townCoordinates } from '../townCoordinates';
 import LoginModal from '../pages/Loginpage';
 import TouristInfoSection from './TouristInfoSection';
+import SharePlace from './SharePlace';
 
 const containerStyle = {
   position: 'absolute',
@@ -247,14 +248,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // useEffect(() => {
-  //   const coordinates = townCoordinates[currentTown];
-  //   if (map && coordinates) {
-  //     map.panTo({ lat: coordinates.lat, lng: coordinates.lon });
-  //     map.setZoom(10); // or any zoom level you prefer
-  //   }
-  // }, [currentTown, map]);
-
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
     setActiveOption(category);
@@ -448,6 +441,8 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 name: selectedLocation.name,
                 image: selectedLocation.image || 'default-image.jpg',
                 description: selectedLocation.description || "No description available.",
+                latitude: selectedLocation.latitude || "N/A",
+                longitude: selectedLocation.longitude || "N/A",
                 // url: selectedLocation.url || 'No URL provided',
                 // rating: selectedLocation.rating,
                 // openNowText: selectedLocation.openNowText,

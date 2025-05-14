@@ -1,15 +1,21 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import "../styles/SharePlace.css";
 import { FaFacebookF, FaInstagram, FaXTwitter } from "react-icons/fa6";
 import { FaTelegram } from "react-icons/fa";
 
-const SharePlace = () => {
-  return (
+const SharePlace = ({ visible, onClose, location }) => {
+  if (!visible || !location) return null;
+
+  const { name, image, description, latitude, longitude, url } = location;
+
+  return ReactDOM.createPortal(
     <div className="share-container">
+      <div className="share-overlay" onClick={onClose}></div>
       <div className="share-box">
         <div className="share-header">
           <h3>Share</h3>
-          <button className="close-btn99">×</button>
+          <button className="close-btn99" onClick={onClose}>×</button>
         </div>
 
         <div className="share-tabs">
@@ -18,25 +24,29 @@ const SharePlace = () => {
         </div>
 
         <div className="share-preview">
-          <img
-            src="https://via.placeholder.com/300x150"
-            alt="Place"
-            className="share-image"
-          />
+          <img src={image} alt={name} className="share-image" />
           <div className="share-address">
-            Blablablabalbalbalbal  
-            <br />
-            93400 Bau, Sarawak
+            <strong>{name}</strong><br />
+            {description}<br />
+            Lat: {latitude}, Lng: {longitude}
           </div>
         </div>
 
         <div className="share-link-row">
           <input
             className="share-link-input"
-            value="https://fiafkaenfaiofnaiof.fefafwaf.fwafa"
+            value={url}
             readOnly
           />
-          <button className="copy-btn">COPY LINK</button>
+          <button
+            className="copy-btn"
+            onClick={() => {
+              navigator.clipboard.writeText(url);
+              alert("Link copied!");
+            }}
+          >
+            COPY LINK
+          </button>
         </div>
 
         <div className="share-social-icons">
@@ -46,8 +56,10 @@ const SharePlace = () => {
           <FaTelegram className="social-icon tg" />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
+
 
 export default SharePlace;
