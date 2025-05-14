@@ -4,6 +4,7 @@ import "../styles/ContactUs.css";
 import ky from "ky";
 import { toast } from "react-toastify";
 import MenuNavBar from "../components/MenuNavbar";
+import LoginPage from './Loginpage.jsx';
 
 export default function ContactUs() {
   // States
@@ -15,6 +16,15 @@ export default function ContactUs() {
   });
   
   const { email, topic, message } = formData;
+  const [showLogin, setShowLogin] = useState(false);
+    
+  const handleLoginClick = () => {
+    setShowLogin(true);
+  };
+
+  const closeLogin = () => {
+    setShowLogin(false);
+  };
 
   // Category button click handler
   const handleButtonClick = (buttonName) => {
@@ -103,7 +113,7 @@ export default function ContactUs() {
 
   return (
     <>
-    <MenuNavBar />
+    <MenuNavBar onLoginClick={handleLoginClick}/>
     <div className="contact-us-container">
       <div className="header">
         <h1>
@@ -344,6 +354,7 @@ export default function ContactUs() {
           </div>
         </div>
       </footer>
+      {showLogin && <LoginPage onClose={closeLogin} />}
     </div>
     </>
   );

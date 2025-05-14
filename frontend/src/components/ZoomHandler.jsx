@@ -12,7 +12,7 @@ export default function ZoomHandler({ selectedSearchPlace }) {
         lng: selectedSearchPlace.longitude,
       };
       map.panTo(position);  // This will move the map center to the place
-      map.setZoom(15);      // Set zoom level to 15 (you can adjust this value)
+      map.setZoom(13);      // Set zoom level to 15 (you can adjust this value)
     } else {
       console.log("Map not available or selectedSearchPlace missing");
     }

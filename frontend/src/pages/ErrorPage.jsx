@@ -10,9 +10,9 @@ function ErrorPage() {
   return (
     <div className="error-page">
       <Lottie animationData={animationData} loop={true} className="lottie-error" />
-      <h1>Page Not Found</h1>
+      <h1>Error 404</h1>
       <p>The page you are looking for doesn’t exist or an unexpected error occurred.</p>
-      <button onClick={() => navigate('/')}>Return to Home</button>
+      <button className="back-home" onClick={() => navigate('/')}>Return to Home</button>
     </div>
   );
 }

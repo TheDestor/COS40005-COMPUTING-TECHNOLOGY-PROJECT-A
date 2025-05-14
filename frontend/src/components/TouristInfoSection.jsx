@@ -9,8 +9,17 @@ const TouristInfoSection = ({ selectedLocation }) => {
   const [containerStyle, setContainerStyle] = useState({ top: '60px' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [reelsCache, setReelsCache] = useState({});
 
   useEffect(() => {
+    if (!selectedLocation) return;
+
+    const cached = reelsCache[selectedLocation.name];
+    if (cached) {
+      setReels(cached);
+      return;
+    }
+
     const fetchReels = async () => {
       try {
         // console.log('Selected Location:', selectedLocation);
@@ -23,7 +32,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
         setError(null);
         
         const apiKey = 'AIzaSyAl79EwWjJZ9w1IFFZlT7RvzORHoA7szYY';
-        const searchQuery = `${selectedLocation.name} tourism shorts`;
+        const searchQuery = `${selectedLocation.name} sarawak tourism shorts`;
         const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 
         console.log('Fetching from:', apiUrl); // Debug URL (without key)
@@ -76,14 +85,16 @@ const TouristInfoSection = ({ selectedLocation }) => {
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
-    <div 
-      className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
-      style={containerStyle}
-    >
+    <>
+    <div className={`tourist-info-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="collapse-toggle" onClick={toggleCollapse}>
         {isCollapsed ? <FiChevronLeft /> : <FiChevronRight />}
       </div>
 
+    <div 
+      className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
+      style={containerStyle}
+    >
       <div className="reels-content">
         {loading && <p className="loading">Loading videos...</p>}
         {error && <p className="error">Error: {error}</p>}
@@ -97,6 +108,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
                     <ReactPlayer
                       url={reel.videoUrl}
                       controls
+                      playing={false}
+                      className="react-player"
                       width="100%"
                       height="100%"
                       config={{
@@ -123,6 +136,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
         )}
       </div>
     </div>
+    </div>
+    </>
   );
 };
 

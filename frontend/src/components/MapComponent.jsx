@@ -247,13 +247,13 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  useEffect(() => {
-    const coordinates = townCoordinates[currentTown];
-    if (map && coordinates) {
-      map.panTo({ lat: coordinates.lat, lng: coordinates.lon });
-      map.setZoom(10); // or any zoom level you prefer
-    }
-  }, [currentTown, map]);
+  // useEffect(() => {
+  //   const coordinates = townCoordinates[currentTown];
+  //   if (map && coordinates) {
+  //     map.panTo({ lat: coordinates.lat, lng: coordinates.lon });
+  //     map.setZoom(10); // or any zoom level you prefer
+  //   }
+  // }, [currentTown, map]);
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -480,7 +480,9 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
         <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} /> 
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-        <TouristInfoSection selectedLocation={selectedLocation} />
+        {selectedLocation && (
+          <TouristInfoSection selectedLocation={selectedLocation} />
+        )}
       </Map>
     </APIProvider>
   );

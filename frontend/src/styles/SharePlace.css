@@ -1,0 +1,159 @@
+.share-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f3f4f6;
+  min-height: 100vh;
+}
+
+.share-box {
+  width: 360px;
+  background-color: #fff;
+  border-radius: 18px;
+  border: 1px solid #ddd;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.share-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.share-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-btn99 {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s ease;
+}
+
+.close-btn99:hover {
+  color: #333;
+}
+
+.share-tabs {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 16px;
+}
+
+.share-tabs span {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.active-tab5 {
+  color: #007bff;
+  font-weight: 600;
+  border-bottom: 2px solid #007bff;
+}
+
+.inactive-tab5:hover {
+  color: #007bff;
+}
+
+.share-preview {
+  display: flex;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.share-image {
+  width: 90px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+}
+
+.share-address {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.4;
+}
+
+.share-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  color: #333;
+}
+
+.copy-btn {
+  font-size: 12px;
+  color: #007bff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.copy-btn:hover {
+  color: #0056b3;
+}
+
+.share-social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.social-icon {
+  font-size: 26px;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 12px;
+  background-color: #f0f0f0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-icon:hover {
+  background-color: #e6e6e6;
+  transform: scale(1.1);
+}
+
+.fb {
+  color: #1877f2;
+}
+
+.ig {
+  color: #e1306c;
+}
+
+.x {
+  color: #000;
+}
+
+.tg {
+  color: #229ED9;
+}

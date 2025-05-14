@@ -216,8 +216,8 @@
 
           <div className="registration-right">
             <div className="tabs">
-              <span className="active-tab">User registration</span>
-              <span className="inactive-tab" onClick={ onSwitchToBusiness }>Business registration</span>
+              <span className="active-tab">User Registration</span>
+              <span className="inactive-tab2" onClick={ onSwitchToBusiness }>Business Registration</span>
               <span className="close-btn2"  onClick={onClose}>&times;</span>
             </div>
 

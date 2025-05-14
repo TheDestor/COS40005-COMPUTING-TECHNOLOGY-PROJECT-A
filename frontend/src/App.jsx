@@ -35,6 +35,7 @@ import ManageReviews from './pages/ManageReviews.jsx';
 import DiscoverPlaces from './pages/DiscoverPlaces.jsx';
 import ProtectedRoute from './components/ProtectedRoutes.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
+import SharePlace from './components/SharePlace.jsx';
 
 function App() {
   return (
@@ -62,6 +63,7 @@ function App() {
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
             <Route path="/discover/:slug" element={<DiscoverPlaces />} />
             <Route path="/error" element={<ErrorPage />} />
+            <Route path="/share" element={<SharePlace />} />
             {/* <Route path="/write-review" element={<WriteReviewForm />} /> */}
             {/* Add more routes as needed */}
 

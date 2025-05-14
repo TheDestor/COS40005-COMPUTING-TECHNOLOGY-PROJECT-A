@@ -168,7 +168,7 @@ const LoginPage = ({ onClose }) => {
   const getOTP = async (e) => {
     e.preventDefault();
 
-    if (identifier === "" || identifier === undefined) return handleError("Please enter a valid Phone NUMBER!!!");
+    if (identifier === "" || identifier === undefined) return handleError("Please enter a valid phone number");
     try {
       const response = await setUpRecaptcha(identifier);
       console.log(response);
@@ -239,10 +239,10 @@ const LoginPage = ({ onClose }) => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
+            <div className="form-group100">
               <input
                 type="text"
-                className="input-field"
+                className="input-field100"
                 placeholder="Email/Phone Number"
                 name="identifier"
                 value={identifier}
@@ -252,11 +252,11 @@ const LoginPage = ({ onClose }) => {
             </div>
 
             {activeTab === 'otp' ? (
-              <div className="form-group">
+              <div className="form-group100">
                 <div className="otp-input-wrapper">
                   <input
                     type="text"
-                    className="input-field otp-input"
+                    className="input-field100 otp-input"
                     placeholder="OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
@@ -273,11 +273,11 @@ const LoginPage = ({ onClose }) => {
                 </div>
               </div>
             ) : (
-              <div className="form-group">
+              <div className="form-group100">
                 <div className="input-with-icon">
                   <input
                     type={showConfirm ? 'text' : 'password'}
-                    className="input-field"
+                    className="input-field100"
                     placeholder="Password"
                     name="password"
                     value={password}

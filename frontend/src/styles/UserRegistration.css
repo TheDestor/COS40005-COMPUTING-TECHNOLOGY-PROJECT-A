@@ -10,7 +10,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
   
   /* ========== Main Container ========== */
@@ -68,30 +68,31 @@
     color: #007bff;
     border-bottom: 2px solid #007bff;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: bold;
     cursor: pointer;
     transition: color 0.3s;
   }
   
-  .inactive-tab {
-    color: #333;
+  .inactive-tab2 {
+    color: #444;
     margin: 0 1.5rem;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
-    transition: color 0.3s;
+    transition: color 0.3s ease;
   }
 
-  .inactive-tab2 {
-    color: #333;
+  .inactive-tab3 {
+    color: #444;
     margin-right: 1.5rem;
+    margin-left: 0.1rem;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: color 0.3s;
   }
   
-  .inactive-tab:hover, .inactive-tab2:hover {
+  .inactive-tab:hover, .inactive-tab2:hover, .inactive-tab3:hover {
     color: #007bff;
   }
   
@@ -143,7 +144,7 @@
   
   .phone-input-wrapper:focus-within {
     border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    /* box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); */
   }
   
   .phone-input-wrapper select {
@@ -210,11 +211,14 @@
   
   .password-input span {
     position: absolute;
-    right: 15px;
+    right: 5%;
     cursor: pointer;
     color: #888;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     transition: color 0.3s;
+    justify-content: center;
+    align-items: center;
+    display: flex;
   }
   
   .password-input span:hover {

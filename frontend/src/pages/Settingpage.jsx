@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Settingpage.css';
 import Switch from 'react-switch';
 import { FaRegQuestionCircle, FaUserCog, FaBug, FaMicrophoneSlash } from 'react-icons/fa';
@@ -20,11 +21,20 @@ const SettingsPage = () => {
     setShowLogin(false);
   };
 
-  const [activeSection, setActiveSection] = useState('general');
+  const [activeSection, setActiveSection] = useState(() => {
+    return localStorage.getItem('activeSection') || 'general';
+  });
+
   const [seniorMode, setSeniorMode] = useState(false);
   const [voiceAssistant, setVoiceAssistant] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [showSeniorConfirm, setShowSeniorConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    localStorage.setItem('activeSection', section);
+  };
 
   const renderContent = () => {
     switch(activeSection) {
@@ -64,9 +74,9 @@ const SettingsPage = () => {
             </div>
 
             <ul className="settings-list">
-              <li>Clear cache</li>
-              <li>System updates</li>
-              <li>About the map</li>
+              <li onClick={() => navigate('/error')}>Clear cache</li>
+              <li onClick={() => navigate('/error')}>System updates</li>
+              <li onClick={() => navigate('/error')}>About the map</li>
             </ul>
           </div>
         );
@@ -123,22 +133,23 @@ const SettingsPage = () => {
     <div>
       <MenuNavbar onLoginClick={handleLoginClick}/> 
       <div className="settings-container">
-        <div className="sidebar2">
+        <div className="sidebar3">
+          <h3 className="settings-heading">Settings</h3>
           <div
             className={`sidebar-item ${activeSection === 'general' ? 'active' : ''}`}
-            onClick={() => setActiveSection('general')}
+            onClick={() => handleSectionChange('general')}
           >
             <MdOutlineSettings className="sidebar-icon" /> General settings
           </div>
           <div
             className={`sidebar-item ${activeSection === 'languages' ? 'active' : ''}`}
-            onClick={() => setActiveSection('languages')}
+            onClick={() => handleSectionChange('languages')}
           >
             <RiGlobalLine className="sidebar-icon" /> Languages
           </div>
           <div
             className={`sidebar-item ${activeSection === 'help' ? 'active' : ''}`}
-            onClick={() => setActiveSection('help')}
+            onClick={() => handleSectionChange('help')}
           >
             <FaRegQuestionCircle className="sidebar-icon" /> Help centre
           </div>

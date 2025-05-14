@@ -10,13 +10,6 @@ import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/Kuching.png';
 import ZoomHandler from './ZoomHandler';
 
-useEffect(() => {
-  if (map) {
-    window.mapRef = map;
-  }
-}, [map]);
-
-
 // Menu items
 const menuItems = [
   { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
@@ -33,17 +26,16 @@ const sarawakDivisions = [
   { name: 'Kuching', latitude: 1.5534, longitude: 110.3594 },
   { name: 'Samarahan', latitude: 1.4591, longitude: 110.4883 },
   { name: 'Serian', latitude: 1.1670, longitude: 110.5665 },
-  { name: 'Sri Aman', latitude: 1.2389, longitude: 111.4636 },
+  { name: 'Sri Aman', latitude: 1.2370, longitude: 111.4621 },
   { name: 'Betong', latitude: 1.4115, longitude: 111.5290 },
   { name: 'Sarikei', latitude: 2.1271, longitude: 111.5182 },
   { name: 'Sibu', latitude: 2.2870, longitude: 111.8320 },
   { name: 'Mukah', latitude: 2.8988, longitude: 112.0914 },
   { name: 'Kapit', latitude: 2.0167, longitude: 112.9333 },
-  { name: 'Bintulu', latitude: 3.1707, longitude: 113.0360 },
+  { name: 'Bintulu', latitude: 3.1739, longitude: 113.0428 },
   { name: 'Miri', latitude: 4.4180, longitude: 114.0155 },
   { name: 'Limbang', latitude: 4.7548, longitude: 115.0089 }
 ];
-
 
 // Categories
 const placeCategories = {
@@ -128,10 +120,10 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
     setSelectedMenu(item.name);
     const centerOfKuching = new window.google.maps.LatLng(1.5533, 110.3592);
     setLocationsData([]);
-    setSelectedSearchPlace(null); // Reset selected place on new category
-
+    
     if (item.isFetchOnly) {
       if (item.name === 'Major Town') {
+        setSelectedSearchPlace(null);
         const formatted = sarawakDivisions.map(town => ({
           name: town.name,
           latitude: town.latitude,
@@ -144,7 +136,7 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
         if (onSelectCategory) onSelectCategory(item.name, formatted);
       } else {
         // Zoom to Kuching for all other categories
-        const formattedKuching = { lat: centerOfKuching.lat(), lng: centerOfKuching.lng() };
+        setSelectedSearchPlace({ latitude: 1.5533, longitude: 110.3592 });
         fetchPlacesByCategory(item.name, centerOfKuching);
       }
     } else {
