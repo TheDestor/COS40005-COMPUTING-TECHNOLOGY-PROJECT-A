@@ -19,8 +19,8 @@ const contactUsSchema = new mongoose.Schema({
         required: [true, "Email required"]
     },
     category: { type: String, required: true },
-    topic: { type: String, required: true },
-    message: { type: String, required: true },
+    topic: { type: String, required: true, trim: true },
+    message: { type: String, required: true, trim: true },
     status: { type: String, required: true, default: 'Unread' }
 
 }, baseOptions);

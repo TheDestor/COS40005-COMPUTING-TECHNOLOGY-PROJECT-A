@@ -35,8 +35,8 @@ const baseOptions = {
 
 // Base user schema
 const userSchema = new mongoose.Schema({
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
     email: {
         type: String,
         unique: true,
@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema({
         },
         required: [true, "Email required"]
     },
-    phoneNumber: { type: String, required: true }, // Haven't done for phone number yet
-    password: { type: String, required: true },
+    phoneNumber: { type: String, required: true, trim: true }, // Haven't done for phone number yet
+    password: { type: String, required: true, trim: true },
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
     nationality: { type: String, required: true, default: 'N/A' },
     avatarUrl: { type: String, default: null}
@@ -80,9 +80,9 @@ export const userModel = mongoose.models.user || mongoose.model('users', userSch
 
 // Business user schema with business user specific fields
 const businessUserSchema = new mongoose.Schema({
-    companyName: { type: String, required: true },
-    companyRegistrationNo: { type: String, required: true },
-    companyAddress: { type: String, required: true },
+    companyName: { type: String, required: true, trim: true },
+    companyRegistrationNo: { type: String, required: true, trim: true },
+    companyAddress: { type: String, required: true, trim: true },
 })
 
 const touristUserSchema = new mongoose.Schema({});

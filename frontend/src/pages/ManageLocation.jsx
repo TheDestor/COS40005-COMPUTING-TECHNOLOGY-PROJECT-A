@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaDownload } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import DatePicker from 'react-datepicker';
@@ -30,37 +30,37 @@ const getTimeAgo = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now - date) / 1000);
-  
+
   let interval = Math.floor(seconds / 31536000);
   if (interval >= 1) {
     return interval === 1 ? '1 year ago' : `${interval} years ago`;
   }
-  
+
   interval = Math.floor(seconds / 2592000);
   if (interval >= 1) {
     return interval === 1 ? '1 month ago' : `${interval} months ago`;
   }
-  
+
   interval = Math.floor(seconds / 604800);
   if (interval >= 1) {
     return interval === 1 ? '1 week ago' : `${interval} weeks ago`;
   }
-  
+
   interval = Math.floor(seconds / 86400);
   if (interval >= 1) {
     return interval === 1 ? '1 day ago' : `${interval} days ago`;
   }
-  
+
   interval = Math.floor(seconds / 3600);
   if (interval >= 1) {
     return interval === 1 ? '1 hour ago' : `${interval} hours ago`;
   }
-  
+
   interval = Math.floor(seconds / 60);
   if (interval >= 1) {
     return interval === 1 ? '1 minute ago' : `${interval} minutes ago`;
   }
-  
+
   return 'Just now';
 };
 
@@ -69,24 +69,53 @@ const ManageLocation = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
+  const [locations, setLocations] = useState([]);
   const [editingLocation, setEditingLocation] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
 
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await ky.get("/api/locations/").json();
+        console.log(response);
+        setLocations(response);
+      } catch (error) {
+        console.error("An error occured while trying to get all locations:", error);
+      }
+    }
+
+    fetchLocations();
+  }, []);
+
   const clearValidationError = (fieldName) => {
     setValidationErrors(prev => {
-      const newErrors = {...prev};
+      const newErrors = { ...prev };
       delete newErrors[fieldName];
       return newErrors;
     });
   };
 
   const categoryOptions = [
+    'Attraction',
+    'Shopping & Leisure',
     'Food & Beverages',
+    'Transportation',
     'Accommodation',
-    'Attraction'
+    'Tour Guide', 
   ];
 
   const typeOptions = {
+    'Attraction': [
+      'National Park',
+      'Museum',
+      'Beach',
+      'Cultural Site',
+      'Adventure Park',
+      'Others'
+    ],
+    'Shopping & Leisure': [
+      'Test'
+    ],
     'Food & Beverages': [
       'Restaurant',
       'Cafe',
@@ -94,6 +123,9 @@ const ManageLocation = () => {
       'Bar',
       'Fine Dining',
       'Others'
+    ],
+    'Transportation': [
+      'Test'
     ],
     'Accommodation': [
       'Hotel',
@@ -103,13 +135,8 @@ const ManageLocation = () => {
       'Villa',
       'Others'
     ],
-    'Attraction': [
-      'National Park',
-      'Museum',
-      'Beach',
-      'Cultural Site',
-      'Adventure Park',
-      'Others'
+    'Tour Guide': [
+      'Test'
     ]
   };
 
@@ -118,74 +145,10 @@ const ManageLocation = () => {
     return typeOptions[editingLocation.category] || [];
   };
 
-  const generateLocationId = () => {
-    const prefix = '#LOC';
-    const randomNum = Math.floor(Math.random() * 900) + 100;
-    return `${prefix}${randomNum}`;
-  };
-
-  const [locations, setLocations] = useState([
-    {
-      id: '#LOC301',
-      category: 'Attraction',
-      type: 'National Park',
-      division: 'Kuching',
-      name: 'Bako National Park',
-      status: 'Active',
-      latitude: 1.697763,
-      longitude: 110.407775,
-      description: 'Bako National Park is home to proboscis monkey, along with macaques',
-      url: 'https://bakonationalpark.com/',
-      image: 'https://www.example.com/bako-national-park.jpg',
-      lastUpdated: '2025-03-12 14:30:00',
-    },
-    {
-      id: '#LOC302',
-      category: 'Accommodation',
-      type: 'Lodge',
-      division: 'Kuching',
-      name: 'Rainforest Lodge',
-      status: 'Active',
-      latitude: 1.5532,
-      longitude: 110.3608,
-      description: 'Eco-friendly jungle lodge',
-      url: '',
-      image: '',
-      lastUpdated: '2025-03-13 09:45:00',
-    },
-    {
-      id: '#LOC303',
-      category: 'Cultural',
-      type: 'Village',
-      division: 'Kuching',
-      name: 'Cultural Village',
-      status: 'Inactive',
-      latitude: 1.5592,
-      longitude: 110.3472,
-      description: 'Cultural shows and heritage',
-      url: '',
-      image: '',
-      lastUpdated: '2025-04-14 10:00:00',
-    },
-  ]);
-
-  const getAllLocations = async () => {
-    try {
-      const response = await ky.get("/api/locations/").json();
-
-      console.log(response);
-    } catch (error) {
-      console.error("An error occured while trying to get all locations:", error);
-    }
-  }
-
-  getAllLocations();
-
   const getStatusClass = (status) => status === 'Active' ? 'status-active' : 'status-inactive';
 
   const filteredLocations = locations.filter((location) => {
     const matchesSearchQuery =
-      location.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,9 +165,19 @@ const ManageLocation = () => {
       adjustedEndDate.setHours(23, 59, 59, 999);
       matchesDateRange = locationDate >= startDate && locationDate <= adjustedEndDate;
     }
-  
+
     return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
   });
+
+  const handleOpenModalForNew = () => {
+    setEditingLocation({
+      id: 'temp-' + Date.now(),
+      category: '', type: '', division: '', name: '', status: '',
+      latitude: 0, longitude: 0, description: '',
+      url: '', image: null, imagePreviewUrl: null, lastUpdated: ''
+    });
+    setValidationErrors({});
+  }
 
   const handleDelete = (id) => {
     setLocations(prev => prev.filter(loc => loc.id !== id));
@@ -214,7 +187,7 @@ const ManageLocation = () => {
     setEditingLocation({ ...location });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     const errors = {};
     if (!editingLocation.category) errors.category = 'Category is required';
     if (!editingLocation.type) errors.type = 'Type is required';
@@ -222,31 +195,61 @@ const ManageLocation = () => {
     if (!editingLocation.name) errors.name = 'Location name is required';
     if (!editingLocation.description) errors.description = 'Description is required';
     if (!editingLocation.status) errors.status = 'Status is required';
-  
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       return;
     }
-  
-    const now = new Date().toISOString();
-    const finalLocation = { 
-      ...editingLocation,
-      lastUpdated: now 
-    };
-  
-    if (finalLocation.id.startsWith('temp-')) {
-      finalLocation.id = generateLocationId();
+
+    // const now = new Date().toISOString();
+    // const finalLocation = { 
+    //   ...editingLocation,
+    //   lastUpdated: now 
+    // };
+
+    // if (finalLocation.id.startsWith('temp-')) {
+    //   finalLocation.id = generateLocationId();
+    // }
+
+    // setLocations(prev => {
+    //   if (!editingLocation.id.startsWith('temp-')) {
+    //     return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
+    //   }
+    //   return [...prev, finalLocation];
+    // });
+
+    // setEditingLocation(null);
+    // setValidationErrors({});
+
+    const isNewLocation = editingLocation?.id?.startsWith('temp-');
+
+    const locationData = {
+      category: editingLocation.category,
+      type: editingLocation.type,
+      division: editingLocation.division,
+      name: editingLocation.name,
+      status: editingLocation.status,
+      latitude: editingLocation.latitude,
+      longitude: editingLocation.longitude,
+      description: editingLocation.description,
+      url: editingLocation.url,
+      image: editingLocation.image
     }
-  
-    setLocations(prev => {
-      if (!editingLocation.id.startsWith('temp-')) {
-        return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
+    console.log(locationData);
+    try {
+      if (isNewLocation) {
+        const response = await ky.post(
+          "/api/locations/addLocation",
+          { json: locationData }
+        ).json();
+        console.log(response);
+      } else {
+
       }
-      return [...prev, finalLocation];
-    });
-    
-    setEditingLocation(null);
-    setValidationErrors({});
+      setValidationErrors({});
+    } catch (error) {
+      console.error("An error occured while adding new location:", error);
+    }
   };
 
   const downloadCSV = () => {
@@ -284,6 +287,11 @@ const ManageLocation = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const closeModal = () => {
+    setEditingLocation(null);
+    setValidationErrors({});
   };
 
   return (
@@ -331,22 +339,9 @@ const ManageLocation = () => {
             />
           </div>
 
-          <button 
+          <button
             className="add-location-button"
-            onClick={() => setEditingLocation({
-              id: 'temp-' + Date.now(),
-              category: '',
-              type: '',
-              division: '',
-              name: '',
-              status: '',
-              latitude: 0,
-              longitude: 0,
-              description: '',
-              url: '',
-              image: '',
-              lastUpdated: ''
-            })}
+            onClick={handleOpenModalForNew}
           >
             Add New Location +
           </button>
@@ -404,8 +399,8 @@ const ManageLocation = () => {
           </div>
 
           {filteredLocations.map((location) => (
-            <div key={location.id} className="MLtable-row">
-              <div className="table-cell">{location.id}</div>
+            <div key={location._id} className="MLtable-row">
+              <div className="table-cell">{location._id}</div>
               <div className="table-cell">{location.name}</div>
               <div className="table-cell">{location.category}</div>
               <div className="table-cell">{location.type}</div>
@@ -430,15 +425,15 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
-              <h3>{editingLocation.id.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
+              <h3>{editingLocation?.id?.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
 
               <label>Category *</label>
               <select
                 name="category"
                 value={editingLocation.category}
                 onChange={(e) => {
-                  setEditingLocation({ 
-                    ...editingLocation, 
+                  setEditingLocation({
+                    ...editingLocation,
                     category: e.target.value,
                     type: ''
                   });
@@ -511,14 +506,14 @@ const ManageLocation = () => {
               <input
                 name="coordinates"
                 value={
-                  editingLocation.latitude === 0 && editingLocation.longitude === 0 
-                    ? '' 
+                  editingLocation.latitude === 0 && editingLocation.longitude === 0
+                    ? ''
                     : `${editingLocation.latitude}, ${editingLocation.longitude}`
                 }
                 onChange={(e) => {
                   const [lat, lng] = e.target.value.split(',').map(coord => parseFloat(coord.trim()));
-                  setEditingLocation({ 
-                    ...editingLocation, 
+                  setEditingLocation({
+                    ...editingLocation,
                     latitude: isNaN(lat) ? 0 : lat,
                     longitude: isNaN(lng) ? 0 : lng
                   });
@@ -553,9 +548,7 @@ const ManageLocation = () => {
               <input
                 name="image"
                 value={editingLocation.image || ''}
-                onChange={(e) =>
-                  setEditingLocation({ ...editingLocation, image: e.target.value })
-                }
+                onChange={(e) => setEditingLocation({ ...editingLocation, image: e.target.value })}
               />
 
               <label>Status *</label>
@@ -579,7 +572,7 @@ const ManageLocation = () => {
               <MapPreview latitude={editingLocation.latitude} longitude={editingLocation.longitude} />
 
               <div className="modal-actions">
-                <button className="cancel-button" onClick={() => setEditingLocation(null)}>Cancel</button>
+                <button className="cancel-button" onClick={closeModal}>Cancel</button>
                 <button className="save-button" onClick={handleSaveEdit}>Save Location</button>
               </div>
             </div>
