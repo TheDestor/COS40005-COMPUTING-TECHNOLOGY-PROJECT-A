@@ -77,7 +77,6 @@ const ManageLocation = () => {
     const fetchLocations = async () => {
       try {
         const response = await ky.get("/api/locations/").json();
-        console.log(response);
         setLocations(response);
       } catch (error) {
         console.error("An error occured while trying to get all locations:", error);
@@ -154,11 +153,11 @@ const ManageLocation = () => {
       location.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.division.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getTimeAgo(location.lastUpdated).toLowerCase().includes(searchQuery.toLowerCase());
+      getTimeAgo(location.updatedAt).toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatusFilter = statusFilter ? location.status === statusFilter : true;
 
-    const locationDate = new Date(location.lastUpdated);
+    const locationDate = new Date(location.updatedAt);
     let matchesDateRange = true;
     if (startDate && endDate) {
       const adjustedEndDate = new Date(endDate);
@@ -171,16 +170,27 @@ const ManageLocation = () => {
 
   const handleOpenModalForNew = () => {
     setEditingLocation({
-      id: 'temp-' + Date.now(),
+      _id: 'temp-' + Date.now(),
       category: '', type: '', division: '', name: '', status: '',
       latitude: 0, longitude: 0, description: '',
-      url: '', image: null, imagePreviewUrl: null, lastUpdated: ''
+      url: '', image: null, updatedAt: ''
     });
     setValidationErrors({});
   }
 
-  const handleDelete = (id) => {
-    setLocations(prev => prev.filter(loc => loc.id !== id));
+  const handleDelete = async (locationId) => {
+    try {
+      console.log(locationId);
+      const response = await ky.post(
+        "/api/locations/removeLocation",
+        { json: {id: locationId} }
+      ).json();
+
+      console.log(response);
+      setLocations(prev => prev.filter(loc => loc._id !== locationId));
+    } catch (error) {
+      console.error("An error occured while trying to delete this location", error);
+    }
   };
 
   const handleEdit = (location) => {
@@ -201,29 +211,10 @@ const ManageLocation = () => {
       return;
     }
 
-    // const now = new Date().toISOString();
-    // const finalLocation = { 
-    //   ...editingLocation,
-    //   lastUpdated: now 
-    // };
-
-    // if (finalLocation.id.startsWith('temp-')) {
-    //   finalLocation.id = generateLocationId();
-    // }
-
-    // setLocations(prev => {
-    //   if (!editingLocation.id.startsWith('temp-')) {
-    //     return prev.map(loc => (loc.id === editingLocation.id ? finalLocation : loc));
-    //   }
-    //   return [...prev, finalLocation];
-    // });
-
-    // setEditingLocation(null);
-    // setValidationErrors({});
-
-    const isNewLocation = editingLocation?.id?.startsWith('temp-');
+    const isNewLocation = editingLocation?._id?.startsWith('temp-');
 
     const locationData = {
+      id: editingLocation._id,
       category: editingLocation.category,
       type: editingLocation.type,
       division: editingLocation.division,
@@ -242,9 +233,33 @@ const ManageLocation = () => {
           "/api/locations/addLocation",
           { json: locationData }
         ).json();
-        console.log(response);
-      } else {
+        
+        const newLocation = response.newLocation;
 
+        if (newLocation) {
+          setLocations(prevLocations => [...prevLocations, newLocation]);
+          closeModal();
+        } else {
+          console.error("Failed to add location: Invalid response from server", response);
+        }
+      } else {
+        const response = await ky.post(
+          "/api/locations/updateLocation",
+          { json: locationData }
+        ).json();
+
+        const updatedLocation = response.updatedLocation;
+
+        if (updatedLocation) {
+          setLocations(prevLocations =>
+            prevLocations.map(loc =>
+              loc._id === updatedLocation._id ? updatedLocation : loc
+            )
+          );
+          closeModal();
+        } else {
+          console.error("Failed to update location: Invalid response from server", response);
+        }
       }
       setValidationErrors({});
     } catch (error) {
@@ -260,13 +275,13 @@ const ManageLocation = () => {
 
     const headers = ['Location ID', 'Name', 'Category', 'Type', 'Division', 'Status', 'Last Updated'];
     const rows = filteredLocations.map(loc => [
-      `"${loc.id}"`,
+      `"${loc._id}"`,
       `"${loc.name}"`,
       `"${loc.category}"`,
       `"${loc.type}"`,
       `"${loc.division}"`,
       `"${loc.status}"`,
-      `"${new Date(loc.lastUpdated).toLocaleDateString('en-GB', {
+      `"${new Date(loc.updatedAt).toLocaleDateString('en-GB', {
         year: 'numeric',
         month: 'short',
         day: '2-digit',
@@ -411,11 +426,11 @@ const ManageLocation = () => {
                 </span>
               </div>
               <div className="table-cell">
-                {getTimeAgo(location.lastUpdated)}
+                {getTimeAgo(location.updatedAt)}
               </div>
               <div className="table-cell">
                 <button className="edit-button" onClick={() => handleEdit(location)}>Edit</button>
-                <button className="delete-button" onClick={() => handleDelete(location.id)}>Delete</button>
+                <button className="delete-button" onClick={() => handleDelete(location._id)}>Delete</button>
               </div>
             </div>
           ))}
@@ -425,7 +440,7 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
-              <h3>{editingLocation?.id?.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
+              <h3>{editingLocation?._id?.startsWith('temp-') ? 'Add New Location' : 'Edit Location'}</h3>
 
               <label>Category *</label>
               <select
