@@ -6,6 +6,7 @@ import userRouter from "../routes/UserRoutes.js";
 import locationRouter from "../routes/LocationRoutes.js";
 import inquiryRouter from "../routes/InquiryRoutes.js";
 import eventRouter from "../routes/EventRoutes.js";
+import businessRouter from "../routes/BusinessRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5050
@@ -24,6 +25,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/inquiry", inquiryRouter);
 app.use("/api/event", eventRouter);
+app.use("/api/businesses", businessRouter);
 
 // Start the express server on this port
 app.listen(PORT, () => {
