@@ -241,15 +241,20 @@ const handleChange = (e) => {
         // Set initial status
         formDataToSend.append('status', 'pending');
         
-        // Mock API call (for actual API endpoint will do it when we do backend)
-        // await fetch('/api/business-submission', {
-        //   method: 'POST',
-        //   body: formDataToSend
-        // });
-        
-        // Simulate API call with timeout
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
+        // Main API call to  backend endpoint
+        const response = await fetch('/api/business/addBusiness', {
+          method: 'POST',
+          body: formDataToSend,
+          // No need to set Content-Type header as it's automatically set for FormData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to submit business information');
+        }
+
+        const result = await response.json();
+        console.log('Submission successful:', result);
         setSubmitSuccess(true);
         
         // Reset form after successful submission (or redirect)
@@ -276,7 +281,7 @@ const handleChange = (e) => {
         console.error('Submission error:', error);
         setErrors({
           ...errors,
-          submit: 'There was an error submitting your business. Please try again.'
+          submit: error.message || 'There was an error submitting your business. Please try again.'
         });
       } finally {
         setSubmitting(false);
