@@ -240,3 +240,27 @@
   background-color: #218838;
   color: white;
 }
+
+.search-sort-bar {
+  display: flex;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;      /* vertically aligns both elements */
+  gap: 1rem;                /* space between search and select */
+  margin: 2rem 0;           /* add vertical spacing if needed */
+}
+
+.search-input {
+  width: 300px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.sort-select {
+  width: 180px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}

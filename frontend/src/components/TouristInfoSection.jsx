@@ -10,6 +10,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [reelsCache, setReelsCache] = useState({});
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
   useEffect(() => {
     if (!selectedLocation) return;
@@ -21,13 +22,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
     }
 
     const fetchReels = async () => {
+      let scrollTimeout;
       try {
-        // console.log('Selected Location:', selectedLocation);
-        // if (!selectedLocation || selectedLocation.type !== 'Major Town') {
-        //   console.log('Not a major town or no location selected');
-        //   return;
-        // }
-
         setLoading(true);
         setError(null);
         
@@ -59,6 +55,10 @@ const TouristInfoSection = ({ selectedLocation }) => {
         }));
 
         setReels(videos);
+        setReelsCache(prev => ({ ...prev, [selectedLocation.name]: videos }));
+        setShowScrollIndicator(true);
+
+        scrollTimeout = setTimeout(() => setShowScrollIndicator(false), 3000);
       } catch (error) {
         console.error('Full error:', error);
         setError(error.message);
@@ -95,6 +95,13 @@ const TouristInfoSection = ({ selectedLocation }) => {
       className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
       style={containerStyle}
     >
+      {!isCollapsed && reels.length > 0 && showScrollIndicator && (
+        <div className="scroll-down-indicator">
+          <span></span>
+          <p>Scroll down</p>
+        </div>
+      )}
+
       <div className="reels-content">
         {loading && <p className="loading">Loading videos...</p>}
         {error && <p className="error">Error: {error}</p>}

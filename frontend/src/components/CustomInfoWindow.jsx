@@ -4,17 +4,57 @@ import '../styles/CustomInfoWindow.css';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthProvider.jsx';
 import SharePlace from './SharePlace'; // adjust path as needed
+import { useNavigate } from 'react-router-dom';
+import defaultImage from '../assets/default.png';
 
+const majorTowns = [
+  'Kuching',
+  'Sibu',
+  'Bintulu',
+  'Miri',
+  'Serian',
+  'Sri Aman',
+  'Sarikei',
+  'Kapit',
+  'Mukah',
+  'Limbang',
+  'Samarahan',
+  'Betong'
+];
 
 const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, onOpenLoginModal }) => {
   const [activeFooter, setActiveFooter] = useState('');
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [isFooterDisabled, setIsFooterDisabled] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [exploreData, setExploreData] = useState(null);
+  const navigate = useNavigate();
 
   const auth = useAuth();
 
   if (!location) return null;
+
+  // Fetch handler
+  const handleExploreClick = () => {
+  const isMajorTown = majorTowns.includes(location.name);
+
+  const path = isMajorTown
+    ? `/towns/${encodeURIComponent(location.name)}`
+    : `/discover/${encodeURIComponent(location.name)}`;
+
+  navigate(path, {
+    state: {
+      location: {
+        name: location.name,
+        description: location.description,
+        image: location.image,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      }
+    }
+  });
+};
+
 
   const footerItems = [
     { icon: <FaMapMarkerAlt />, label: 'Directions' },
@@ -66,7 +106,15 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
   return (
     <>
     <div className="info-window-card">
-      <img src={location.image} alt={location.name} className="info-image" />
+      <img
+        src={location.image || defaultImage}
+        alt={location.name}
+        className="info-image"
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = defaultImage;
+        }}
+      />
 
       <div className="info-header">
         <h3>{location.name}</h3>
@@ -112,7 +160,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
           </p>
         )} */}
         <p>Open at 12 noon </p>
-        <button className="book-btn">Explore Now!</button>
+        <button className="book-btn" onClick={handleExploreClick}>Explore Now!</button>
       </div>
 
       <div className="info-footer">

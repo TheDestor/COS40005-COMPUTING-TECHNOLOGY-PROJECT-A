@@ -88,6 +88,12 @@
     min-width: 64px;
     position: relative;
     transition: transform 0.2s ease, background-color 0.3s ease;
+    min-width: 64px;
+    flex-shrink: 0;
+    width: 100px;
+    box-sizing: border-box;
+    text-overflow: ellipsis;
+    overflow: hidden; 
   }
   
   .menu-item3:hover {
@@ -135,14 +141,16 @@
     text-align: center;
     font-weight: 400;
     transition: color 0.3s ease;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: unset;
     max-width: 100%;
     color: #555;
   }
   
   .menu-item3:hover .menu-text3 {
     color: #007AFF;
+    animation: marquee 2s linear infinite;
+    padding-left: 20%;
   }
   
   .menu-item3 button:focus,

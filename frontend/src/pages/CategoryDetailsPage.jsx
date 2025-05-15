@@ -17,6 +17,8 @@ const CategoryDetailsPage = () => {
   const passedTown = location.state?.town;
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('restaurant');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortCategory, setSortCategory] = useState('all');
 
   useEffect(() => {
     if (passedTown) {
@@ -175,6 +177,12 @@ const CategoryDetailsPage = () => {
     );
   }
 
+  const filteredItems = divisionItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSort = sortCategory === 'all' || item.type === sortCategory;
+    return matchesSearch && matchesSort;
+  });
+
   return (
     <div className="details-page">
       <MenuNavbar />
@@ -206,10 +214,33 @@ const CategoryDetailsPage = () => {
         </div>
       </div>
 
+      <div className="search-sort-bar">
+        <input
+          type="text"
+          placeholder="Search locations by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+        
+        <select
+          value={sortCategory}
+          onChange={(e) => setSortCategory(e.target.value)}
+          className="sort-select"
+        >
+          <option value="all">All Categories</option>
+          <option value="National Park">National Park</option>
+          <option value="Homestay">Homestay</option>
+          <option value="Museum">Museum</option>
+          <option value="Beach">Beach</option>
+          <option value="Airport">Airport</option>
+        </select>
+      </div>
+
       <div className="division-locations-section">
         <h2>Discover {townData.name}</h2>
         <div className="locations-grid">
-          {divisionItems.map((item, index) => (
+          {filteredItems.map((item, index) => (
             <div className="location-card" key={index}>
             <img src={item.image || defaultImage} alt={item.name} />
             <div className="location-info">
