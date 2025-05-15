@@ -39,7 +39,7 @@ const businessUpload = upload.fields([
 businessRouter.post("/addBusiness", businessUpload, addBusiness);
 businessRouter.get("/getAllApprovedBusinesses", getAllBusinesses); // For public display
 
-// Admin-only routes
+// CBT Admin-only routes
 businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['admin']), getAllBusinesses);
 businessRouter.get("/getBusinessById/:id", verifyJWT, checkRole(['admin']), getBusinessById);
 businessRouter.get("/getBusinessesByStatus/:status", verifyJWT, checkRole(['admin']), getBusinessesByStatus);
