@@ -100,6 +100,8 @@ const BusinessManagement = () => {
       const response = await authAxios.get(`${endpoint}?${params.toString()}`);
       
       console.log('Response received:', response.data);
+      console.log('Businesses count:', response.data.data ? response.data.data.length : 0);
+      console.log('First business:', response.data.data && response.data.data.length > 0 ? response.data.data[0] : 'No businesses found');
       
       if (response.data.success) {
         setBusinesses(response.data.data);
