@@ -99,10 +99,19 @@ export const addBusiness = async (req, res) => {
 export const getAllBusinesses = async (req, res) => {
     try {
         // Check if request is from admin or public
-        const isAdmin = req.user && req.user.role === 'admin';
+        const isAdmin = req.user && req.user.role === 'cbt_admin'; // UPDATED: Changed 'admin' to 'cbt_admin'
+        
+        // Log debugging info
+        console.log('getAllBusinesses called by:', isAdmin ? 'admin' : 'public');
+        console.log('User info:', req.user);
         
         // Build query - public users only see approved businesses
         const query = isAdmin ? {} : { status: 'approved' };
+        console.log('Query filter:', query);
+        
+        // Count all businesses in the collection (no filters)
+        const allBusinessesCount = await businessModel.countDocuments({});
+        console.log('Total businesses in DB (no filter):', allBusinessesCount);
         
         // Apply any filters from query parameters
         if (req.query.category) {
@@ -129,6 +138,9 @@ export const getAllBusinesses = async (req, res) => {
         
         // Get total count for pagination info
         const total = await businessModel.countDocuments(query);
+        
+        console.log('Filtered businesses count:', total);
+        console.log('Returning businesses:', businesses.length);
         
         res.status(200).json({
             success: true,
