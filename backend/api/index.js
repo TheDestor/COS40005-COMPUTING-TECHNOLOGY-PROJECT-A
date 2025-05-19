@@ -7,6 +7,12 @@ import locationRouter from "../routes/LocationRoutes.js";
 import inquiryRouter from "../routes/InquiryRoutes.js";
 import eventRouter from "../routes/EventRoutes.js";
 import businessRouter from "../routes/BusinessRoutes.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get directory name (required for ES modules)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5050
@@ -20,6 +26,10 @@ connectDB(); // Establish connection to the database as soon as the backend is r
 app.disable("x-powered-by");
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use("/api/locations", locationRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);

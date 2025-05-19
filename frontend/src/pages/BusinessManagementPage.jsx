@@ -11,31 +11,19 @@ import {
   FaExclamationTriangle,
   FaStar,
   FaClock,
-  FaBuilding
+  FaBuilding,
+  FaSpinner,
+  FaLock
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
 import '../styles/BusinessManagementPage.css';
+import axios from 'axios';
+import { useAuth } from '../context/AuthProvider'; // Fixed import path
 
-// Import profile images
-import profile1 from '../assets/profile1.png';
-import profile2 from '../assets/profile2.png';
-import profile3 from '../assets/profile3.png';
-import profile4 from '../assets/profile4.png';
-import profile5 from '../assets/profile5.png';
-import profile6 from '../assets/profile6.png';
-import profile7 from '../assets/profile7.png';
-import profile8 from '../assets/profile8.png';
-
-// Import business images
-import business1 from '../assets/business1.jpg';
-import business2 from '../assets/business2.jpg';
-import business3 from '../assets/business3.jpg';
-import business4 from '../assets/business4.jpg';
-import business5 from '../assets/business5.jpg';
-import business6 from '../assets/business6.jpg';
-import business7 from '../assets/business7.jpg';
-import business8 from '../assets/business8.jpg';
+// Fallback images (in case API images fail to load)
+import defaultBusinessImage from '../assets/default-business.jpg';
+import defaultAvatarImage from '../assets/default-avatar.png';
 
 const BusinessManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,162 +33,119 @@ const BusinessManagement = () => {
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
-
-  // Dummy data for businesses
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [businessCategories, setBusinessCategories] = useState([]);
+  
+  // Get authentication context
+  const { accessToken, isLoggedIn, user } = useAuth();
+  
+  // Check if user is an admin
+  const isAdmin = user && user.role === 'cbt_admin';
+  
+  // Log user info for debugging
   useEffect(() => {
-    const dummyBusinesses = [
-      {
-        id: 1,
-        name: 'Sunrise Cafe',
-        owner: 'Gokul Kalla',
-        ownerEmail: 'gokulkalla@gmail.com',
-        description: 'A cozy cafe serving freshly brewed coffee and homemade pastries. Our atmosphere is perfect for both work meetings and casual get-togethers.',
-        category: 'Food & Beverage',
-        address: '123 Main Street, Downtown',
-        phone: '555-123-4567',
-        website: 'www.sunrisecafe.com',
-        submissionDate: '2025-04-20T14:25:00',
-        status: 'pending',
-        rating: 4.5,
-        openingHours: 'Mon-Fri: 7AM-7PM, Sat-Sun: 8AM-6PM',
-        priority: 'medium',
-        ownerAvatar: profile1,
-        businessImage: business1
-      },
-      {
-        id: 2,
-        name: 'Tech Haven',
-        owner: 'Carlos Sainz',
-        ownerEmail: 'carlos.sainz@gmail.com',
-        description: 'Premium tech repair and custom PC building services. We offer same-day repairs for most common issues and specialized builds for gaming and professional use.',
-        category: 'Technology',
-        address: '456 Tech Boulevard, Innovation District',
-        phone: '555-987-6543',
-        website: 'www.techhaven.com',
-        submissionDate: '2025-04-19T09:12:00',
-        status: 'in-review',
-        rating: 4.8,
-        openingHours: 'Mon-Sat: 9AM-8PM, Sun: 10AM-5PM',
-        priority: 'high',
-        ownerAvatar: profile2,
-        businessImage: business2
-      },
-      {
-        id: 3,
-        name: 'Fitness First',
-        owner: 'Kenneth',
-        ownerEmail: 'kenneth@gmail.com',
-        description: 'State-of-the-art fitness center with personal training, group classes, and premium equipment. Our certified trainers provide personalized fitness plans for all levels.',
-        category: 'Health & Fitness',
-        address: '789 Wellness Way, Uptown',
-        phone: '555-789-0123',
-        website: 'www.fitnessfirst.com',
-        submissionDate: '2025-04-18T16:35:00',
-        status: 'approved',
-        rating: 4.2,
-        openingHours: '24/7 access for members',
-        priority: 'low',
-        ownerAvatar: profile3,
-        businessImage: business3
-      },
-      {
-        id: 4,
-        name: 'Bookworm Paradise',
-        owner: 'Daniel',
-        ownerEmail: 'daniel@gmail.com',
-        description: 'Independent bookstore specializing in rare finds and local authors. We host weekly book clubs and author signings in our comfortable reading lounge.',
-        category: 'Retail',
-        address: '321 Literary Lane, Arts District',
-        phone: '555-456-7890',
-        website: 'www.bookwormparadise.com',
-        submissionDate: '2025-04-17T11:20:00',
-        status: 'pending',
-        rating: 4.7,
-        openingHours: 'Tue-Sun: 10AM-8PM, Closed on Mondays',
-        priority: 'high',
-        ownerAvatar: profile4,
-        businessImage: business4
-      },
-      {
-        id: 5,
-        name: 'Coastal Inn',
-        owner: 'Steph',
-        ownerEmail: 'steph12@gmail.com',
-        description: 'Boutique hotel with oceanfront views and luxury amenities. Each room features locally sourced furnishings and artwork from regional artists.',
-        category: 'Hospitality',
-        address: '555 Shoreline Drive, Beachfront',
-        phone: '555-234-5678',
-        website: 'www.coastalinn.com',
-        submissionDate: '2025-04-16T14:50:00',
-        status: 'in-review',
-        rating: 4.9,
-        openingHours: 'Check-in: 3PM, Check-out: 11AM',
-        priority: 'medium',
-        ownerAvatar: profile5,
-        businessImage: business5
-      },
-      {
-        id: 6,
-        name: 'Green Thumb Garden Center',
-        owner: 'Alvin',
-        ownerEmail: 'alvin@gmail.com',
-        description: 'Family-owned nursery and garden supply store specializing in native plants and organic gardening supplies. We offer landscaping consultations and seasonal workshops.',
-        category: 'Home & Garden',
-        address: '987 Botanical Way, Greenfield',
-        phone: '555-345-6789',
-        website: 'www.greenthumbgarden.com',
-        submissionDate: '2025-04-15T08:05:00',
-        status: 'rejected',
-        rating: 4.0,
-        openingHours: 'Mon-Sun: 8AM-6PM',
-        priority: 'low',
-        ownerAvatar: profile6,
-        businessImage: business6
-      },
-      {
-        id: 7,
-        name: 'Auto Excellence',
-        owner: 'Gary',
-        ownerEmail: 'gary@gmail.com',
-        description: 'Full-service auto repair and maintenance shop with certified mechanics. We specialize in domestic and foreign vehicles and offer courtesy shuttle service.',
-        category: 'Automotive',
-        address: '654 Mechanic Street, Industrial Park',
-        phone: '555-876-5432',
-        website: 'www.autoexcellence.com',
-        submissionDate: '2025-04-14T13:15:00',
-        status: 'pending',
-        rating: 4.6,
-        openingHours: 'Mon-Fri: 8AM-6PM, Sat: 9AM-3PM',
-        priority: 'high',
-        ownerAvatar: profile7,
-        businessImage: business7
-      },
-      {
-        id: 8,
-        name: 'Pawsome Pet Care',
-        owner: 'Lara Wilson',
-        ownerEmail: 'lauren.wilson@gmail.com',
-        description: 'Professional pet grooming, daycare, and boarding facility. Our team of animal lovers provides personalized care for pets of all sizes and temperaments.',
-        category: 'Pet Services',
-        address: '123 Furry Friends Lane, Westside',
-        phone: '555-789-4321',
-        website: 'www.pawsomepetcare.com',
-        submissionDate: '2025-04-13T15:40:00',
-        status: 'in-review',
-        rating: 4.3,
-        openingHours: 'Mon-Sat: 7AM-7PM, Sun: 9AM-5PM',
-        priority: 'medium',
-        ownerAvatar: profile8,
-        businessImage: business8
-      }
-    ];
-    
-    setBusinesses(dummyBusinesses);
-    // first business selected by default
-    setSelectedBusiness(dummyBusinesses[0]);
-  }, []);
+    console.log("Current user:", user);
+    console.log("Is user admin?", isAdmin);
+  }, [user, isAdmin]);
 
-  // readable string format of date
+  // Create axios instance with authentication
+  const authAxios = axios.create({
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+
+  // Fetch businesses from backend
+  const fetchBusinesses = async () => {
+    if (!isLoggedIn || !accessToken) {
+      setError('Authentication required. Please log in.');
+      setLoading(false);
+      return;
+    }
+    
+    if (!isAdmin) {
+      setError('You do not have permission to access this page. Admin access required.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let endpoint = '/api/businesses/getAllBusinesses';
+      
+      // Add query parameters for filtering
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', 10); // Adjust limit as needed
+      
+      if (filterStatus !== 'all') {
+        endpoint = `/api/businesses/getBusinessesByStatus/${filterStatus}`;
+      }
+      
+      if (filterCategory !== 'all') {
+        params.append('category', filterCategory);
+      }
+      
+      // Sorting - newest first
+      params.append('sortField', 'submissionDate');
+      params.append('sortOrder', 'desc');
+      
+      // Log the request URL and token for debugging
+      console.log(`Fetching: ${endpoint}?${params.toString()}`);
+      console.log(`Using token: ${accessToken.substring(0, 20)}...`);
+      
+      const response = await authAxios.get(`${endpoint}?${params.toString()}`);
+      
+      console.log('Response received:', response.data);
+      
+      if (response.data.success) {
+        setBusinesses(response.data.data);
+        setTotalPages(response.data.totalPages);
+        
+        // Extract unique categories for filter dropdown
+        if (response.data.data && response.data.data.length > 0) {
+          const categories = [...new Set(response.data.data.map(b => b.category))];
+          setBusinessCategories(categories);
+        }
+        
+        // Select first business by default if no business is selected
+        if (!selectedBusiness && response.data.data && response.data.data.length > 0) {
+          setSelectedBusiness(response.data.data[0]);
+        }
+      } else {
+        setError('Failed to load businesses: ' + (response.data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error fetching businesses:', err);
+      
+      if (err.response && err.response.status === 403) {
+        setError('Access denied. You do not have permission to view businesses.');
+      } else {
+        setError('Failed to load businesses. ' + (err.response?.data?.message || err.message));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update axios instance when token changes
+  useEffect(() => {
+    if (accessToken) {
+      authAxios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    }
+  }, [accessToken]);
+
+  // Initial data loading - reload when token, page, or filters change
+  useEffect(() => {
+    if (isLoggedIn && accessToken) {
+      fetchBusinesses();
+    }
+  }, [isLoggedIn, accessToken, page, filterStatus, filterCategory]);
+
+  // Format date to readable string
   const formatDate = (dateString) => {
     const options = { 
       year: 'numeric', 
@@ -218,98 +163,139 @@ const BusinessManagement = () => {
     
     // If the business was pending, mark it as in-review
     if (business.status === 'pending') {
-      const updatedBusinesses = businesses.map(item => {
-        if (item.id === business.id) {
-          return { ...item, status: 'in-review' };
-        }
-        return item;
+      handleUpdateBusinessStatus(business._id, 'in-review');
+    }
+  };
+
+  // Handler for updating business status
+  const handleUpdateBusinessStatus = async (id, newStatus) => {
+    if (!isLoggedIn || !accessToken) {
+      setError('Authentication required. Please log in.');
+      return;
+    }
+    
+    if (!isAdmin) {
+      setError('You do not have permission to perform this action.');
+      return;
+    }
+
+    try {
+      const response = await authAxios.patch(`/api/businesses/updateBusinessStatus/${id}`, {
+        status: newStatus
       });
       
-      setBusinesses(updatedBusinesses);
-      setSelectedBusiness({ ...business, status: 'in-review' });
+      if (response.data.success) {
+        // Update businesses list
+        const updatedBusinesses = businesses.map(item => {
+          if (item._id === id) {
+            return { ...item, status: newStatus };
+          }
+          return item;
+        });
+        
+        setBusinesses(updatedBusinesses);
+        
+        // Update selected business if it's the one that was modified
+        if (selectedBusiness && selectedBusiness._id === id) {
+          setSelectedBusiness({ ...selectedBusiness, status: newStatus });
+        }
+        
+        // Show success message (could use a toast notification here)
+        alert(`Business listing ${newStatus} successfully!`);
+      } else {
+        alert('Failed to update business status: ' + response.data.message);
+      }
+    } catch (err) {
+      console.error('Error updating business status:', err);
+      
+      if (err.response && err.response.status === 403) {
+        alert('Access denied. You do not have permission to update business status.');
+      } else {
+        alert('Error updating business status: ' + (err.response?.data?.message || err.message));
+      }
     }
   };
 
   // Handler for approving a business
   const handleApproveBusiness = (id) => {
-    const updatedBusinesses = businesses.map(item => {
-      if (item.id === id) {
-        return { ...item, status: 'approved' };
-      }
-      return item;
-    });
-    
-    setBusinesses(updatedBusinesses);
-    
-    if (selectedBusiness && selectedBusiness.id === id) {
-      setSelectedBusiness({ ...selectedBusiness, status: 'approved' });
-    }
-    
-    // Show success message (we might use a toast notification)
-    alert("Business listing approved successfully!");
+    handleUpdateBusinessStatus(id, 'approved');
   };
 
   // Handler for rejecting a business
   const handleRejectBusiness = (id) => {
-    const updatedBusinesses = businesses.map(item => {
-      if (item.id === id) {
-        return { ...item, status: 'rejected' };
-      }
-      return item;
-    });
-    
-    setBusinesses(updatedBusinesses);
-    
-    if (selectedBusiness && selectedBusiness.id === id) {
-      setSelectedBusiness({ ...selectedBusiness, status: 'rejected' });
-    }
-    
-    // Show success message (we might use a toast notification)
-    alert("Business listing rejected!");
+    handleUpdateBusinessStatus(id, 'rejected');
   };
 
   // Handler for deleting a business
-  const handleDeleteBusiness = (id) => {
-    const updatedBusinesses = businesses.filter(item => item.id !== id);
-    setBusinesses(updatedBusinesses);
+  const handleDeleteBusiness = async (id) => {
+    if (!isLoggedIn || !accessToken) {
+      setError('Authentication required. Please log in.');
+      return;
+    }
     
-    // If the deleted business was selected, select the first one from the updated list
-    if (selectedBusiness && selectedBusiness.id === id) {
-      setSelectedBusiness(updatedBusinesses.length > 0 ? updatedBusinesses[0] : null);
+    if (!isAdmin) {
+      setError('You do not have permission to perform this action.');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const response = await authAxios.delete(`/api/businesses/deleteBusiness/${id}`);
+      
+      if (response.data.success) {
+        // Remove business from the list
+        const updatedBusinesses = businesses.filter(item => item._id !== id);
+        setBusinesses(updatedBusinesses);
+        
+        // If the deleted business was selected, select the first one from the updated list
+        if (selectedBusiness && selectedBusiness._id === id) {
+          setSelectedBusiness(updatedBusinesses.length > 0 ? updatedBusinesses[0] : null);
+        }
+        
+        // Show success message
+        alert('Business deleted successfully!');
+      } else {
+        alert('Failed to delete business: ' + response.data.message);
+      }
+    } catch (err) {
+      console.error('Error deleting business:', err);
+      
+      if (err.response && err.response.status === 403) {
+        alert('Access denied. You do not have permission to delete businesses.');
+      } else {
+        alert('Error deleting business: ' + (err.response?.data?.message || err.message));
+      }
     }
   };
 
   // Handler for submitting admin notes
   const handleSubmitNotes = (e) => {
     e.preventDefault();
-    if (!adminNotes.trim()) return;
+    if (!adminNotes.trim() || !selectedBusiness) return;
     
-    // WE CAN USE THIS FOR BACKEND PURPOSE
-    console.log(`Admin notes for business #${selectedBusiness.id}:`, adminNotes);
+    // Here you could save the notes to the backend if needed
+    console.log(`Admin notes for business #${selectedBusiness._id}:`, adminNotes);
     
-    // Reset notes field
-    setAdminNotes('');
-    
-    // Show success message (we might use a toast notification)
+    // For now, just show a success message and clear the notes field
     alert("Notes saved successfully!");
+    setAdminNotes('');
   };
 
-  // Filter businesses based on search query and filters
+  // Filter businesses based on search query (client-side filtering)
   const filteredBusinesses = businesses.filter(business => {
-    const matchesSearch = 
-      business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      business.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      business.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      business.description.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!business) return false;
     
-    const matchesStatus = filterStatus === 'all' || business.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || business.category === filterCategory;
+    const matchesSearch = !searchQuery || 
+      (business.name && business.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (business.owner && business.owner.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (business.category && business.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (business.description && business.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch;
   });
-
-  // Get unique business categories for the filter dropdown
-  const businessCategories = [...new Set(businesses.map(b => b.category))];
 
   // Helper function to get status badge styling
   const getStatusBadgeClass = (status) => {
@@ -354,6 +340,72 @@ const BusinessManagement = () => {
         return null;
     }
   };
+
+  // Render unauthorized state
+  if (!isAdmin) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <div className="greeting">
+              <h3>Business Management</h3>
+              <p>Review and manage business listings</p>
+            </div>
+          </div>
+          <div className="error-container">
+            <FaLock className="error-icon" />
+            <h2>Access Denied</h2>
+            <p>You do not have permission to access this page. This feature is restricted to CBT administrators only.</p>
+            <p>If you believe you should have access, please contact your system administrator.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render loading state
+  if (loading && businesses.length === 0) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <div className="greeting">
+              <h3>Business Management</h3>
+              <p>Review and manage business listings</p>
+            </div>
+          </div>
+          <div className="loading-container">
+            <FaSpinner className="spinner" />
+            <p>Loading businesses...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error && businesses.length === 0) {
+    return (
+      <div className="dashboard-container">
+        <Sidebar />
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <div className="greeting">
+              <h3>Business Management</h3>
+              <p>Review and manage business listings</p>
+            </div>
+          </div>
+          <div className="error-container">
+            <FaExclamationTriangle className="error-icon" />
+            <p>{error}</p>
+            <button className="retry-button" onClick={fetchBusinesses}>Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -428,7 +480,10 @@ const BusinessManagement = () => {
                       <label>Status:</label>
                       <select 
                         value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
+                        onChange={(e) => {
+                          setFilterStatus(e.target.value);
+                          setPage(1); // Reset to first page on filter change
+                        }}
                       >
                         <option value="all">All</option>
                         <option value="pending">Pending</option>
@@ -442,7 +497,10 @@ const BusinessManagement = () => {
                       <label>Category:</label>
                       <select 
                         value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
+                        onChange={(e) => {
+                          setFilterCategory(e.target.value);
+                          setPage(1); // Reset to first page on filter change
+                        }}
                       >
                         <option value="all">All Categories</option>
                         {businessCategories.map((category, index) => (
@@ -456,6 +514,7 @@ const BusinessManagement = () => {
                       onClick={() => {
                         setFilterStatus('all');
                         setFilterCategory('all');
+                        setPage(1);
                       }}
                     >
                       Clear Filters
@@ -472,12 +531,19 @@ const BusinessManagement = () => {
               {filteredBusinesses.length > 0 ? (
                 filteredBusinesses.map(business => (
                   <div 
-                    key={business.id}
-                    className={`business-item ${selectedBusiness && selectedBusiness.id === business.id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
+                    key={business._id}
+                    className={`business-item ${selectedBusiness && selectedBusiness._id === business._id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
                     onClick={() => handleSelectBusiness(business)}
                   >
                     <div className="business-avatar">
-                      <img src={business.businessImage} alt={`${business.name} thumbnail`} />
+                      <img 
+                        src={business.businessImage} 
+                        alt={`${business.name} thumbnail`} 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = defaultBusinessImage;
+                        }}
+                      />
                     </div>
                     <div className="business-brief">
                       <div className="business-header">
@@ -485,12 +551,22 @@ const BusinessManagement = () => {
                         <span className="business-date">{formatDate(business.submissionDate)}</span>
                       </div>
                       <div className="business-owner">
-                        <img src={business.ownerAvatar} alt={`${business.owner}'s avatar`} className="owner-avatar" />
+                        <img 
+                          src={business.ownerAvatar} 
+                          alt={`${business.owner}'s avatar`} 
+                          className="owner-avatar"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = defaultAvatarImage;
+                          }}
+                        />
                         <span>{business.owner}</span>
                       </div>
                       <div className="business-category">{business.category}</div>
                       <div className="business-description-preview">
-                        {business.description.substring(0, 60)}...
+                        {business.description && business.description.length > 60 
+                          ? `${business.description.substring(0, 60)}...` 
+                          : business.description}
                       </div>
                       <div className="business-status">
                         <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
@@ -509,6 +585,27 @@ const BusinessManagement = () => {
                   <p>No businesses match your criteria</p>
                 </div>
               )}
+
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="pagination-controls">
+                  <button 
+                    className="page-button"
+                    disabled={page === 1}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span className="page-info">Page {page} of {totalPages}</span>
+                  <button 
+                    className="page-button"
+                    disabled={page === totalPages}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
             
             {/* Right panel - Selected business detail */}
@@ -517,7 +614,15 @@ const BusinessManagement = () => {
                 <div className="business-detail-header">
                   <div className="business-info">
                     <div className="business-main-image">
-                      <img src={selectedBusiness.businessImage} alt={`${selectedBusiness.name}`} className="detail-business-image" />
+                      <img 
+                        src={selectedBusiness.businessImage} 
+                        alt={`${selectedBusiness.name}`} 
+                        className="detail-business-image"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = defaultBusinessImage;
+                        }}
+                      />
                     </div>
                     <div className="business-header-info">
                       <h3 className="detail-name">{selectedBusiness.name}</h3>
@@ -530,21 +635,21 @@ const BusinessManagement = () => {
                   <div className="business-actions">
                     <button 
                       className={`business-action-btn approve-btn ${selectedBusiness.status === 'approved' ? 'disabled' : ''}`}
-                      onClick={() => handleApproveBusiness(selectedBusiness.id)}
+                      onClick={() => handleApproveBusiness(selectedBusiness._id)}
                       disabled={selectedBusiness.status === 'approved'}
                     >
                       <FaCheck /> {selectedBusiness.status === 'approved' ? 'Approved' : 'Approve'}
                     </button>
                     <button 
                       className={`business-action-btn reject-btn ${selectedBusiness.status === 'rejected' ? 'disabled' : ''}`}
-                      onClick={() => handleRejectBusiness(selectedBusiness.id)}
+                      onClick={() => handleRejectBusiness(selectedBusiness._id)}
                       disabled={selectedBusiness.status === 'rejected'}
                     >
                       <FaTimes /> {selectedBusiness.status === 'rejected' ? 'Rejected' : 'Reject'}
                     </button>
                     <button 
                       className="business-action-btn delete-btn"
-                      onClick={() => handleDeleteBusiness(selectedBusiness.id)}
+                      onClick={() => handleDeleteBusiness(selectedBusiness._id)}
                     >
                       <FaTrash /> Delete
                     </button>
@@ -564,7 +669,15 @@ const BusinessManagement = () => {
                     <div className="owner-info-header">
                       <h4>Owner Information</h4>
                       <div className="owner-profile">
-                        <img src={selectedBusiness.ownerAvatar} alt={`${selectedBusiness.owner}'s avatar`} className="detail-avatar" />
+                        <img 
+                          src={selectedBusiness.ownerAvatar} 
+                          alt={`${selectedBusiness.owner}'s avatar`} 
+                          className="detail-avatar"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = defaultAvatarImage;
+                          }}
+                        />
                         <div>
                           <p className="detail-owner-name">{selectedBusiness.owner}</p>
                           <p className="detail-email">{selectedBusiness.ownerEmail}</p>
@@ -591,15 +704,18 @@ const BusinessManagement = () => {
                         </div>
                         <div className="meta-item">
                           <span className="meta-label">Website:</span>
-                          <span className="meta-value">{selectedBusiness.website}</span>
+                          <span className="meta-value">{selectedBusiness.website || 'Not provided'}</span>
                         </div>
                         <div className="meta-item">
-                          <span className="meta-label">Rating:</span>
-                          <span className="meta-value">{selectedBusiness.rating}/5</span>
+                          <span className="meta-label">Priority:</span>
+                          <span className="meta-value">
+                            {renderPriorityIcon(selectedBusiness.priority)}
+                            {selectedBusiness.priority.charAt(0).toUpperCase() + selectedBusiness.priority.slice(1)}
+                          </span>
                         </div>
                         <div className="meta-item">
                           <span className="meta-label">Hours:</span>
-                          <span className="meta-value">{selectedBusiness.openingHours}</span>
+                          <span className="meta-value">{selectedBusiness.openingHours || 'Not provided'}</span>
                         </div>
                       </div>
                     </div>

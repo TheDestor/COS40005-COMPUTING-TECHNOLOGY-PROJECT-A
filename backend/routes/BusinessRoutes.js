@@ -40,11 +40,11 @@ businessRouter.post("/addBusiness", businessUpload, addBusiness);
 businessRouter.get("/getAllApprovedBusinesses", getAllBusinesses); // For public display
 
 // CBT Admin-only routes
-businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['admin']), getAllBusinesses);
-businessRouter.get("/getBusinessById/:id", verifyJWT, checkRole(['admin']), getBusinessById);
-businessRouter.get("/getBusinessesByStatus/:status", verifyJWT, checkRole(['admin']), getBusinessesByStatus);
-businessRouter.patch("/updateBusinessStatus/:id", verifyJWT, checkRole(['admin']), updateBusinessStatus);
-businessRouter.put("/updateBusinessDetails/:id", verifyJWT, checkRole(['admin']), businessUpload, updateBusinessDetails);
-businessRouter.delete("/deleteBusiness/:id", verifyJWT, checkRole(['admin']), deleteBusiness);
+businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['cbt_admin']), getAllBusinesses);
+businessRouter.get("/getBusinessById/:id", verifyJWT, checkRole(['cbt_admin']), getBusinessById);
+businessRouter.get("/getBusinessesByStatus/:status", verifyJWT, checkRole(['cbt_admin']), getBusinessesByStatus);
+businessRouter.patch("/updateBusinessStatus/:id", verifyJWT, checkRole(['cbt_admin']), updateBusinessStatus);
+businessRouter.put("/updateBusinessDetails/:id", verifyJWT, checkRole(['cbt_admin']), businessUpload, updateBusinessDetails);
+businessRouter.delete("/deleteBusiness/:id", verifyJWT, checkRole(['cbt_admin']), deleteBusiness);
 
 export default businessRouter;

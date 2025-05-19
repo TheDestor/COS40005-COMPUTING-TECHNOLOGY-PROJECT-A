@@ -11,7 +11,7 @@ const hash = async (password) => {
             if (error) reject(error);
             resolve(`${salt}.${derivedKey.toString("hex")}`);
         });
-    });
+    })
 };
 
 // Compare password hash

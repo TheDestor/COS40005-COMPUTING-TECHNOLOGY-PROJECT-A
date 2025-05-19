@@ -74,7 +74,8 @@ export const addBusiness = async (req, res) => {
         const newBusiness = new businessModel({
             ...businessData,
             businessImage: businessImagePath,
-            ownerAvatar: ownerAvatarPath
+            ownerAvatar: ownerAvatarPath,
+            agreement: businessData.agreement === 'true' || businessData.agreement === true
         });
         
         await newBusiness.save();

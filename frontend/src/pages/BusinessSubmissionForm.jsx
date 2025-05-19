@@ -16,8 +16,9 @@ import {
   FaArrowRight
 } from 'react-icons/fa';
 import '../styles/BusinessSubmissionForm.css';
+import axios from 'axios'; // Make sure axios is installed
 
-const BusinessSubmissionForm = ({ isOpen, onClose}) => {
+const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -99,7 +100,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose}) => {
   };
 
   // Handle form field changes with improved image handling
-const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     
     if (type === 'file') {
@@ -241,47 +242,26 @@ const handleChange = (e) => {
         // Set initial status
         formDataToSend.append('status', 'pending');
         
-        // Main API call to  backend endpoint
-        const response = await fetch('/api/business/addBusiness', {
-          method: 'POST',
-          body: formDataToSend,
-          // No need to set Content-Type header as it's automatically set for FormData
+        // Main API call to backend endpoint
+        const response = await axios.post('/api/businesses/addBusiness', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to submit business information');
-        }
-
-        const result = await response.json();
-        console.log('Submission successful:', result);
+        console.log('Submission successful:', response.data);
         setSubmitSuccess(true);
         
-        // Reset form after successful submission (or redirect)
-        // setTimeout(() => {
-        //   setFormData({
-        //     name: '',
-        //     owner: '',
-        //     ownerEmail: '',
-        //     description: '',
-        //     category: '',
-        //     address: '',
-        //     phone: '',
-        //     website: '',
-        //     openingHours: '',
-        //     businessImage: null,
-        //     ownerAvatar: null,
-        //     agreement: false
-        //   });
-        //   setCurrentStep(1);
-        //   setSubmitSuccess(false);
-        // }, 3000);
+        // If a success callback was provided, call it
+        if (onSubmitSuccess && typeof onSubmitSuccess === 'function') {
+          onSubmitSuccess(response.data.data);
+        }
         
       } catch (error) {
         console.error('Submission error:', error);
         setErrors({
           ...errors,
-          submit: error.message || 'There was an error submitting your business. Please try again.'
+          submit: error.response?.data?.message || error.message || 'There was an error submitting your business. Please try again.'
         });
       } finally {
         setSubmitting(false);
@@ -502,7 +482,7 @@ const handleChange = (e) => {
   };
 
   // Render step 3: Media Upload - Improved version
-const renderMediaUploadStep = () => {
+  const renderMediaUploadStep = () => {
     return (
       <div className="form-step">
         <h3>Upload Media</h3>
@@ -590,7 +570,7 @@ const renderMediaUploadStep = () => {
   };
 
   // Render step 4: Review and Submit with improved image section
-const renderReviewStep = () => {
+  const renderReviewStep = () => {
     const priority = calculatePriority();
     
     return (
@@ -798,33 +778,32 @@ const renderReviewStep = () => {
   if (!isOpen) return null;
 
   return (
-    
     <div className="business-submission-overlay">
-    <div className="business-submission-container">
-      <div className="business-submission-form-wrapper">
-        <div className="form-header">
-          <h2>Business Submission Form</h2>
-          <p>Complete the form below to add your business to our directory</p>
-          <button className="close-button" onClick={onClose}>
-          &times; {/* This is the multiplication sign (X) */}
-          </button>
+      <div className="business-submission-container">
+        <div className="business-submission-form-wrapper">
+          <div className="form-header">
+            <h2>Business Submission Form</h2>
+            <p>Complete the form below to add your business to our directory</p>
+            <button className="close-button" onClick={onClose}>
+              &times;
+            </button>
+          </div>
+          
+          {submitSuccess ? (
+            renderSuccessMessage()
+          ) : (
+            <>
+              {renderProgressBar()}
+              
+              <form className="business-submission-form" onSubmit={handleSubmit}>
+                {renderFormStep()}
+                {renderFormNavigation()}
+              </form>
+            </>
+          )}
         </div>
-        
-        {submitSuccess ? (
-          renderSuccessMessage()
-        ) : (
-          <>
-            {renderProgressBar()}
-            
-            <form className="business-submission-form" onSubmit={handleSubmit}>
-              {renderFormStep()}
-              {renderFormNavigation()}
-            </form>
-          </>
-        )}
       </div>
     </div>
-  </div>
   );
 };
 
