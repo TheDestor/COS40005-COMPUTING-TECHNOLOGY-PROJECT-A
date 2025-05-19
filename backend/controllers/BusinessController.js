@@ -99,11 +99,12 @@ export const addBusiness = async (req, res) => {
 export const getAllBusinesses = async (req, res) => {
     try {
         // Check if request is from admin or public
-        const isAdmin = req.user && req.user.role === 'cbt_admin'; // UPDATED: Changed 'admin' to 'cbt_admin'
+        const isAdmin = req.role === 'cbt_admin'; // FIXED: Using req.role instead of req.user.role
         
         // Log debugging info
         console.log('getAllBusinesses called by:', isAdmin ? 'admin' : 'public');
-        console.log('User info:', req.user);
+        console.log('User ID:', req.user);
+        console.log('User role:', req.role);
         
         // Build query - public users only see approved businesses
         const query = isAdmin ? {} : { status: 'approved' };
