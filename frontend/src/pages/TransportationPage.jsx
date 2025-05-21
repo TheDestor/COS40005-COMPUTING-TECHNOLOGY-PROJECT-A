@@ -6,30 +6,27 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const ShoppingLeisurePage = () => {
+const AirportPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Shopping & Leisure');
+  const [currentCategory, setCurrentCategory] = useState('Transportation');
 
-  const placeCategories = {
-    ShoppingLeisure: [
-      'shopping_mall', 'clothing_store', 'department_store', 'jewelry_store',
-      'movie_theater', 'spa', 'gym', 'bowling_alley', 'casino'
-    ]
+  const transportationCategories = {
+    Transportation: ['airport', 'bus_station', 'transit_station', 'train_station', 'subway_station']
   };
 
   const fetchGooglePlaces = (categoryName, location, radius = 50000) => {
     return new Promise((resolve) => {
       if (!window.google) {
-        console.error("Google Maps API not loaded");
+        console.error('Google Maps API not loaded');
         return resolve([]);
       }
 
-      const entries = placeCategories[categoryName];
+      const entries = transportationCategories[categoryName];
       if (!entries) return resolve([]);
 
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
@@ -74,20 +71,20 @@ const ShoppingLeisurePage = () => {
     });
   };
 
-  const fetchShoppingLeisurePlaces = async () => {
+  const fetchTransportationPlaces = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces('ShoppingLeisure', { lat: 1.5533, lng: 110.3592 });
+      const results = await fetchGooglePlaces('Transportation', { lat: 1.5533, lng: 110.3592 }); // Kuching
       setData(results);
     } catch (error) {
-      console.error('Error fetching Google Places:', error);
+      console.error('Error fetching transportation places:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchShoppingLeisurePlaces();
+    fetchTransportationPlaces();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -162,31 +159,38 @@ const ShoppingLeisurePage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredData
-          .slice(0, visibleItems)
-          .map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
-                      Explore
-                    </Link>
-                  </div>
+        {filteredData.slice(0, visibleItems).map((item, index) => (
+          <div
+            className="card-wrapper"
+            key={index}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+              <img src={item.image} alt={item.name} />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                    }}
+                    className="explore-btn"
+                  >
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
 
       {filteredData.length > visibleItems && (
@@ -206,4 +210,4 @@ const ShoppingLeisurePage = () => {
   );
 };
 
-export default ShoppingLeisurePage;
+export default AirportPage;

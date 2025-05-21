@@ -240,8 +240,8 @@ const CategoryDetailsPage = () => {
       <div className="division-locations-section">
         <h2>Discover {townData.name}</h2>
         <div className="locations-grid">
-          {filteredItems.map((item, index) => (
-            <div className="location-card" key={index}>
+          {filteredItems.map((item) => (
+            <div className="location-card" key={item._id || item.name}>
             <img src={item.image || defaultImage} alt={item.name} />
             <div className="location-info">
               <div className="location-header">
@@ -258,24 +258,18 @@ const CategoryDetailsPage = () => {
               )}
           
               <div className="location-actions">
-              <Link
-                to={{
-                  pathname: `/discover/${encodeURIComponent(item.slug || item.name)}`,
-                  state: {
-                    location: {
-                      name: item.name,
-                      description: item.description,
-                      coordinates: [item.coordinates?.lng, item.coordinates?.lat],
-                      image: item.image
-                    },
-                    // nearbyPlaces
-                    selectedCategory // pass selected category to DiscoverPlaces
-                  }
-                }}
-                className="explore-btn"
-              >
-                Explore
-              </Link>
+                <Link
+                  to={`/discover/${item.slug}`}
+                  state={{
+                    name: item.name,
+                    image: item.image,
+                    desc: item.desc,
+                    coordinates: [item.lat, item.lng]
+                  }}
+                  className="explore-btn"
+                >
+                  Explore
+                </Link>
               </div>
             </div>
           </div>

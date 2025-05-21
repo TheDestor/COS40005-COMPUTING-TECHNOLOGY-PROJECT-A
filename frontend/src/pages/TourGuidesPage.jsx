@@ -158,7 +158,16 @@ const TourGuidePage = () => {
                   <p>{item.desc}</p>
                 </div>
                 <div className="button-container">
-                  <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                    }}
+                      className="explore-btn"
+                  >
                     Explore
                   </Link>
                 </div>

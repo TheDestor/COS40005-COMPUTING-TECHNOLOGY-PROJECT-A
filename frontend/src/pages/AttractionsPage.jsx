@@ -11,12 +11,34 @@ const AttractionsPage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('all');  // Use 'all' to show all categories
+  const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Attractions');
 
   const placeCategories = {
     Attractions: ['tourist_attraction', 'museum', 'zoo', 'amusement_park', 'aquarium']
+  };
+
+  // ✅ Get coordinates dynamically (e.g., from geolocation)
+  const getCurrentLocation = () => {
+    return new Promise((resolve) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            resolve({ lat: 1.5533, lng: 110.3592 }); // Fallback to Kuching
+          }
+        );
+      } else {
+        resolve({ lat: 1.5533, lng: 110.3592 }); // Fallback if geolocation is unsupported
+      }
+    });
   };
 
   const fetchGooglePlaces = (categoryName, location, radius = 50000) => {
@@ -35,8 +57,8 @@ const AttractionsPage = () => {
 
       entries.forEach(entry => {
         const request = {
-          location: new window.google.maps.LatLng(location.lat, location.lng),
-          radius,
+          location: new window.google.maps.LatLng(1.5533, 110.3592),
+          radius: 50000,
           type: entry
         };
 
@@ -63,7 +85,9 @@ const AttractionsPage = () => {
                     desc: place.vicinity || 'Google Places result',
                     image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
                     slug: name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-                    type
+                    type,
+                    lat: place.geometry?.location?.lat(),
+                    lng: place.geometry?.location?.lng()
                   };
                 });
                 resolve(formatted);
@@ -121,7 +145,8 @@ const AttractionsPage = () => {
         slug: name.toLowerCase().replace(/\s+/g, '-') || 'unknown',
         image: item?.image || defaultImage,
         type,
-        coordinates: item?.coordinates || [1.5533, 110.3592],
+        lat: item.geometry?.location?.lat() || 0, // From Google Places
+        lng: item.geometry?.location?.lng() || 0  // From Google Places
       };
     });
   };
@@ -223,7 +248,7 @@ const AttractionsPage = () => {
                       name: item.name,
                       image: item.image,
                       desc: item.desc,
-                      coordinates: item.coordinates,
+                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
                     }}
                     className="explore-btn"
                   >

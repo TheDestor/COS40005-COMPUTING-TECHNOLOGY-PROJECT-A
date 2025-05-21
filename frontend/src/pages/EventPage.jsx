@@ -6,51 +6,53 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const MuseumPage = () => {
+const EventPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('');
+  const [currentCategory] = useState('All Events');
 
-  // Function to fetch major towns from backend
-  const fetchMuseums = async () => {
+  const fetchEvents = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/events');
+      const response = await fetch('api/events'); // Use full backend URL
+      console.log('API Response:', response);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch events');
+      }
+
       const fetchedData = await response.json();
-      handleDataFetch('Museums', fetchedData);
+      console.log('Raw API Data:', fetchedData);
+      setData(processData(fetchedData));
     } catch (error) {
-      console.error('Error fetching Homestay:', error);
+      console.error('Full Error Details:', error);
+      setData([]); // Reset data on error
+    } finally {
       setLoading(false);
     }
   };
 
-  // Load default data on component mount
   useEffect(() => {
-    fetchMuseums();
+    fetchEvents();
   }, []);
 
-  const handleDataFetch = (category, fetchedData) => {
-    setLoading(true);
-    setCurrentCategory(category);
-    setSearchQuery('');
-    setSortOrder('default');
-
-    const processed = processData(fetchedData, category);
-    setData(processed);
-    setLoading(false);
-  };
-
-  const processData = (items, category) => {
+  const processData = (items) => {
     return (items || []).map(item => ({
-      name: item?.Name || item?.name || 'Unknown',
-      desc: item?.description || item?.Desc || 'No description',
-      slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      image: item?.image || defaultImage,
+      id: item._id?.toString() || item.id, // Convert MongoDB ObjectID
+      name: item.name || 'Unknown Event',
+      desc: item.description || 'No description available',
+      slug: (item.name || 'unknown').toLowerCase().replace(/\s+/g, '-'),
+      image: item.imageUrl || defaultImage,
+      lat: item.latitude || item.lat || null,
+      lng: item.longitude || item.lng || null,
+      date: item.eventDate ? new Date(item.eventDate) : null,
+      location: item.location || 'Location not specified',
+      eventType: item.eventType || 'General'
     }));
   };
 
@@ -58,7 +60,7 @@ const MuseumPage = () => {
   const closeLogin = () => setShowLogin(false);
 
   const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
+    setSortOrder(prev => prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default');
   };
 
   const highlightMatch = (name) => {
@@ -87,7 +89,7 @@ const MuseumPage = () => {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading...</p>
+        <p>Loading events...</p>
       </div>
     );
   }
@@ -98,8 +100,8 @@ const MuseumPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'Category'}</h1>
-          <p>Exploring {currentCategory || 'Sarawak'}</p>
+          <h1>{currentCategory.toUpperCase()}</h1>
+          <p>Explore {currentCategory}</p>
         </div>
       </div>
 
@@ -126,39 +128,59 @@ const MuseumPage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredData
-          .slice(0, visibleItems)
-          .map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
-                      Explore
-                    </Link>
-                  </div>
+        {filteredData.slice(0, visibleItems).map((item) => (
+          <div className="card-wrapper" key={item.id}>
+            <div className="card">
+              <img 
+                src={item.image} 
+                alt={item.name}
+                onError={(e) => {
+                  e.target.src = defaultImage;
+                  e.target.alt = 'Default event image';
+                }}
+              />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="event-meta">
+                  <span className="event-type">{item.eventType}</span>
+                  {item.date && (
+                    <span className="event-date">
+                      {item.date.toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <div className="location">{item.location}</div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: item.lng && item.lat ? [item.lng, item.lat] : null,
+                      date: item.date,
+                      location: item.location
+                    }}
+                    className="explore-btn"
+                  >
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
 
       {filteredData.length > visibleItems && (
-        <div className="pagination-controls100">
-          <button className="show-more-btn100" onClick={() => setVisibleItems(prev => prev + 12)}>
+        <div className="pagination-controls">
+          <button className="show-more-btn" onClick={() => setVisibleItems(prev => prev + 12)}>
             Show More (+12)
           </button>
-          <button className="show-all-btn100" onClick={() => setVisibleItems(filteredData.length)}>
+          <button className="show-all-btn" onClick={() => setVisibleItems(filteredData.length)}>
             Show All
           </button>
         </div>
@@ -170,4 +192,4 @@ const MuseumPage = () => {
   );
 };
 
-export default MuseumPage;
+export default EventPage;

@@ -353,6 +353,19 @@
   animation: pulse 1.5s infinite;
 }
 
+.location-error {
+  display: flex;
+  align-items: center;
+  color: #d32f2f;
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 5px;
+  background-color: #fde8e8;
+  border-radius: 4px;
+}
+
+
+
 .add-destination, .current-location-button {
   border-radius: 10px;
   border: 1px solid transparent;

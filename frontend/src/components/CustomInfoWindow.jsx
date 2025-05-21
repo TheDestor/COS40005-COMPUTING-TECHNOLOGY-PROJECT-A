@@ -29,32 +29,38 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [exploreData, setExploreData] = useState(null);
   const navigate = useNavigate();
-
   const auth = useAuth();
 
   if (!location) return null;
 
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // remove non-word characters
+      .replace(/\s+/g, '-') // replace spaces with hyphens
+      .replace(/-+/g, '-'); // collapse multiple hyphens
+  };
+
   // Fetch handler
   const handleExploreClick = () => {
-  const isMajorTown = majorTowns.includes(location.name);
+    const isMajorTown = majorTowns.includes(location.name);
+    const slug = generateSlug(location.name);
+    
+    const path = isMajorTown 
+      ? `/towns/${slug}`
+      : `/discover/${slug}`;
 
-  const path = isMajorTown
-    ? `/towns/${encodeURIComponent(location.name)}`
-    : `/discover/${encodeURIComponent(location.name)}`;
-
-  navigate(path, {
-    state: {
-      location: {
+    navigate(path, {
+      state: {
         name: location.name,
-        description: location.description,
-        image: location.image,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        desc: location.description || 'No description available',
+        image: location.image || defaultImage,
+        coordinates: [location.lat, location.lng], // Correct coordinate order
+        type: location.type || 'tourist_attraction'
       }
-    }
-  });
-};
-
+    });
+  };
 
   const footerItems = [
     { icon: <FaMapMarkerAlt />, label: 'Directions' },

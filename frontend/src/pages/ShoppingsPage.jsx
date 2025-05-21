@@ -6,20 +6,19 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const FoodBeveragePage = () => {
+const ShoppingLeisurePage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Food & Beverages');
+  const [currentCategory, setCurrentCategory] = useState('Shopping & Leisure');
 
-  // Place types to query from Google Places
   const placeCategories = {
-    FoodBeverages: [
-      'restaurant', 'cafe', 'bar', 'bakery', 'meal_takeaway',
-      'food', 'meal_delivery'
+    ShoppingLeisure: [
+      'shopping_mall', 'clothing_store', 'department_store', 'jewelry_store',
+      'movie_theater', 'spa', 'gym', 'bowling_alley', 'casino'
     ]
   };
 
@@ -75,10 +74,10 @@ const FoodBeveragePage = () => {
     });
   };
 
-  const fetchFoodBeveragePlaces = async () => {
+  const fetchShoppingLeisurePlaces = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces('FoodBeverages', { lat: 1.5533, lng: 110.3592 }); // Example: Kuching
+      const results = await fetchGooglePlaces('ShoppingLeisure', { lat: 1.5533, lng: 110.3592 });
       setData(results);
     } catch (error) {
       console.error('Error fetching Google Places:', error);
@@ -88,14 +87,15 @@ const FoodBeveragePage = () => {
   };
 
   useEffect(() => {
-    fetchFoodBeveragePlaces();
+    fetchShoppingLeisurePlaces();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const handleSortToggle = () =>
+  const handleSortToggle = () => {
     setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
+  };
 
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
@@ -162,29 +162,40 @@ const FoodBeveragePage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div
-            className="card-wrapper"
-            key={index}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img src={item.image} alt={item.name} />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
-                <div className="desc-scroll">
-                  <p>{item.desc}</p>
-                </div>
-                <div className="button-container">
-                  <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
-                    Explore
-                  </Link>
+        {filteredData
+          .slice(0, visibleItems)
+          .map((item, index) => (
+            <div
+              className="card-wrapper"
+              key={index}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                <img src={item.image} alt={item.name} />
+                <div className="card-content">
+                  <h3>{highlightMatch(item.name)}</h3>
+                  <div className="rating">⭐⭐⭐⭐⭐</div>
+                  <div className="desc-scroll">
+                    <p>{item.desc}</p>
+                  </div>
+                  <div className="button-container">
+                    <Link
+                      to={`/discover/${item.slug}`}
+                      state={{
+                        name: item.name,
+                        image: item.image,
+                        desc: item.desc,
+                        coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                      }}
+                      className="explore-btn"
+                    >
+                      Explore
+                    </Link>                  
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {filteredData.length > visibleItems && (
@@ -204,4 +215,4 @@ const FoodBeveragePage = () => {
   );
 };
 
-export default FoodBeveragePage;
+export default ShoppingLeisurePage;

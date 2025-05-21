@@ -112,6 +112,7 @@ const HomePage = () => {
         activeOption={selectedCategory}
         setShowRecent={setShowRecent}
         showRecent={showRecent}
+        setSelectedPlace={setSelectedPlace}
       />
       
       {/* <TouristInfoSection 
@@ -131,6 +132,9 @@ const HomePage = () => {
         setNearbyPlaces={setNearbyPlaces}
         showRecent={showRecent}
         setShowRecent={setShowRecent}
+        nearbyPlaces={nearbyPlaces}
+        selectedPlace={selectedPlace}
+        setSelectedPlace={setSelectedPlace}
       />
 
       {/* {showLogin && <LoginPage onClose={closeLogin} />} */}

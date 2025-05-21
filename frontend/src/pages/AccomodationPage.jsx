@@ -6,38 +6,33 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const AirportPage = () => {
+const AccommodationPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Transportation');
+  const [currentCategory, setCurrentCategory] = useState('Accommodation');
 
-  const transportationCategories = {
-    Transportation: ['airport', 'bus_station', 'transit_station', 'train_station', 'subway_station']
-  };
+  const accommodationTypes = ['lodging']; // Google Places "lodging" includes hotels, hostels, resorts
 
-  const fetchGooglePlaces = (categoryName, location, radius = 50000) => {
+  const fetchGooglePlaces = (types, location, radius = 50000) => {
     return new Promise((resolve) => {
       if (!window.google) {
         console.error('Google Maps API not loaded');
         return resolve([]);
       }
 
-      const entries = transportationCategories[categoryName];
-      if (!entries) return resolve([]);
-
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const collectedResults = [];
       let completedRequests = 0;
 
-      entries.forEach(entry => {
+      types.forEach(type => {
         const request = {
           location: new window.google.maps.LatLng(location.lat, location.lng),
           radius,
-          type: entry
+          type,
         };
 
         const processResults = (results, status, pagination) => {
@@ -48,7 +43,7 @@ const AirportPage = () => {
               setTimeout(() => pagination.nextPage(), 1000);
             } else {
               completedRequests++;
-              if (completedRequests === entries.length) {
+              if (completedRequests === types.length) {
                 const formatted = collectedResults.slice(0, 50).map(place => ({
                   name: place.name,
                   desc: place.vicinity || 'Google Places result',
@@ -60,7 +55,7 @@ const AirportPage = () => {
             }
           } else {
             completedRequests++;
-            if (completedRequests === entries.length) {
+            if (completedRequests === types.length) {
               resolve([]);
             }
           }
@@ -71,20 +66,20 @@ const AirportPage = () => {
     });
   };
 
-  const fetchTransportationPlaces = async () => {
+  const fetchAccommodations = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces('Transportation', { lat: 1.5533, lng: 110.3592 }); // Kuching
+      const results = await fetchGooglePlaces(accommodationTypes, { lat: 1.5533, lng: 110.3592 }); // Example: Kuching
       setData(results);
     } catch (error) {
-      console.error('Error fetching transportation places:', error);
+      console.error('Error fetching accommodations:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTransportationPlaces();
+    fetchAccommodations();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -174,7 +169,16 @@ const AirportPage = () => {
                   <p>{item.desc}</p>
                 </div>
                 <div className="button-container">
-                  <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                    }}
+                    className="explore-btn"
+                  >
                     Explore
                   </Link>
                 </div>
@@ -201,4 +205,4 @@ const AirportPage = () => {
   );
 };
 
-export default AirportPage;
+export default AccommodationPage;

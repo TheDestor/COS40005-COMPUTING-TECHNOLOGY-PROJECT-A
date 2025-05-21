@@ -24,10 +24,10 @@ import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
 import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
 import AttractionsPage from './pages/AttractionsPage.jsx';
-import MuseumPage from './pages/MuseumPage.jsx';
-import NationalParkPage from './pages/NationalParkPage.jsx';
-import AirportPage from './pages/AirportPage.jsx';
-import BeachPage from './pages/BeachPage.jsx';
+import ShoppingsPage from './pages/ShoppingsPage.jsx';
+import FoodPage from './pages/FoodPage.jsx';
+import Transportation from './pages/TransportationPage.jsx';
+import AccomodationPage from './pages/AccomodationPage.jsx';
 import CategoryDetailsPage from './pages/CategoryDetailsPage.jsx';
 import Eventpage from './pages/EventPage.jsx'
 import ManageLocation from './pages/ManageLocation.jsx';
@@ -53,10 +53,10 @@ function App() {
             <Route path="/settings" element={<SettingPage />} />
             <Route path="/major-towns" element={<MajorTownPage />} />
             <Route path="/attractions" element={<AttractionsPage />} />
-            <Route path="/museum" element={<MuseumPage />} />
-            <Route path="/national-parks" element={<NationalParkPage />} />
-            <Route path="/airport" element={<AirportPage />} />
-            <Route path="/beach" element={<BeachPage />} />
+            <Route path="/shopping" element={<ShoppingsPage />} />
+            <Route path="/food" element={<FoodPage />} />
+            <Route path="/transportation" element={<Transportation />} />
+            <Route path="/accomodation" element={<AccomodationPage />} />
             <Route path="/tourguides" element={<TourGuides />} />
             <Route path="/event" element={<Eventpage />} />
             <Route path="/towns/:slug" element={<CategoryDetailsPage />} />

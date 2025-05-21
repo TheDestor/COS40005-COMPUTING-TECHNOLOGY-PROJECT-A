@@ -526,7 +526,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
 
   
         {/* Nearby Places */}
-        {nearbyPlaces.filter((place) => {
+        {/* {nearbyPlaces.filter((place) => {
           const type = getPlaceType(place.types);
           return selectedCategory === 'All' || type === selectedCategory;
         })
@@ -549,6 +549,44 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 alt={type}
                 style={{ width: '36px', height: '36px' }}
               />
+            </AdvancedMarker>
+          );
+        })} */}
+        {nearbyPlaces.filter((place) => {
+          const type = getPlaceType(place.types);
+          return selectedCategory === 'All' || type === selectedCategory;
+        })
+        .map((place) => {
+          const lat = place.geometry?.location?.lat();
+          const lng = place.geometry?.location?.lng();
+          if (!lat || !lng) return null;
+
+          const type = getPlaceType(place.types);
+          const icon = categoryIcons[type];
+          const isSelected = selectedPlace?.place_id === place.place_id;
+
+          return (
+            <AdvancedMarker 
+              key={place.place_id}
+              position={{ lat, lng }}
+              title={`Nearby: ${place.name}`}
+              onClick={() => setSelectedPlace(place)}
+            >
+              <img
+                src={icon}
+                alt={type}
+                style={{ 
+                  width: isSelected ? '42px' : '36px',
+                  height: isSelected ? '42px' : '36px',
+                  transition: 'all 0.2s ease',
+                  filter: isSelected ? 'drop-shadow(0 0 8px rgba(0, 0, 255, 0.6))' : 'none'
+                }}
+              />
+              {isSelected && (
+                <div className="selected-marker-label">
+                  {place.name}
+                </div>
+              )}
             </AdvancedMarker>
           );
         })}

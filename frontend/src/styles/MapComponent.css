@@ -28,3 +28,30 @@
     line-height: 40px;
   }
   
+  .nearby-place-item100.selected-place {
+  background-color: #f0f7ff;
+  border-left: 4px solid #4285f4;
+}
+
+.nearby-place-item100 {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nearby-place-item100:hover {
+  background-color: #f5f5f5;
+}
+
+.selected-marker-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  font-size: 14px;
+  margin-bottom: 8px;
+}

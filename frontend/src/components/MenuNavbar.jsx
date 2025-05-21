@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  FaBed, FaUniversity, FaMountain, FaPlaneDeparture,
-  FaUmbrellaBeach, FaHospital, FaCalendarAlt
+  FaBed, FaPlaneDeparture, FaHospital, FaCalendarAlt, FaShoppingCart
 } from 'react-icons/fa';
+import { MdForest } from "react-icons/md";
+import { IoFastFood } from "react-icons/io5";
 import { FaLocationDot, FaMapLocationDot } from "react-icons/fa6";
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import '../styles/MenuNavbar.css';
@@ -29,12 +30,12 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
     { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' },
-    { name: 'Attractions', icon: <FaBed />, path: '/attractions' },
-    { name: 'Shoppings & Leisures', icon: <FaUniversity />, path: '/museum' },
-    { name: 'Food & Beverages', icon: <FaMountain />, path: '/national-parks' },
-    { name: 'Transportation', icon: <FaPlaneDeparture />, path: '/airport' },
-    { name: 'Accomodation', icon: <FaUmbrellaBeach />, path: '/beach' },
-    { name: 'Tour Guides', icon: <FaUmbrellaBeach />, path: '/tourguides' },
+    { name: 'Attractions', icon: <MdForest />, path: '/attractions' },
+    { name: 'Shoppings & Leisures', icon: <FaShoppingCart />, path: '/shopping' },
+    { name: 'Food & Beverages', icon: <IoFastFood />, path: '/food' },
+    { name: 'Transportation', icon: <FaPlaneDeparture />, path: '/transportation' },
+    { name: 'Accomodation', icon: <FaBed />, path: '/accomodation' },
+    { name: 'Tour Guides', icon: <FaHospital />, path: '/tourguides' },
     { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
   ];
 

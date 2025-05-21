@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup } from 'react-icons/fa';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle  } from 'react-icons/fa';
+import { toast} from 'react-toastify';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
 import BookmarkPage from '../pages/Bookmarkpage';
@@ -21,7 +22,7 @@ const travelModes = {
   Motorbike: 'DRIVING',
 };
 
-const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent }) => {
+const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent, nearbyPlaces, setSelectedPlace, selectedPlace, setNearbyPlaces }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -35,49 +36,102 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent 
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
-  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  // const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { openRecent } = useAuth();
   const [currentLocation, setCurrentLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [isLocationFetching, setIsLocationFetching] = useState(false);
 
-  const handleAddCurrentLocation = () => {
+  const handleAddCurrentLocation = async () => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser");
+      toast.error("Geolocation is not supported by your browser");
       return;
     }
 
+    // Prevent multiple clicks
+    if (isLocationFetching) {
+      toast.warn("Please wait... Fetching your location", { autoClose: 2000 });
+      return;
+    }
+
+    setIsLocationFetching(true);
     setIsLoading(true);
-    setLocationError(null);
+
+    // Check permission status
+    const permissionStatus = await navigator.permissions?.query({ name: 'geolocation' });
+    if (permissionStatus?.state === 'denied') {
+      toast.error("Location permission denied. Please enable it in browser settings.");
+      setIsLocationFetching(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Add a 2.5-second delay to prevent spamming
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
         setCurrentLocation({ lat: latitude, lng: longitude });
         
-        // Reverse geocode to get address
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode(
-          { location: { lat: latitude, lng: longitude } },
-          (results, status) => {
-            setIsLoading(false);
-            if (status === "OK" && results[0]) {
-              setAddDestinations(prev => [...prev, results[0].formatted_address]);
+        if (accuracy > 10000) {
+          toast.error(
+            `GPS signal weak (accuracy: ${Math.round(accuracy)}m).\n
+            1. Ensure high-accuracy mode is enabled on your device.\n
+            2. Move to an open area.`,
+            { autoClose: 8000 }
+          );
+          setIsLocationFetching(false);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const geocoder = new window.google.maps.Geocoder();
+          const results = await new Promise((resolve, reject) => {
+            geocoder.geocode({ location: { lat: latitude, lng: longitude } }, 
+              (results, status) => status === "OK" ? resolve(results) : reject(status));
+          });
+
+          if (results[0]) {
+            const address = results[0].formatted_address;
+            
+            if (!startingPoint.trim()) {
+              setStartingPoint(address);
+              toast.success("Current location set as starting point");
+            } else if (!destination.trim()) {
+              setDestination(address);
+              toast.success("Current location set as destination");
             } else {
-              setLocationError("Could not determine your address");
+              setAddDestinations(prev => [...prev, address]);
+              toast.success("Current location added as waypoint");
             }
+          } else {
+            toast.error("Could not determine your address");
           }
-        );
+        } catch (error) {
+          toast.error("Geocoding service error");
+        } finally {
+          setIsLocationFetching(false);
+          setIsLoading(false);
+        }
       },
       (error) => {
+        setIsLocationFetching(false);
         setIsLoading(false);
-        setLocationError(error.message);
+        const errorMessage = error.code === error.PERMISSION_DENIED 
+          ? "Please enable location permissions in your browser settings"
+          : error.message;
+        toast.error(errorMessage, { autoClose: 8000 });
       },
-      { 
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
+      options
     );
   };
 
@@ -367,24 +421,29 @@ useEffect(() => {
             </div>
           ))}
 
-          <button 
-            className="current-location-button" 
-            onClick={handleAddCurrentLocation}
-            title="Add Current Location"
-          >
-          <BiCurrentLocation /> Current Location
-          </button>
-          
-          <button className="add-destination" onClick={handleAddDestination}>
-          <IoMdAdd /> Add Destination
-          </button>
-
-          {isLoading && (
-            <div className="loading-message">Getting your current location...</div>
-          )}
-          {locationError && (
-            <div className="location-error">{locationError}</div>
-          )}
+          <div className="destination-buttons">
+            <button className="add-destination" onClick={handleAddDestination}>
+              ➕ Add Destination
+            </button>
+            <button 
+              className="current-location-button" 
+              onClick={handleAddCurrentLocation}
+              title="Use my current location"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="location-error"></span>
+                  Locating...
+                </>
+              ) : (
+                <>
+                  <FaLocationArrow style={{ marginRight: '5px' }} />
+                  My Location
+                </>
+              )}
+            </button>
+          </div>
 
           {isLoading ? (
             <div className="loading-message">Calculating routes...</div>
@@ -425,11 +484,23 @@ useEffect(() => {
                 <hr />
 
                 <div className="explore-nearby-text">🔍 Explore Nearby</div>
-
                 {nearbyPlaces.length > 0 && (
                   <div className="nearby-places-container100">
                     {nearbyPlaces.map((place, index) => (
-                      <div key={index} className="nearby-place-item100">
+                      <div 
+                        key={index} 
+                        className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
+                        onClick={() => {
+                          setSelectedPlace(place);
+                          // Optional: Pan to the selected location
+                          if (mapRef.current) {
+                            mapRef.current.panTo({
+                              lat: place.geometry.location.lat(),
+                              lng: place.geometry.location.lng()
+                            });
+                          }
+                        }}
+                      >
                         <div className="place-name100">{place.name}</div>
                         <div className="place-address100">{place.vicinity}</div>
                         {place.rating && (
@@ -447,7 +518,7 @@ useEffect(() => {
         </div>
       </APIProvider>
 
-            <RecentSection 
+      <RecentSection 
         isOpen={showRecent} 
         onClose={() => setShowRecent(false)} 
         history={history} 
