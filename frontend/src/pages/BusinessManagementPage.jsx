@@ -539,7 +539,9 @@ const BusinessManagement = () => {
                   >
                     <div className="business-avatar">
                       <img 
-                        src={business.businessImage} 
+                        src={business.businessImage.startsWith('/uploads') 
+                          ? `${window.location.origin}${business.businessImage}` 
+                          : business.businessImage} 
                         alt={`${business.name} thumbnail`} 
                         onError={(e) => {
                           e.target.onerror = null;
@@ -554,7 +556,9 @@ const BusinessManagement = () => {
                       </div>
                       <div className="business-owner">
                         <img 
-                          src={business.ownerAvatar} 
+                          src={business.ownerAvatar.startsWith('/uploads') 
+                            ? `${window.location.origin}${business.ownerAvatar}` 
+                            : business.ownerAvatar} 
                           alt={`${business.owner}'s avatar`} 
                           className="owner-avatar"
                           onError={(e) => {
@@ -617,7 +621,9 @@ const BusinessManagement = () => {
                   <div className="business-info">
                     <div className="business-main-image">
                       <img 
-                        src={selectedBusiness.businessImage} 
+                        src={selectedBusiness.businessImage.startsWith('/uploads') 
+                          ? `${window.location.origin}${selectedBusiness.businessImage}` 
+                          : selectedBusiness.businessImage} 
                         alt={`${selectedBusiness.name}`} 
                         className="detail-business-image"
                         onError={(e) => {
@@ -640,14 +646,14 @@ const BusinessManagement = () => {
                       onClick={() => handleApproveBusiness(selectedBusiness._id)}
                       disabled={selectedBusiness.status === 'approved'}
                     >
-                      <FaCheck /> {selectedBusiness.status === 'approved' ? 'Approved' : 'Approve'}
+                      {selectedBusiness.status === 'approved' ? 'Approved' : 'Approve'}
                     </button>
                     <button 
                       className={`business-action-btn reject-btn ${selectedBusiness.status === 'rejected' ? 'disabled' : ''}`}
                       onClick={() => handleRejectBusiness(selectedBusiness._id)}
                       disabled={selectedBusiness.status === 'rejected'}
                     >
-                      <FaTimes /> {selectedBusiness.status === 'rejected' ? 'Rejected' : 'Reject'}
+                      {selectedBusiness.status === 'rejected' ? 'Rejected' : 'Reject'}
                     </button>
                     <button 
                       className="business-action-btn delete-btn"
@@ -672,7 +678,9 @@ const BusinessManagement = () => {
                       <h4>Owner Information</h4>
                       <div className="owner-profile">
                         <img 
-                          src={selectedBusiness.ownerAvatar} 
+                          src={selectedBusiness.ownerAvatar.startsWith('/uploads') 
+                            ? `${window.location.origin}${selectedBusiness.ownerAvatar}` 
+                            : selectedBusiness.ownerAvatar} 
                           alt={`${selectedBusiness.owner}'s avatar`} 
                           className="detail-avatar"
                           onError={(e) => {
