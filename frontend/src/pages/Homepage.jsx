@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import TouristInfoSection from '../components/TouristInfoSection.jsx';
+// import TouristInfoSection from '../components/TouristInfoSection.jsx';
 import LeftSidebar from '../components/LeftSideBar.jsx';  
-import LoginPage from './Loginpage.jsx';
+// import LoginPage from './Loginpage.jsx';
 import MapComponent from '../components/MapComponent.jsx';
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/Kuching.png';
-import ProfileDropdown from '../components/ProfileDropdown.jsx';
+// import ProfileDropdown from '../components/ProfileDropdown.jsx';
 
 const HomePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showLogin, setShowLogin] = useState(false);
+  // const [showLogin, setShowLogin] = useState(false);
   const [showBookmark, setShowBookmark] = useState(false);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
@@ -86,17 +86,17 @@ const HomePage = () => {
     }
   }, [location.state]);
 
-  const handleLoginClick = () => {
-    setShowLogin(true);
-  };
+  // const handleLoginClick = () => {
+  //   setShowLogin(true);
+  // };
 
-  const closeLogin = () => {
-    setShowLogin(false);
-  };
+  // const closeLogin = () => {
+  //   setShowLogin(false);
+  // };
 
   return (
     <>
-      <ProfileDropdown onLoginClick={handleLoginClick} />
+      {/* <ProfileDropdown onLoginClick={handleLoginClick} /> */}
 
       <MapComponent 
         startingPoint={startingPoint} 
@@ -133,7 +133,7 @@ const HomePage = () => {
         setShowRecent={setShowRecent}
       />
 
-      {showLogin && <LoginPage onClose={closeLogin} />}
+      {/* {showLogin && <LoginPage onClose={closeLogin} />} */}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
       </>
   );

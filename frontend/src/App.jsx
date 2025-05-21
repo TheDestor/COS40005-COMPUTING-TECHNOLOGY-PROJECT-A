@@ -23,7 +23,7 @@ import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
 import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
-import HomestayPage from './pages/HomestayPage.jsx';
+import AttractionsPage from './pages/AttractionsPage.jsx';
 import MuseumPage from './pages/MuseumPage.jsx';
 import NationalParkPage from './pages/NationalParkPage.jsx';
 import AirportPage from './pages/AirportPage.jsx';
@@ -36,6 +36,7 @@ import DiscoverPlaces from './pages/DiscoverPlaces.jsx';
 import ProtectedRoute from './components/ProtectedRoutes.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
 import SharePlace from './components/SharePlace.jsx';
+import TourGuides from './pages/TourGuidesPage.jsx';
 
 function App() {
   return (
@@ -51,11 +52,12 @@ function App() {
             <Route path="/forget-password" element={<ForgetPassword />} />
             <Route path="/settings" element={<SettingPage />} />
             <Route path="/major-towns" element={<MajorTownPage />} />
-            <Route path="/homestay" element={<HomestayPage />} />
+            <Route path="/attractions" element={<AttractionsPage />} />
             <Route path="/museum" element={<MuseumPage />} />
             <Route path="/national-parks" element={<NationalParkPage />} />
             <Route path="/airport" element={<AirportPage />} />
             <Route path="/beach" element={<BeachPage />} />
+            <Route path="/tourguides" element={<TourGuides />} />
             <Route path="/event" element={<Eventpage />} />
             <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
             <Route path="/contact-us" element={<ContactUs />} />

@@ -29,12 +29,12 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const menuItems = [
     { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
     { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' },
-    { name: 'Attractions', icon: <FaBed />, path: '/homestay' },
+    { name: 'Attractions', icon: <FaBed />, path: '/attractions' },
     { name: 'Shoppings & Leisures', icon: <FaUniversity />, path: '/museum' },
     { name: 'Food & Beverages', icon: <FaMountain />, path: '/national-parks' },
     { name: 'Transportation', icon: <FaPlaneDeparture />, path: '/airport' },
     { name: 'Accomodation', icon: <FaUmbrellaBeach />, path: '/beach' },
-    { name: 'Tour Guides', icon: <FaUmbrellaBeach />, path: '/beach' },
+    { name: 'Tour Guides', icon: <FaUmbrellaBeach />, path: '/tourguides' },
     { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
   ];
 

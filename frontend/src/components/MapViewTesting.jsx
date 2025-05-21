@@ -81,6 +81,7 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
               // open24Hours: place.opening_hours?.periods?.some(p =>
               //   (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
               // ) || false,
+              type: categoryName
             }));
 
             setLocationsData(formatted);
@@ -130,6 +131,7 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
           longitude: town.longitude,
           image: defaultImage,
           description: 'Division in Sarawak, Malaysia.',
+          type: 'Major Town'
         }));
         setLocationsData(formatted);
         if (onSelect) onSelect(item.name, formatted);

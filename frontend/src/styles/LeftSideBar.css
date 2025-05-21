@@ -107,6 +107,12 @@
   transform: scale(1.05);
 }
 
+.transport-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Input Box */
 .input-container {
   display: flex;
@@ -155,13 +161,18 @@
   color: #333;
 }
 
+.input-icon-add {
+  font-size: 14px;
+  color: red;
+}
+
 .input-icon:hover {
   color: #007bff;
   transform: scale(1.1);
 }
 
 .input-box button:hover {
-  transform: rotate(90deg) scale(1.2);
+  transform: scale(1.2);
   color: #c0392b;
 }
 
@@ -270,21 +281,17 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #007bff;
-  cursor: pointer;
+  color: #333;
   transition: color 0.2s ease;
   font-size: 15px;
   font-weight: 600;
 }
 
-.send-directions-text:hover {
-  color: #0056b3;
-}
 .explore-nearby-text {
   font-size: 15px;
   font-weight: 600;
   margin: 15px 0 10px;
-  color: #007bff;
+  color: #333;
   transition: color 0.2s ease;
 }
 
@@ -346,25 +353,41 @@
   animation: pulse 1.5s infinite;
 }
 
-.add-destination {
+.add-destination, .current-location-button {
   border-radius: 10px;
   border: 1px solid transparent;
   padding: 0.4rem 1.2rem;
   margin-left: 4px;
+  margin-bottom: 8px;
   font-weight: 500;
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
-  /* transition: border 0.25s; */
   transition: all 0.3s ease;
   background-color: #f2ecf7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  color: #333;
 }
 
-.add-destination:hover {
+.add-destination:hover, .current-location-button:hover {
   color:#0056b3;
   background-color: #d0eafc;
   transform: scale(1.05);
   border: 0px solid #e8f0fe;
+}
+
+.current-location-button {
+  background-color: #f2ecf7;
+  color: #333;
+}
+
+.location-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 5px;
 }
 
 .side-panel100::-webkit-scrollbar {

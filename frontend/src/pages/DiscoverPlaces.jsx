@@ -7,15 +7,17 @@ import '../styles/DiscoverPlaces.css';
 import { useApiIsLoaded } from '@vis.gl/react-google-maps';
 
 const DiscoverPlaces = () => {
-  const { state } = useLocation();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [locationData, setLocationData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [coordError, setCoordError] = useState(null);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(state?.selectedCategory || 'restaurant');
   const isApiLoaded = useApiIsLoaded();
+  const location = useLocation();
+  const { name, desc, image, coordinates } = location.state || {}; 
+  const { state } = location.state; 
+   const [selectedCategory, setSelectedCategory] = useState(state?.selectedCategory || 'restaurant');
 
   useEffect(() => {
     if (!isApiLoaded || !window.google || !locationData?.coordinates) return;

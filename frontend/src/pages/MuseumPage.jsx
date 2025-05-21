@@ -6,53 +6,89 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const MuseumPage = () => {
+const ShoppingLeisurePage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('');
+  const [currentCategory, setCurrentCategory] = useState('Shopping & Leisure');
 
-  // Function to fetch major towns from backend
-  const fetchMuseums = async () => {
+  const placeCategories = {
+    ShoppingLeisure: [
+      'shopping_mall', 'clothing_store', 'department_store', 'jewelry_store',
+      'movie_theater', 'spa', 'gym', 'bowling_alley', 'casino'
+    ]
+  };
+
+  const fetchGooglePlaces = (categoryName, location, radius = 50000) => {
+    return new Promise((resolve) => {
+      if (!window.google) {
+        console.error("Google Maps API not loaded");
+        return resolve([]);
+      }
+
+      const entries = placeCategories[categoryName];
+      if (!entries) return resolve([]);
+
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+      const collectedResults = [];
+      let completedRequests = 0;
+
+      entries.forEach(entry => {
+        const request = {
+          location: new window.google.maps.LatLng(location.lat, location.lng),
+          radius,
+          type: entry
+        };
+
+        const processResults = (results, status, pagination) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+            collectedResults.push(...results);
+
+            if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
+              setTimeout(() => pagination.nextPage(), 1000);
+            } else {
+              completedRequests++;
+              if (completedRequests === entries.length) {
+                const formatted = collectedResults.slice(0, 50).map(place => ({
+                  name: place.name,
+                  desc: place.vicinity || 'Google Places result',
+                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+                }));
+                resolve(formatted);
+              }
+            }
+          } else {
+            completedRequests++;
+            if (completedRequests === entries.length) {
+              resolve([]);
+            }
+          }
+        };
+
+        service.nearbySearch(request, processResults);
+      });
+    });
+  };
+
+  const fetchShoppingLeisurePlaces = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/locations?type=Museum');
-      const fetchedData = await response.json();
-      handleDataFetch('Museums', fetchedData);
+      const results = await fetchGooglePlaces('ShoppingLeisure', { lat: 1.5533, lng: 110.3592 });
+      setData(results);
     } catch (error) {
-      console.error('Error fetching Homestay:', error);
+      console.error('Error fetching Google Places:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Load default data on component mount
   useEffect(() => {
-    fetchMuseums();
+    fetchShoppingLeisurePlaces();
   }, []);
-
-  const handleDataFetch = (category, fetchedData) => {
-    setLoading(true);
-    setCurrentCategory(category);
-    setSearchQuery('');
-    setSortOrder('default');
-
-    const processed = processData(fetchedData, category);
-    setData(processed);
-    setLoading(false);
-  };
-
-  const processData = (items, category) => {
-    return (items || []).map(item => ({
-      name: item?.Name || item?.name || 'Unknown',
-      desc: item?.description || item?.Desc || 'No description',
-      slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      image: item?.image || defaultImage,
-    }));
-  };
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
@@ -98,8 +134,8 @@ const MuseumPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'Category'}</h1>
-          <p>Exploring {currentCategory || 'Sarawak'}</p>
+          <h1>{currentCategory.toUpperCase()}</h1>
+          <p>Exploring {currentCategory}</p>
         </div>
       </div>
 
@@ -170,4 +206,4 @@ const MuseumPage = () => {
   );
 };
 
-export default MuseumPage;
+export default ShoppingLeisurePage;

@@ -6,53 +6,81 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const BeachPage = () => {
+const AccommodationPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('');
+  const [currentCategory, setCurrentCategory] = useState('Accommodation');
 
-  // Function to fetch major towns from backend
-  const fetchBeachs = async () => {
+  const accommodationTypes = ['lodging']; // Google Places "lodging" includes hotels, hostels, resorts
+
+  const fetchGooglePlaces = (types, location, radius = 50000) => {
+    return new Promise((resolve) => {
+      if (!window.google) {
+        console.error('Google Maps API not loaded');
+        return resolve([]);
+      }
+
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+      const collectedResults = [];
+      let completedRequests = 0;
+
+      types.forEach(type => {
+        const request = {
+          location: new window.google.maps.LatLng(location.lat, location.lng),
+          radius,
+          type,
+        };
+
+        const processResults = (results, status, pagination) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+            collectedResults.push(...results);
+
+            if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
+              setTimeout(() => pagination.nextPage(), 1000);
+            } else {
+              completedRequests++;
+              if (completedRequests === types.length) {
+                const formatted = collectedResults.slice(0, 50).map(place => ({
+                  name: place.name,
+                  desc: place.vicinity || 'Google Places result',
+                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+                }));
+                resolve(formatted);
+              }
+            }
+          } else {
+            completedRequests++;
+            if (completedRequests === types.length) {
+              resolve([]);
+            }
+          }
+        };
+
+        service.nearbySearch(request, processResults);
+      });
+    });
+  };
+
+  const fetchAccommodations = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/locations?type=Beach');
-      const fetchedData = await response.json();
-      handleDataFetch('Beaches', fetchedData);
+      const results = await fetchGooglePlaces(accommodationTypes, { lat: 1.5533, lng: 110.3592 }); // Example: Kuching
+      setData(results);
     } catch (error) {
-      console.error('Error fetching Homestay:', error);
+      console.error('Error fetching accommodations:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Load default data on component mount
   useEffect(() => {
-    fetchBeachs();
+    fetchAccommodations();
   }, []);
-
-  const handleDataFetch = (category, fetchedData) => {
-    setLoading(true);
-    setCurrentCategory(category);
-    setSearchQuery('');
-    setSortOrder('default');
-
-    const processed = processData(fetchedData, category);
-    setData(processed);
-    setLoading(false);
-  };
-
-  const processData = (items, category) => {
-    return (items || []).map(item => ({
-      name: item?.Name || item?.name || 'Unknown',
-      desc: item?.description || item?.Desc || 'No description',
-      slug: (item?.Name || item?.name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-      image: item?.image || defaultImage,
-    }));
-  };
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
@@ -98,8 +126,8 @@ const BeachPage = () => {
 
       <div className="hero-banner">
         <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'Category'}</h1>
-          <p>Exploring {currentCategory || 'Sarawak'}</p>
+          <h1>{currentCategory.toUpperCase()}</h1>
+          <p>Exploring {currentCategory}</p>
         </div>
       </div>
 
@@ -126,31 +154,29 @@ const BeachPage = () => {
       </div>
 
       <div className="cards-section">
-        {filteredData
-          .slice(0, visibleItems)
-          .map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
-                      Explore
-                    </Link>
-                  </div>
+        {filteredData.slice(0, visibleItems).map((item, index) => (
+          <div
+            className="card-wrapper"
+            key={index}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+              <img src={item.image} alt={item.name} />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
 
       {filteredData.length > visibleItems && (
@@ -170,4 +196,4 @@ const BeachPage = () => {
   );
 };
 
-export default BeachPage;
+export default AccommodationPage;

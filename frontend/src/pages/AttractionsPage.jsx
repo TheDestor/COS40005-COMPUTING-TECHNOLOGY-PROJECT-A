@@ -1,32 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 
-const AirportPage = () => {
+const AttractionsPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('all');  // Use 'all' to show all categories
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Transportation');
+  const [currentCategory] = useState('Attractions');
 
-  const transportationCategories = {
-    Transportation: ['airport', 'bus_station', 'transit_station', 'train_station', 'subway_station']
+  const placeCategories = {
+    Attractions: ['tourist_attraction', 'museum', 'zoo', 'amusement_park', 'aquarium']
   };
 
   const fetchGooglePlaces = (categoryName, location, radius = 50000) => {
     return new Promise((resolve) => {
       if (!window.google) {
-        console.error('Google Maps API not loaded');
+        console.error("Google Maps API not loaded");
         return resolve([]);
       }
 
-      const entries = transportationCategories[categoryName];
+      const entries = placeCategories[categoryName];
       if (!entries) return resolve([]);
 
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
@@ -49,12 +49,23 @@ const AirportPage = () => {
             } else {
               completedRequests++;
               if (completedRequests === entries.length) {
-                const formatted = collectedResults.slice(0, 50).map(place => ({
-                  name: place.name,
-                  desc: place.vicinity || 'Google Places result',
-                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-                }));
+                const formatted = collectedResults.slice(0, 50).map(place => {
+                  const name = place.name;
+                  const lowerName = name.toLowerCase();
+                  let type = '';
+                  if (lowerName.includes('museum')) type = 'Museum';
+                  else if (lowerName.includes('park') || lowerName.includes('national')) type = 'National Park';
+                  else if (lowerName.includes('beach')) type = 'Beach';
+                  else type = 'Other';
+
+                  return {
+                    name,
+                    desc: place.vicinity || 'Google Places result',
+                    image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+                    slug: name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+                    type
+                  };
+                });
                 resolve(formatted);
               }
             }
@@ -71,28 +82,56 @@ const AirportPage = () => {
     });
   };
 
-  const fetchTransportationPlaces = async () => {
+  const fetchAttractions = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces('Transportation', { lat: 1.5533, lng: 110.3592 }); // Kuching
-      setData(results);
+      const response = await fetch('/api/locations?category=Attraction');
+      const fetchedData = await response.json();
+
+      const googleResults = await fetchGooglePlaces('Attractions', { lat: 1.5533, lng: 110.3592 });
+
+      const filteredBackend = fetchedData.filter(item =>
+        item.category?.toLowerCase() === 'attraction'
+      );
+      const allData = [...filteredBackend, ...googleResults];
+
+      const processedData = processData(allData);
+      setData(processedData);
     } catch (error) {
-      console.error('Error fetching transportation places:', error);
+      console.error('Error fetching Attractions:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const processData = (items) => {
+    return (items || []).map(item => {
+      const name = item?.Name || item?.name || 'Unknown';
+      const lowerName = name.toLowerCase();
+      let type = '';
+      if (lowerName.includes('museum')) type = 'Museum';
+      else if (lowerName.includes('park') || lowerName.includes('national')) type = 'National Park';
+      else if (lowerName.includes('airport')) type = 'Airport';
+      else if (lowerName.includes('beach')) type = 'Beach';
+      else type = 'Other';
+
+      return {
+        name,
+        desc: item?.description || item?.Desc || 'No description',
+        slug: name.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+        image: item?.image || defaultImage,
+        type,
+        coordinates: item?.coordinates || [1.5533, 110.3592],
+      };
+    });
+  };
+
   useEffect(() => {
-    fetchTransportationPlaces();
+    fetchAttractions();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
-
-  const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
 
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
@@ -108,13 +147,11 @@ const AirportPage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSort = sortOrder === 'all' || item.type === sortOrder;
+    return matchesSearch && matchesSort;
+  });
 
   if (loading) {
     return (
@@ -144,17 +181,23 @@ const AirportPage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="sort-select"
+            >
+              <option value="all">All Categories</option>
+              <option value="Museum">Museum</option>
+              <option value="National Park">National Park</option>
+              <option value="Beach">Beach</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -174,7 +217,16 @@ const AirportPage = () => {
                   <p>{item.desc}</p>
                 </div>
                 <div className="button-container">
-                  <Link to={`/details/${currentCategory}/${item.slug}`} className="explore-btn">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: item.coordinates,
+                    }}
+                    className="explore-btn"
+                  >
                     Explore
                   </Link>
                 </div>
@@ -201,4 +253,4 @@ const AirportPage = () => {
   );
 };
 
-export default AirportPage;
+export default AttractionsPage;

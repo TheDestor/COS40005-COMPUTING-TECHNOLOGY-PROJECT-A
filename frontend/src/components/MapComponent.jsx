@@ -21,6 +21,7 @@ import WeatherDateTime from './WeatherDateTime';
 import { townCoordinates } from '../townCoordinates';
 import LoginModal from '../pages/Loginpage';
 import TouristInfoSection from './TouristInfoSection';
+import ProfileDropdown from './ProfileDropdown';
 import SharePlace from './SharePlace';
 
 const containerStyle = {
@@ -65,27 +66,6 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
 
   return (
     <>
-      {/* {locations.map((loc) => (
-        <AdvancedMarker
-          key={loc.id}
-          position={{ lat: loc.latitude, lng: loc.longitude }}
-          title={loc.name}
-          onClick={() => handleMarkerClick(loc)}
-        >
-          <img 
-            src={categoryIcons[loc.type] || townIcon} 
-            alt={loc.type} 
-            style={{ 
-              width: '30px', 
-              height: '30px',
-              cursor: 'pointer',
-              borderRadius: '999px',
-              transform: selectedLocation?.id === loc.id ? 'scale(1.2)' : 'scale(1)',
-              transition: 'transform 0.2s ease'
-            }} 
-          />
-        </AdvancedMarker>
-      ))} */}
       {locations.map((loc, index) => (
         <AdvancedMarker
           key={index}
@@ -111,36 +91,60 @@ function MarkerManager({ locations, selectedLocation, setSelectedLocation }) {
   );
 }
 
-function Directions({ startingPoint, destination, addDestinations=[], nearbyPlaces=[], selectedVehicle, travelModes, selectedCategory, onRoutesCalculated, selectedRouteIndex, route }) {
-  const map = useMap('e57efe6c5ed679ba');
+function Directions({ startingPoint, destination, addDestinations=[], selectedVehicle, onRoutesCalculated, selectedRouteIndex }) {
+  const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
   const [directionsService, setDirectionsService] = useState(null);
-  // const [directionsRenderer, setDirectionsRenderer] = useState(null);
   const [routes, setRoutes] = useState([]);
-  const [routesIndex, setRoutesIndex] = useState(0);
-  const selected = routes[routesIndex];
-  const leg = selected?.legs[0];
-  const [isRoutesLoaded, setIsRoutesLoaded] = useState(false);
-
+  const [markerPositions, setMarkerPositions] = useState({
+    origin: null,
+    waypoints: [],
+    destination: null
+  });
+  const [hoveredMarker, setHoveredMarker] = useState(null);
   const routeRenderersRef = useRef([]);
 
-  useEffect(() => {
-    console.log("Selected Route Index123:", selectedRouteIndex);
-  }, [selectedRouteIndex]);
-
-  useEffect(() => {
-    if (routesLibrary) {
-      setIsRoutesLoaded(true);
-      setDirectionsService(new routesLibrary.DirectionsService());
+  // Animation styles
+  const pulseAnimation = `
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
-  }, [routesLibrary]);
+  `;
 
-  useEffect(() => {
-    return () => {
-      routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
-      routeRenderersRef.current = [];
-    };
-  }, []);
+  const markerStyles = {
+    base: {
+      borderRadius: "50%",
+      width: "28px",
+      height: "28px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "white",
+      fontWeight: "bold",
+      border: "2px solid white",
+      fontSize: "12px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      animation: "pulse 2s infinite"
+    },
+    origin: {
+      background: "#4285F4",
+    },
+    waypoint: {
+      background: "#34A853",
+    },
+    destination: {
+      background: "#EA4335",
+    },
+    hover: {
+      transform: "scale(1.2)",
+      boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+      zIndex: 100
+    }
+  };
 
   const geocode = async (input) => {
     if (typeof input === 'string') {
@@ -162,73 +166,206 @@ function Directions({ startingPoint, destination, addDestinations=[], nearbyPlac
   };
 
   useEffect(() => {
+    if (!routesLibrary) return;
+    setDirectionsService(new routesLibrary.DirectionsService());
+  }, [routesLibrary]);
+
+  useEffect(() => {
+    return () => {
+      routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
+    };
+  }, []);
+
+  useEffect(() => {
     if (!directionsService || !map) return;
-  
+
     const getRoutes = async () => {
       try {
         const origin = await geocode(startingPoint);
         const dest = await geocode(destination);
         const waypoints = await Promise.all(
-          addDestinations.map(async (addDest) => ({
-            location: await geocode(addDest)
-          }))
+          addDestinations.map(async (dest) => {
+            const location = await geocode(dest);
+            return {
+              location,
+              stopover: true // Explicitly mark it as a stopover
+            };
+          })
         );
-  
+
+        setMarkerPositions({
+          origin: { location: origin, address: startingPoint },
+          waypoints,
+          destination: { location: dest, address: destination }
+        });
+
         const response = await directionsService.route({
-          origin: origin,
+          origin,
           destination: dest,
-          waypoints: waypoints,
+          waypoints: waypoints.length > 0 ? waypoints : undefined,
           travelMode: selectedVehicle,
           provideRouteAlternatives: true,
+          optimizeWaypoints: true
         });
-  
+
         setRoutes(response.routes);
-  
-        // Clear previous route renderers
+        
+        // Clear previous renderers
         routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
         routeRenderersRef.current = [];
-  
-        // Render all route alternatives with the proper styling
-        response.routes.forEach((route, index) => {
+
+        // Create new renderers
+       response.routes.forEach((route, index) => {
+          const singleRouteResponse = {
+            ...response,
+            routes: [route]
+          };
+
           const renderer = new routesLibrary.DirectionsRenderer({
             map,
-            directions: response,
-            routeIndex: index,
-            suppressMarkers: false,
+            directions: singleRouteResponse, // only the specific route
+            suppressMarkers: true,
             polylineOptions: {
-              strokeColor: index === selectedRouteIndex ? '#0057e7' : '	#a7cdf2', // Highlight the selected route
+              strokeColor: index === selectedRouteIndex ? '#0057e7' : '#a7cdf2',
               strokeOpacity: index === selectedRouteIndex ? 1 : 0.5,
-              strokeWeight: index === selectedRouteIndex ? 8 : 6,
-            },
+              strokeWeight: index === selectedRouteIndex ? 8 : 6
+            }
           });
-  
-          // Store the renderer in ref for cleanup later
+
           routeRenderersRef.current.push(renderer);
         });
-  
-        // Callback with structured data
+
         if (onRoutesCalculated) {
           onRoutesCalculated({
-            routes: response.routes.map(route => ({
-              ...route,
-              optimizedOrder: route.waypoint_order,
-              segments: route.legs.map(leg => ({
-                start: leg.start_address,
-                end: leg.end_address,
-                duration: leg.duration.text,
-                distance: leg.distance.text,
-              }))
-            }))
+            routes: response.routes,
+            waypointOrder: response.routes[0]?.waypoint_order || []
           });
         }
-  
       } catch (error) {
         console.error('Directions error:', error);
       }
     };
-  
+
     getRoutes();
-  }, [directionsService, startingPoint, destination, addDestinations, selectedVehicle, map, selectedRouteIndex]);
+  }, [directionsService, startingPoint, destination, addDestinations, selectedVehicle, selectedRouteIndex]);
+
+  const getMarkerLabel = (type, index) => {
+    if (type === 'origin') return 'A';
+    if (type === 'destination') return String.fromCharCode(66 + markerPositions.waypoints.length);
+    return String.fromCharCode(66 + index);
+  };
+
+  return (
+    <>
+      <style>{pulseAnimation}</style>
+      
+      {/* Starting Point (A) */}
+      {markerPositions.origin && (
+        <AdvancedMarker 
+          position={markerPositions.origin.location}
+          onClick={() => console.log('Origin clicked:', markerPositions.origin.address)}
+          onMouseEnter={() => setHoveredMarker('origin')}
+          onMouseLeave={() => setHoveredMarker(null)}
+        >
+          <div style={{
+            ...markerStyles.base,
+            ...markerStyles.origin,
+            ...(hoveredMarker === 'origin' && markerStyles.hover)
+          }}>
+            {getMarkerLabel('origin')}
+          </div>
+          {hoveredMarker === 'origin' && (
+            <div style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              whiteSpace: 'nowrap',
+              fontSize: '12px',
+              marginBottom: '8px'
+            }}>
+              Start: {markerPositions.origin.address}
+            </div>
+          )}
+        </AdvancedMarker>
+      )}
+
+      {/* Waypoints (B, C, etc.) */}
+      {markerPositions.waypoints.map((waypoint, index) => (
+        <AdvancedMarker 
+          key={index}
+          position={waypoint.location}
+          onClick={() => console.log('Waypoint clicked:', waypoint.address)}
+          onMouseEnter={() => setHoveredMarker(`waypoint-${index}`)}
+          onMouseLeave={() => setHoveredMarker(null)}
+        >
+          <div style={{
+            ...markerStyles.base,
+            ...markerStyles.waypoint,
+            ...(hoveredMarker === `waypoint-${index}` && markerStyles.hover)
+          }}>
+            {getMarkerLabel('waypoint', index)}
+          </div>
+          {hoveredMarker === `waypoint-${index}` && (
+            <div style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              whiteSpace: 'nowrap',
+              fontSize: '12px',
+              marginBottom: '8px'
+            }}>
+              Stop {index + 1}: {waypoint.address}
+            </div>
+          )}
+        </AdvancedMarker>
+      ))}
+
+      {/* Destination (last letter) */}
+      {markerPositions.destination && (
+        <AdvancedMarker 
+          position={markerPositions.destination.location}
+          onClick={() => console.log('Destination clicked:', markerPositions.destination.address)}
+          onMouseEnter={() => setHoveredMarker('destination')}
+          onMouseLeave={() => setHoveredMarker(null)}
+        >
+          <div style={{
+            ...markerStyles.base,
+            ...markerStyles.destination,
+            ...(hoveredMarker === 'destination' && markerStyles.hover)
+          }}>
+            {getMarkerLabel('destination')}
+          </div>
+          {hoveredMarker === 'destination' && (
+            <div style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              whiteSpace: 'nowrap',
+              fontSize: '12px',
+              marginBottom: '8px'
+            }}>
+              Destination: {markerPositions.destination.address}
+            </div>
+          )}
+        </AdvancedMarker>
+      )}
+    </>
+  );
 }
 
 function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes, setShowRecent, showRecent }) {
@@ -273,6 +410,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const handleTownChange = (town) => {
     setCurrentTown(town);
   };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+  };
    
   const categoryIcons = {
     'Major Town': townIcon,
@@ -284,11 +425,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
     'Tour Guides': tourIcon,
     'Events': eventIcon,
     'Restaurant': restaurantIcon,
-  };
-
-  useEffect(() => {
-    console.log('Updated locations:', locations);
-  }, [locations]);    
+  };    
 
   const getPlaceType = (types) => {
     if (types?.includes('airport')) return "Airport";
@@ -339,6 +476,23 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         id="e57efe6c5ed679ba"
         mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
+        // defaultZoom={7}
+       restriction={{
+          latLngBounds: {
+            north: 14.5,   
+            south: -6.5,    
+            east: 141.0,   
+            west: 78.0     
+          },
+          strictBounds: false
+        }}
+        options={{
+          gestureHandling: 'cooperative',
+          keyboardShortcuts: false,
+          scrollwheel: true,
+          disableDoubleClickZoom: false,
+          touchZoom: true
+        }}
       >
 
       {/* Locations based on type */}
@@ -471,6 +625,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             />
           </div>
         )}
+        <ProfileDropdown onLoginClick={handleLoginClick} />
         <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
         {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
         <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} /> 
