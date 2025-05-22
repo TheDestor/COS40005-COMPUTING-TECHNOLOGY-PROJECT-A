@@ -53,7 +53,9 @@ const MajorTownPage = () => {
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^\w-]/g, ''),
-      image: item.image || defaultImage
+      image: item.image || defaultImage,
+      lat: item.lat,
+      lng: item.lng
     }));
   };
 
@@ -151,7 +153,9 @@ const MajorTownPage = () => {
                       state={{ 
                         town: item,
                         division: item.name,
-                        type: item.type
+                        type: item.type,
+                        lat: item.lat,
+                        lng: item.lng
                       }} 
                       className="explore-btn"
                     >

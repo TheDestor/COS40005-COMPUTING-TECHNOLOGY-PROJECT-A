@@ -328,13 +328,15 @@
   transform: translateX(-50%);
   text-align: center;
   z-index: 2;
-  animation: shineBackground 3s infinite alternate;
+  /* animation: shineBackground 3s infinite alternate; */
+  animation: 3s infinite alternate;
   padding: 6px 10px;
   border-radius: 10px;
   background: none;
   pointer-events: none;
   font-weight: bold;
   margin: 50px 0;
+  background: none;
 }
 
 .scroll-down-indicator span {

@@ -13,6 +13,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
 import { BiCurrentLocation } from "react-icons/bi";
 import { IoMdAdd } from "react-icons/io";
+import MapZoomController from './MapZoomController';
 
 const travelModes = {
   Car: 'DRIVING',
@@ -42,6 +43,7 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent,
   const [currentLocation, setCurrentLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [isLocationFetching, setIsLocationFetching] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const handleAddCurrentLocation = async () => {
     if (!navigator.geolocation) {
@@ -487,20 +489,18 @@ useEffect(() => {
                 {nearbyPlaces.length > 0 && (
                   <div className="nearby-places-container100">
                     {nearbyPlaces.map((place, index) => (
-                      <div 
-                        key={index} 
-                        className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
-                        onClick={() => {
-                          setSelectedPlace(place);
-                          // Optional: Pan to the selected location
-                          if (mapRef.current) {
-                            mapRef.current.panTo({
-                              lat: place.geometry.location.lat(),
-                              lng: place.geometry.location.lng()
-                            });
-                          }
-                        }}
-                      >
+                     <div 
+                      key={index} 
+                      className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
+                      onClick={() => {
+                        setSelectedPlace(place);
+                        // Set the location for zooming
+                        setSelectedLocation({
+                          lat: place.geometry.location.lat(),
+                          lng: place.geometry.location.lng()
+                        });
+                      }}
+                    >
                         <div className="place-name100">{place.name}</div>
                         <div className="place-address100">{place.vicinity}</div>
                         {place.rating && (
@@ -517,6 +517,11 @@ useEffect(() => {
           ) : null}
         </div>
       </APIProvider>
+
+      <MapZoomController 
+        location={selectedLocation} 
+        zoom={20} // You might want a higher zoom when selecting a place
+      />
 
       <RecentSection 
         isOpen={showRecent} 
