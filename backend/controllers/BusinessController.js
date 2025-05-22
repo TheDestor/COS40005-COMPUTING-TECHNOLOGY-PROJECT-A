@@ -267,7 +267,7 @@ export const updateBusinessStatus = async (req, res) => {
                     message: "Invalid status. Must be one of: pending, approved, rejected"
                 });
             }
-        }
+        }    
         
         // Validate priority if provided
         if (priority) {
@@ -297,7 +297,6 @@ export const updateBusinessStatus = async (req, res) => {
                 message: "Business not found"
             });
         }
-        
         res.status(200).json({
             success: true,
             message: "Business status updated successfully",

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { addEvent, getAllEvents } from "../controllers/EventController.js";
 import multer from "multer";
+import { checkRole, verifyJWT } from "../middleware/AuthMiddleware.js";
 
 const eventRouter = Router();
 const upload = multer({
@@ -17,7 +18,7 @@ const upload = multer({
 });
 
 
-eventRouter.post("/addEvent", upload.single('image'), addEvent);
+eventRouter.post("/addEvent", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), addEvent);
 eventRouter.get("/getAllEvents", getAllEvents);
 
 export default eventRouter;

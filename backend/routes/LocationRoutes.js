@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { addLocation, getAllLocations, removeLocation, updateLocation } from "../controllers/LocationController.js";
-import multer from "multer";
+import { verifyJWT, checkRole } from "../middleware/AuthMiddleware.js";
 
 const locationRouter = Router();
 
 locationRouter.get('/', getAllLocations);
-locationRouter.post("/addLocation", addLocation);
-locationRouter.post("/removeLocation", removeLocation);
-locationRouter.post("/updateLocation", updateLocation);
+locationRouter.post("/addLocation", verifyJWT, checkRole(['cbt_admin']), addLocation);
+locationRouter.post("/removeLocation", verifyJWT, checkRole(['cbt_admin']), removeLocation);
+locationRouter.post("/updateLocation", verifyJWT, checkRole(['cbt_admin']), updateLocation);
 
 export default locationRouter;

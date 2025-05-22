@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { APIProvider, Map } from '@vis.gl/react-google-maps';
 import '../styles/ManageLocation.css';
 import ky from 'ky';
+import { useAuth } from '../context/AuthProvider';
 
 const MapPreview = ({ latitude, longitude }) => {
   return (
@@ -72,6 +73,7 @@ const ManageLocation = () => {
   const [locations, setLocations] = useState([]);
   const [editingLocation, setEditingLocation] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -183,7 +185,10 @@ const ManageLocation = () => {
       console.log(locationId);
       const response = await ky.post(
         "/api/locations/removeLocation",
-        { json: {id: locationId} }
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          json: { id: locationId }
+        }
       ).json();
 
       console.log(response);
@@ -231,7 +236,10 @@ const ManageLocation = () => {
       if (isNewLocation) {
         const response = await ky.post(
           "/api/locations/addLocation",
-          { json: locationData }
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            json: locationData
+          }
         ).json();
         
         const newLocation = response.newLocation;
@@ -245,7 +253,10 @@ const ManageLocation = () => {
       } else {
         const response = await ky.post(
           "/api/locations/updateLocation",
-          { json: locationData }
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            json: locationData
+          }
         ).json();
 
         const updatedLocation = response.updatedLocation;

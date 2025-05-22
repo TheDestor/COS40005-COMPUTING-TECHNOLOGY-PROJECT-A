@@ -35,7 +35,7 @@ const AddEventPage = () => {
   const locations = ['Sarawak Cultural Village', 'Damai Beach', 'Kuching Waterfront'];
   const eventTypes = ['Festival', 'Workshop', 'Business Meetup'];
 
-  const { user } = useAuth();
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const currentImage = uploadedImage;
@@ -222,7 +222,7 @@ const AddEventPage = () => {
       const response = await ky.post(
         "/api/event/addEvent",
         {
-          headers: { 'Authorization': `Bearer ${user?.accessToken}` },
+          headers: { 'Authorization': `Bearer ${accessToken}` },
           body: formData
         }
       ).json();

@@ -26,6 +26,7 @@ import profile5 from '../assets/profile5.png';
 import profile6 from '../assets/profile6.png';
 import profile7 from '../assets/profile7.png';
 import profile8 from '../assets/profile8.png';
+import { useAuth } from '../context/AuthProvider';
 
 const ViewInquiry = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +36,7 @@ const ViewInquiry = () => {
   const [inquiries, setInquiries] = useState([]);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const { accessToken } = useAuth();
 
   // Dummy data for inquiries
   useEffect(() => {
@@ -131,7 +133,12 @@ const ViewInquiry = () => {
 
     const fetchInquiries = async () => {
       try {
-        const response = await ky.get("/api/inquiry/getAllInquiries").json();
+        const response = await ky.get(
+          "/api/inquiry/getAllInquiries",
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+          }
+        ).json();
 
         if (response && response.success) {
           const fetchedInquiries = response.inquiries;
@@ -214,6 +221,7 @@ const ViewInquiry = () => {
       const response = await ky.post(
         "/api/inquiry/updateInquiry",
         {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
           json: payload
         }
       ).json();

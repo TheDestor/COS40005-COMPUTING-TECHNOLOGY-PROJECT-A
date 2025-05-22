@@ -1,10 +1,10 @@
 import { getAllInquiries, updateInquiry } from "../controllers/InquiryController.js";
 import { Router } from "express";
-import { verifyJWT } from "../middleware/AuthMiddleware.js";
+import { checkRole, verifyJWT } from "../middleware/AuthMiddleware.js";
 
 const inquiryRouter = Router();
 
-inquiryRouter.get("/getAllInquiries", getAllInquiries);
-inquiryRouter.post("/updateInquiry", updateInquiry);
+inquiryRouter.get("/getAllInquiries", verifyJWT, checkRole(['cbt_admin']), getAllInquiries);
+inquiryRouter.post("/updateInquiry", verifyJWT, checkRole(['cbt_admin']), updateInquiry);
 
 export default inquiryRouter;

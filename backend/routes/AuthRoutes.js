@@ -8,7 +8,7 @@ authRouter.post("/register", register);
 authRouter.post("/businessRegister", businessRegister);
 authRouter.post("/login", login);
 authRouter.post("/logout", logout);
-authRouter.get("/refresh", refresh, verifyJWT); // Check for permission
+authRouter.get("/refresh", refresh);
 
 
 export default authRouter;
