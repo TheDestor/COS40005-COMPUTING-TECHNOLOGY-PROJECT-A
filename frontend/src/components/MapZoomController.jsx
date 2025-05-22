@@ -1,23 +1,30 @@
 import { useMap } from '@vis.gl/react-google-maps';
 import { useEffect, useState } from 'react';
 
-export default function MapZoomController({ location, zoom = 15 }) {
+export default function MapZoomController({ selectedPlace }) {
   const map = useMap('e57efe6c5ed679ba');
-  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
-    if (map) {
-      setIsMapReady(true);
-    }
-  }, [map]);
+    if (!selectedPlace?.geometry?.location) return;
 
-  useEffect(() => {
-    if (isMapReady && location?.lat && location?.lng) {
-      console.log('Panning to:', location);
-      map.panTo(location);
-      map.setZoom(zoom);
-    }
-  }, [isMapReady, location, zoom, map]);
+    const location = {
+      lat: selectedPlace.geometry.location.lat(),
+      lng: selectedPlace.geometry.location.lng()
+    };
+
+    console.log('Map ready, zooming to:', location);
+    
+    // First pan smoothly to the location
+    map.panTo(location);
+    
+    // Then zoom after a small delay for better UX
+    const zoomTimer = setTimeout(() => {
+      map.setZoom(20);
+      console.log('Zoom completed');
+    }, 100);
+
+    return () => clearTimeout(zoomTimer);
+  }, [selectedPlace, map]);
 
   return null;
 }

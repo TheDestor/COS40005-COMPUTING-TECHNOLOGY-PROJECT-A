@@ -23,6 +23,7 @@ import LoginModal from '../pages/Loginpage';
 import TouristInfoSection from './TouristInfoSection';
 import ProfileDropdown from './ProfileDropdown';
 import SharePlace from './SharePlace';
+import MapZoomController from './MapZoomController';
 
 const containerStyle = {
   position: 'absolute',
@@ -368,9 +369,9 @@ function Directions({ startingPoint, destination, addDestinations=[], selectedVe
   );
 }
 
-function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes, setShowRecent, showRecent }) {
+function MapComponent({ startingPoint, destination, addDestinations=[], selectedVehicle, mapType, selectedCategory, selectedPlace, nearbyPlaces =[], onRoutesCalculated, selectedRouteIndex, routes, setShowRecent, showRecent, setSelectedPlace }) {
   const mapRef = useRef();
-  const mapInstanceRef = useRef(null);
+  // const mapInstanceRef = useRef(null);
   const map = useMap('e57efe6c5ed679ba'); 
 
   const [markerRef, setMarkerRef] = useState(null);
@@ -384,6 +385,102 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
   const [searchInfoOpen, setSearchInfoOpen] = useState(false);
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  const [searchNearbyPlaces, setSearchNearbyPlaces] = useState([]);
+
+  // New zoom function for nearby places
+  const zoomToPlace = useCallback((place) => {
+    if (!map || !place?.geometry?.location) {
+      console.warn('Map or place location not available');
+      return;
+    }
+
+    const location = {
+      lat: place.geometry.location.lat(),
+      lng: place.geometry.location.lng()
+    };
+
+    const zoomWithRetry = (attempt = 1) => {
+      try {
+        console.log(`Zoom attempt ${attempt} to:`, location);
+        map.panTo(location);
+        map.setZoom(18);
+      } catch (error) {
+        console.error('Zoom error:', error);
+        if (attempt < 3) {
+          setTimeout(() => zoomWithRetry(attempt + 1), 300 * attempt);
+        }
+      }
+    };
+
+    zoomWithRetry();
+  }, [map]);
+
+  // Handle map initialization
+  useEffect(() => {
+    if (map) {
+      console.log("Map instance now available");
+      setMapInitialized(true);
+    }
+  }, [map]);
+
+  // Handle selected place changes
+  useEffect(() => {
+    if (selectedPlace && mapInitialized) {
+      zoomToPlace(selectedPlace);
+    }
+  }, [selectedPlace, mapInitialized, zoomToPlace]);
+
+  const renderNearbyPlaces = () => {
+    return nearbyPlaces
+      .filter((place) => {
+        const type = getPlaceType(place.types);
+        return selectedCategory === 'All' || type === selectedCategory;
+      })
+      .map((place) => {
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+        if (!lat || !lng) return null;
+
+        const type = getPlaceType(place.types);
+        const icon = categoryIcons[type];
+        const isSelected = selectedPlace?.place_id === place.place_id;
+
+        return (
+          <AdvancedMarker 
+            key={place.place_id}
+            position={{ lat, lng }}
+            title={`Nearby: ${place.name}`}
+            onClick={() => {
+              setSelectedPlace(place);
+              setSelectedLocation({
+                latitude: lat,
+                longitude: lng,
+                name: place.name
+              });
+            }}
+          >
+            <img
+                src={icon}
+                alt={type}
+                style={{ 
+                  width: isSelected ? '42px' : '36px',
+                  height: isSelected ? '42px' : '36px',
+                  transition: 'all 0.2s ease',
+                  filter: isSelected ? 'drop-shadow(0 0 8px rgba(0, 0, 255, 0.6))' : 'none'
+                }}
+              />
+              {isSelected && (
+                <div className="selected-marker-label">
+                  {place.name}
+                </div>
+              )}
+          </AdvancedMarker>
+        );
+      });
+  };
+
 
   // Add this function to handle menu selections
   const handleMenuSelect = async (category, data) => {
@@ -461,7 +558,7 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           if (map) {
             console.log("Map initialized");
             mapRef.current = map;
-            mapInstanceRef.current = map.map;
+            // mapInstanceRef.current = map.map;
           } else {
             console.log("Map failed");
           }
@@ -552,11 +649,12 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
             </AdvancedMarker>
           );
         })} */}
-        {nearbyPlaces.filter((place) => {
+        {/* <MapZoomController selectedPlace={selectedPlace} /> */}
+        
+        {/* {nearbyPlaces.filter((place) => {
           const type = getPlaceType(place.types);
           return selectedCategory === 'All' || type === selectedCategory;
-        })
-        .map((place) => {
+        }).map((place) => {
           const lat = place.geometry?.location?.lat();
           const lng = place.geometry?.location?.lng();
           if (!lat || !lng) return null;
@@ -570,7 +668,15 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               key={place.place_id}
               position={{ lat, lng }}
               title={`Nearby: ${place.name}`}
-              onClick={() => setSelectedPlace(place)}
+              onClick={() => {
+                setSelectedPlace(place);
+                setSelectedLocation({
+                  latitude: lat,
+                  longitude: lng,
+                  name: place.name
+                });
+                zoomToNearbyPlace(place); // Using the new zoom function
+              }}
             >
               <img
                 src={icon}
@@ -589,13 +695,15 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               )}
             </AdvancedMarker>
           );
-        })}
+        })} */}
+
+        {renderNearbyPlaces()}
 
         {/* Search bar marker */}
         <SearchBar onPlaceSelected={setSelectedSearchPlace} setShowRecent={setShowRecent}/>
         {selectedSearchPlace && (
           <>
-            <SearchHandler selectedSearchPlace={selectedSearchPlace} />
+            <SearchHandler selectedSearchPlace={selectedSearchPlace} setSearchNearbyPlaces={setSearchNearbyPlaces} />
             <AdvancedMarker
               position={{
                 lat: selectedSearchPlace.latitude,
@@ -603,8 +711,15 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
               }}
               title={selectedSearchPlace.name}
             />
-          </>
-        )}
+            {searchNearbyPlaces.map((place, index) => (
+            <AdvancedMarker
+              key={index}
+              position={{ lat: place.latitude, lng: place.longitude }}
+              title={place.name}
+            />
+          ))}
+        </>
+      )}
 
         {/* Direction services */}
         <Directions 

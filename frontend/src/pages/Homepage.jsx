@@ -7,6 +7,8 @@ import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/Kuching.png';
 // import ProfileDropdown from '../components/ProfileDropdown.jsx';
+import { APIProvider } from '@vis.gl/react-google-maps';
+// import MapZoomHandler from '../components/MapZoomController.jsx';
 
 const HomePage = () => {
   const location = useLocation();
@@ -96,8 +98,6 @@ const HomePage = () => {
 
   return (
     <>
-      {/* <ProfileDropdown onLoginClick={handleLoginClick} /> */}
-
       <MapComponent 
         startingPoint={startingPoint} 
         destination={destination}
@@ -114,13 +114,6 @@ const HomePage = () => {
         showRecent={showRecent}
         setSelectedPlace={setSelectedPlace}
       />
-      
-      {/* <TouristInfoSection 
-        locations={infoLocations}
-        onDataFetch={handleDataFetch}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-      /> */}
 
       <LeftSidebar
         startingPoint={startingPoint}
@@ -136,6 +129,9 @@ const HomePage = () => {
         selectedPlace={selectedPlace}
         setSelectedPlace={setSelectedPlace}
       />
+
+      {/* <MapZoomHandler selectedPlace={selectedPlace} /> */}
+      
 
       {/* {showLogin && <LoginPage onClose={closeLogin} />} */}
       {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
