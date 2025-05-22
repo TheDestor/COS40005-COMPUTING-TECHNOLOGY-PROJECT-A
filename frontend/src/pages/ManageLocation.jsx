@@ -76,7 +76,7 @@ const ManageLocation = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await ky.get("/api/locations/").json();
+        const response = await ky.get("/api/locations").json();
         setLocations(response);
       } catch (error) {
         console.error("An error occured while trying to get all locations:", error);

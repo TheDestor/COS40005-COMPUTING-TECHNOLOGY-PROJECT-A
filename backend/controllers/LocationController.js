@@ -10,6 +10,7 @@ export const getAllLocations = async (req, res) => {
         }
 
         const locations = await locationModel.find(filter);
+        console.log(locations);
         return res.status(200).json(locations);
     } catch (error) {
         console.error(error);
