@@ -34,65 +34,65 @@ const saveFile = (file) => {
 
 // Add a new business
 export const addBusiness = async (req, res) => {
-    // try {
-    //     const businessData = req.body;
+    try {
+        const businessData = req.body;
         
-    //     // Validate required fields
-    //     if (!businessData.name || !businessData.owner || !businessData.description) {
-    //         return res.status(400).json({
-    //             success: false,
-    //             message: "Missing required fields"
-    //         });
-    //     }
+        // Validate required fields
+        if (!businessData.name || !businessData.owner || !businessData.description) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields"
+            });
+        }
         
-    //     // Check if business already exists with the same name and owner
-    //     const existingBusiness = await businessModel.findOne({
-    //         name: businessData.name,
-    //         owner: businessData.owner
-    //     });
+        // Check if business already exists with the same name and owner
+        const existingBusiness = await businessModel.findOne({
+            name: businessData.name,
+            owner: businessData.owner
+        });
         
-    //     if (existingBusiness) {
-    //         return res.status(409).json({
-    //             success: false,
-    //             message: "A business with this name and owner already exists"
-    //         });
-    //     }
+        if (existingBusiness) {
+            return res.status(409).json({
+                success: false,
+                message: "A business with this name and owner already exists"
+            });
+        }
         
-    //     // Handle file uploads
-    //     if (!req.files || !req.files.businessImage || !req.files.ownerAvatar) {
-    //         return res.status(400).json({
-    //             success: false,
-    //             message: "Business image and owner avatar are required"
-    //         });
-    //     }
+        // Handle file uploads
+        if (!req.files || !req.files.businessImage || !req.files.ownerAvatar) {
+            return res.status(400).json({
+                success: false,
+                message: "Business image and owner avatar are required"
+            });
+        }
         
-    //     // Save files and get paths
-    //     const businessImagePath = saveFile(req.files.businessImage[0]);
-    //     const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
+        // Save files and get paths
+        const businessImagePath = saveFile(req.files.businessImage[0]);
+        const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
         
-    //     // Create new business with file paths
-    //     const newBusiness = new businessModel({
-    //         ...businessData,
-    //         businessImage: businessImagePath,
-    //         ownerAvatar: ownerAvatarPath,
-    //         agreement: businessData.agreement === 'true' || businessData.agreement === true
-    //     });
+        // Create new business with file paths
+        const newBusiness = new businessModel({
+            ...businessData,
+            businessImage: businessImagePath,
+            ownerAvatar: ownerAvatarPath,
+            agreement: businessData.agreement === 'true' || businessData.agreement === true
+        });
         
-    //     await newBusiness.save();
+        await newBusiness.save();
         
-    //     res.status(201).json({
-    //         success: true,
-    //         message: "Business added successfully and pending approval",
-    //         data: newBusiness
-    //     });
-    // } catch (error) {
-    //     console.error("Error adding business:", error);
-    //     res.status(500).json({
-    //         success: false,
-    //         message: "Failed to add business",
-    //         error: error.message
-    //     });
-    // }
+        res.status(201).json({
+            success: true,
+            message: "Business added successfully and pending approval",
+            data: newBusiness
+        });
+    } catch (error) {
+        console.error("Error adding business:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to add business",
+            error: error.message
+        });
+    }
 };
 
 // Get all businesses (with optional filtering)

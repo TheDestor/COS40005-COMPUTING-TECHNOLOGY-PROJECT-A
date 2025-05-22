@@ -10,10 +10,10 @@ export const getAllLocations = async (req, res) => {
         }
 
         const locations = await locationModel.find(filter);
-        res.json(locations);
+        return res.status(200).json(locations);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "An error occurred while loading locations." });
+        return res.status(500).json({ message: "An error occurred while loading locations.", success: false });
     }
 }
 
