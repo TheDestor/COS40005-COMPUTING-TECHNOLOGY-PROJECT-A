@@ -18,7 +18,7 @@ const EventPage = () => {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const response = await fetch('api/events'); // Use full backend URL
+      const response = await fetch('/api/events?eventType=Festival'); // Use full backend URL
       console.log('API Response:', response);
       
       if (!response.ok) {

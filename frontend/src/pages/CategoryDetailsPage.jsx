@@ -15,6 +15,7 @@ const CategoryDetailsPage = () => {
   const { slug } = useParams();
   const location = useLocation();
   const passedTown = location.state?.town;
+  console.log('Passed town from previous page:', passedTown);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('restaurant');
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,8 +253,8 @@ const CategoryDetailsPage = () => {
           
               {item.coordinates && (
                 <div className="coordinates">
-                  <p><strong>Lat:</strong> {item.lat}</p>
-                  <p><strong>Lng:</strong> {item.lng}</p>
+                  <p><strong>Lat:</strong> {item.latitude}</p>
+                  <p><strong>Lng:</strong> {item.longitude}</p>
                 </div>
               )}
           
@@ -264,7 +265,7 @@ const CategoryDetailsPage = () => {
                     name: item.name,
                     image: item.image,
                     desc: item.desc,
-                    coordinates: [item.lat, item.lng]
+                    coordinates: [item.latitude, item.longitude]
                   }}
                   className="explore-btn"
                 >
