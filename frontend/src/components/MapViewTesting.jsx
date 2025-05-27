@@ -75,12 +75,12 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
               longitude: place.geometry?.location?.lng() || 0,
               image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
               description: place.vicinity || 'No description available.',
-              // url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
-              // rating: place.rating || null,
-              // openNowText: place.opening_hours?.open_now ? 'Open now' : 'Closed now',
-              // open24Hours: place.opening_hours?.periods?.some(p =>
-              //   (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
-              // ) || false,
+              url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
+              rating: place.rating || null,
+              openNowText: place.opening_hours?.open_now ? 'Open now' : 'Closed now',
+              open24Hours: place.opening_hours?.periods?.some(p =>
+                (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
+              ) || false,
               type: categoryName
             }));
 

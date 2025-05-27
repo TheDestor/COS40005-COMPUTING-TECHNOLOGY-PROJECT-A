@@ -147,6 +147,21 @@ function Directions({ startingPoint, destination, addDestinations=[], selectedVe
     }
   };
 
+  // Add this useEffect to your Directions component
+  useEffect(() => {
+    if (!startingPoint && !destination) {
+      // Clear all routes and markers when both inputs are empty
+      setRoutes([]);
+      setMarkerPositions({
+        origin: null,
+        waypoints: [],
+        destination: null
+      });
+      routeRenderersRef.current.forEach(renderer => renderer.setMap(null));
+      routeRenderersRef.current = [];
+    }
+  }, [startingPoint, destination]);
+
   const geocode = async (input) => {
     if (typeof input === 'string') {
       if (!input.trim() || input.trim().length < 3) {
@@ -750,10 +765,10 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
                 description: selectedLocation.description || "No description available.",
                 latitude: selectedLocation.latitude || "N/A",
                 longitude: selectedLocation.longitude || "N/A",
-                // url: selectedLocation.url || 'No URL provided',
-                // rating: selectedLocation.rating,
-                // openNowText: selectedLocation.openNowText,
-                // open24Hours: selectedLocation.open24Hours,
+                url: selectedLocation.url || 'No URL provided',
+                rating: selectedLocation.rating,
+                openNowText: selectedLocation.openNowText,
+                open24Hours: selectedLocation.open24Hours,
               }}
               addBookmark={addBookmark}
               onCloseClick={() => setSelectedLocation(null)}

@@ -124,11 +124,11 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
       <div className="info-header">
         <h3>{location.name}</h3>
-        {/* {location.rating && (
+        {location.rating && (
           <p className="rating51">
             {location.rating.toFixed(1)} <FaStar color="#ffc107" />
           </p>
-        )} */}
+        )}
       </div>
 
       <div className="info-tabs">
@@ -150,22 +150,27 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         )}
       </p>
 
-      {/* <a
-        href={location.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="info-link"
-      >
-        {new URL(location.url).hostname}
-      </a> */}
+      {location.url && location.url.startsWith('http') ? (
+        <a
+          href={location.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="info-link"
+        >
+          {new URL(location.url).hostname}
+        </a>
+      ) : (
+        <span className="info-link">No website available</span>
+      )}
+
 
       <div className="info-actions">
-        {/* {location.openNowText && (
+        {location.openNowText && (
           <p className="info-open-status" style={{ color: location.openNowText.includes('Open') ? 'green' : 'red' }}>
             {location.open24Hours ? 'Open 24 hours' : location.openNowText}
           </p>
-        )} */}
-        <p>Open at 12 noon </p>
+        )}
+        {/* <p>Open at 12 noon </p> */}
         <button className="book-btn" onClick={handleExploreClick}>Explore Now!</button>
       </div>
 

@@ -44,6 +44,20 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent,
   const [locationError, setLocationError] = useState(null);
   const [isLocationFetching, setIsLocationFetching] = useState(false);
   // const [selectedLocation, setSelectedLocation] = useState(null);
+  
+  const handleClearStartingPoint = () => {
+    setStartingPoint('');
+    if (!destination) {
+      setRoutes([]); // Clear routes only if destination is also empty
+    }
+  };
+
+  const handleClearDestination = () => {
+    setDestination('');
+    if (!startingPoint) {
+      setRoutes([]); // Clear routes only if starting point is also empty
+    }
+  };
 
   const handleAddCurrentLocation = async () => {
     if (!navigator.geolocation) {
@@ -196,8 +210,12 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent,
   };
 
   const handleRoutesCalculated = (routesData) => {
-    setRoutes(routesData.routes);
-    setSelectedRouteIndex(0);
+    if (routesData && routesData.routes) {
+      setRoutes(routesData.routes || []);
+      // setSelectedRouteIndex(0);
+    } else {
+      setRoutes([]);
+    }
   };
 
   const handleAddDestination = () => {
@@ -404,6 +422,15 @@ useEffect(() => {
                 value={startingPoint}
                 onChange={(e) => setStartingPoint(e.target.value)}
               />
+              {startingPoint && (
+                <button 
+                  className="clear-button2" 
+                  onClick={handleClearStartingPoint}
+                  title="Clear input"
+                >
+                  <IoCloseOutline />
+                </button>
+              )}
               <FaSearch className="input-icon" />
             </div>
           </div>
@@ -417,6 +444,15 @@ useEffect(() => {
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
               />
+              {destination && (
+                <button 
+                  className="clear-button2" 
+                  onClick={handleClearDestination}
+                  title="Clear input"
+                >
+                  <IoCloseOutline />
+                </button>
+              )}
               <FaSearch className="input-icon" />
             </div>
           </div>
@@ -467,7 +503,7 @@ useEffect(() => {
           ) : routes.length > 0 ? (
             <>
               <div className="route-list">
-                {routes.map((route, index) => {
+                {routes && routes.map((route, index) => {
                   const totalDuration = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
                   const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
                   

@@ -156,6 +156,25 @@
   transition: transform 0.2s ease;
 }
 
+.clear-button2 {
+  position: relative;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 10px;
+  height: 10px;
+}
+
+.clear-button2:hover {
+  color: #666;
+}
+
 .input-icon {
   font-size: 14px;
   color: #333;
