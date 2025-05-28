@@ -68,7 +68,7 @@
 }
 
 /* Close Button */
-.close-btn {
+.close-btn95 {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -83,7 +83,7 @@
   transition: transform 0.2s ease;
 }
 
-.close-btn:hover {
+.close-btn95:hover {
   transform: rotate(90deg);
   color: #007bff;
 }

@@ -235,7 +235,7 @@ const LoginPage = ({ onClose }) => {
             >
               Password Login
             </button>
-            <button className="close-btn" onClick={onClose}>✕</button>
+            <button className="close-btn95" onClick={onClose}>✕</button>
           </div>
 
           <form onSubmit={handleSubmit}>
