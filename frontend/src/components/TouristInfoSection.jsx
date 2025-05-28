@@ -29,7 +29,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
         
         const apiKey = 'AIzaSyAl79EwWjJZ9w1IFFZlT7RvzORHoA7szYY';
         const searchQuery = `${selectedLocation.name} sarawak tourism shorts`;
-        // const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
+        const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 
         console.log('Fetching from:', apiUrl); // Debug URL (without key)
 
