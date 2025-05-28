@@ -150,7 +150,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         )}
       </p>
 
-      {location.url && location.url.startsWith('http') ? (
+      {/* {location.url && location.url.startsWith('http') ? (
         <a
           href={location.url}
           target="_blank"
@@ -161,16 +161,16 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         </a>
       ) : (
         <span className="info-link">No website available</span>
-      )}
+      )} */}
 
 
       <div className="info-actions">
-        {location.openNowText && (
+        {/* {location.openNowText && (
           <p className="info-open-status" style={{ color: location.openNowText.includes('Open') ? 'green' : 'red' }}>
             {location.open24Hours ? 'Open 24 hours' : location.openNowText}
           </p>
-        )}
-        {/* <p>Open at 12 noon </p> */}
+        )} */}
+        <p>Open at 12 noon </p>
         <button className="book-btn" onClick={handleExploreClick}>Explore Now!</button>
       </div>
 
