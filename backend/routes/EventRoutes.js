@@ -17,7 +17,6 @@ const upload = multer({
     }
 });
 
-
 eventRouter.post("/addEvent", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), addEvent);
 eventRouter.get("/getAllEvents", getAllEvents);
 

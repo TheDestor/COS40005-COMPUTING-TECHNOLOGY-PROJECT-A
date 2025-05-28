@@ -11,66 +11,105 @@ const AccommodationPage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [selectedType, setSelectedType] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Accommodation');
+  const [currentCategory] = useState('Accommodation');
 
-  const accommodationTypes = ['lodging']; // Google Places "lodging" includes hotels, hostels, resorts
+  const getCurrentLocation = () => {
+    return new Promise((resolve) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            resolve({ lat: 1.5533, lng: 110.3592 });
+          }
+        );
+      } else {
+        resolve({ lat: 1.5533, lng: 110.3592 });
+      }
+    });
+  };
 
-  const fetchGooglePlaces = (types, location, radius = 50000) => {
+  const fetchGooglePlaces = async (location) => {
     return new Promise((resolve) => {
       if (!window.google) {
-        console.error('Google Maps API not loaded');
+        console.error("Google Maps API not loaded");
         return resolve([]);
       }
 
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
-      const collectedResults = [];
-      let completedRequests = 0;
+      const request = {
+        location: new window.google.maps.LatLng(location.lat, location.lng),
+        radius: 50000,
+        type: 'lodging'
+      };
 
-      types.forEach(type => {
-        const request = {
-          location: new window.google.maps.LatLng(location.lat, location.lng),
-          radius,
-          type,
-        };
+      const processResults = (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          const formatted = results.map(place => {
+            const types = place.types || [];
+            let placeType = 'Other';
+            if (types.includes('hotel')) placeType = 'Hotel';
+            else if (types.includes('homestay')) placeType = 'Homestay';
+            else if (types.includes('hostel')) placeType = 'Hostel';
+            else if (types.includes('resort')) placeType = 'Resort';
+            else if (types.includes('guest_house')) placeType = 'Guest House';
 
-        const processResults = (results, status, pagination) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-            collectedResults.push(...results);
+            return {
+              name: place.name,
+              desc: place.vicinity || 'Google Places result',
+              slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+              image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+              type: placeType,
+              lat: place.geometry?.location?.lat(),
+              lng: place.geometry?.location?.lng()
+            };
+          });
+          resolve(formatted);
+        } else {
+          resolve([]);
+        }
+      };
 
-            if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
-              setTimeout(() => pagination.nextPage(), 1000);
-            } else {
-              completedRequests++;
-              if (completedRequests === types.length) {
-                const formatted = collectedResults.slice(0, 50).map(place => ({
-                  name: place.name,
-                  desc: place.vicinity || 'Google Places result',
-                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-                }));
-                resolve(formatted);
-              }
-            }
-          } else {
-            completedRequests++;
-            if (completedRequests === types.length) {
-              resolve([]);
-            }
-          }
-        };
-
-        service.nearbySearch(request, processResults);
-      });
+      service.nearbySearch(request, processResults);
     });
+  };
+
+  const processBackendData = (backendData) => {
+    return backendData
+      .filter(item => item.category?.toLowerCase() === 'accommodation')
+      .map(item => ({
+        name: item.Name || item.name,
+        desc: item.description || item.Desc,
+        slug: item.slug || item.Name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+        image: item.image || defaultImage,
+        type: item.type || 'Other',
+        lat: item.latitude || item.lat,
+        lng: item.longitude || item.lng
+      }));
   };
 
   const fetchAccommodations = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces(accommodationTypes, { lat: 1.5533, lng: 110.3592 }); // Example: Kuching
-      setData(results);
+      // Fetch backend data
+      const backendResponse = await fetch('/api/locations?category=Accommodation');
+      const backendData = await backendResponse.json();
+      const processedBackend = processBackendData(backendData);
+
+      // Fetch Google Places data
+      const location = await getCurrentLocation();
+      const googleResults = await fetchGooglePlaces(location);
+
+      // Combine data
+      const allData = [...processedBackend, ...googleResults];
+      setData(allData);
     } catch (error) {
       console.error('Error fetching accommodations:', error);
     } finally {
@@ -84,10 +123,6 @@ const AccommodationPage = () => {
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
-
-  const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
 
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
@@ -103,13 +138,11 @@ const AccommodationPage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === 'all' || item.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   if (loading) {
     return (
@@ -139,17 +172,25 @@ const AccommodationPage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="sort-select"
+            >
+              <option value="all">All Types</option>
+              <option value="Hotel">Hotel</option>
+              <option value="Homestay">Homestay</option>
+              <option value="Hostel">Hostel</option>
+              <option value="Resort">Resort</option>
+              <option value="Guest House">Guest House</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -175,7 +216,7 @@ const AccommodationPage = () => {
                       name: item.name,
                       image: item.image,
                       desc: item.desc,
-                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                      coordinates: [item.lat, item.lng]
                     }}
                     className="explore-btn"
                   >

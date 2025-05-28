@@ -11,9 +11,28 @@ const TourGuidePage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Tour Guides');
+  const [currentCategory] = useState('Tour Guides');
+
+  const determineTourType = (place) => {
+    const lowerName = place.name.toLowerCase();
+    const lowerAddress = (place.vicinity || '').toLowerCase();
+    
+    if (lowerName.includes('cultural') || lowerName.includes('heritage')) {
+      return 'Cultural Tours';
+    }
+    if (lowerName.includes('adventure') || lowerName.includes('hiking')) {
+      return 'Adventure Tours';
+    }
+    if (lowerName.includes('nature') || lowerName.includes('wildlife')) {
+      return 'Nature Tours';
+    }
+    if (lowerName.includes('city') || lowerAddress.includes('city')) {
+      return 'City Tours';
+    }
+    return 'General Tours';
+  };
 
   const fetchTourGuides = () => {
     return new Promise((resolve) => {
@@ -24,7 +43,7 @@ const TourGuidePage = () => {
 
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const request = {
-        location: new window.google.maps.LatLng(1.5533, 110.3592), // Example: Kuching
+        location: new window.google.maps.LatLng(1.5533, 110.3592),
         radius: 50000,
         keyword: 'tour guide',
       };
@@ -43,6 +62,9 @@ const TourGuidePage = () => {
               desc: place.vicinity || 'Guided tours service',
               slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
               image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+              type: determineTourType(place),
+              lat: place.geometry?.location?.lat(),
+              lng: place.geometry?.location?.lng()
             }));
             resolve(formatted);
           }
@@ -74,10 +96,6 @@ const TourGuidePage = () => {
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
-
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
@@ -92,13 +110,11 @@ const TourGuidePage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSort = sortOrder === 'all' || item.type === sortOrder;
+    return matchesSearch && matchesSort;
+  });
 
   if (loading) {
     return (
@@ -128,17 +144,24 @@ const TourGuidePage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="sort-select"
+            >
+              <option value="all">All Categories</option>
+              <option value="Cultural Tours">Cultural Tours</option>
+              <option value="Adventure Tours">Adventure Tours</option>
+              <option value="Nature Tours">Nature Tours</option>
+              <option value="City Tours">City Tours</option>
+              <option value="General Tours">General Tours</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -164,9 +187,9 @@ const TourGuidePage = () => {
                       name: item.name,
                       image: item.image,
                       desc: item.desc,
-                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                      coordinates: [item.lat, item.lng]
                     }}
-                      className="explore-btn"
+                    className="explore-btn"
                   >
                     Explore
                   </Link>

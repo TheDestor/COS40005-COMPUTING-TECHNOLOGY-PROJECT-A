@@ -114,24 +114,6 @@
   margin-left: 0.5rem;
 }
 
-/* Quick Facts Styling */
-.quick-facts {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 10px;
-  margin-top: 1.5rem;
-}
-
-.quick-facts ul {
-  list-style: none;
-  padding: 0;
-}
-
-.quick-facts li {
-  margin-bottom: 0.5rem;
-  color: #6c757d;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero-banner {

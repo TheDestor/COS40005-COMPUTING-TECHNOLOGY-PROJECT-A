@@ -10,7 +10,6 @@ import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/Kuching.png';
 import ZoomHandler from './ZoomHandler';
 
-// Menu items
 const menuItems = [
   { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
   { name: 'Attractions', icon: <MdForest />, isFetchOnly: true },
@@ -37,7 +36,6 @@ const sarawakDivisions = [
   { name: 'Limbang', latitude: 4.7548, longitude: 115.0089 }
 ];
 
-// Categories
 const placeCategories = {
   Transportation: ['airport', 'bus_station', 'train_station', 'taxi_stand'],
   Accommodation: ['lodging', 'campground', 'homestay'],
@@ -52,22 +50,52 @@ const placeCategories = {
 const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
   const [selectedMenu, setSelectedMenu] = useState(activeOption || '');
   const [locationsData, setLocationsData] = useState([]);
-   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
+  const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
 
-  const fetchPlacesByCategory = (categoryName, location, radius = 50000) => {
+  const fetchBackendData = async (categoryName) => {
+    try {
+      const response = await fetch('/api/locations');
+      if (!response.ok) throw new Error('Failed to fetch backend data');
+      const data = await response.json();
+
+      return data.filter(item => {
+        switch(categoryName.toLowerCase()) {
+          case 'attractions': return item.category === 'Attraction';
+          case 'accommodation': return item.category === 'Accommodation';
+          case 'food & beverages': return item.category === 'Restaurant';
+          case 'transportation': return item.category === 'Transport';
+          default: return item.category === categoryName;
+        }
+      }).map(item => ({
+        name: item.name,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        image: item.image || defaultImage,
+        description: item.description || 'No description available',
+        rating: item.rating || null,
+        type: item.category,
+        source: 'backend'
+      }));
+    } catch (error) {
+      console.error('Backend fetch error:', error);
+      return [];
+    }
+  };
+
+  const fetchPlacesByCategory = async (categoryName, location, radius = 50000) => {
     const entries = placeCategories[categoryName];
     if (!entries || !window.google) return;
 
     const service = new window.google.maps.places.PlacesService(document.createElement('div'));
     const collectedResults = [];
 
-    const fetchWithPagination = (request, callback) => {
-      service.nearbySearch(request, function processResults(results, status, pagination) {
+    const fetchGooglePlaces = () => new Promise((resolve) => {
+      const processResults = (results, status, pagination) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
           collectedResults.push(...results);
 
           if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
-            setTimeout(() => pagination.nextPage(), 1000); // delay needed
+            setTimeout(() => pagination.nextPage(), 1000);
           } else {
             const formatted = collectedResults.slice(0, 50).map(place => ({
               name: place.name,
@@ -81,40 +109,56 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
               open24Hours: place.opening_hours?.periods?.some(p =>
                 (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
               ) || false,
-              type: categoryName
+              type: categoryName,
+              source: 'google'
             }));
-
-            setLocationsData(formatted);
-            if (onSelect) onSelect(categoryName, formatted);
-            if (onSelectCategory) onSelectCategory(categoryName, formatted);
-
-            // Only zoom if it's not Major Town
-            if (formatted.length > 0 && categoryName !== 'Major Town') {
-              if (window.mapRef) {
-                window.mapRef.panTo({
-                  lat: formatted[0].latitude,
-                  lng: formatted[0].longitude
-                });
-                window.mapRef.setZoom(14);
-              }
-            }
+            resolve(formatted);
           }
         } else {
-          console.error(`Google Places error for ${categoryName}:`, status);
+          resolve([]);
         }
-      });
-    };
-
-    entries.forEach(entry => {
-      const isKeywordBased = ['Events', 'Tour Guides', 'Major Town'].includes(categoryName);
-      const request = {
-        location,
-        radius,
-        ...(isKeywordBased ? { keyword: entry } : { type: entry })
       };
 
-      fetchWithPagination(request);
+      entries.forEach(entry => {
+        const isKeywordBased = ['Events', 'Tour Guides', 'Major Town'].includes(categoryName);
+        const request = {
+          location,
+          radius,
+          ...(isKeywordBased ? { keyword: entry } : { type: entry })
+        };
+        service.nearbySearch(request, processResults);
+      });
     });
+
+    try {
+      const [googleResults, backendResults] = await Promise.all([
+        fetchGooglePlaces(),
+        fetchBackendData(categoryName)
+      ]);
+
+      const combinedResults = [...googleResults, ...backendResults].reduce((acc, current) => {
+        if (!acc.find(item => item.name === current.name)) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+
+      setLocationsData(combinedResults);
+      if (onSelect) onSelect(categoryName, combinedResults);
+      if (onSelectCategory) onSelectCategory(categoryName, combinedResults);
+
+      if (combinedResults.length > 0 && categoryName !== 'Major Town') {
+        if (window.mapRef) {
+          window.mapRef.panTo({
+            lat: combinedResults[0].latitude,
+            lng: combinedResults[0].longitude
+          });
+          window.mapRef.setZoom(14);
+        }
+      }
+    } catch (error) {
+      console.error('Combined fetch error:', error);
+    }
   };
 
   const handleMenuItemClick = (item) => {
@@ -137,7 +181,6 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
         if (onSelect) onSelect(item.name, formatted);
         if (onSelectCategory) onSelectCategory(item.name, formatted);
       } else {
-        // Zoom to Kuching for all other categories
         setSelectedSearchPlace({ latitude: 1.5533, longitude: 110.3592 });
         fetchPlacesByCategory(item.name, centerOfKuching);
       }
@@ -150,9 +193,7 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
   useEffect(() => {
     if (!activeOption) {
       const defaultItem = menuItems.find(item => item.name === 'Major Town');
-      if (defaultItem) {
-        handleMenuItemClick(defaultItem);
-      }
+      if (defaultItem) handleMenuItemClick(defaultItem);
     } else {
       setSelectedMenu(activeOption);
     }
@@ -163,7 +204,6 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
       <div className="menu-container">
         {menuItems.map((item) => {
           const isActive = selectedMenu === item.name;
-
           return (
             <button
               key={item.name}
@@ -184,10 +224,9 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
           );
         })}
       </div>
-      
-      {/* Call ZoomHandler and pass selectedSearchPlace */}
       <ZoomHandler selectedSearchPlace={selectedSearchPlace} />
     </div>
   );
 };
+
 export default MapViewTesting;
