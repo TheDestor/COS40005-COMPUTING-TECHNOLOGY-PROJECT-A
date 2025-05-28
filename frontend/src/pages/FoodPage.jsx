@@ -11,11 +11,10 @@ const FoodBeveragePage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Food & Beverages');
+  const [currentCategory] = useState('Food & Beverages');
 
-  // Place types to query from Google Places
   const placeCategories = {
     FoodBeverages: [
       'restaurant', 'cafe', 'bar', 'bakery', 'meal_takeaway',
@@ -53,12 +52,40 @@ const FoodBeveragePage = () => {
             } else {
               completedRequests++;
               if (completedRequests === entries.length) {
-                const formatted = collectedResults.slice(0, 50).map(place => ({
-                  name: place.name,
-                  desc: place.vicinity || 'Google Places result',
-                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-                }));
+                const formatted = collectedResults.slice(0, 50).map(place => {
+                  // Categorize based on Google Places type
+                  let categoryType;
+                  switch(entry) {
+                    case 'restaurant':
+                      categoryType = 'Restaurants';
+                      break;
+                    case 'cafe':
+                      categoryType = 'Cafes';
+                      break;
+                    case 'bar':
+                      categoryType = 'Bars & Pubs';
+                      break;
+                    case 'bakery':
+                      categoryType = 'Bakeries';
+                      break;
+                    case 'meal_takeaway':
+                    case 'meal_delivery':
+                      categoryType = 'Takeaway & Delivery';
+                      break;
+                    default:
+                      categoryType = 'Other';
+                  }
+
+                  return {
+                    name: place.name,
+                    desc: place.vicinity || 'Google Places result',
+                    slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+                    image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+                    type: categoryType,
+                    lat: place.geometry?.location?.lat(),
+                    lng: place.geometry?.location?.lng()
+                  };
+                });
                 resolve(formatted);
               }
             }
@@ -78,7 +105,7 @@ const FoodBeveragePage = () => {
   const fetchFoodBeveragePlaces = async () => {
     setLoading(true);
     try {
-      const results = await fetchGooglePlaces('FoodBeverages', { lat: 1.5533, lng: 110.3592 }); // Example: Kuching
+      const results = await fetchGooglePlaces('FoodBeverages', { lat: 1.5533, lng: 110.3592 });
       setData(results);
     } catch (error) {
       console.error('Error fetching Google Places:', error);
@@ -94,9 +121,6 @@ const FoodBeveragePage = () => {
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const handleSortToggle = () =>
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
@@ -111,13 +135,11 @@ const FoodBeveragePage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSort = sortOrder === 'all' || item.type === sortOrder;
+    return matchesSearch && matchesSort;
+  });
 
   if (loading) {
     return (
@@ -147,17 +169,25 @@ const FoodBeveragePage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="sort-select"
+            >
+              <option value="all">All Categories</option>
+              <option value="Restaurants">Restaurants</option>
+              <option value="Cafes">Cafes</option>
+              <option value="Bars & Pubs">Bars & Pubs</option>
+              <option value="Bakeries">Bakeries</option>
+              <option value="Takeaway & Delivery">Takeaway & Delivery</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -183,7 +213,7 @@ const FoodBeveragePage = () => {
                       name: item.name,
                       image: item.image,
                       desc: item.desc,
-                      coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
+                      coordinates: [item.lat, item.lng]
                     }}
                     className="explore-btn"
                   >

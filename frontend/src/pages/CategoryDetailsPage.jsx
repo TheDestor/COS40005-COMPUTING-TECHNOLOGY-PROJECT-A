@@ -200,14 +200,14 @@ const CategoryDetailsPage = () => {
           <div className="text-content">
             <h2>About {townData.name}</h2>
             <p className="overview-text">{townData.description}</p>
-            <div className="quick-facts">
+            {/* <div className="quick-facts">
               <h3>Quick Facts</h3>
               <ul>
                 <li><strong>Population:</strong> {townData.population}</li>
                 <li><strong>Area:</strong> {townData.area}</li>
                 <li><strong>Climate:</strong> {townData.climate}</li>
               </ul>
-            </div>
+            </div> */}
           </div>
           <div className="image-content">
             <img src={townData.image} alt={townData.name} />
@@ -264,7 +264,7 @@ const CategoryDetailsPage = () => {
                   state={{
                     name: item.name,
                     image: item.image,
-                    desc: item.desc,
+                    desc: item.description,
                     coordinates: [item.latitude, item.longitude]
                   }}
                   className="explore-btn"

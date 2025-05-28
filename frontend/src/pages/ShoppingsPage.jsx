@@ -11,9 +11,9 @@ const ShoppingLeisurePage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('Shopping & Leisure');
+  const [currentCategory] = useState('Shopping & Leisure');
 
   const placeCategories = {
     ShoppingLeisure: [
@@ -52,12 +52,39 @@ const ShoppingLeisurePage = () => {
             } else {
               completedRequests++;
               if (completedRequests === entries.length) {
-                const formatted = collectedResults.slice(0, 50).map(place => ({
-                  name: place.name,
-                  desc: place.vicinity || 'Google Places result',
-                  slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-                  image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-                }));
+                const formatted = collectedResults.slice(0, 50).map(place => {
+                  // Determine category type based on Google Places entry
+                  let categoryType;
+                  switch (entry) {
+                    case 'shopping_mall':
+                    case 'department_store':
+                      categoryType = 'Shopping Malls';
+                      break;
+                    case 'clothing_store':
+                    case 'jewelry_store':
+                      categoryType = 'Fashion & Jewelry';
+                      break;
+                    case 'movie_theater':
+                    case 'spa':
+                    case 'gym':
+                    case 'bowling_alley':
+                    case 'casino':
+                      categoryType = 'Wellness & Entertainment';
+                      break;
+                    default:
+                      categoryType = 'Other';
+                  }
+
+                  return {
+                    name: place.name,
+                    desc: place.vicinity || 'Google Places result',
+                    slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+                    image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
+                    type: categoryType,
+                    lat: place.geometry?.location?.lat(),
+                    lng: place.geometry?.location?.lng()
+                  };
+                });
                 resolve(formatted);
               }
             }
@@ -93,10 +120,6 @@ const ShoppingLeisurePage = () => {
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const handleSortToggle = () => {
-    setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
-
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
@@ -111,13 +134,11 @@ const ShoppingLeisurePage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSort = sortOrder === 'all' || item.type === sortOrder;
+    return matchesSearch && matchesSort;
+  });
 
   if (loading) {
     return (
@@ -147,55 +168,59 @@ const ShoppingLeisurePage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="sort-select"
+            >
+              <option value="all">All Categories</option>
+              <option value="Shopping Malls">Shopping Malls</option>
+              <option value="Fashion & Jewelry">Fashion & Jewelry</option>
+              <option value="Wellness & Entertainment">Wellness & Entertainment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="cards-section">
-        {filteredData
-          .slice(0, visibleItems)
-          .map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link
-                      to={`/discover/${item.slug}`}
-                      state={{
-                        name: item.name,
-                        image: item.image,
-                        desc: item.desc,
-                        coordinates: [item.lat, item.lng] // Pass coordinates as [lng, lat]
-                      }}
-                      className="explore-btn"
-                    >
-                      Explore
-                    </Link>                  
-                  </div>
+        {filteredData.slice(0, visibleItems).map((item, index) => (
+          <div
+            className="card-wrapper"
+            key={index}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+              <img src={item.image} alt={item.name} />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      desc: item.desc,
+                      coordinates: [item.lat, item.lng]
+                    }}
+                    className="explore-btn"
+                  >
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
 
       {filteredData.length > visibleItems && (

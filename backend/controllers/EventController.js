@@ -57,17 +57,42 @@ export const addEvent = async (req, res) => {
     }
 }
 
+// export const getAllEvents = async (req, res) => {
+//     try {
+//         const events = eventModel.find();
+
+//         if (events) {
+//             return res.status(200).json({ message: "Events fetched successfully", success: true, events });
+//         } else {
+//             return res.status(401).json({ message: "No events found", success: false });
+//         }
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500).json({ message: "An error has occured while trying to fetch all events", success: false });
+//     }
+// }
+
 export const getAllEvents = async (req, res) => {
     try {
-        const events = eventModel.find();
+        const { eventType } = req.query;
+        const filter = eventType ? { eventType } : {};
+        
+        const events = await eventModel.find(filter).exec();
 
-        if (events) {
-            return res.status(200).json({ message: "Events fetched successfully", success: true, events });
-        } else {
-            return res.status(401).json({ message: "No events found", success: false });
+        if (!events.length) {
+            return res.status(404).json({ message: "No events found", success: false });
         }
+
+        return res.status(200).json({ 
+            message: "Events fetched successfully", 
+            success: true, 
+            events 
+        });
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: "An error has occured while trying to fetch all events", success: false });
+        console.error(error);
+        return res.status(500).json({ 
+            message: "An error occurred while fetching events", 
+            success: false 
+        });
     }
 }
