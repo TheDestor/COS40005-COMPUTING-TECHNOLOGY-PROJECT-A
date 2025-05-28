@@ -11,27 +11,33 @@ const EventPage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('All Events');
+  const [error, setError] = useState(null);
+  const [selectedEventType, setSelectedEventType] = useState('All');
 
   const fetchEvents = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch('api/events'); // Use full backend URL
-      console.log('API Response:', response);
+      const response = await fetch('/api/event/getAllEvents');
+      const contentType = response.headers.get('content-type');
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch events');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Received non-JSON response');
       }
 
-      const fetchedData = await response.json();
-      console.log('Raw API Data:', fetchedData);
-      setData(processData(fetchedData));
+      const { events: fetchedData } = await response.json();
+      if (!fetchedData || !Array.isArray(fetchedData)) {
+        throw new Error('Invalid data format from API');
+      }
+
+      const processedData = processData(fetchedData);
+      setData(processedData);
     } catch (error) {
-      console.error('Full Error Details:', error);
-      setData([]); // Reset data on error
+      console.error('Fetch Error:', error);
+      setError(`Failed to load events: ${error.message}`);
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -42,26 +48,24 @@ const EventPage = () => {
   }, []);
 
   const processData = (items) => {
-    return (items || []).map(item => ({
-      id: item._id?.toString() || item.id, // Convert MongoDB ObjectID
-      name: item.name || 'Unknown Event',
-      desc: item.description || 'No description available',
-      slug: (item.name || 'unknown').toLowerCase().replace(/\s+/g, '-'),
+    if (!items || !Array.isArray(items)) return [];
+    
+    return items.map(item => ({
+      id: item._id?.toString() || Math.random().toString(36).substr(2, 9),
+      name: item.name || 'Unnamed Event',
+      desc: item.description || 'Description not available',
+      slug: (item.name || 'event').toLowerCase().replace(/\s+/g, '-'),
       image: item.imageUrl || defaultImage,
       lat: item.latitude || item.lat || null,
       lng: item.longitude || item.lng || null,
       date: item.eventDate ? new Date(item.eventDate) : null,
       location: item.location || 'Location not specified',
-      eventType: item.eventType || 'General'
+      eventType: item.eventType || 'Event'
     }));
   };
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
-
-  const handleSortToggle = () => {
-    setSortOrder(prev => prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default');
-  };
 
   const highlightMatch = (name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
@@ -77,13 +81,11 @@ const EventPage = () => {
     );
   };
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedEventType === 'All' || item.eventType === selectedEventType;
+    return matchesSearch && matchesType;
+  });
 
   if (loading) {
     return (
@@ -105,6 +107,12 @@ const EventPage = () => {
         </div>
       </div>
 
+      {error && (
+        <div className="error-banner">
+          Error loading events: {error}. Please try refreshing the page.
+        </div>
+      )}
+
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar">
@@ -113,19 +121,36 @@ const EventPage = () => {
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
             />
           </div>
-          <button
-            className={`sort-btn ${sortOrder !== 'default' ? 'active' : ''}`}
-            onClick={handleSortToggle}
-          >
-            <span aria-label="Sort by name">≡</span>
-            {sortOrder === 'asc' && 'A-Z'}
-            {sortOrder === 'desc' && 'Z-A'}
-            {sortOrder === 'default' && 'Sort'}
-          </button>
+
+          <div className="sort-dropdown">
+            <select
+              value={selectedEventType}
+              onChange={(e) => setSelectedEventType(e.target.value)}
+              className="sort-select"
+            >
+              <option value="All">All Events</option>
+              <option value="Festival">Festival</option>
+              <option value="Workshop">Workshop</option>
+              <option value="Business Meetup">Business Meetup</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      {!loading && !error && filteredData.length === 0 && (
+        <div className="no-results">
+          <p>No events found matching your criteria.</p>
+          <button onClick={() => {
+            setSearchQuery('');
+            setSelectedEventType('All');
+          }}>
+            Reset Filters
+          </button>
+        </div>
+      )}
 
       <div className="cards-section">
         {filteredData.slice(0, visibleItems).map((item) => (

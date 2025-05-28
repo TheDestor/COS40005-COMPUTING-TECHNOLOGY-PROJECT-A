@@ -15,6 +15,7 @@ const CategoryDetailsPage = () => {
   const { slug } = useParams();
   const location = useLocation();
   const passedTown = location.state?.town;
+  console.log('Passed town from previous page:', passedTown);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('restaurant');
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,14 +200,14 @@ const CategoryDetailsPage = () => {
           <div className="text-content">
             <h2>About {townData.name}</h2>
             <p className="overview-text">{townData.description}</p>
-            <div className="quick-facts">
+            {/* <div className="quick-facts">
               <h3>Quick Facts</h3>
               <ul>
                 <li><strong>Population:</strong> {townData.population}</li>
                 <li><strong>Area:</strong> {townData.area}</li>
                 <li><strong>Climate:</strong> {townData.climate}</li>
               </ul>
-            </div>
+            </div> */}
           </div>
           <div className="image-content">
             <img src={townData.image} alt={townData.name} />
@@ -252,8 +253,8 @@ const CategoryDetailsPage = () => {
           
               {item.coordinates && (
                 <div className="coordinates">
-                  <p><strong>Lat:</strong> {item.lat}</p>
-                  <p><strong>Lng:</strong> {item.lng}</p>
+                  <p><strong>Lat:</strong> {item.latitude}</p>
+                  <p><strong>Lng:</strong> {item.longitude}</p>
                 </div>
               )}
           
@@ -263,8 +264,8 @@ const CategoryDetailsPage = () => {
                   state={{
                     name: item.name,
                     image: item.image,
-                    desc: item.desc,
-                    coordinates: [item.lat, item.lng]
+                    desc: item.description,
+                    coordinates: [item.latitude, item.longitude]
                   }}
                   className="explore-btn"
                 >

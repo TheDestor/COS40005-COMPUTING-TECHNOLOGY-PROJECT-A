@@ -21,6 +21,12 @@ const MajorTownPage = () => {
     try {
       const response = await fetch('/api/locations');
       const allData = await response.json();
+
+      // Log first 3 items to inspect structure
+      allData.slice(0, 3).forEach((item, i) => {
+        console.log(`Item ${i}: latitude = ${item.latitude}, longitude = ${item.longitude}`, item);
+      });
+
       const majorTowns = allData.filter(item => item.type === 'Major Town');
       handleDataFetch('Major Towns', majorTowns);
     } catch (error) {
@@ -54,8 +60,8 @@ const MajorTownPage = () => {
         .replace(/\s+/g, '-')
         .replace(/[^\w-]/g, ''),
       image: item.image || defaultImage,
-      lat: item.lat,
-      lng: item.lng
+      lat: item.latitude,
+      lng: item.longitude
     }));
   };
 
@@ -154,8 +160,8 @@ const MajorTownPage = () => {
                         town: item,
                         division: item.name,
                         type: item.type,
-                        lat: item.lat,
-                        lng: item.lng
+                        lat: item.latitude,
+                        lng: item.longitude
                       }} 
                       className="explore-btn"
                     >

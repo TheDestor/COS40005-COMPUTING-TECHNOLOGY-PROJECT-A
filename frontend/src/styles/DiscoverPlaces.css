@@ -117,22 +117,45 @@
   margin: 0 auto;
 }
 
+.places-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 2rem;
+}
+
 .place-card {
-  background: white;
-  padding: 20px;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .place-card:hover {
-  transform: translateY(-5px);
+  transform: scale(1.03);
 }
 
-.place-card h3 {
-  margin: 0 0 10px;
-  color: #34495e;
-  font-size: 1.2rem;
+.place-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+
+.place-info {
+  padding: 1rem;
+}
+
+.place-info h3 {
+  margin: 0 0 0.5rem;
+}
+
+.rating {
+  color: #f39c12;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 
 .place-rating {
@@ -144,11 +167,57 @@
   gap: 5px;
 }
 
+.address {
+  color: #555;
+  font-size: 0.85rem;
+}
+
 .place-address {
   color: #7f8c8d;
   font-size: 0.9rem;
   line-height: 1.4;
   margin: 0;
+}
+
+.place-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 700px;
+  width: 100%;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ccc;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+}
+
+.photo-gallery img {
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: 6px;
 }
 
 /* Buttons & Actions */

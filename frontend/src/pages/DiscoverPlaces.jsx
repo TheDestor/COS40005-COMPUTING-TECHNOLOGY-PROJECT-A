@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import defaultImage from '../assets/Kuching.png';
 import '../styles/DiscoverPlaces.css';
-import { useApiIsLoaded } from '@vis.gl/react-google-maps';
+import { useApiIsLoaded, APIProvider } from '@vis.gl/react-google-maps';
+import { FaMapMarkerAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 
 const DiscoverPlaces = () => {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const [locationData, setLocationData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [coordError, setCoordError] = useState(null);
@@ -16,272 +16,331 @@ const DiscoverPlaces = () => {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const isApiLoaded = useApiIsLoaded();
   const location = useLocation();
-  const { name, desc, image, coordinates, type } = location.state || {};
-  const [selectedCategory, setSelectedCategory] = useState(type || 'tourist_attraction');
+  const [placesLoading, setPlacesLoading] = useState(false);
 
-  const processPlacesResults = useCallback((results) => {
-    return results
-      .filter(place => place.name && place.vicinity)
-      .map(place => ({
-        place_id: place.place_id,
-        name: place.name,
-        rating: place.rating || 0,
-        totalRatings: place.user_ratings_total || 0,
-        address: place.vicinity,
-        photos: place.photos?.map(photo => photo.getUrl({ maxWidth: 400 })) || [defaultImage],
-        location: place.geometry?.location.toJSON(),
-      }));
+  const processLocationData = useCallback((data) => {
+    try {
+      let rawCoords = data.coordinates || [];
+      
+      if (typeof rawCoords === 'string') {
+        rawCoords = rawCoords.split(',').map(Number);
+      } else if (rawCoords.latitude && rawCoords.longitude) {
+        rawCoords = [rawCoords.latitude, rawCoords.longitude];
+      }
+
+      const [lat, lng] = rawCoords;
+      
+      if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+        throw new Error(`Invalid coordinates: ${lat}, ${lng}`);
+      }
+
+      return { ...data, coordinates: [lat, lng] };
+    } catch (e) {
+      console.error('Coordinate error:', e);
+      setCoordError(e.message);
+      return { ...data, coordinates: [1.5533, 110.3592] };
+    }
   }, []);
 
   useEffect(() => {
-    if (location.state) {
+    let isMounted = true;
+    
+    const loadInitialData = async () => {
       try {
-        const { name, desc, image, coordinates } = location.state;
-        // Validate coordinates array exists and has valid values
-        if (!coordinates || coordinates.length < 2) {
-          throw new Error('Invalid coordinates data');
+        setLoading(true);
+        
+        if (location.state) {
+          const processed = processLocationData(location.state);
+          if (isMounted) setLocationData(processed);
+          return;
         }
-        const data = processLocationData({ name, desc, image, coordinates });
-        setLocationData(data);
-      } catch (e) {
-        setCoordError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setCoordError('Missing location data');
-      setLoading(false);
-    }
-  }, [location.state]);
 
-  const fetchNearbyPlaces = useCallback(async () => {
-    if (!isApiLoaded || !window.google || !locationData?.coordinates) return;
+        if (slug) {
+          apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI"
+        }
+
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 10000,
+            enableHighAccuracy: true
+          });
+        });
+        
+        if (isMounted) {
+          setLocationData({
+            coordinates: [position.coords.latitude, position.coords.longitude],
+            name: 'Your Current Location',
+            desc: 'Exploring nearby places around your current location',
+            image: defaultImage
+          });
+        }
+      } catch (error) {
+        console.error('Initialization error:', error);
+        if (isMounted) {
+          setCoordError(error.message);
+          setLocationData({
+            coordinates: [1.5533, 110.3592],
+            name: 'Kuching',
+            desc: 'Default location: Kuching, Sarawak',
+            image: defaultImage
+          });
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadInitialData();
+    return () => { isMounted = false; };
+  }, [location.state, slug, processLocationData]);
+
+  const processPlacesResults = useCallback((results) => {
+    return results.filter(place => place.name && place.vicinity).map(place => ({
+      place_id: place.place_id,
+      name: place.name,
+      rating: place.rating || 'N/A',
+      totalRatings: place.user_ratings_total || 'No reviews',
+      address: place.vicinity,
+      photos: place.photos?.map(photo => 
+        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI`
+      ) || [defaultImage],
+      types: place.types || [],
+      location: place.geometry?.location.toJSON(),
+    }));
+  }, []);
+
+  const fetchAllNearbyPlaces = useCallback(async (coords) => {
+    if (!isApiLoaded) return;
 
     try {
-      const [lat, lng] = locationData.coordinates;
-      const service = new window.google.maps.places.PlacesService(
-        document.createElement('div')
-      );
+      const [lat, lng] = coords;
+      const div = document.createElement('div');
+      document.body.appendChild(div);
 
-      const location = new window.google.maps.LatLng(lat, lng);
+      const service = new window.google.maps.places.PlacesService(div);
+      
+      const request = {
+        location: new window.google.maps.LatLng(lat, lng),
+        radius: 50000,
+        fields: ['name', 'vicinity', 'rating', 'user_ratings_total', 'photos', 'geometry', 'types']
+      };
 
+      setPlacesLoading(true);
+      
       const results = await new Promise((resolve) => {
-        service.nearbySearch({
-          location,
-          radius: 5000,
-          type: selectedCategory
-        }, (results, status) => {
-          if (status === 'OK') resolve(results || []);
-          else resolve([]);
+        service.nearbySearch(request, (results, status) => {
+          document.body.removeChild(div);
+          console.log('Places API Response:', {
+            status,
+            statusMessage: window.google.maps.places.PlacesServiceStatus[status],
+            resultsCount: results?.length || 0,
+            request: { lat, lng, radius: request.radius },
+            timestamp: new Date().toISOString()
+          });
+
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(results);
+          } else {
+            console.error('API Error Details:', {
+              status,
+              message: window.google.maps.places.PlacesServiceStatus[status]
+            });
+            resolve([]);
+          }
         });
       });
 
-      const detailedPlaces = await Promise.all(
-        results.map(place => new Promise(resolve => {
-          new window.google.maps.places.PlacesService(document.createElement('div'))
-            .getDetails({ placeId: place.place_id }, (details, status) => {
-              resolve(status === 'OK' ? { ...place, ...details } : null);
-            });
-        }))
-      );
-
-      setNearbyPlaces(processPlacesResults(detailedPlaces.filter(Boolean)));
+      console.log('Raw API Results:', results);
+      setNearbyPlaces(processPlacesResults(results));
     } catch (error) {
-      console.error('Error fetching places:', error);
+      console.error('Full Error Stack:', error);
       setNearbyPlaces([]);
+    } finally {
+      setPlacesLoading(false);
     }
-  }, [isApiLoaded, locationData, selectedCategory, processPlacesResults]);
+  }, [isApiLoaded, processPlacesResults]);
 
   useEffect(() => {
-    fetchNearbyPlaces();
-  }, [fetchNearbyPlaces]);
-
-  const processLocationData = (data) => {
-    const rawCoords = data.coordinates || [];
-    let processedCoords = [0, 0]; // Default to [0, 0] if invalid
-
-    try {
-      // First parse attempt
-      let lat = parseFloat(rawCoords[0]) || 0;
-      let lng = parseFloat(rawCoords[1]) || 0;
-
-      // Validate coordinate ranges
-      const isValidLat = (val) => val >= -90 && val <= 90;
-      const isValidLng = (val) => val >= -180 && val <= 180;
-
-      // Check if initial parse is valid
-      if (isValidLat(lat) && isValidLng(lng)) {
-        processedCoords = [lat, lng];
-      } else {
-        // Attempt coordinate swap
-        const swappedLat = parseFloat(rawCoords[1]) || 0;
-        const swappedLng = parseFloat(rawCoords[0]) || 0;
-        
-        if (isValidLat(swappedLat) && isValidLng(swappedLng)) {
-          processedCoords = [swappedLat, swappedLng];
-        } else {
-          throw new Error('Invalid coordinate values');
-        }
-      }
-    } catch (e) {
-      console.error('Coordinate processing error:', e);
-      // Fallback to Kuching coordinates if parsing fails
-      processedCoords = [1.5533, 110.3592];
+    if (locationData?.coordinates) {
+      fetchAllNearbyPlaces(locationData.coordinates);
     }
+  }, [locationData?.coordinates, fetchAllNearbyPlaces]);
 
-    return {
-      name: data.name || 'Unknown Location',
-      description: data.desc || 'No description available',
-      image: data.image || defaultImage,
-      coordinates: processedCoords
-    };
+  const getPlaceType = (types) => {
+    const exclude = ['point_of_interest', 'establishment'];
+    return types?.find(t => !exclude.includes(t))?.replace(/_/g, ' ') || 'Location';
   };
-
-  // Validation function (optional but recommended)
-  const validateCoordinates = (coords) => {
-    if (!Array.isArray(coords) || coords.length < 2) {
-      throw new Error('Invalid coordinates format');
-    }
-
-    const [lat, lng] = coords;
-    
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-      throw new Error('Coordinates must be numbers');
-    }
-
-    if (lat < -90 || lat > 90) {
-      throw new Error(`Invalid latitude: ${lat}. Must be between -90 and 90`);
-    }
-
-    if (lng < -180 || lng > 180) {
-      throw new Error(`Invalid longitude: ${lng}. Must be between -180 and 180`);
-    }
-  };
-
-  useEffect(() => {
-    if (name && coordinates) {
-      try {
-        validateCoordinates(coordinates);
-        const data = processLocationData({ name, desc, image, coordinates });
-        setLocationData(data);
-      } catch (e) {
-        setCoordError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setCoordError('Missing location data');
-      setLoading(false);
-    }
-  }, [name, desc, image, coordinates]);
-
-  const renderNearbyPlaces = () => (
-    <div className="nearby-places-section">
-      <h2>Nearby {selectedCategory.replace(/_/g, ' ').toUpperCase()}</h2>
-
-      <div className="places-grid">
-        {nearbyPlaces.map(place => (
-          <div
-            key={place.place_id}
-            className="place-card"
-            onClick={() => setSelectedPlace(place)}
-          >
-            <img src={place.photos[0]} alt={place.name} />
-            <div className="place-info">
-              <h3>{place.name}</h3>
-              <div className="rating">
-                ⭐ {place.rating} ({place.totalRatings} reviews)
-              </div>
-              <p className="address">{place.address}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedPlace && (
-        <div className="place-modal">
-          <div className="modal-content">
-            <button className="close-btn" onClick={() => setSelectedPlace(null)}>
-              &times;
-            </button>
-            <h2>{selectedPlace.name}</h2>
-
-            <div className="photo-gallery">
-              {selectedPlace.photos.map((photo, index) => (
-                <img key={index} src={photo} alt={`${selectedPlace.name} ${index + 1}`} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   return (
-    <div className="details-page">
-      <MenuNavbar />
+    <APIProvider 
+      apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI"
+      libraries={['places']}
+      onLoad={() => console.log('Google Maps API initialized successfully')}
+      onError={(error) => console.error('Google Maps API failed to load:', error)}
+    >
+      <div className="details-page">
+        <MenuNavbar />
 
-      {loading || !locationData ? (
-        <div className="loading-section">
-          <h2>Loading location details...</h2>
-        </div>
-      ) : (
-        <>
-          <div className="hero-banner">
-            <div className="hero-overlay">
-              <h1>{locationData.name.toUpperCase()}</h1>
-              <p>Explore {locationData.name}</p>
-            </div>
+        {/* <button 
+          style={{
+            position: 'fixed',
+            top: '70px',
+            right: '10px',
+            zIndex: 1000,
+            padding: '10px',
+            background: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+          onClick={() => {
+            console.log('Current Location State:', locationData);
+            console.log('Google Maps API Status:', window.google?.maps?.version);
+            fetchAllNearbyPlaces([1.5580, 110.3478]);
+          }}
+        >
+          Debug: Force Kuching Location
+        </button> */}
+
+        {coordError && (
+          <div className="error-banner">
+            <FaExclamationTriangle /> {coordError}
           </div>
+        )}
 
-          <div className="town-overview">
-            <div className="overlay-container">
-              <div className="text-content">
-                <h2>About {locationData.name}</h2>
-                <p className="overview-text">{locationData.description}</p>
-                <div className="coordinates-display">
-                  <span className="coord-badge">
-                    Longitude: {locationData.coordinates[0]?.toFixed(4)}
-                  </span>
-                  <span className="coord-badge">
-                    Latitude: {locationData.coordinates[1]?.toFixed(4)}
-                  </span>
+        {loading ? (
+          <div className="loading-section">
+            <h2>Loading location details...</h2>
+          </div>
+        ) : (
+          <>
+            <div className="hero-banner">
+              <div className="hero-overlay">
+                <h1>{locationData?.name?.toUpperCase()}</h1>
+                <p>Exploring {locationData?.name} area</p>
+              </div>
+            </div>
+
+            <div className="town-overview">
+              <div className="overlay-container">
+                <div className="text-content">
+                  <h2>About {locationData?.name}</h2>
+                  {locationData?.desc ? (
+                    <p className="overview-text">{locationData.desc}</p>
+                  ) : (
+                    <p className="overview-text no-description">No description available</p>
+                  )}
+                  {/* <p className="overview-text">{locationData?.desc}</p> */}
+                  {/* <div className="coordinates-display">
+                    <span className="coord-badge">
+                      Lat: {locationData?.coordinates[0]?.toFixed(4)}
+                    </span>
+                    <span className="coord-badge">
+                      Lng: {locationData?.coordinates[1]?.toFixed(4)}
+                    </span>
+                  </div> */}
+                </div>
+                <div className="image-content">
+                  <img
+                    src={locationData?.image || defaultImage}
+                    alt={locationData?.name}
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                      e.target.style.opacity = '0.8';
+                    }}
+                  />
                 </div>
               </div>
-
-              <div className="image-content">
-                <img
-                  src={locationData.image}
-                  alt={locationData.name}
-                  onError={(e) => {
-                    e.target.src = defaultImage;
-                    e.target.style.opacity = '0.8';
-                  }}
-                />
-              </div>
             </div>
-          </div>
 
-          <div className="category-selector">
-            <label htmlFor="category">Nearby: </label>
-            <select
-              id="category"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              <option value="tourist_attraction">Tourist Attraction</option>
-              <option value="museum">Museum</option>
-              <option value="zoo">Zoo</option>
-              <option value="amusement_park">Amusement Park</option>
-            </select>
-          </div>
+            <div className="nearby-places-section">
+              <h2>Nearby Places ({nearbyPlaces.length})</h2>
+              
+              {placesLoading ? (
+                <div className="loading-section">
+                  <h3>Discovering nearby places...</h3>
+                </div>
+              ) : nearbyPlaces.length > 0 ? (
+                <div className="places-grid">
+                  {nearbyPlaces.map(place => (
+                    <div
+                      key={place.place_id}
+                      className="place-card"
+                      onClick={() => setSelectedPlace(place)}
+                    >
+                      <img 
+                        src={place.photos[0]} 
+                        alt={place.name} 
+                        onError={(e) => {
+                          e.target.src = defaultImage;
+                          e.target.style.opacity = '0.8';
+                        }}
+                      />
+                      <div className="place-info">
+                        <div className="place-type">
+                          {getPlaceType(place.types).toUpperCase()}
+                        </div>
+                        <h3>{place.name}</h3>
+                        <div className="rating">
+                          ⭐ {place.rating} ({place.totalRatings})
+                        </div>
+                        <p className="address">{place.address}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-results">
+                  <FaExclamationTriangle />
+                  <p>No places found within 50km radius</p>
+                  <p>Check browser console for API response details</p>
+                </div>
+              )}
+            </div>
 
-          {renderNearbyPlaces()}
-        </>
-      )}
+            {selectedPlace && (
+              <div className="place-modal">
+                <div className="modal-content">
+                  <button className="close-btn" onClick={() => setSelectedPlace(null)}>
+                    &times;
+                  </button>
+                  <h2>{selectedPlace.name}</h2>
+                  <div className="place-details">
+                    <div className="detail-item">
+                      <FaMapMarkerAlt />
+                      <span>{selectedPlace.address}</span>
+                    </div>
+                    <div className="detail-item">
+                      ⭐ {selectedPlace.rating} ({selectedPlace.totalRatings} reviews)
+                    </div>
+                    <div className="detail-item">
+                      <FaClock />
+                      {getPlaceType(selectedPlace.types)}
+                    </div>
+                  </div>
+                  <div className="photo-gallery">
+                    {selectedPlace.photos.map((photo, index) => (
+                      <img 
+                        key={index} 
+                        src={photo} 
+                        alt={`${selectedPlace.name} ${index + 1}`}
+                        onError={(e) => {
+                          e.target.src = defaultImage;
+                          e.target.style.opacity = '0.8';
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </APIProvider>
   );
 };
 
