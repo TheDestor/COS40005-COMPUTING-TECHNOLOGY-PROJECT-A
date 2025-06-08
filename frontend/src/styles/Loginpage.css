@@ -65,6 +65,7 @@
   flex-direction: column;
   justify-content: center;
   position: relative;
+  animation: slideIn 0.5s ease-out;
 }
 
 /* Close Button */
@@ -80,12 +81,12 @@
   padding: 8px;
   margin-right: 20px;
   margin-top: 10px;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .close-btn95:hover {
-  transform: rotate(90deg);
-  color: #007bff;
+  transform: rotate(90deg) scale(1.1);
+  color: #ff4444;
 }
 
 /* ============================
@@ -107,16 +108,26 @@
   color: #444;
   padding-bottom: 4px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
-.login-tab:hover {
-  color: #007bff;
+.login-tab::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #007bff;
+  transition: width 0.3s ease;
 }
 
-.login-tab.active-tab {
-  color: #007bff;
-  font-weight: bold;
-  border-bottom: 2px solid #007bff;
+.login-tab:hover::after {
+  width: 100%;
+}
+
+.login-tab.active-tab::after {
+  width: 100%;
 }
 
 /* ============================
@@ -135,13 +146,20 @@
   border: 1px solid #ddd;
   border-radius: 999px;
   outline: none;
-  transition: border-color 0.3s, box-shadow 0.2s;
+  transition: all 0.3s ease;
   background-color: white;
+}
+
+.input-field100:hover {
+  border-color: #007bff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
 }
 
 .input-field100:focus {
   border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 /* Field with icon */
@@ -200,12 +218,16 @@
   border-radius: 999px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
   background-color: white;
 }
 
 .send-button-inside:hover {
-  text-decoration: underline;
+  background-color: #f0f7ff;
+}
+
+.send-button-inside:active {
+  transform: translateY(-12px);
 }
 
 /* ============================
@@ -239,13 +261,37 @@
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition: all 0.3s ease;
   margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.login-button:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .login-button:hover {
-  background-color: #0056b3;
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.login-button:active {
+  transform: translateY(0);
 }
 
 .login-button:disabled {
@@ -291,13 +337,25 @@
   text-decoration: none;
   cursor: pointer;
   font-weight: 500;
-  transition: text-decoration 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.signup-link:hover,
-.forgot-password:hover {
-  text-decoration: underline;
-  color: #0056b3;
+.signup-link::after,
+.forgot-password::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: #007bff;
+  transition: width 0.3s ease;
+}
+
+.signup-link:hover::after,
+.forgot-password:hover::after {
+  width: 100%;
 }
 
 /* ============================
@@ -311,6 +369,17 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -446,7 +515,7 @@
   margin-top: 5px;
   margin-bottom: 10px;
   text-align: left;
-  animation: fadeIn 0.3s ease;
+  animation: shake 0.5s ease-in-out;
 }
 
 .match-success {
@@ -455,7 +524,7 @@
   margin-top: 5px;
   margin-bottom: 10px;
   text-align: left;
-  animation: fadeIn 0.3s ease;
+  animation: bounce 0.5s ease-in-out;
 }
 
 .strength-meter {
@@ -476,6 +545,125 @@
 
 .strength-meter.strong {
   color: #388e3c;
+}
+
+/* ============================
+   12. RESPONSIVE DESIGN
+============================ */
+@media screen and (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+    height: 90%;
+    max-width: 95%;
+    margin: 20px;
+    z-index: 9999;
+  }
+
+  .login-image {
+    height: 200px;
+  }
+
+  .login-container {
+    padding: 1.5rem;
+  }
+
+  .login-type-selector {
+    gap: 1rem;
+  }
+
+  .login-tab {
+    font-size: 1rem;
+  }
+
+  .close-btn95 {
+    top: 5px;
+    right: 5px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .login-wrapper {
+    margin: 10px;
+  }
+
+  .login-image {
+    height: 150px;
+  }
+
+  .login-container {
+    padding: 1rem;
+  }
+
+  .login-type-selector {
+    gap: 0.5rem;
+  }
+
+  .login-tab {
+    font-size: 0.9rem;
+  }
+
+  .input-field100 {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .login-button {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .bottom-links-row {
+    font-size: 0.85rem;
+  }
+
+  .spaced-links {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 320px) {
+  .login-wrapper {
+    margin: 5px;
+  }
+
+  .login-image {
+    height: 120px;
+  }
+
+  .login-container {
+    padding: 0.8rem;
+  }
+
+  .login-tab {
+    font-size: 0.8rem;
+  }
+}
+
+/* Loading Animation for OTP Button */
+@keyframes loadingDots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+  100% { content: '.'; }
+}
+
+.send-button-inside:disabled::after {
+  content: '.';
+  animation: loadingDots 1.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 

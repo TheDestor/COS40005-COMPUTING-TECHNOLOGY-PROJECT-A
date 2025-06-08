@@ -23,13 +23,21 @@
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    /* animation: fadeIn 0.4s ease forwards; */
   }
   
   /* ========== Left Panel (Image) ========== */
   .registration-left {
     flex: 1;
     z-index: 1;
+  }
+  
+  @keyframes fadeInImage {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   
   .registration-left img {
@@ -70,7 +78,19 @@
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .active-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #007bff;
+    transition: width 0.3s ease;
   }
   
   .inactive-tab2 {
@@ -79,7 +99,8 @@
     font-size: 1.1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    position: relative;
   }
 
   .inactive-tab3 {
@@ -89,11 +110,23 @@
     font-size: 1.1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: color 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
   }
   
-  .inactive-tab:hover, .inactive-tab2:hover, .inactive-tab3:hover {
-    color: #007bff;
+  .inactive-tab2::after, .inactive-tab3::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #007bff;
+    transition: width 0.3s ease;
+  }
+  
+  .inactive-tab2:hover::after, .inactive-tab3:hover::after {
+    width: 100%;
   }
   
   .close-btn2 {
@@ -107,8 +140,8 @@
   }
   
   .close-btn2:hover {
-    transform: rotate(90deg);
-    color: #007bff;
+    transform: rotate(90deg) scale(1.1);
+    color: #ff4444;
   }
   
   
@@ -139,12 +172,19 @@
     border-radius: 999px;
     overflow: hidden;
     background-color: white;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+  }
+  
+  .phone-input-wrapper:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+    transform: translateY(-1px);
   }
   
   .phone-input-wrapper:focus-within {
     border-color: #007bff;
-    /* box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
   }
   
   .phone-input-wrapper select {
@@ -163,11 +203,11 @@
     background-position: right 0.75rem center;
     background-size: 14px;
     padding-right: 2rem;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, color 0.3s;
   }
   
-  .phone-input-wrapper select:focus {
-    background-color: #fff;
+  .phone-input-wrapper select:hover {
+    background-color: #f0f7ff;
   }
   
   .phone-input-wrapper input[type="tel"] {
@@ -188,12 +228,20 @@
     border-radius: 999px;
     outline: none;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
     color: black;
   }
   
   input:focus {
     border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .input-field:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+    transform: translateY(-1px);
   }
   
   /* ========== Password Field with Eye Toggle ========== */
@@ -215,7 +263,7 @@
     cursor: pointer;
     color: #888;
     font-size: 1.2rem;
-    transition: color 0.3s;
+    transition: all 0.3s ease;
     justify-content: center;
     align-items: center;
     display: flex;
@@ -223,6 +271,7 @@
   
   .password-input span:hover {
     color: #007bff;
+    transform: scale(1.1);
   }
   
   /* ========== Register Button ========== */
@@ -235,12 +284,60 @@
     border-radius: 999px;
     cursor: pointer;
     font-size: 1.1rem;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .register-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    z-index: 0;
+  }
+  
+  .register-btn:hover::before {
+    width: 300px;
+    height: 300px;
   }
   
   .register-btn:hover {
     background-color: #0056b3;
     transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+  }
+  
+  .register-btn:active {
+    transform: translateY(0);
+  }
+  
+  /* Button disabled state animation */
+  .register-btn:disabled {
+    background-color: #d3d3d3;
+    color: #888888;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transition: none;
+  }
+  
+  /* Cooldown text animation */
+  @keyframes loadingDots {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+    100% { content: '.'; }
+  }
+  
+  .register-btn.cooldown-text::after {
+    content: '.';
+    animation: loadingDots 1.5s infinite;
   }
   
   /* ========== Sign-in Link ========== */
@@ -250,18 +347,40 @@
     font-size: 0.95rem;
     color: black;
     font-weight: 500;
+    
+    /* Added styles to keep "Sign in" on the same line and centered */
+    display: flex; /* Use flexbox to align content */
+    justify-content: center; /* Center the content horizontally */
+    align-items: center; /* Align items vertically (useful if text heights differ) */
+    flex-wrap: nowrap; /* Prevent the content from wrapping to the next line */
+    gap: 5px; /* Add a small gap between the text and the link */
   }
   
   .signin-link span {
     color: #007bff;
     text-decoration: none;
     font-weight: 500;
-    transition: text-decoration 0.3s;
+    transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
+  }
+  
+  .signin-link span::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: #007bff;
+    transition: width 0.3s ease;
+  }
+  
+  .signin-link span:hover::after {
+    width: 100%;
   }
   
   .signin-link span:hover {
-    text-decoration: underline;
     color:#0056b3;
   }
   
@@ -280,10 +399,184 @@
     font-size: 0.9rem;
     margin-top: -10px;
     margin-left: 6px;
+    animation: fadeInStrength 0.3s ease-in-out;
   }
+  
+  @keyframes fadeInStrength {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
   .strength-0 { color: red; }
   .strength-1 { color: orange; }
   .strength-2 { color: gold; }
   .strength-3 { color: blue; }
   .strength-4 { color: green; }
+  
+  /* ========== Responsive Design ========== */
+  @media screen and (max-width: 1024px) {
+    .registration-container {
+      width: 90%;
+      height: auto;
+      min-height: 600px;
+      max-height: 95vh;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .registration-container {
+      flex-direction: column;
+      width: 95%;
+      height: auto;
+      max-height: 95vh;
+      overflow-y: auto;
+    }
+
+    .registration-left {
+      height: 250px;
+    }
+
+    .registration-right {
+      padding: 1.5rem;
+      padding-top: 2.2rem;
+      background-color: #fff;
+    }
+
+    .tabs, .tabs2 {
+      margin-top: -1rem;
+      margin-bottom: 1rem;
+    }
+
+    .registration-form {
+      margin-top: 0.5rem;
+    }
+
+    .form-row, .form-row2 {
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .phone-input-wrapper {
+      width: 100%;
+    }
+
+    .password-input {
+      width: 100%;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .registration-container {
+      width: 100%;
+      height: 100vh;
+      max-height: 100vh;
+      border-radius: 0;
+    }
+
+    .registration-left {
+      height: 120px;
+    }
+
+    .registration-right {
+      padding: 1rem;
+      padding-top: 1.8rem;
+      background-color: #fff;
+    }
+
+    .tabs, .tabs2 {
+      margin-top: -0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .registration-form {
+      margin-top: 0.5rem;
+    }
+
+    .input-field {
+      padding: 0.6rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .phone-input-wrapper select,
+    .phone-input-wrapper input[type="tel"] {
+      padding: 0.6rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .register-btn {
+      padding: 0.6rem;
+      font-size: 1rem;
+    }
+
+    .signin-link {
+      font-size: 0.85rem;
+    }
+
+    .password-strength {
+      font-size: 0.8rem;
+    }
+  }
+
+  /* For very small screens */
+  @media screen and (max-width: 320px) {
+    .registration-left {
+      height: 100px;
+    }
+
+    .registration-right {
+      padding: 0.8rem;
+      padding-top: 1.2rem;
+      background-color: #fff;
+    }
+
+    .tabs, .tabs2 {
+      margin-top: -0.2rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .registration-form {
+      margin-top: 0.3rem;
+    }
+  }
+
+  /* Add smooth scrolling for mobile */
+  @media screen and (max-width: 768px) {
+    .registration-container {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Improve touch targets for mobile */
+  @media screen and (max-width: 768px) {
+    .password-input span,
+    .close-btn2,
+    .signin-link span {
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  /* Adjust spacing for better mobile layout */
+  @media screen and (max-width: 768px) {
+    .registration-form {
+      gap: 0.8rem;
+    }
+
+    .form-row, .form-row2 {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  /* Improve button accessibility on mobile */
+  @media screen and (max-width: 768px) {
+    .register-btn {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
   
