@@ -1,582 +1,686 @@
-/* ========== Overlay Styling ========== */
+/*
+ * User Registration Page Styles
+ *
+ * This stylesheet defines the visual appearance and responsive behavior
+ * for the user and business registration modals.
+ */
+
+/* =========================================
+   1. GLOBAL & BASE STYLES
+   ========================================= */
+/* Apply base font and box-sizing to all elements */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7f6; /* Example background */
+}
+
+/* =========================================
+   2. OVERLAY & MODAL STRUCTURE
+   ========================================= */
+
+/* Overlay background for the modal */
 .registration-overlay {
-  position: fixed;
+  position: fixed; /* Stays in place regardless of scrolling */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0,0,0,0.3); /* Semi-transparent black */
+  display: flex; /* Use flexbox for centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  z-index: 1000; /* Ensure it's on top of other content */
+}
+
+/* Main registration container (modal box) */
+.registration-container {
+  width: 1000px; /* Desktop width */
+  height: 600px; /* Desktop height */
+  display: flex; /* Layout left and right panels side-by-side */
+  background-color: #fff; /* White background */
+  border-radius: 20px; /* Rounded corners */
+  overflow: hidden; /* Hide content that goes beyond border-radius */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for interaction */
+}
+
+/* Left panel containing the background image */
+.registration-left {
+  flex: 1; /* Takes up equal space as right panel */
+  z-index: 1; /* Ensures it's above other elements if positioned */
+}
+
+.registration-left img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Cover the area, cropping if necessary */
+  pointer-events: none; /* Prevent image from being clickable/draggable */
+}
+
+/* Right panel containing the registration form */
+.registration-right {
+  flex: 1; /* Takes up equal space as left panel */
+  z-index: 2; /* Ensures it's on top if overlapping */
+  padding: 2rem; /* Inner padding */
+  display: flex; /* Flex container for content inside */
+  flex-direction: column; /* Stack content vertically */
+  justify-content: center; /* Center content vertically */
+}
+
+/* =========================================
+   3. TABS
+   ========================================= */
+
+/* Common styles for tab containers */
+.tabs, .tabs2 {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Style for the active tab */
+.active-tab {
+  color: #007bff; /* Primary blue color */
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Smooth transitions for properties */
+  position: relative; /* For underline effect */
+}
+
+/* Underline for the active tab */
+.active-tab::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; /* Position slightly below text */
+  left: 0;
+  width: 100%; /* Always full width for active tab */
+  height: 2px;
+  background-color: #007bff;
+  transition: width 0.3s ease; /* Smooth transition for width */
+}
+
+/* Styles for inactive tabs (User Registration) */
+.inactive-tab2 {
+  color: #444;
+  margin: 0 1.5rem; /* Spacing from active tab */
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative; /* For underline effect */
+}
+
+/* Styles for inactive tabs (Business Registration) */
+.inactive-tab3 {
+  color: #444;
+  margin-right: 1.5rem; /* Spacing from active tab */
+  margin-left: 0.1rem; /* Adjust initial spacing */
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative; /* For underline effect */
+}
+
+/* Underline effect for inactive tabs on hover */
+.inactive-tab2::after, .inactive-tab3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0; /* Starts hidden */
+  height: 2px;
+  background-color: #007bff;
+  transition: width 0.3s ease; /* Smooth expansion */
+}
+
+/* Expand underline on hover for inactive tabs */
+.inactive-tab2:hover::after, .inactive-tab3:hover::after {
+  width: 100%;
+}
+
+/* Change color on hover for inactive tabs */
+.inactive-tab:hover, .inactive-tab2:hover, .inactive-tab3:hover {
+  color: #007bff;
+}
+
+/* Close button style */
+.close-btn2 {
+  margin-left: auto; /* Push to the right */
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #999;
+  transition: transform 0.3s ease, color 0.3s ease; /* Smooth animation for transform and color */
+}
+
+/* Close button hover effect */
+.close-btn2:hover {
+  transform: rotate(90deg) scale(1.1); /* Rotate and slightly enlarge */
+  color: #ff4444; /* Change color to red */
+}
+
+/* =========================================
+   4. FORM ELEMENTS
+   ========================================= */
+
+/* General form layout */
+.registration-form {
+  display: flex;
+  flex-direction: column; /* Stack fields vertically */
+  gap: 1rem; /* Space between form rows */
+}
+
+/* Layout for form rows with multiple inputs */
+.form-row {
+  display: flex;
+  gap: 1rem; /* Space between inputs in a row */
+}
+
+.form-row2 {
+  display: flex;
+  gap: 0.5rem; /* Slightly less space for tighter rows */
+}
+
+/* Wrapper for phone number input and country code select */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 999px; /* Pill shape */
+  overflow: hidden;
+  background-color: white;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+}
+
+/* Hover effect for phone input wrapper */
+.phone-input-wrapper:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1); /* Subtle shadow */
+  transform: translateY(-1px); /* Slight lift */
+}
+
+/* Focus effect for phone input wrapper (when any child is focused) */
+.phone-input-wrapper:focus-within {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Blue glow */
+  transform: translateY(-2px); /* More pronounced lift */
+}
+
+/* Style for the country code select dropdown */
+.phone-input-wrapper select {
+  appearance: none; /* Remove default dropdown arrow */
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: white;
+  color: black;
+  outline: none;
+  cursor: pointer;
+  border-right: 1px solid #ccc; /* Separator line */
+  font-weight: 500;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>"); /* Custom SVG arrow */
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px;
+  padding-right: 2rem; /* Space for the custom arrow */
+  transition: background-color 0.3s, color 0.3s; /* Smooth transitions */
+}
+
+/* Hover effect for country code select */
+.phone-input-wrapper select:hover {
+  background-color: #f0f7ff; /* Lighter background */
+}
+
+/* Focus effect for country code select */
+.phone-input-wrapper select:focus {
+  background-color: #fff;
+}
+
+/* Style for the phone number input field */
+.phone-input-wrapper input[type="tel"] {
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+  background-color: white;
+  color: black;
+}
+
+/* General input field styles */
+.input-field {
+  flex: 1; /* Allow input to fill available space in form-row */
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 999px; /* Pill shape */
+  outline: none;
+  font-size: 1rem;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  color: black;
+  background-color: white; /* Ensure white background for all input fields */
+}
+
+/* Hover effect for general input fields */
+.input-field:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1); /* Subtle shadow */
+  transform: translateY(-1px); /* Slight lift */
+}
+
+/* Focus effect for general input fields */
+input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Blue glow */
+  transform: translateY(-2px); /* More pronounced lift */
+}
+
+/* Wrapper for password input and eye toggle */
+.password-input {
+  flex: 1;
+  position: relative; /* For positioning the eye icon */
+  display: flex;
+  align-items: center;
+}
+
+/* Ensure password input itself doesn't cover the eye icon */
+.password-input input {
+  width: 100%;
+  padding-right: 2.5rem; /* Space for the eye icon */
+}
+
+/* Eye icon style */
+.password-input span {
+  position: absolute;
+  right: 5%;
+  cursor: pointer;
+  color: #888;
+  font-size: 1.2rem;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+/* Eye icon hover effect */
+.password-input span:hover {
+  color: #007bff;
+  transform: scale(1.1); /* Slightly enlarge icon */
+}
+
+/* =========================================
+   5. BUTTONS
+   ========================================= */
+
+/* Register button style */
+.register-btn {
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 999px; /* Pill shape */
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  position: relative; /* For ripple effect */
+  overflow: hidden; /* Hide overflow of the ripple effect */
+}
+
+/* Ripple effect for the register button */
+.register-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2); /* White ripple color */
+  border-radius: 50%;
+  transform: translate(-50%, -50%); /* Center the ripple */
+  transition: width 0.6s ease, height 0.6s ease; /* Smooth expansion */
+  z-index: 0; /* Ensure ripple is behind text */
+}
+
+/* Expand ripple on hover */
+.register-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Hover effect for register button */
+.register-btn:hover {
+  background-color: #0056b3; /* Darker blue */
+  transform: translateY(-2px); /* Slight lift */
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3); /* Add shadow */
+}
+
+/* Active (click) effect for register button */
+.register-btn:active {
+  transform: translateY(0); /* Press down effect */
+}
+
+/* Disabled state for register button */
+.register-btn:disabled {
+  background-color: #d3d3d3; /* Grey background */
+  color: #888888; /* Grey text */
+  cursor: not-allowed;
+  opacity: 0.6; /* Reduced opacity */
+  transition: none; /* No animations when disabled */
+}
+
+/* Cooldown text animation for register button */
+.register-btn.cooldown-text::after {
+  content: '.'; /* Start with a single dot */
+  animation: loadingDots 1.5s infinite; /* Dot animation */
+}
+
+/* =========================================
+   6. LINKS & TEXT
+   ========================================= */
+
+/* Style for the "Already have an account? Sign in" paragraph */
+.signin-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: black;
+  font-weight: 500;
+  
+  /* Flexbox to keep "Sign in" on the same line and center horizontally */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  gap: 5px; /* Space between text and link */
+}
+
+/* Style for the "Sign in" span */
+.signin-link span {
+  color: #007bff; /* Primary blue color */
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  cursor: pointer;
+  position: relative; /* For underline effect */
+}
+
+/* Underline effect for "Sign in" link on hover */
+.signin-link span::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; /* Position slightly below text */
+  left: 0;
+  width: 0; /* Starts hidden */
+  height: 1px;
+  background-color: #007bff;
+  transition: width 0.3s ease; /* Smooth expansion */
+}
+
+/* Expand underline on hover for "Sign in" link */
+.signin-link span:hover::after {
+  width: 100%;
+}
+
+/* Change color on hover for "Sign in" link */
+.signin-link span:hover {
+  color:#0056b3; /* Darker blue */
+}
+
+/* =========================================
+   7. PASSWORD STRENGTH INDICATOR
+   ========================================= */
+
+/* General style for password strength text */
+.password-strength {
+  font-size: 0.9rem;
+  margin-top: -10px; /* Pull closer to password field */
+  margin-left: 6px; /* Indent slightly */
+  animation: fadeInStrength 0.3s ease-in-out; /* Fade-in animation */
+}
+
+/* Color codes for different strength levels */
+.strength-0 { color: red; } /* Very Weak */
+.strength-1 { color: orange; } /* Weak */
+.strength-2 { color: gold; } /* Fair */
+.strength-3 { color: blue; } /* Good */
+.strength-4 { color: green; } /* Strong */
+
+/* =========================================
+   8. ANIMATIONS
+   ========================================= */
+
+/* Keyframes for overall modal fade-in */
+@keyframes fadeInContainer {
+  from {
+    opacity: 0;
+    transform: scale(0.98); /* Start slightly smaller */
   }
-  
-  /* ========== Main Container ========== */
+  to {
+    opacity: 1;
+    transform: scale(1); /* End at normal size */
+  }
+}
+
+/* Keyframes for image fade-in */
+@keyframes fadeInImage {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Keyframes for loading dots animation */
+@keyframes loadingDots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+  100% { content: '.'; }
+}
+
+/* Keyframes for password strength fade-in */
+@keyframes fadeInStrength {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Original fadeIn animation (if still used elsewhere) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================
+   9. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================= */
+
+/* For screens up to 1024px (e.g., smaller desktops, large tablets) */
+@media screen and (max-width: 1024px) {
   .registration-container {
-    width: 1000px;
-    height: 600px;
-    display: flex;
-    background-color: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 90%; /* Make container take up more width */
+    height: auto; /* Adjust height based on content */
+    min-height: 600px;
+    max-height: 95vh; /* Limit max height to viewport height */
   }
-  
-  /* ========== Left Panel (Image) ========== */
+  /* Keeping registration-left height consistent or adjust based on overall design */
   .registration-left {
-    flex: 1;
-    z-index: 1;
+    height: 250px; /* Adjust image height for this breakpoint */
   }
-  
-  @keyframes fadeInImage {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+}
+
+/* For screens up to 768px (e.g., tablets in portrait) */
+@media screen and (max-width: 768px) {
+  .registration-container {
+    flex-direction: column; /* Stack image and form vertically */
+    width: 95%; /* Wider container */
+    height: auto;
+    max-height: 95vh;
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
   }
-  
-  .registration-left img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
+
+  .registration-left {
+    height: 180px; /* Reduced image height to save space */
   }
-  
-  /* ========== Right Panel (Form) ========== */
+
   .registration-right {
-    flex: 1;
-    z-index: 2;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  
-  /* ========== Tabs ========== */
-  .tabs {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
+    padding: 1.5rem; /* General padding */
+    padding-top: 2.2rem; /* Increased top padding to clear image curve */
+    background-color: #fff; /* Ensure white background */
   }
 
-  .tabs2 {
-    display: flex;
-    align-items: center;
+  .tabs, .tabs2 {
+    margin-top: -1rem; /* Pull tabs up to align better with the top edge */
     margin-bottom: 1rem;
-    font-size: 1.1rem;
-  }
-  
-  .active-tab {
-    color: #007bff;
-    border-bottom: 2px solid #007bff;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-  }
-  
-  .active-tab::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #007bff;
-    transition: width 0.3s ease;
-  }
-  
-  .inactive-tab2 {
-    color: #444;
-    margin: 0 1.5rem;
-    font-size: 1.1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
   }
 
-  .inactive-tab3 {
-    color: #444;
-    margin-right: 1.5rem;
-    margin-left: 0.1rem;
-    font-size: 1.1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-  }
-  
-  .inactive-tab2::after, .inactive-tab3::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: #007bff;
-    transition: width 0.3s ease;
-  }
-  
-  .inactive-tab2:hover::after, .inactive-tab3:hover::after {
-    width: 100%;
-  }
-  
-  .close-btn2 {
-    margin-left: auto;
-    background: none;
-    border: none;
-    font-size: 2rem;
-    cursor: pointer;
-    color: #999;
-    transition: transform 0.3s ease, color 0.3s ease;
-  }
-  
-  .close-btn2:hover {
-    transform: rotate(90deg) scale(1.1);
-    color: #ff4444;
-  }
-  
-  
-  /* ========== Form Styling ========== */
   .registration-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    margin-top: 0.5rem; /* Space between tabs and first form field */
   }
-  
-  /* Form Layouts */
-  .form-row {
-    display: flex;
-    gap: 1rem;
+
+  .form-row, .form-row2 {
+    flex-direction: column; /* Stack inputs within rows vertically */
+    gap: 0.8rem;
   }
-  
-  .form-row2 {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
-  /* Phone Input with Country Select */
-  .phone-input-wrapper {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 999px;
-    overflow: hidden;
-    background-color: white;
-    transition: all 0.3s ease;
-  }
-  
-  .phone-input-wrapper:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
-    transform: translateY(-1px);
-  }
-  
-  .phone-input-wrapper:focus-within {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-    transform: translateY(-2px);
-  }
-  
-  .phone-input-wrapper select {
-    appearance: none;
-    border: none;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    background-color: white;
-    color: black;
-    outline: none;
-    cursor: pointer;
-    border-right: 1px solid #ccc;
-    font-weight: 500;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 14px;
-    padding-right: 2rem;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  .phone-input-wrapper select:hover {
-    background-color: #f0f7ff;
-  }
-  
-  .phone-input-wrapper input[type="tel"] {
-    border: none;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    width: 100%;
-    outline: none;
-    background-color: white;
-    color: black;
-  }
-  
-  /* ========== General Inputs ========== */
-  .input-field {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 999px;
-    outline: none;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    color: black;
-  }
-  
-  input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-    transform: translateY(-2px);
-  }
-  
-  .input-field:hover {
-    border-color: #007bff;
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
-    transform: translateY(-1px);
-  }
-  
-  /* ========== Password Field with Eye Toggle ========== */
+
+  .phone-input-wrapper,
   .password-input {
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  
-  .password-input input {
-    width: 100%;
-    padding-right: 2.5rem;
-  }
-  
-  .password-input span {
-    position: absolute;
-    right: 5%;
-    cursor: pointer;
-    color: #888;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-  }
-  
-  .password-input span:hover {
-    color: #007bff;
-    transform: scale(1.1);
-  }
-  
-  /* ========== Register Button ========== */
-  .register-btn {
-    padding: 0.75rem;
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .register-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.6s ease, height 0.6s ease;
-    z-index: 0;
-  }
-  
-  .register-btn:hover::before {
-    width: 300px;
-    height: 300px;
-  }
-  
-  .register-btn:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-  }
-  
-  .register-btn:active {
-    transform: translateY(0);
-  }
-  
-  /* Button disabled state animation */
-  .register-btn:disabled {
-    background-color: #d3d3d3;
-    color: #888888;
-    cursor: not-allowed;
-    opacity: 0.6;
-    transition: none;
-  }
-  
-  /* Cooldown text animation */
-  @keyframes loadingDots {
-    0% { content: '.'; }
-    33% { content: '..'; }
-    66% { content: '...'; }
-    100% { content: '.'; }
-  }
-  
-  .register-btn.cooldown-text::after {
-    content: '.';
-    animation: loadingDots 1.5s infinite;
-  }
-  
-  /* ========== Sign-in Link ========== */
-  .signin-link {
-    text-align: center;
-    margin-top: 1rem;
-    font-size: 0.95rem;
-    color: black;
-    font-weight: 500;
-    
-    /* Added styles to keep "Sign in" on the same line and centered */
-    display: flex; /* Use flexbox to align content */
-    justify-content: center; /* Center the content horizontally */
-    align-items: center; /* Align items vertically (useful if text heights differ) */
-    flex-wrap: nowrap; /* Prevent the content from wrapping to the next line */
-    gap: 5px; /* Add a small gap between the text and the link */
-  }
-  
-  .signin-link span {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-  }
-  
-  .signin-link span::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background-color: #007bff;
-    transition: width 0.3s ease;
-  }
-  
-  .signin-link span:hover::after {
-    width: 100%;
-  }
-  
-  .signin-link span:hover {
-    color:#0056b3;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  .password-strength {
-    font-size: 0.9rem;
-    margin-top: -10px;
-    margin-left: 6px;
-    animation: fadeInStrength 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeInStrength {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .strength-0 { color: red; }
-  .strength-1 { color: orange; }
-  .strength-2 { color: gold; }
-  .strength-3 { color: blue; }
-  .strength-4 { color: green; }
-  
-  /* ========== Responsive Design ========== */
-  @media screen and (max-width: 1024px) {
-    .registration-container {
-      width: 90%;
-      height: auto;
-      min-height: 600px;
-      max-height: 95vh;
-    }
-  }
-
-  @media screen and (max-width: 768px) {
-    .registration-container {
-      flex-direction: column;
-      width: 95%;
-      height: auto;
-      max-height: 95vh;
-      overflow-y: auto;
-    }
-
-    .registration-left {
-      height: 250px;
-    }
-
-    .registration-right {
-      padding: 1.5rem;
-      padding-top: 2.2rem;
-      background-color: #fff;
-    }
-
-    .tabs, .tabs2 {
-      margin-top: -1rem;
-      margin-bottom: 1rem;
-    }
-
-    .registration-form {
-      margin-top: 0.5rem;
-    }
-
-    .form-row, .form-row2 {
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-
-    .phone-input-wrapper {
-      width: 100%;
-    }
-
-    .password-input {
-      width: 100%;
-    }
-  }
-
-  @media screen and (max-width: 480px) {
-    .registration-container {
-      width: 100%;
-      height: 100vh;
-      max-height: 100vh;
-      border-radius: 0;
-    }
-
-    .registration-left {
-      height: 120px;
-    }
-
-    .registration-right {
-      padding: 1rem;
-      padding-top: 1.8rem;
-      background-color: #fff;
-    }
-
-    .tabs, .tabs2 {
-      margin-top: -0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .registration-form {
-      margin-top: 0.5rem;
-    }
-
-    .input-field {
-      padding: 0.6rem 0.8rem;
-      font-size: 0.9rem;
-    }
-
-    .phone-input-wrapper select,
-    .phone-input-wrapper input[type="tel"] {
-      padding: 0.6rem 0.8rem;
-      font-size: 0.9rem;
-    }
-
-    .register-btn {
-      padding: 0.6rem;
-      font-size: 1rem;
-    }
-
-    .signin-link {
-      font-size: 0.85rem;
-    }
-
-    .password-strength {
-      font-size: 0.8rem;
-    }
-  }
-
-  /* For very small screens */
-  @media screen and (max-width: 320px) {
-    .registration-left {
-      height: 100px;
-    }
-
-    .registration-right {
-      padding: 0.8rem;
-      padding-top: 1.2rem;
-      background-color: #fff;
-    }
-
-    .tabs, .tabs2 {
-      margin-top: -0.2rem;
-      margin-bottom: 0.3rem;
-    }
-
-    .registration-form {
-      margin-top: 0.3rem;
-    }
-  }
-
-  /* Add smooth scrolling for mobile */
-  @media screen and (max-width: 768px) {
-    .registration-container {
-      scroll-behavior: smooth;
-    }
-  }
-
-  /* Improve touch targets for mobile */
-  @media screen and (max-width: 768px) {
-    .password-input span,
-    .close-btn2,
-    .signin-link span {
-      min-height: 44px;
-      min-width: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    width: 100%; /* Ensure full width */
   }
 
   /* Adjust spacing for better mobile layout */
-  @media screen and (max-width: 768px) {
-    .registration-form {
-      gap: 0.8rem;
-    }
-
-    .form-row, .form-row2 {
-      margin-bottom: 0.5rem;
-    }
+  .registration-form {
+    gap: 0.8rem;
   }
 
-  /* Improve button accessibility on mobile */
-  @media screen and (max-width: 768px) {
-    .register-btn {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  .form-row, .form-row2 {
+    margin-bottom: 0.5rem;
   }
+
+  /* Improve touch targets for mobile */
+  .password-input span,
+  .close-btn2,
+  .signin-link span,
+  .register-btn {
+    min-height: 44px; /* Minimum height for easy tapping */
+    min-width: 44px; /* Minimum width for easy tapping */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Add smooth scrolling for mobile */
+  .registration-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* For screens up to 480px (e.g., most mobile phones) */
+@media screen and (max-width: 480px) {
+  .registration-container {
+    width: 100%;
+    height: 100vh; /* Take full viewport height */
+    max-height: 100vh;
+    border-radius: 0; /* Remove rounded corners for full-screen feel */
+  }
+
+  .registration-left {
+    height: 120px; /* Further reduce image height */
+  }
+
+  .registration-right {
+    padding: 1rem;
+    padding-top: 1.8rem; /* Adjust top padding */
+    background-color: #fff;
+  }
+
+  .tabs, .tabs2 {
+    font-size: 0.9rem;
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .active-tab, .inactive-tab2, .inactive-tab3 {
+    font-size: 0.9rem;
+  }
+
+  .close-btn2 {
+    font-size: 1.5rem;
+  }
+
+  .registration-form {
+    margin-top: 0.5rem;
+  }
+
+  .input-field,
+  .phone-input-wrapper select,
+  .phone-input-wrapper input[type="tel"] {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .register-btn {
+    padding: 0.6rem;
+    font-size: 1rem;
+  }
+
+  .signin-link {
+    font-size: 0.85rem;
+  }
+
+  .password-strength {
+    font-size: 0.8rem;
+  }
+}
+
+/* For very small screens up to 320px */
+@media screen and (max-width: 320px) {
+  .registration-left {
+    height: 100px;
+  }
+
+  .registration-right {
+    padding: 0.8rem;
+    padding-top: 1.2rem;
+    background-color: #fff;
+  }
+
+  .tabs, .tabs2 {
+    font-size: 0.8rem;
+    margin-top: -0.2rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .active-tab, .inactive-tab2, .inactive-tab3 {
+    font-size: 0.8rem;
+  }
+
+  .registration-form {
+    margin-top: 0.3rem;
+  }
+
+  .input-field,
+  .phone-input-wrapper select,
+  .phone-input-wrapper input[type="tel"] {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.8rem;
+  }
+}
   

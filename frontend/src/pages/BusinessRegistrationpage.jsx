@@ -258,7 +258,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
                   <option value="+44">🇬🇧 +44</option>
                   <option value="+91">🇮🇳 +91</option>
                 </select>
-                <input type="tel" className="input-field" name="phoneNumber" placeholder="Contact Number" value={phoneNumber} onChange={handleInputChange} pattern="[0-9]*" title="Only numbers are allowed." required />
+                <input type="tel" name="phoneNumber" placeholder="Contact Number" value={phoneNumber} onChange={handleInputChange} pattern="[0-9]*" title="Only numbers are allowed." required />
               </div>
             </div>
 

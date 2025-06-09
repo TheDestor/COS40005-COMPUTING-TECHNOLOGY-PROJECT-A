@@ -3,11 +3,9 @@
 
 .contact-us-container {
     font-family: 'Roboto', sans-serif;
-    /* max-width: 1200px; */
-    /* margin: 40px auto; */
     padding: 0 20px;
     color: #333;
-    height: calc(100vh - 80px); 
+    /* height: calc(100vh - 80px);  */
     margin-top: 100px;   
     width: 100vw;      
 }
@@ -416,3 +414,366 @@ footer::before {
     border-color: #4a90e2 !important;
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2) !important;
 } */
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+/* For screens smaller than 1024px (e.g., larger tablets, small laptops) */
+@media (max-width: 1024px) {
+  .contact-us-container {
+    margin-top: 100px; /* Adjust top margin for less header space */
+    padding: 0 15px; /* Slightly less side padding */
+    height: auto;
+  }
+
+  .header {
+    margin-top: 100px;
+    margin-bottom: 40px; /* Reduce header bottom margin */
+  }
+
+  .header h1 {
+    font-size: 2.2em; /* Smaller heading */
+    gap: 10px;
+  }
+
+  .header p {
+    font-size: 1.1em; /* Smaller paragraph text */
+    max-width: 90%; /* Allow paragraph to take more width */
+  }
+
+  .content {
+    gap: 30px; /* Reduce gap between sections */
+    flex-direction: column; /* Stack help and form sections */
+    margin-bottom: 50px;
+  }
+
+  .help-section, .form-section {
+    width: 100%; /* Make both sections full width */
+  }
+
+  .help-section h2 {
+    font-size: 1.8em; /* Smaller help section heading */
+  }
+
+  .help-section > p {
+    font-size: 1em; /* Smaller help section paragraph */
+    margin-bottom: 20px;
+  }
+
+  .help-options {
+    gap: 15px; /* Reduce gap between help cards */
+  }
+
+  .help-card {
+    padding: 20px 15px; /* Adjust card padding */
+  }
+
+  .help-card h3 {
+    font-size: 1.1em; /* Smaller card heading */
+  }
+
+  .help-card p {
+    font-size: 0.9em; /* Smaller card paragraph */
+  }
+
+  .form {
+    padding: 30px; /* Adjust form padding */
+  }
+
+  .form-group {
+    margin-bottom: 20px; /* Adjust form group margin */
+  }
+
+  .button-group button {
+    padding: 10px 8px; /* Smaller category buttons */
+    font-size: 0.95em;
+  }
+
+  .submit-button {
+    padding: 12px; /* Smaller submit button */
+    font-size: 1em;
+  }
+
+  footer {
+    margin-top: 50px;
+    padding: 30px 20px; /* Adjust footer padding */
+  }
+
+  .footer-content p {
+    font-size: 1.1em; /* Smaller footer text */
+    margin-bottom: 15px;
+  }
+
+  .newsletter input,
+  .newsletter button {
+    padding: 10px 18px; /* Smaller newsletter elements */
+    font-size: 0.95em;
+  }
+}
+
+/* For screens smaller than 768px (e.g., tablets in portrait, large phones) */
+@media (max-width: 768px) {
+  .contact-us-container {
+    margin-top: 60px; /* Further reduce top margin */
+    padding: 0 10px; /* Minimal side padding */
+  }
+
+  .header {
+    margin-bottom: 30px;
+  }
+
+  .header h1 {
+    font-size: 1.8em; /* Even smaller main heading */
+    gap: 8px;
+  }
+
+  .header p {
+    font-size: 1em; /* Even smaller paragraph */
+    max-width: 100%; /* Full width for text */
+  }
+
+  .content {
+    gap: 25px; /* Reduce gap */
+    margin-bottom: 40px;
+  }
+
+  .help-section h2 {
+    font-size: 1.5em; /* Smaller help section heading */
+  }
+
+  .help-section > p {
+    font-size: 0.9em;
+  }
+
+  .help-options {
+    grid-template-columns: 1fr; /* Stack help cards into a single column */
+    gap: 15px;
+  }
+
+  .help-card {
+    padding: 18px 12px;
+  }
+
+  .help-card h3 {
+    font-size: 1.05em;
+  }
+
+  .help-card p {
+    font-size: 0.85em;
+  }
+
+  .icon {
+    font-size: 1.8em; /* Smaller icons in help cards */
+  }
+
+  .form {
+    padding: 25px; /* Smaller form padding */
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label,
+  .select-category {
+    font-size: 0.9em; /* Smaller labels */
+    gap: 6px;
+  }
+
+  .input-icon {
+    width: 14px; /* Smaller input icons */
+    height: 14px;
+  }
+
+  .email-input,
+  .topic-input,
+  .message-input {
+    padding: 10px 12px; /* Smaller input padding */
+    font-size: 0.9em;
+  }
+
+  .message-input {
+    min-height: 80px; /* Smaller textarea */
+  }
+
+  .button-group {
+    gap: 8px; /* Smaller gap for category buttons */
+  }
+
+  .button-group button {
+    min-width: calc(100% - 8px); /* Make buttons stack if needed */
+    padding: 10px 8px;
+    font-size: 0.9em;
+    gap: 6px;
+  }
+
+  .button-icon {
+    width: 12px; /* Smaller button icons */
+    height: 12px;
+  }
+
+  .divider {
+    margin: 20px 0; /* Adjust divider margin */
+  }
+
+  .divider span {
+    font-size: 0.85em;
+  }
+
+  .submit-button {
+    padding: 10px; /* Smaller submit button */
+    font-size: 0.95em;
+    gap: 8px;
+  }
+
+  .arrow-icon {
+    width: 16px; /* Smaller arrow icon */
+    height: 16px;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding: 25px 15px;
+  }
+
+  .footer-content p {
+    font-size: 1em;
+    margin-bottom: 10px;
+  }
+
+  .newsletter-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .newsletter {
+    flex-direction: column; /* Stack newsletter input and button */
+    gap: 8px;
+  }
+
+  .newsletter input {
+    min-width: unset; /* Remove min-width to allow full flexibility */
+    width: 100%; /* Full width for input */
+    padding: 10px 12px;
+    font-size: 0.9em;
+  }
+
+  .newsletter button {
+    width: 100%; /* Full width for button */
+    padding: 10px 18px;
+    font-size: 0.9em;
+  }
+}
+
+/* For screens smaller than 480px (e.g., small mobile phones) */
+@media (max-width: 480px) {
+  .contact-us-container {
+    margin-top: 40px; /* Even less top margin */
+    padding: 0 8px; /* Minimal side padding */
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-size: 1.5em; /* Smallest main heading */
+    gap: 6px;
+  }
+
+  .header p {
+    font-size: 0.9em; /* Smallest paragraph */
+  }
+
+  .content {
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .help-section h2 {
+    font-size: 1.3em;
+  }
+
+  .help-section > p {
+    font-size: 0.85em;
+  }
+
+  .help-card {
+    padding: 15px 10px;
+  }
+
+  .help-card h3 {
+    font-size: 1em;
+  }
+
+  .help-card p {
+    font-size: 0.8em;
+  }
+
+  .icon {
+    font-size: 1.5em;
+  }
+
+  .form {
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label,
+  .select-category {
+    font-size: 0.85em;
+  }
+
+  .email-input,
+  .topic-input,
+  .message-input {
+    padding: 8px 10px;
+    font-size: 0.85em;
+  }
+
+  .message-input {
+    min-height: 70px;
+  }
+
+  .button-group {
+    gap: 6px;
+  }
+
+  .button-group button {
+    padding: 8px 6px;
+    font-size: 0.85em;
+  }
+
+  .divider {
+    margin: 15px 0;
+  }
+
+  .divider span {
+    font-size: 0.8em;
+  }
+
+  .submit-button {
+    padding: 8px;
+    font-size: 0.9em;
+    gap: 6px;
+  }
+
+  footer {
+    margin-top: 30px;
+    padding: 20px 10px;
+  }
+
+  .footer-content p {
+    font-size: 0.9em;
+  }
+
+  .newsletter input,
+  .newsletter button {
+    padding: 8px 10px;
+    font-size: 0.85em;
+  }
+}

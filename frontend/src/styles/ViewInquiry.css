@@ -587,16 +587,527 @@
     font-size: 16px;
   }
 
-  /* Responsive adjustment */
-@media (max-width: 992px) {
-    .filter-dropdown {
-      left: -100px; /* Less offset on smaller screens */
+  /* =========================================
+     RESPONSIVE DESIGN
+     ========================================= */
+
+  /* For screens smaller than 1200px (e.g., larger tablets, small laptops) */
+  @media (max-width: 1200px) {
+    .inquiry-container {
+      gap: 16px; /* Slightly reduce gap */
+    }
+
+    .inquiry-options {
+      padding: 12px 20px; /* Reduce padding */
+    }
+
+    .inquiry-statistics {
+      gap: 20px; /* Reduce gap between stats */
+    }
+
+    .stat-value {
+      font-size: 20px; /* Slightly smaller stats font */
+    }
+
+    .stat-label {
+      font-size: 13px;
+    }
+
+    .filter-button {
+      padding: 8px 14px; /* Smaller filter button */
+      font-size: 13px;
+    }
+
+    .inquiry-item {
+      padding: 12px; /* Smaller padding for list items */
+    }
+
+    .inquiry-name {
+      font-size: 15px; /* Adjust font size */
+    }
+
+    .inquiry-subject {
+      font-size: 13px;
+    }
+
+    .inquiry-message-preview {
+      font-size: 12px;
+    }
+
+    .inquiry-detail-header {
+      padding: 16px 20px; /* Smaller padding for detail header */
+    }
+
+    .detail-name {
+      font-size: 16px;
+    }
+
+    .detail-email {
+      font-size: 13px;
+    }
+
+    .inquiry-action-btn {
+      padding: 6px 12px; /* Smaller action buttons */
+      font-size: 13px;
+    }
+
+    .inquiry-detail-content {
+      padding: 20px; /* Adjust padding */
+    }
+
+    .inquiry-meta {
+      gap: 12px; /* Reduce gap in meta section */
+    }
+
+    .meta-label {
+      font-size: 12px;
+    }
+
+    .meta-value {
+      font-size: 14px;
+    }
+
+    .message-body {
+      font-size: 14px;
+      padding: 12px;
+    }
+
+    .inquiry-reply textarea {
+      padding: 12px;
+      font-size: 14px;
     }
   }
-  
-  @media (max-width: 768px) {
+
+  /* For screens smaller than 992px (e.g., most tablets) */
+  @media (max-width: 992px) {
+    .inquiry-container {
+      grid-template-columns: 1fr; /* Switch to single column layout */
+      height: auto; /* Allow height to adjust to content */
+      min-height: calc(100vh - 200px); /* Ensure some minimum height */
+    }
+
+    .inquiry-list,
+    .inquiry-detail {
+      box-shadow: none; /* Remove shadows when stacked */
+      border: 1px solid rgba(0, 0, 0, 0.08); /* Add subtle border */
+    }
+
+    .inquiry-options {
+      flex-direction: column; /* Stack stats and filters vertically */
+      align-items: flex-start; /* Align items to start */
+      gap: 15px; /* Space between stacked sections */
+      padding: 16px;
+    }
+
+    .inquiry-statistics {
+      width: 100%; /* Take full width */
+      justify-content: space-around; /* Distribute stats evenly */
+      flex-wrap: wrap; /* Allow stats to wrap */
+    }
+
+    .stat:not(:last-child)::after {
+      display: none; /* Hide separators for stacked stats */
+    }
+
     .filter-dropdown {
-      left: -40px; /* Even less offset on mobile */
-      width: 220px; /* Slightly smaller on mobile */
+      left: auto; /* Reset left positioning */
+      right: 0; /* Align dropdown to the right */
+      width: 220px; /* Maintain a reasonable width */
+    }
+
+    .filter-dropdown::before {
+      right: 20px; /* Adjust triangle pointer position */
+    }
+
+    /* Ensure detail view takes full width when active */
+    .inquiry-detail {
+      width: 100%;
+    }
+  }
+
+  /* For screens smaller than 768px (e.g., small tablets, larger phones) */
+  @media (max-width: 768px) {
+    .inquiry-content {
+      margin-top: 15px;
+    }
+
+    .inquiry-options {
+      padding: 12px;
+    }
+
+    .inquiry-statistics {
+      gap: 15px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+    }
+
+    .inquiry-filters {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end; /* Push filter button to the right */
+    }
+
+    .filter-dropdown {
+      width: 190px; /* Reduce width further */
+    }
+
+    .inquiry-list {
+      min-height: 250px; /* Ensure list is not too short */
+      max-height: 400px; /* Limit list height to prevent excessive scrolling */
+      overflow-y: auto;
+    }
+
+    .inquiry-item {
+      padding: 10px;
+    }
+
+    .inquiry-avatar img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .inquiry-brief {
+      margin-right: 10px; /* Reduce margin */
+    }
+
+    .inquiry-name {
+      font-size: 14px;
+    }
+
+    .inquiry-date {
+      font-size: 11px;
+    }
+
+    .inquiry-subject {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .inquiry-message-preview {
+      font-size: 12px;
+      -webkit-line-clamp: 1; /* Show only one line for preview */
+    }
+
+    .status-badge, .priority-badge {
+      padding: 2px 6px;
+      font-size: 10px;
+    }
+
+    .inquiry-detail-header {
+      flex-direction: column; /* Stack header content */
+      align-items: flex-start;
+      padding: 15px;
+      gap: 10px;
+    }
+
+    .inquiry-user-info {
+      width: 100%; /* Take full width */
+    }
+
+    .inquiry-actions {
+      width: 100%;
+      justify-content: space-between; /* Distribute action buttons */
+    }
+
+    .detail-avatar {
+      width: 40px;
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .detail-name {
+      font-size: 16px;
+    }
+
+    .detail-email {
+      font-size: 12px;
+    }
+
+    .inquiry-action-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .more-actions {
+      width: 30px;
+      height: 30px;
+      font-size: 1rem;
+    }
+
+    .more-dropdown {
+      width: 120px;
+    }
+
+    .more-dropdown button {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .inquiry-detail-content {
+      padding: 15px;
+    }
+
+    .inquiry-meta {
+      grid-template-columns: 1fr; /* Stack meta items vertically */
+      gap: 10px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+
+    .meta-label {
+      font-size: 11px;
+    }
+
+    .meta-value {
+      font-size: 13px;
+    }
+
+    .inquiry-message h4,
+    .inquiry-reply h4 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .message-body {
+      font-size: 13px;
+      padding: 12px;
+    }
+
+    .inquiry-reply textarea {
+      min-height: 100px; /* Smaller textarea */
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .send-reply-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .no-inquiry-selected, .no-inquiries {
+      font-size: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+  }
+
+  /* For screens smaller than 600px (e.g., standard phones) */
+  @media (max-width: 600px) {
+    .inquiry-container {
+      /* When on a phone, we'll implement a logic in JS to show either list or detail */
+      /* This CSS simply ensures they are styled correctly when visible */
+    }
+
+    /* To manage visibility on mobile, you'd typically add a class
+       e.g., .inquiry-list.hidden { display: none; }
+       and .inquiry-detail.hidden { display: none; }
+       and toggle them via JavaScript.
+    */
+
+    .inquiry-statistics {
+      flex-direction: column; /* Stack stats even tighter */
+      align-items: flex-start;
+    }
+
+    .stat {
+      width: 100%; /* Each stat takes full width */
+      align-items: flex-start;
+    }
+
+    .stat-value {
+      font-size: 20px; /* Slightly larger again for readability when stacked */
+    }
+
+    .stat-label {
+      font-size: 14px;
+    }
+
+    .inquiry-filters {
+      justify-content: flex-start; /* Align filter button to start */
+    }
+
+    .filter-dropdown {
+      right: auto;
+      left: 0; /* Align dropdown to the left */
+      width: 100%; /* Full width dropdown */
+      max-width: 250px; /* Limit max width */
+      padding: 10px;
+    }
+
+    .filter-dropdown::before {
+      left: 20px; /* Adjust triangle pointer */
+      right: auto;
+    }
+
+    .filter-group select {
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .clear-filters {
+      font-size: 13px;
+      padding: 8px;
+    }
+
+    .inquiry-actions {
+      flex-wrap: wrap; /* Allow action buttons to wrap */
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .inquiry-action-btn {
+      flex-grow: 1; /* Allow buttons to grow and fill space */
+      text-align: center;
+    }
+  }
+
+  /* For very small screens smaller than 480px (e.g., small phones) */
+  @media (max-width: 480px) {
+    .dashboard-header {
+      flex-direction: column; /* Stack header elements */
+      align-items: flex-start;
+      gap: 15px;
+    }
+
+    .search-bar {
+      width: 100%; /* Full width search bar */
+    }
+
+    .inquiry-options {
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .inquiry-statistics {
+      gap: 10px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+    }
+
+    .inquiry-list {
+      min-height: 200px;
+      max-height: 350px;
+    }
+
+    .inquiry-item {
+      flex-direction: column; /* Stack avatar and brief */
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px;
+    }
+
+    .inquiry-avatar {
+      margin-right: 0;
+    }
+
+    .inquiry-header {
+      flex-direction: column; /* Stack name and date */
+      align-items: flex-start;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+
+    .inquiry-name {
+      font-size: 14px;
+    }
+
+    .inquiry-date {
+      font-size: 10px;
+    }
+
+    .inquiry-subject {
+      font-size: 12px;
+    }
+
+    .inquiry-status {
+      flex-wrap: wrap; /* Allow badges to wrap */
+      gap: 5px;
+    }
+
+    .status-badge, .priority-badge {
+      padding: 1px 5px;
+      font-size: 9px;
+    }
+
+    .inquiry-detail-header {
+      padding: 10px;
+    }
+
+    .inquiry-user-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+    }
+
+    .detail-avatar {
+      margin-right: 0;
+    }
+
+    .detail-name {
+      font-size: 14px;
+    }
+
+    .detail-email {
+      font-size: 11px;
+    }
+
+    .inquiry-actions {
+      flex-direction: column; /* Stack action buttons */
+      gap: 5px;
+    }
+
+    .inquiry-action-btn, .send-reply-btn {
+      width: 100%; /* Full width buttons */
+      font-size: 12px;
+      padding: 8px;
+    }
+
+    .inquiry-detail-content {
+      padding: 10px;
+    }
+
+    .inquiry-meta {
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+    }
+
+    .meta-label {
+      font-size: 10px;
+    }
+
+    .meta-value {
+      font-size: 12px;
+    }
+
+    .inquiry-message h4,
+    .inquiry-reply h4 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .message-body {
+      font-size: 12px;
+      padding: 10px;
+    }
+
+    .inquiry-reply textarea {
+      min-height: 80px;
+      padding: 8px;
+      font-size: 12px;
+      margin-bottom: 10px;
     }
   }

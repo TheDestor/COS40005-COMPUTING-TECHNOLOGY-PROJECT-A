@@ -20,7 +20,7 @@
   .sidebar3 {
     width: 250px;
     height: 100vh;
-    background-color: #ffffff;
+    background-color: #ffffff; /* Default background for desktop */
     padding: 20px;
     border-right: 1px solid #ddd;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
@@ -47,36 +47,26 @@
     transform: translateX(5px);
   }
   
+  /* Remove the ::before indicator for the new design */
   .sidebar-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background-color: transparent;
-    transition: background-color 0.3s ease;
-    border-radius: 4px;
+    display: none; /* Hide the previous visual indicator */
   }
   
   .sidebar-item.active {
-    background-color: #007bff;
+    background-color: #007bff; /* Default active background for desktop */
     color: white;
     font-weight: bold;
-  }
-  
-  .sidebar-item.active::before {
-    background-color: #007bff;
+    /* Remove border-left for active state here, as it will be handled by mobile styles */
   }
   
   .sidebar-item .sidebar-icon {
     font-size: 18px;
-    color: black;
+    color: black; /* Default icon color for desktop */
     transition: color 0.2s;
   }
   
   .sidebar-item.active .sidebar-icon {
-    color: white;
+    color: white; /* Default active icon color for desktop */
   }
   
   /* Ripple effect on click */
@@ -160,7 +150,7 @@
   }
   
   /* Toggle Switch */
-  .toggle-switch {
+  .toggle-switch { /* This targets the default react-switch styling */
     position: relative;
     width: 50px;
     height: 24px;
@@ -241,9 +231,10 @@
     font-size: 16px;
     font-weight: 500;
     width: 40%;
+    color: #444;
   }
   
-  /* ------------------ Settings List ------------------ */
+  /* ------------------ Settings List (General) ------------------ */
   .settings-list {
     list-style-type: none;
     padding-left: 0;
@@ -260,6 +251,7 @@
     font-size: 16px;
     font-weight: 500;
     width: 40%;
+    color: #444;
   }
   
   .settings-list li:hover {
@@ -330,4 +322,309 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
   }
+  
+/* =========================================
+   RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================= */
+
+/* For screens smaller than 1024px (e.g., larger tablets, small laptops) */
+@media screen and (max-width: 1024px) {
+  .settings-container {
+    margin-top: 70px; /* Adjust top margin for smaller screen header */
+  }
+
+  .sidebar3 {
+    width: 200px; /* Reduce sidebar width */
+    padding: 15px; /* Adjust sidebar padding */
+  }
+
+  .settings-heading {
+    font-size: 22px; /* Smaller heading in sidebar */
+    margin-bottom: 25px;
+  }
+
+  .sidebar-item {
+    padding: 10px 12px; /* Adjust sidebar item padding */
+    margin: 15px 0; /* Adjust sidebar item margin */
+    font-size: 15px; /* Smaller font size for sidebar items */
+  }
+
+  .main-content {
+    padding: 30px; /* Adjust main content padding */
+  }
+
+  .content-section h2 {
+    font-size: 22px; /* Smaller section heading */
+    margin-bottom: 20px;
+  }
+
+  .icon-setting {
+    font-size: 20px; /* Smaller icons in content sections */
+  }
+
+  /* Adjust width of content items for better spacing */
+  .setting-item,
+  .language-list li,
+  .settings-list li,
+  .help-list li,
+  .faq-list li {
+    width: 60%; /* Allow content items to take up more width */
+  }
+
+  .faq-section h3 {
+    font-size: 18px; /* Smaller FAQ heading */
+  }
+}
+
+/* For screens smaller than 768px (e.g., tablets in portrait) */
+@media screen and (max-width: 768px) {
+  .settings-container {
+    flex-direction: column; /* Stack sidebar and main content vertically */
+    height: auto; /* Allow height to adjust to content */
+    min-height: calc(100vh - 60px); /* Ensure minimum height */
+    margin-top: 80px; /* Further adjust top margin */
+  }
+
+  .sidebar3 {
+    width: 100%; /* Sidebar takes full width */
+    height: 110px; /* Fixed height for the tab bar */
+    padding: 15px 10px; /* Adjust padding for tab bar */
+    background-color: #ffffff; /* Light grey background for the tab bar */
+    border-right: none; /* Remove vertical border */
+    border-bottom: 1px solid #ccc; /* Add subtle bottom border */
+    box-shadow: none; /* Remove shadow on the sidebar itself */
+    display: flex; /* Use flexbox for sidebar items */
+    flex-wrap: nowrap; /* Prevent items from wrapping to next line */
+    justify-content: space-around; /* Distribute items evenly */
+    align-items: center;
+    gap: 5px; /* Small gap between items */
+    overflow-x: auto; /* Allow horizontal scrolling if items overflow */
+    scroll-behavior: smooth; /* Smooth scroll behavior */
+    /* Adding subtle gradient for scroll indication if content overflows */
+    /* background-image: linear-gradient(to right, #e6e6e6, #e6e6e6),
+                      linear-gradient(to right, rgba(0,0,0,.1), rgba(0,0,0,0)); */
+    background-position: 100% 0, 0 0;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%;
+    /* Overlay effects to hide scrollbar and show gradient */
+    background-attachment: local, scroll;
+  }
+  
+  /* Hide actual scrollbar */
+  .sidebar3::-webkit-scrollbar {
+    display: none;
+  }
+  .sidebar3 {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .settings-heading {
+    display: none; /* Hide the "Settings" heading in sidebar on mobile */
+  }
+
+  .sidebar-item {
+    flex-direction: column; /* Stack icon and text vertically */
+    align-items: center; /* Center content horizontally */
+    justify-content: center;
+    padding: 10px 5px; /* Adjust padding for items */
+    margin: 0; /* Remove vertical margin */
+    height: 80px; /* Fixed height for each tab item */
+    width: calc(33.33% - 10px); /* Roughly equal width for 3 items with gap */
+    flex-shrink: 0; /* Prevent items from shrinking */
+    background-color: transparent; /* Initially transparent, blends with sidebar3 background */
+    color: #555; /* Darker grey for inactive text */
+    font-weight: 500;
+    border-radius: 8px; /* Slightly rounded corners */
+    border: 1px solid transparent; /* Subtle transparent border */
+    transition: all 0.2s ease; /* Smooth transitions for hover/active */
+    transform: none !important; /* Remove previous translateX from hover/active */
+    position: relative; /* Needed for ripple effect */
+    overflow: hidden; /* Hide ripple overflow */
+  }
+  
+  .sidebar-item:hover {
+    background-color: #f0f0f0; /* Slightly lighter grey on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
+    transform: translateY(-3px); /* Stronger lift on hover */
+    border-radius: 6px solid #007bff;
+  }
+  
+  .sidebar-item.active {
+    background-color: white; /* White background for active tab */
+    color: #007bff; /* Blue text for active tab */
+    font-weight: bold;
+    border-radius: 6px solid #007bff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow for active */
+    transform: translateY(-5px); /* More pronounced lift for active */
+  }
+
+  /* Add press down effect on click */
+  .sidebar-item:active {
+    transform: translateY(0); /* Press down effect */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Reduce shadow when pressed */
+  }
+
+  /* Ripple effect on click for sidebar items */
+  .sidebar-item::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(0, 123, 255, 0.1); /* Light blue ripple */
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0; /* Starts hidden */
+    transition: width 0.4s ease-out, height 0.4s ease-out, opacity 0.4s ease-out;
+    z-index: 0;
+  }
+
+  .sidebar-item:active::after {
+    width: 200%; /* Expands ripple */
+    height: 200%; /* Expands ripple */
+    opacity: 1; /* Make visible when active */
+    transition: width 0s, height 0s, opacity 0s; /* No transition on activate, only on deactivate */
+  }
+  
+  .sidebar-item:not(:active)::after {
+    width: 0; /* Reset width to zero */
+    height: 0; /* Reset height to zero */
+    opacity: 0; /* Hide */
+    transition: width 0.4s ease-out, height 0.4s ease-out, opacity 0.4s ease-out; /* Transition on return */
+  }
+
+  /* Specific icon styling for sidebar items */
+  .sidebar-item .sidebar-icon {
+    font-size: 24px; /* Larger icon size */
+    margin-bottom: 5px; /* Space between icon and text */
+    color: #666; /* Default icon color for inactive tabs */
+    transition: all 0.2s ease; /* Smooth icon color transition */
+  }
+  
+  .sidebar-item:hover .sidebar-icon {
+    color: #007bff; /* Change icon color on hover */
+  }
+
+  .sidebar-item.active .sidebar-icon {
+    color: #007bff;
+    transform: scale(1.1); /* Slightly enlarge active icon */
+  }
+
+  .main-content {
+    padding: 25px 20px; /* Adjust main content padding */
+  }
+
+  .content-section h2 {
+    font-size: 20px; /* Smaller section heading */
+    margin-bottom: 15px;
+  }
+
+  .icon-setting {
+    font-size: 18px;
+  }
+
+  /* Make all content items full width */
+  .setting-item,
+  .language-list li,
+  .settings-list li,
+  .help-list li,
+  .faq-list li {
+    width: 100%; /* Full width for content items */
+    padding: 12px 18px; /* Adjust padding */
+    font-size: 15px; /* Adjust font size */
+  }
+
+  .setting-item span {
+    white-space: normal; /* Allow text to wrap */
+  }
+
+  .language-option .tick-mark {
+    width: 20px; /* Smaller tick mark */
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .help-list li {
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+
+  .help-icon {
+    font-size: 16px;
+  }
+
+  .faq-section {
+    margin-top: 20px;
+  }
+
+  .faq-section h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .faq-list li {
+    padding: 15px 20px;
+    font-size: 15px;
+  }
+}
+
+/* For screens smaller than 480px (e.g., most mobile phones) */
+@media screen and (max-width: 480px) {
+  .settings-container {
+    margin-top: 50px; /* Further adjust top margin */
+  }
+
+  .sidebar3 {
+    padding: 10px; /* Reduce sidebar padding */
+    height: 100px; /* Adjust height for smaller screens */
+  }
+
+  .sidebar-item {
+    height: 75px; /* Adjust item height */
+    font-size: 12px; /* Smaller font size */
+    padding: 8px 5px; /* Adjust padding */
+    width: calc(33.33% - 8px); /* Adjust width considering gap */
+  }
+
+  .sidebar-item .sidebar-icon {
+    font-size: 22px; /* Smaller icon size */
+    margin-bottom: 3px; /* Smaller space */
+  }
+
+  .main-content {
+    padding: 20px 15px; /* Further reduce main content padding */
+  }
+
+  .content-section h2 {
+    font-size: 18px; /* Smaller section headings */
+  }
+
+  .icon-setting {
+    font-size: 16px;
+  }
+
+  .setting-item,
+  .language-list li,
+  .settings-list li,
+  .help-list li,
+  .faq-list li {
+    padding: 10px 15px; /* Adjust padding */
+    font-size: 14px; /* Smaller font size */
+  }
+
+  .help-list li {
+    font-size: 14px;
+  }
+
+  .help-icon {
+    font-size: 14px;
+  }
+
+  .faq-list li {
+    padding: 12px 18px;
+    font-size: 14px;
+  }
+}
   

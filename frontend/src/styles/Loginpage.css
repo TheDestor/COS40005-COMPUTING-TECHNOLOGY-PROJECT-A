@@ -1,36 +1,51 @@
-/* ============================
-   1. OVERLAY BACKGROUND
-============================ */
+/*
+ * Login Page Styles
+ *
+ * This stylesheet defines the visual appearance, interactivity, and responsive behavior
+ * for the login modal.
+ */
+
+/* =========================================
+   1. GLOBAL & BASE STYLES
+   ========================================= */
+/* Apply base font for the entire overlay */
 .overlay {
-  position: fixed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* ... existing styles ... */
+}
+
+/* =========================================
+   2. OVERLAY & MODAL STRUCTURE
+   ========================================= */
+
+/* Overlay background for the login modal */
+.overlay {
+  position: fixed; /* Stays in place regardless of scrolling */
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0,0,0,0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  z-index: 9999;
+  background-color: rgba(0,0,0,0.3); /* Semi-transparent black */
+  display: flex; /* Use flexbox for centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  z-index: 9999; /* Ensure it's on top of other content */
 }
 
-
-/* ============================
-   2. LOGIN WRAPPER
-============================ */
+/* Main login container (modal box) */
 .login-wrapper {
-  display: flex;
-  max-width: 900px;
+  display: flex; /* Layout left image and right form side-by-side */
+  max-width: 900px; /* Max width for desktop */
   width: 100%;
-  height: 450px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
-  animation: fadeIn 0.4s ease-in-out;
+  height: 450px; /* Desktop height */
+  border-radius: 16px; /* Rounded corners */
+  overflow: hidden; /* Hide content that goes beyond border-radius */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  background-color: #fff; /* White background */
+  animation: fadeIn 0.4s ease-in-out; /* Entrance animation for the wrapper */
 }
 
+/* A second wrapper class (if used for other login-like modals) */
 .login-wrapper2 {
   display: flex;
   max-width: 900px;
@@ -42,35 +57,33 @@
   background-color: #fff;
 }
 
-/* Left Image */
+/* Left panel containing the background image */
 .login-image {
-  flex: 1;
+  flex: 1; /* Takes up equal space as the form area */
   height: 100%;
 }
 
 .login-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Cover the area, cropping if necessary */
 }
 
-/* ============================
-   3. LOGIN FORM AREA
-============================ */
+/* Right panel containing the login form */
 .login-container {
-  flex: 1;
-  padding: 2rem;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-  animation: slideIn 0.5s ease-out;
+  flex: 1; /* Takes up equal space as the image */
+  padding: 2rem; /* Inner padding */
+  background-color: #fff; /* White background */
+  display: flex; /* Flex container for content inside */
+  flex-direction: column; /* Stack content vertically */
+  justify-content: center; /* Center content vertically */
+  position: relative; /* For positioning the close button */
+  animation: slideIn 0.5s ease-out; /* Entrance animation for the form */
 }
 
-/* Close Button */
+/* Close button style */
 .close-btn95 {
-  position: absolute;
+  position: absolute; /* Position relative to .login-container */
   top: 10px;
   right: 10px;
   background: none;
@@ -78,97 +91,122 @@
   font-size: 1.3rem;
   cursor: pointer;
   color: #555;
-  padding: 8px;
+  padding: 8px; /* Increase clickable area */
   margin-right: 20px;
   margin-top: 10px;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
 }
 
+/* Close button hover effect */
 .close-btn95:hover {
-  transform: rotate(90deg) scale(1.1);
-  color: #ff4444;
+  transform: rotate(90deg) scale(1.1); /* Rotate and slightly enlarge */
+  color: #ff4444; /* Change color to red */
 }
 
-/* ============================
-   4. LOGIN TYPE TABS
-============================ */
+/* =========================================
+   3. LOGIN TYPE TABS
+   ========================================= */
+
+/* Container for login type selector tabs */
 .login-type-selector {
   display: flex;
   margin-bottom: 1rem;
-  gap: 1.5rem;
+  gap: 1.5rem; /* Space between tabs */
   align-items: center;
   font-size: 1rem;
   font-weight: 500;
 }
 
+/* General style for login tabs */
 .login-tab {
-  all: unset;
+  all: unset; /* Remove all default button styles */
   cursor: pointer;
   font-size: 1.1rem;
   color: #444;
-  padding-bottom: 4px;
-  transition: all 0.3s ease;
-  position: relative;
+  padding-bottom: 4px; /* Space for the underline */
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  position: relative; /* For underline effect */
 }
 
+/* Underline effect for all tabs */
 .login-tab::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: -2px; /* Position slightly below text */
   left: 0;
-  width: 0;
+  width: 0; /* Starts hidden */
   height: 2px;
-  background-color: #007bff;
-  transition: width 0.3s ease;
+  background-color: #007bff; /* Primary blue color */
+  transition: width 0.3s ease; /* Smooth expansion */
 }
 
+/* Expand underline on hover for all tabs */
 .login-tab:hover::after {
   width: 100%;
 }
 
+/* Style for the active tab */
+.login-tab.active-tab {
+  color: #007bff; /* Primary blue color for active tab */
+  font-weight: bold;
+  border-bottom: 2px solid #007bff; /* Existing solid underline */
+  /* Remove ::after specific styles for active-tab if already covered by border-bottom */
+  /* Or ensure ::after overrides/enhances border-bottom for active state */
+}
+
+/* Ensure active tab's underline is always visible */
 .login-tab.active-tab::after {
   width: 100%;
 }
 
-/* ============================
-   5. FORM FIELDS
-============================ */
+/* =========================================
+   4. FORM FIELDS & INPUTS
+   ========================================= */
+
+/* Container for each form group (input + label/other elements) */
 .form-group100 {
   margin-bottom: 1.2rem;
   width: 100%;
 }
 
+/* General style for all input fields */
 .input-field100 {
   width: 100%;
-  /* max-width: 91%; */
   padding: 12px 16px;
   font-size: 1rem;
   border: 1px solid #ddd;
-  border-radius: 999px;
+  border-radius: 999px; /* Pill shape */
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
   background-color: white;
 }
 
+/* Hover effect for input fields */
 .input-field100:hover {
   border-color: #007bff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+  transform: translateY(-1px); /* Slight lift */
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1); /* Subtle shadow */
 }
 
+/* Focus effect for input fields */
 .input-field100:focus {
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Blue glow */
+  transform: translateY(-2px); /* More pronounced lift */
 }
 
-/* Field with icon */
+/* Wrapper for input fields that include an icon (e.g., password eye) */
 .input-with-icon {
-  position: relative;
+  position: relative; /* For positioning the icon */
   width: 100%;
-  /* max-width: 91%; */
 }
 
+/* Specific padding for input fields with an icon to prevent text overlap */
+.input-with-icon .input-field100 {
+  padding-right: 45px; /* Space for the icon */
+}
+
+/* A second input-with-icon class (if used) */
 .input-with-icon2 {
   position: relative;
   width: 100%;
@@ -176,41 +214,43 @@
   margin-bottom: 1rem;
 }
 
-.input-with-icon .input-field100 {
-  padding-right: 45px;
-}
 .input-with-icon2 .input-field100 {
   padding-right: 45px;
 }
 
+/* Eye icon style for password toggle */
 .eye-icon {
   position: absolute;
-  top: 55%;
+  top: 55%; /* Vertically center */
   right: 5%;
-  transform: translateY(-50%);
+  transform: translateY(-50%); /* Fine-tune vertical alignment */
   cursor: pointer;
   color: #666;
   font-size: 1.2rem;
-  transition: color 0.2s;
+  transition: color 0.2s; /* Smooth color change */
 }
 
+/* Eye icon hover effect */
 .eye-icon:hover {
   color: #007bff;
 }
 
-/* ============================
-   6. OTP INPUT + BUTTON
-============================ */
+/* =========================================
+   5. OTP INPUT & BUTTON
+   ========================================= */
+
+/* Wrapper for the OTP input field and send button */
 .otp-input-wrapper {
-  position: relative;
+  position: relative; /* For positioning the send button inside */
   width: 100%;
 }
 
+/* Send OTP button positioned inside the input field */
 .send-button-inside {
   position: absolute;
   right: 0.2rem;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%); /* Vertically center */
   height: 34px;
   padding: 0 14px;
   border: none;
@@ -218,21 +258,30 @@
   border-radius: 999px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
   background-color: white;
 }
 
+/* Send OTP button hover effect */
 .send-button-inside:hover {
-  background-color: #f0f7ff;
+  background-color: #f0f7ff; /* Lighter background */
 }
 
+/* Send OTP button active (click) effect */
 .send-button-inside:active {
-  transform: translateY(-12px);
+  transform: translateY(-12px); /* Corrected: This likely intended a subtle press, not a large vertical shift. Review if this is the desired effect. If not, change to translateY(0) or similar. */
 }
 
-/* ============================
-   7. CAPTCHA CHECKBOX
-============================ */
+/* Animation for disabled OTP button text (e.g., "Sending...") */
+.send-button-inside:disabled::after {
+  content: '.'; /* Initial dot */
+  animation: loadingDots 1.5s infinite; /* Loading dots animation */
+}
+
+/* =========================================
+   6. CAPTCHA CHECKBOX (Currently Commented Out in JSX)
+   ========================================= */
+
 .captcha-section {
   margin: 1rem 0;
 }
@@ -248,9 +297,10 @@
   user-select: none;
 }
 
-/* ============================
-   8. LOGIN BUTTON
-============================ */
+/* =========================================
+   7. LOGIN BUTTON
+   ========================================= */
+
 .login-button {
   width: 100%;
   padding: 12px;
@@ -261,12 +311,13 @@
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
   margin-top: 1.5rem;
-  position: relative;
-  overflow: hidden;
+  position: relative; /* For ripple effect */
+  overflow: hidden; /* Hide overflow of the ripple effect */
 }
 
+/* Ripple effect for the login button */
 .login-button::before {
   content: '';
   position: absolute;
@@ -274,56 +325,64 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2); /* White ripple color */
   border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.6s ease, height 0.6s ease;
+  transform: translate(-50%, -50%); /* Center the ripple */
+  transition: width 0.6s ease, height 0.6s ease; /* Smooth expansion */
 }
 
+/* Expand ripple on hover */
 .login-button:hover::before {
   width: 300px;
   height: 300px;
 }
 
+/* Hover effect for login button */
 .login-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+  transform: translateY(-2px); /* Slight lift */
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3); /* Add shadow */
 }
 
+/* Active (click) effect for login button */
 .login-button:active {
-  transform: translateY(0);
+  transform: translateY(0); /* Press down effect */
 }
 
+/* Disabled state for login button */
 .login-button:disabled {
-  background-color: #d3d3d3; /* Light grey background for disabled state */
-  color: #888888; /* Grey text for disabled state */
-  cursor: not-allowed; /* Change cursor to not-allowed */
+  background-color: #d3d3d3; /* Light grey background */
+  color: #888888; /* Grey text */
+  cursor: not-allowed;
 }
 
+/* =========================================
+   8. BOTTOM LINKS (Sign Up, Forgot Password)
+   ========================================= */
 
-/* ============================
-   9. BOTTOM LINKS
-============================ */
+/* Container for bottom links */
 .bottom-links-row {
   margin-top: 1.5rem;
   font-size: 0.95rem;
   width: 100%;
 }
 
+/* Centered link layout (for OTP login) */
 .center-links {
   display: flex;
   justify-content: center;
   text-align: center;
-  gap: 10px;
+  gap: 10px; /* Space between elements */
 }
 
+/* Spaced link layout (for password login) */
 .spaced-links {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Space out elements */
   align-items: center;
   padding: 0 4px;
 }
 
+/* Common style for sign up text and forgot password link */
 .signup-text,
 .forgot-password {
   font-weight: 500;
@@ -331,75 +390,61 @@
   font-size: 0.95rem;
 }
 
+/* Common style for clickable links (Sign up, Forgot Password) */
 .signup-link,
 .forgot-password {
-  color: #007bff;
+  color: #007bff; /* Primary blue color */
   text-decoration: none;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
+  transition: all 0.3s ease; /* Smooth transition for all properties */
+  position: relative; /* For underline effect */
 }
 
+/* Underline effect for links */
 .signup-link::after,
 .forgot-password::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: -1px; /* Position slightly below text */
   left: 0;
-  width: 0;
+  width: 0; /* Starts hidden */
   height: 1px;
   background-color: #007bff;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease; /* Smooth expansion */
 }
 
+/* Expand underline on hover for links */
 .signup-link:hover::after,
 .forgot-password:hover::after {
   width: 100%;
 }
 
-/* ============================
-   10. ANIMATIONS
-============================ */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* Change color on hover for links */
+.signup-link:hover,
+.forgot-password:hover {
+  color: #0056b3;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* ============================
-   11. FORGOT PASSWORD & OTP & RESET STYLES
-============================ */
+/* =========================================
+   9. FORGOT PASSWORD & OTP & RESET STYLES (Specific to those modals, but integrated here)
+   ========================================= */
 
-/* Reuse login-wrapper and login-image */
+/* Reuse login-wrapper and login-image (comment suggests these are shared) */
 
+/* Container for reset/OTP forms (used in ForgotPasswordpage.jsx) */
 .reset-container {
   flex: 1;
   padding: 2rem;
   background-color: #fff;
-  /* display: flex; */
+  /* display: flex; */ /* This might be commented out if direct usage is 'block' or 'flex' is set elsewhere */
   flex-direction: column;
   justify-content: center;
   position: relative;
 }
 
-/* Title & subtitle */
+/* Title & subtitle styles for reset pages */
 .reset-container h2 {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
@@ -407,11 +452,12 @@
 }
 
 .reset-container p {
-  margin-bottom: 6rem;
+  margin-bottom: 6rem; /* Large margin, adjust if needed */
   color: #555;
   font-size: 0.95rem;
 }
 
+/* Variants of paragraph spacing for different reset steps */
 .reset-container2 p {
   margin-bottom: 3rem;
   color: #555;
@@ -423,9 +469,8 @@
   color: #555;
   font-size: 0.95rem;
 }
-/* Email input (same as input-field) */
 
-/* OTP Code Box */
+/* OTP code input boxes */
 .otp-box-wrapper {
   display: flex;
   justify-content: center;
@@ -449,7 +494,7 @@
   box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
 }
 
-/* Resend link and timer */
+/* Resend OTP link and timer section */
 .resend-section {
   display: flex;
   justify-content: center;
@@ -469,14 +514,15 @@
   text-decoration: underline;
 }
 
-/* Navigation buttons */
+/* Navigation buttons (Cancel, Continue) for reset pages */
 .reset-buttons {
   display: flex;
-  justify-content: flex-end ;
-  gap: 1.2rem; /* Space between Cancel and Continue */
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 1.2rem; /* Space between buttons */
   margin-top: 1.5rem;
 }
 
+/* Common styles for back and continue buttons */
 .reset-buttons .btn-back,
 .reset-buttons .btn-continue {
   padding: 10px 22px;
@@ -488,16 +534,17 @@
   transition: all 0.3s;
 }
 
+/* Specific style for back button */
 .btn-back {
   background: white;
   color: #007bff;
-  ;
 }
 
 .btn-back:hover {
-  background: #f1f8ff;
+  background: #f1f8ff; /* Light blue background on hover */
 }
 
+/* Specific style for continue button */
 .btn-continue {
   background: #007bff;
   color: white;
@@ -505,28 +552,29 @@
 }
 
 .btn-continue:hover {
-  background-color: #0056b3;
+  background-color: #0056b3; /* Darker blue background on hover */
 }
 
-/* Confirm password match styles */
+/* Confirm password match messages (for reset/registration) */
 .match-warning {
   font-size: 0.85rem;
-  color: #d32f2f;
+  color: #d32f2f; /* Red for warning */
   margin-top: 5px;
   margin-bottom: 10px;
   text-align: left;
-  animation: shake 0.5s ease-in-out;
+  animation: shake 0.5s ease-in-out; /* Shake animation for warnings */
 }
 
 .match-success {
   font-size: 0.85rem;
-  color: #388e3c;
+  color: #388e3c; /* Green for success */
   margin-top: 5px;
   margin-bottom: 10px;
   text-align: left;
-  animation: bounce 0.5s ease-in-out;
+  animation: bounce 0.5s ease-in-out; /* Bounce animation for success */
 }
 
+/* Password strength meter */
 .strength-meter {
   font-size: 0.8rem;
   font-weight: bold;
@@ -535,6 +583,7 @@
   padding-left: 5px;
 }
 
+/* Color codes for different strength levels */
 .strength-meter.weak {
   color: #d32f2f;
 }
@@ -547,102 +596,35 @@
   color: #388e3c;
 }
 
-/* ============================
-   12. RESPONSIVE DESIGN
-============================ */
-@media screen and (max-width: 768px) {
-  .login-wrapper {
-    flex-direction: column;
-    height: 90%;
-    max-width: 95%;
-    margin: 20px;
-    z-index: 9999;
-  }
+/* =========================================
+   10. ANIMATIONS
+   ========================================= */
 
-  .login-image {
-    height: 200px;
+/* Animation for login wrapper entrance */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
   }
-
-  .login-container {
-    padding: 1.5rem;
-  }
-
-  .login-type-selector {
-    gap: 1rem;
-  }
-
-  .login-tab {
-    font-size: 1rem;
-  }
-
-  .close-btn95 {
-    top: 5px;
-    right: 5px;
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-@media screen and (max-width: 480px) {
-  .login-wrapper {
-    margin: 10px;
+/* Animation for login form container entrance */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-
-  .login-image {
-    height: 150px;
-  }
-
-  .login-container {
-    padding: 1rem;
-  }
-
-  .login-type-selector {
-    gap: 0.5rem;
-  }
-
-  .login-tab {
-    font-size: 0.9rem;
-  }
-
-  .input-field100 {
-    padding: 10px 14px;
-    font-size: 0.9rem;
-  }
-
-  .login-button {
-    padding: 10px;
-    font-size: 0.9rem;
-  }
-
-  .bottom-links-row {
-    font-size: 0.85rem;
-  }
-
-  .spaced-links {
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* For very small screens */
-@media screen and (max-width: 320px) {
-  .login-wrapper {
-    margin: 5px;
-  }
-
-  .login-image {
-    height: 120px;
-  }
-
-  .login-container {
-    padding: 0.8rem;
-  }
-
-  .login-tab {
-    font-size: 0.8rem;
-  }
-}
-
-/* Loading Animation for OTP Button */
+/* Keyframes for loading dots animation (e.g., for OTP button) */
 @keyframes loadingDots {
   0% { content: '.'; }
   33% { content: '..'; }
@@ -650,20 +632,115 @@
   100% { content: '.'; }
 }
 
-.send-button-inside:disabled::after {
-  content: '.';
-  animation: loadingDots 1.5s infinite;
-}
-
+/* Keyframes for shake animation (e.g., error messages) */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
 
+/* Keyframes for bounce animation (e.g., success messages) */
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
+}
+
+/* =========================================
+   11. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================= */
+
+/* For screens up to 768px (e.g., tablets in portrait) */
+@media screen and (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column; /* Stack image and form vertically */
+    height: 90%; /* Adjust height to fill more of the screen */
+    max-width: 95%; /* Wider container */
+    margin: 20px;
+    z-index: 9999; /* Ensure it stays on top */
+  }
+
+  .login-image {
+    height: 200px; /* Reduced image height to save space */
+  }
+
+  .login-container {
+    padding: 1.5rem; /* Reduced padding */
+  }
+
+  .login-type-selector {
+    gap: 1rem; /* Adjust space between tabs */
+  }
+
+  .login-tab {
+    font-size: 1rem; /* Smaller font size for tabs */
+  }
+
+  .close-btn95 {
+    top: 5px; /* Adjust close button position */
+    right: 5px;
+  }
+}
+
+/* For screens up to 480px (e.g., most mobile phones) */
+@media screen and (max-width: 480px) {
+  .login-wrapper {
+    margin: 10px; /* Smaller margin */
+  }
+
+  .login-image {
+    height: 150px; /* Further reduced image height */
+  }
+
+  .login-container {
+    padding: 1rem; /* Smaller padding */
+  }
+
+  .login-type-selector {
+    gap: 0.5rem; /* Even smaller gap between tabs */
+  }
+
+  .login-tab {
+    font-size: 0.9rem; /* Smaller font size for tabs */
+  }
+
+  .input-field100 {
+    padding: 10px 14px; /* Smaller padding for inputs */
+    font-size: 0.9rem; /* Smaller font size for inputs */
+  }
+
+  .login-button {
+    padding: 10px; /* Smaller padding for button */
+    font-size: 0.9rem; /* Smaller font size for button */
+  }
+
+  .bottom-links-row {
+    font-size: 0.85rem; /* Smaller font size for bottom links */
+  }
+
+  .spaced-links {
+    flex-direction: column; /* Stack links vertically */
+    gap: 10px;
+    align-items: center;
+  }
+}
+
+/* For very small screens up to 320px */
+@media screen and (max-width: 320px) {
+  .login-wrapper {
+    margin: 5px; /* Minimal margin */
+  }
+
+  .login-image {
+    height: 120px; /* Smallest image height */
+  }
+
+  .login-container {
+    padding: 0.8rem; /* Minimal padding */
+  }
+
+  .login-tab {
+    font-size: 0.8rem; /* Smallest font size for tabs */
+  }
 }
 
 
