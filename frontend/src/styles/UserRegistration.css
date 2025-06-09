@@ -255,7 +255,7 @@ body {
   width: 100%;
   outline: none;
   background-color: white;
-  color: black;
+  color: black !important; /* Ensure text is black */
 }
 
 /* General input field styles */
@@ -267,7 +267,7 @@ body {
   outline: none;
   font-size: 1rem;
   transition: all 0.3s ease; /* Smooth transition for all properties */
-  color: black;
+  color: black !important; /* Ensure text is black */
   background-color: white; /* Ensure white background for all input fields */
 }
 
@@ -447,6 +447,7 @@ input:focus {
   margin-top: -10px; /* Pull closer to password field */
   margin-left: 6px; /* Indent slightly */
   animation: fadeInStrength 0.3s ease-in-out; /* Fade-in animation */
+  color: #333 !important;
 }
 
 /* Color codes for different strength levels */

@@ -179,6 +179,7 @@
   outline: none;
   transition: all 0.3s ease; /* Smooth transition for all properties */
   background-color: white;
+  color: black !important; /* Ensure text is black */
 }
 
 /* Hover effect for input fields */

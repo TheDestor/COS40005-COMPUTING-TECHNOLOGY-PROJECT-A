@@ -361,6 +361,7 @@ footer::before {
 .newsletter input {
     flex: 1;
     min-width: 250px;
+    color: #333 !important; /* Ensure text is visible in dark mode */
 }
 
 .newsletter button {

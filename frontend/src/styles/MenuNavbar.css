@@ -8,173 +8,340 @@
   height: 80px; /* define height explicitly */
   width: 100vw;
   z-index: 9999;
-  background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%);
+  /* background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%); */ /* User requested to ignore background */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center; /* Center the menu wrapper by default */
   padding: 10px 20px;
   box-sizing: border-box;
 }
 
+.menu-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
 
-  .menu-wrapper {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-  
-  
-  /* Logo positioning to the left */
-  .nav-logo {
-    position: absolute;
-    left: 20px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo-image {
-    height: 40px;
-    width: auto;
-  }
-  
+/* Logo positioning to the left */
+.nav-logo {
+  position: absolute;
+  left: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+}
+
 /* ============================
-   1. Base Container Styles
+   1. Base Container Styles (Not directly used by MenuNavbar, but good to keep)
 ============================ */
 .mapview-container2 {
-    position: relative;
+  position: relative;
+}
+
+/* ============================
+   2. Horizontal Menu Styles (Desktop View)
+============================ */
+.menu-container2 {
+  display: flex;
+  flex-direction: row;
+  background-color: #ECE6F0;
+  border-radius: 30px;
+  padding: 4px;
+  margin: 0 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  height: 60px;
+  max-width: 100%;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  transition: all 0.3s ease;
+  align-items: center;
+}
+
+.menu-container2::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================
+   3. Menu Item Styles (Horizontal Menu)
+============================ */
+.menu-item3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  border: none;
+  background: none;
+  outline: none;
+  flex-shrink: 0; /* Prevent items from shrinking */
+  min-width: 64px;
+  position: relative;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  width: 100px; /* Fixed width for desktop items to match original */
+  box-sizing: border-box;
+  text-overflow: ellipsis; /* For text that overflows */
+  overflow: hidden;
+}
+
+.menu-item3:hover {
+  transform: translateY(-5px);
+  background-color: rgba(0, 122, 255, 0.1);
+}
+
+/* ============================
+   4. Icon Container & Icon Effects (Horizontal Menu)
+============================ */
+.icon-container2 {
+  width: 30px;
+  height: 30px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1px;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menu-item3:hover .icon-container2 {
+  background-color: #007AFF;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.menu-icon2 {
+  font-size: 14px;
+  color: #555;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.menu-item3:hover .menu-icon2 {
+  transform: scale(1.2);
+  color: #007AFF;
+}
+
+/* ============================
+   5. Menu Text Styles (Horizontal Menu)
+============================ */
+.menu-text3 {
+  font-size: 0.8rem;
+  text-align: center;
+  font-weight: 400;
+  transition: color 0.3s ease;
+  overflow: visible; /* Changed from hidden to visible to allow marquee effect */
+  text-overflow: unset; /* Changed from ellipsis for marquee effect */
+  max-width: 100%;
+  color: #555;
+}
+
+.menu-item3:hover .menu-text3 {
+  color: #007AFF;
+  /* animation: marquee 2s linear infinite; */ /* Commented out as it might not be desired for all cases */
+  /* padding-left: 20%; */ /* This padding is unusual for marquee effect, can be removed or adjusted */
+}
+
+/* Common focus styles for links/buttons */
+.menu-item3 button:focus,
+.menu-item3 a:focus,
+.dropdown-toggle-button:focus,
+.dropdown-menu-item:focus {
+  outline: none;
+  border: none;
+}
+
+/* ============================
+   6. Active State Styles (Horizontal Menu)
+============================ */
+.active-icon-container2 {
+  background-color: #007AFF;
+}
+
+.active-icon2 {
+  color: white;
+}
+
+.active-text2 {
+  color: #007AFF;
+  font-weight: 500;
+}
+
+/* Profile dropdown container */
+.profile-container2 {
+  padding: 0 20px;
+}
+
+/* =========================================
+   7. MOBILE DROPDOWN MENU STYLES
+   ========================================= */
+
+/* Mobile Dropdown Wrapper (Initially hidden) */
+.mobile-menu-dropdown-wrapper {
+  display: none; /* Hidden by default on desktop */
+  position: relative; /* For absolute positioning of dropdown menu */
+  z-index: 100; /* Ensure it's above other navbar elements if needed */
+  flex: 1; /* Allow it to take flexible space in navbar */
+  justify-content: center; /* Center the toggle button */
+}
+
+/* Dropdown Toggle Button */
+.dropdown-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ECE6F0; /* Matches the image background color */
+  border: none;
+  border-radius: 30px; /* Pill shape */
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.2s ease;
+  min-width: 150px; /* Minimum width for the button */
+  justify-content: center; /* Center content within button */
+}
+
+.dropdown-toggle-button:hover {
+  background-color: #e2e8f0; /* Slightly darker on hover */
+}
+
+.dropdown-toggle-icon {
+  font-size: 16px;
+  color: #555;
+}
+
+/* Dropdown Menu List */
+.dropdown-menu-list {
+  position: absolute;
+  top: calc(100% + 10px); /* Position below the toggle button with some gap */
+  left: 50%;
+  transform: translateX(-50%); /* Center horizontally */
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  width: 200px; /* Fixed width for the dropdown menu */
+  max-height: 300px; /* Max height before scrolling */
+  overflow-y: auto; /* Enable scrolling for long lists */
+  z-index: 1000; /* Ensure it's on top */
+  padding: 8px 0;
+  animation: dropdownFadeIn 0.2s ease-out; /* Fade-in animation */
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Individual Dropdown Menu Item */
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  text-decoration: none; /* Remove underline for links */
+  color: #333; /* Dark text for items */
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu-item:hover {
+  background-color: #f0f7ff; /* Light blue background on hover */
+  color: #007bff; /* Blue text on hover */
+}
+
+/* Active state for dropdown menu item */
+.dropdown-menu-item.active-dropdown-item {
+  background-color: #e6f0ff; /* Light blue background for active item */
+  color: #007bff; /* Blue text for active item */
+  font-weight: 500;
+}
+
+.dropdown-item-icon {
+  font-size: 16px;
+  color: #666; /* Default icon color */
+}
+
+.dropdown-menu-item:hover .dropdown-item-icon,
+.dropdown-menu-item.active-dropdown-item .dropdown-item-icon {
+  color: #007bff; /* Blue icon on hover/active */
+}
+
+/* =========================================
+   8. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================= */
+
+/* Media Query to switch between horizontal and dropdown */
+@media screen and (max-width: 992px) {
+  .menu-wrapper {
+    display: none; /* Hide horizontal menu */
   }
-  
-  /* ============================
-     2. Horizontal Menu Styles (Desktop View)
-  ============================ */
-  .menu-container2 {
-    display: flex;
-    flex-direction: row;
-    background-color: #ECE6F0;
-    border-radius: 30px;
-    padding: 4px;
-    margin: 0 6px;
-    overflow-x: auto;
-    white-space: nowrap;
-    height: 60px;
-    max-width: 100%;
-    box-sizing: border-box;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    transition: all 0.3s ease;
-    align-items: center;
-  }
-  
-  .menu-container2::-webkit-scrollbar {
-    display: none;
-  }
-  
-  /* ============================
-     3. Menu Item Styles
-  ============================ */
-  .menu-item3 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #555;
-    border: none;
-    background: none;
-    outline: none;
-    flex-shrink: 0;
-    min-width: 64px;
-    position: relative;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-    min-width: 64px;
-    flex-shrink: 0;
-    width: 100px;
-    box-sizing: border-box;
-    text-overflow: ellipsis;
-    overflow: hidden; 
-  }
-  
-  .menu-item3:hover {
-    transform: translateY(-5px);
-    background-color: rgba(0, 122, 255, 0.1);
-  }
-  
-  /* ============================
-     4. Icon Container & Icon Effects
-  ============================ */
-  .icon-container2 {
-    width: 30px;
-    height: 30px;
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1px;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .menu-item3:hover .icon-container2 {
-    background-color: #007AFF;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-  }
-  
-  .menu-icon2 {
-    font-size: 14px;
-    color: #555;
-    transition: transform 0.3s ease, color 0.3s ease;
-  }
-  
-  .menu-item3:hover .menu-icon2 {
-    transform: scale(1.2);
-    color: #007AFF;
-  }
-  
-  /* ============================
-     5. Menu Text Styles
-  ============================ */
-  .menu-text3 {
-    font-size: 0.8rem;
-    text-align: center;
-    font-weight: 400;
-    transition: color 0.3s ease;
-    overflow: visible;
-    text-overflow: unset;
-    max-width: 100%;
-    color: #555;
-  }
-  
-  .menu-item3:hover .menu-text3 {
-    color: #007AFF;
-    animation: marquee 2s linear infinite;
-    padding-left: 20%;
-  }
-  
-  .menu-item3 button:focus,
-  .menu-item3 a:focus {
-    outline: none;
-    border: none;
-  }
-  
-  /* ============================
-     6. Active State Styles
-  ============================ */
-  .active-icon-container2 {
-    background-color: #007AFF;
-  }
-  
-  .active-icon2 {
-    color: white;
-  }
-  
-  .active-text2 {
-    color: #007AFF;
-    font-weight: 500;
+  .mobile-menu-dropdown-wrapper {
+    display: flex; /* Show mobile dropdown wrapper */
   }
 
-  .profile-container2 {
-    padding:  0 20px;
+  /* Adjust overall navbar padding for mobile */
+  .mapview-navbar {
+    padding: 10px;
+    justify-content: space-between; /* Space out logo, dropdown, profile */
   }
+
+  .nav-logo {
+    position: static; /* Remove absolute positioning */
+    left: auto;
+  }
+}
+
+/* Further adjustments for smaller screens (e.g., small tablets/large phones) */
+@media screen and (max-width: 600px) {
+  .dropdown-toggle-button {
+    font-size: 13px;
+    padding: 6px 12px;
+    min-width: 120px;
+  }
+  .dropdown-toggle-icon {
+    font-size: 14px;
+  }
+  .dropdown-menu-list {
+    width: 180px;
+    font-size: 13px;
+  }
+  .dropdown-menu-item {
+    padding: 8px 12px;
+  }
+  .dropdown-item-icon {
+    font-size: 14px;
+  }
+}
+
+/* Adjustments for typical mobile phone screens */
+@media screen and (max-width: 480px) {
+  .mapview-navbar {
+    height: 70px; /* Slightly shorter navbar */
+  }
+  .logo-image {
+    height: 35px; /* Smaller logo */
+  }
+  .dropdown-toggle-button {
+    font-size: 12px;
+    padding: 5px 10px;
+    min-width: 100px;
+  }
+  .dropdown-menu-list {
+    width: 160px;
+    font-size: 12px;
+  }
+  .dropdown-menu-item {
+    padding: 7px 10px;
+  }
+}

@@ -154,3 +154,196 @@
     transform: translateY(0);
   }
 }
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+/* For screens smaller than 768px (e.g., tablets) */
+@media (max-width: 768px) {
+  .profile-dropdown {
+    top: 10px; /* Slightly adjust top position */
+    right: 1%; /* Keep it fixed to the right */
+  }
+
+  .profile-button {
+    width: 36px; /* Slightly smaller button */
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .profile-icon3 {
+    width: 36px; /* Match button size */
+    height: 36px;
+  }
+
+  .icon-wrapper2 {
+    width: 32px; /* Smaller wrapper for default user icon */
+    height: 32px;
+  }
+
+  .dropdown-menu {
+    top: 45px; /* Adjust dropdown position relative to smaller button */
+    width: 220px; /* Reduce dropdown width */
+    padding: 8px 0; /* Adjust padding */
+    border-radius: 12px;
+  }
+
+  .login-section,
+  .loggedin-section {
+    padding: 8px; /* Adjust padding */
+    font-size: 13px; /* Smaller font size */
+    margin: 6px; /* Adjust margin */
+  }
+
+  .login-button2,
+  .logout-button {
+    padding: 8px 20px; /* Adjust button padding */
+    font-size: 13px; /* Smaller font size */
+  }
+
+  .user-avatar2 {
+    width: 30px; /* Smaller avatar */
+    height: 30px;
+  }
+
+  .divider3 {
+    margin: 10px 15px; /* Adjust divider margin */
+  }
+
+  .menu-item51 {
+    padding: 10px 15px; /* Adjust menu item padding */
+    font-size: 13px; /* Smaller font size */
+    gap: 10px; /* Adjust gap */
+  }
+}
+
+/* For screens smaller than 480px (e.g., mobile phones) */
+@media (max-width: 480px) {
+  .profile-dropdown {
+    top: 8px; /* Further adjust top position */
+    right: 1%; /* Maintain right alignment */
+    /* Consider adding padding-right to body/main content to give space */
+  }
+
+  .profile-button {
+    width: 32px; /* Even smaller button */
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .profile-icon3 {
+    width: 32px;
+    height: 32px;
+  }
+
+  .icon-wrapper2 {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dropdown-menu {
+    top: 40px; /* Adjust dropdown position */
+    width: calc(100vw - 30px); /* Make dropdown span almost full screen width */
+    max-width: 250px; /* Prevent it from becoming too wide on slightly larger phones */
+    padding: 5px 0; /* Further reduced padding */
+    right: 0; /* Align right with the button */
+    /* You might want to adjust the right of .profile-dropdown if it hits the very edge */
+  }
+
+  .login-section,
+  .loggedin-section {
+    flex-direction: column; /* Stack elements vertically */
+    align-items: flex-start; /* Align stacked items to the left */
+    gap: 5px; /* Reduce gap */
+    padding: 5px; /* Adjust padding */
+    margin: 5px; /* Adjust margin */
+    font-size: 12px;
+  }
+
+  .login-button2,
+  .logout-button {
+    width: 100%; /* Make buttons full width when stacked */
+    text-align: center; /* Center text in button */
+    padding: 8px 15px;
+    font-size: 12px;
+  }
+
+  .user-avatar2 {
+    width: 28px; /* Smaller avatar */
+    height: 28px;
+  }
+
+  .user-info span {
+    font-size: 12px; /* Ensure display name is readable */
+  }
+
+  .divider3 {
+    margin: 8px 10px; /* Further adjust divider margin */
+  }
+
+  .menu-item51 {
+    padding: 8px 10px; /* Further adjust menu item padding */
+    font-size: 12px; /* Smaller font size */
+    gap: 8px; /* Adjust gap */
+  }
+
+  .menu-item51 svg { /* Target icons inside menu items */
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* For very small screens smaller than 320px */
+@media (max-width: 320px) {
+  .profile-button {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .profile-icon3 {
+    width: 28px;
+    height: 28px;
+  }
+
+  .icon-wrapper2 {
+    width: 24px;
+    height: 24px;
+  }
+
+  .dropdown-menu {
+    width: calc(100vw - 20px); /* Even tighter width */
+    max-width: 200px; /* Cap max-width */
+    top: 35px;
+  }
+
+  .login-section,
+  .loggedin-section {
+    padding: 4px;
+    margin: 4px;
+    font-size: 11px;
+  }
+
+  .login-button2,
+  .logout-button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .user-avatar2 {
+    width: 24px;
+    height: 24px;
+  }
+
+  .menu-item51 {
+    padding: 6px 8px;
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .menu-item51 svg {
+    width: 14px;
+    height: 14px;
+  }
+}

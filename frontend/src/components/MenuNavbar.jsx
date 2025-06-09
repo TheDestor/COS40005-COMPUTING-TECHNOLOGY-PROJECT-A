@@ -15,16 +15,16 @@ import ky from 'ky';
 const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState({ name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' });
   const location = useLocation();
-  const [selectedMenu, setSelectedMenu] = useState('');
 
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 992);
     };
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    return () => window.removeEventListener('resize', checkIfMobile);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const menuItems = [
@@ -39,83 +39,80 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
     { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
   ];
 
-  // const handleMenuClick = async (item) => {
-  //   if (item.isFetchOnly) {
-  //     setSelectedMenu(item.name);
-  //     try {
-  //       const response = await ky.get(`/api/locations?type=${encodeURIComponent(item.name)}`).json();
-  //       console.log(`Fetched ${item.name} Data:`, response);
+  const handleMobileMenuClick = (item) => {
+    setSelectedMobileMenuItem(item);
+    setIsDropdownOpen(false);
+    if (onMenuSelect) {
+      onMenuSelect(item.name, item.path);
+    }
+  };
 
-  //       // Trigger parent to update
-  //       if (onMenuSelect) {
-  //         onMenuSelect(item.name, response);
-  //       }
-
-  //       // You can now set this data into state if you want to display it
-  //     } catch (error) {
-  //       console.error(`Error fetching ${item.name}:`, error);
-  //     }
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   const defaultItem = menuItems.find(item => item.name === 'Major Town');
-  //   if (defaultItem) {
-  //     handleMenuClick(defaultItem);
-  //   }
-  // }, []);
-  
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   const currentPath = location.pathname;
 
   return (
     <div className="mapview-navbar">
-    <Link to="/" className="nav-logo">
-        <img src={logo} alt="Sarawak Tourism" className="logo-image" />
-    </Link>
+      <Link to="/" className="nav-logo">
+          <img src={logo} alt="Sarawak Tourism" className="logo-image" />
+      </Link>
 
-    <div className="menu-wrapper">
-        <div className="menu-container2">
-          {menuItems.map((item) => {
-            const isActive = selectedMenu === item.name || (!item.isFetchOnly && currentPath === item.path);
-
-            return item.isFetchOnly ? (
-              <div
-                key={item.name}
-                className={`menu-item3 ${isActive ? 'active' : ''}`}
-                onClick={() => handleMenuClick(item)}
-              >
-                <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
-                  <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
-                    {item.icon}
-                  </span>
-                </div>
-                <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
-                  {item.name}
-                </span>
-              </div>
-            ) : (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`menu-item3 ${isActive ? 'active' : ''}`}
-              >
-                <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
-                  <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
-                    {item.icon}
-                  </span>
-                </div>
-                <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
+      {isMobile ? (
+        <div className="mobile-menu-dropdown-wrapper">
+          <button className="dropdown-toggle-button" onClick={handleDropdownToggle}>
+            <span className="dropdown-toggle-text">{selectedMobileMenuItem.name}</span>
+            <span className="dropdown-toggle-icon">
+              {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
+            </span>
+          </button>
+          {isDropdownOpen && (
+            <div className="dropdown-menu-list">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`dropdown-menu-item ${selectedMobileMenuItem.name === item.name ? 'active-dropdown-item' : ''}`}
+                  onClick={() => handleMobileMenuClick(item)}
+                >
+                  <span className="dropdown-item-icon">{item.icon}</span>
+                  <span className="dropdown-item-text">{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
+      ) : (
+        <div className="menu-wrapper">
+          <div className="menu-container2">
+            {menuItems.map((item) => {
+              const isActive = currentPath === item.path;
+
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`menu-item3 ${isActive ? 'active' : ''}`}
+                >
+                  <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
+                    <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>
+                      {item.icon}
+                    </span>
+                  </div>
+                  <span className={`menu-text3 ${isActive ? 'active-text2' : ''}`}>
+                    {item.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      <div className="profile-container2">
+          <ProfileDropdown onLoginClick={onLoginClick} />
       </div>
-    <div className="profile-container2">
-        <ProfileDropdown onLoginClick={onLoginClick} />
-    </div>
     </div>
   );
 };
