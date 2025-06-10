@@ -2,12 +2,11 @@
 /* CSS for ProfileDropdown component */
 
 .profile-dropdown {
-  position: fixed;
+  position: relative;
   display: inline-block; 
   z-index: 9999;
-  right: 1%;
-  /* transform: translateX(-50%); */
-  top: 15px;
+  flex-shrink: 0; 
+  min-width: fit-content; 
 }
 
 .profile-button {
@@ -31,9 +30,9 @@
 
 .dropdown-menu {
   position: absolute;
-  /* z-index: 9999; */
   right: 0;
-  top: 50px;
+  top: 100%;
+  margin-top: 10px;
   background-color: #f6f0fa;
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
@@ -162,8 +161,9 @@
 /* For screens smaller than 768px (e.g., tablets) */
 @media (max-width: 768px) {
   .profile-dropdown {
-    top: 10px; /* Slightly adjust top position */
-    right: 1%; /* Keep it fixed to the right */
+    top: 5px; 
+    right: 1%; 
+    flex-shrink: 1; /* Allow it to shrink when stacked */
   }
 
   .profile-button {
@@ -183,7 +183,8 @@
   }
 
   .dropdown-menu {
-    top: 45px; /* Adjust dropdown position relative to smaller button */
+    top: 100%; /* Ensure it still drops down correctly */
+    margin-top: 8px; /* Adjust margin for smaller screens */
     width: 220px; /* Reduce dropdown width */
     padding: 8px 0; /* Adjust padding */
     border-radius: 12px;
@@ -221,9 +222,8 @@
 /* For screens smaller than 480px (e.g., mobile phones) */
 @media (max-width: 480px) {
   .profile-dropdown {
-    top: 8px; /* Further adjust top position */
-    right: 1%; /* Maintain right alignment */
-    /* Consider adding padding-right to body/main content to give space */
+    top: 5px;
+    right: 1%; 
   }
 
   .profile-button {
@@ -243,7 +243,8 @@
   }
 
   .dropdown-menu {
-    top: 40px; /* Adjust dropdown position */
+    top: 100%; /* Ensure it still drops down correctly */
+    margin-top: 6px; /* Adjust margin for smaller screens */
     width: calc(100vw - 30px); /* Make dropdown span almost full screen width */
     max-width: 250px; /* Prevent it from becoming too wide on slightly larger phones */
     padding: 5px 0; /* Further reduced padding */
@@ -313,9 +314,10 @@
   }
 
   .dropdown-menu {
+    top: 100%; /* Ensure it still drops down correctly */
+    margin-top: 4px; /* Adjust margin for smallest screens */
     width: calc(100vw - 20px); /* Even tighter width */
     max-width: 200px; /* Cap max-width */
-    top: 35px;
   }
 
   .login-section,

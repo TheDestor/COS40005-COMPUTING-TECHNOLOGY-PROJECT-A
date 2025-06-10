@@ -13,8 +13,6 @@
     height: 40px;
     background: none;
     border-radius: 50%;
-    /* border: 2px solid white; */
-    /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
     transform: translate(-50%, -100%);
     display: flex;
     align-items: center;
@@ -54,4 +52,116 @@
   white-space: nowrap;
   font-size: 14px;
   margin-bottom: 8px;
+}
+
+/* Top Header Container for all UI elements */
+.top-header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px 20px; /* Padding around the entire header area */
+  box-sizing: border-box;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  pointer-events: auto; /* Ensures header and its content can receive pointer events */
+  background: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+  backdrop-filter: blur(5px); /* Adds a blur effect */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Main wrapper for all header elements: controls desktop row vs. mobile column */
+.header-elements-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes the two main groups to the ends on desktop */
+  gap: 4px; /* Spacing between the two main groups */
+  width: 100%; /* Takes full available width of its parent */
+  max-width: 1400px; /* Optional: limits max width on very large screens for better aesthetics */
+  flex-wrap: nowrap; /* Prevents the two main groups from wrapping on desktop */
+  pointer-events: auto; /* Ensures children inside receive pointer events */
+}
+
+/* Styles for the individual header groups (search+mapview and weather+profile) */
+.header-group {
+  display: flex;
+  flex-direction: row; /* KEEP horizontal for internal items always */
+  align-items: center;
+  gap: 10px; /* Spacing between items within a group */
+  pointer-events: auto; /* Ensure children inside receive pointer events */
+  flex-wrap: nowrap; /* Ensure items within this group stay on one line always */
+  /* If items inside cannot fit, they will cause overflow, or the group will scroll */
+}
+
+.search-mapview-group {
+  flex-grow: 1; /* This group will grow to take available space on desktop */
+}
+
+.weather-profile-group {
+  justify-content: flex-end;
+  flex-shrink: 0; /* Prevents this group from shrinking on desktop */
+}
+
+/* REMOVED: All direct flex/width/order/margin styles for .styled-searchbar-container,
+   .mapview-container, .date-time-weather-container, .profile-dropdown from here.
+   These components should manage their own internal sizing and responsiveness
+   within their respective CSS files. */
+
+/* =========================================
+   RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================= */
+
+/* For screens smaller than 992px (e.g., tablets and mobile) */
+@media (max-width: 992px) { /* This breakpoint triggers the mobile layout */
+  .top-header-container {
+    padding: 8px 15px; /* Adjust container padding */
+  }
+
+  .header-elements-wrapper {
+    flex-direction: column; /* Stack the two main groups vertically */
+    align-items: center; /* Center the stacked groups horizontally */
+    width: 100%; /* Groups take full width when stacked */
+    gap: 10px; /* Adjust gap between stacked groups */
+    flex-wrap: wrap; /* Allows the elements-wrapper to wrap its two groups */
+  }
+
+  /* Order of groups on mobile */
+  .weather-profile-group {
+    order: 1;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-right: 10px; /* Ensure some spacing from edge */
+  }
+
+  .search-mapview-group {
+    order: 2; /* Force to second row on mobile */
+    gap: 15px;
+    width: 100%;
+    flex-basis: 100%; /* Take full width for its row on mobile */
+    justify-content: center; /* ALIGN TO CENTER */
+    /* REMOVED: max-width here. Let internal components manage their width within the 100% group width. */
+  }
+
+  .header-group {
+    /* Existing flex-direction: row and flex-wrap: nowrap remains for inner items */
+    gap: 8px; /* Slightly reduced gap between items within groups */
+    /* If the items inside the group are still overflowing, you might need to
+       add 'overflow-x: auto;' to .header-group for mobile to enable scrolling,
+       or adjust the responsive sizing in the components' own CSS files. */
+  }
+}
+
+/* Further adjustments for very small screens (e.g., mobile phones) */
+@media (max-width: 600px) {
+  .top-header-container {
+    padding: 5px 10px;
+  }
+  .header-elements-wrapper {
+    gap: 5px; /* Smaller gap between the two main rows */
+  }
+  .header-group {
+    gap: 5px; /* Smaller gap between items within the horizontal groups */
+    /* REMOVED: max-width: 300px on header-group for 600px breakpoint */
+  }
 }

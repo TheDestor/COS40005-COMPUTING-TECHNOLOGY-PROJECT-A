@@ -2,12 +2,13 @@
    1. Base Container Styles
 ============================ */
 .mapview-container {
-  position: absolute;
-  top: 15px;              /* adjust vertical offset from the top */
-  left: 48.5%;
-  transform: translateX(-50%);
-  z-index: 999;           /* make sure it appears above the map */
-  width: auto;            /* or set a fixed width if needed */
+  z-index: 999;
+  width: auto;
+  pointer-events: all;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 /* ============================
@@ -23,7 +24,7 @@
   overflow-x: auto;
   white-space: nowrap;
   height: 55px;
-  max-width: 100%;
+  max-width: 800px;
   box-sizing: border-box;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -54,7 +55,10 @@
   min-width: 64px;
   position: relative;
   transition: transform 0.2s ease, background-color 0.3s ease;
-  max-width: 90px;
+  width: 80px;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .menu-item2:hover {
@@ -91,7 +95,7 @@
 
 .menu-item2:hover .menu-icon {
   transform: scale(1.2);
-  color: #fff;
+  color: #007AFF;
 }
 
 /* ============================
@@ -101,12 +105,11 @@
   font-size: 0.8rem;
   text-align: center;
   font-weight: 400;
-  overflow: hidden;
+  transition: color 0.3s ease;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: 100%;
   color: #555;
-  display: block;
-  width: 80px; /* Fixed width, adjust as needed */
-  height: 16px;
-  position: relative;
 }
 
 .menu-text2 span {
@@ -115,12 +118,10 @@
   min-width: 100%;
   transform: translateX(0);
   animation: none;
-  position: absolute;
-  left: 0;
 }
 
 .menu-item2:hover .menu-text2 span {
-  animation: marquee 4s linear infinite;
+  animation: marquee 2s linear infinite;
   padding-left: 20%;
 }
 
@@ -129,7 +130,6 @@
   100% { transform: translateX(-100%); }
 }
 
-/* Add wrapper for text */
 .menu-text-wrapper {
   display: inline-block;
   width: 100%;
@@ -163,108 +163,178 @@
 }
 
 /* ============================
-   7. Dropdown Styles (Mobile)
+   7. Dropdown Styles (Mobile View)
 ============================ */
-.dropdown-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  margin-top: 8px;
+.mapview-dropdown-wrapper {
+  display: none;
+  position: relative;
+  z-index: 100;
+  width: 200px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
-.dropdown-wrapper {
-  display: inline-flex;
+.dropdown-toggle-mapview-button {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  gap: 8px;
   background-color: #ECE6F0;
-  border-radius: 12px;
-  padding: 6px 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-wrapper:hover {
-  background-color: #D8C9E3;
-}
-
-.menu-dropdown {
-  font-size: 14px;
-  color: #555;
-  width: 100%;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.menu-dropdown:hover {
-  color: #007AFF;
-}
-
-.dropdown-arrow {
-  font-size: 18px;
-  color: #555;
-  transition: transform 0.3s ease;
-}
-
-.dropdown-arrow:hover {
-  transform: rotate(180deg);
-}
-
-/* ============================
-   8. Dropdown Menu Content
-============================ */
-.dropdown-menu {
-  display: flex;
-  flex-direction: column;
-  background-color: #ECE6F0;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 8px;
-  padding: 8px 0;
-  width: 100%;
-  animation: slideIn 0.3s ease-out;
-}
-
-.menu-item-dropdown {
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #555;
   border: none;
-  background: none;
-  outline: none;
-  transition: background-color 0.3s ease;
+  border-radius: 30px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-width: 120px;
+  max-width: 200px;
+  box-sizing: border-box;
 }
 
-.menu-item-dropdown:hover {
-  background-color: #f0f0f0;
+.dropdown-toggle-mapview-button:hover {
+  background-color: #e2e8f0;
+}
+
+.dropdown-toggle-mapview-text {
+  flex-grow: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-toggle-mapview-icon {
+  font-size: 16px;
+  color: #555;
+}
+
+.mapview-dropdown-menu-list {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ECE6F0;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 8px 0;
+  animation: dropdownFadeIn 0.2s ease-out;
+  box-sizing: border-box;
+}
+
+.mapview-dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  background-color: #ECE6F0;
+}
+
+.mapview-dropdown-menu-item:hover {
+  background-color: #f0f7ff;
+  color: #007bff;
+}
+
+.mapview-dropdown-menu-item.active-mapview-dropdown-item {
+  background-color: #e6f0ff;
+  color: #007bff;
+  font-weight: 500;
+}
+
+.mapview-dropdown-item-icon {
+  font-size: 16px;
+  color: #666;
+}
+
+.mapview-dropdown-menu-item:hover .mapview-dropdown-item-icon,
+.mapview-dropdown-menu-item.active-mapview-dropdown-item .mapview-dropdown-item-icon {
+  color: #007bff;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ============================
-   9. Dropdown Animation
+   10. Responsive Styles (Media Queries)
 ============================ */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ============================
-   10. Responsive Styles (Mobile View)
-============================ */
-@media (max-width: 768px) {
+@media screen and (max-width: 992px) {
   .menu-container {
     display: none;
   }
+  .mapview-dropdown-wrapper {
+    display: flex;
+    width: 200px;
+    max-width: unset;
+  }
 
-  .dropdown-wrapper {
-    width: 100%;
+  .mapview-container {
+    flex-shrink: 1;
+    width: auto;
+    max-width: unset;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .mapview-dropdown-wrapper {
+    width: 180px;
+    max-width: unset;
+  }
+  .dropdown-toggle-mapview-button {
+    font-size: 13px;
+    padding: 6px 12px;
+    min-width: 120px;
+  }
+  .dropdown-toggle-mapview-icon {
+    font-size: 14px;
+  }
+  .mapview-dropdown-menu-list {
+    width: 180px;
+    font-size: 13px;
+    padding: 6px 0;
+  }
+  .mapview-dropdown-menu-item {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .mapview-dropdown-item-icon {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .mapview-dropdown-wrapper {
+    width: 160px;
+    max-width: unset;
+  }
+  .dropdown-toggle-mapview-button {
+    font-size: 12px;
+    padding: 5px 10px;
+    min-width: 100px;
+  }
+  .mapview-dropdown-menu-list {
+    width: 160px;
+    font-size: 12px;
+    padding: 5px 0;
+  }
+  .mapview-dropdown-menu-item {
+    padding: 7px 10px;
+    font-size: 12px;
   }
 }

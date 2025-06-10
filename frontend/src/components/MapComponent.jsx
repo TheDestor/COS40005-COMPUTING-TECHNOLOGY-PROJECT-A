@@ -588,7 +588,6 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
         id="e57efe6c5ed679ba"
         mapId='e57efe6c5ed679ba' // Do not change for now
         mapTypeId = {mapType}
-        // defaultZoom={7}
        restriction={{
           latLngBounds: {
             north: 14.5,   
@@ -606,6 +605,46 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
           touchZoom: true
         }}
       >
+
+      {/* Top Header Container: fixed at the top, centers its content */}
+      <div className="top-header-container">
+        {/* Main wrapper for all header elements: controls desktop row vs. mobile column */}
+        <div className="header-elements-wrapper">
+          {/* Group 1: SearchBar and MapViewTesting */}
+          <div className="header-group search-mapview-group">
+            <SearchBar onPlaceSelected={setSelectedSearchPlace} setShowRecent={setShowRecent}/>
+            <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} />
+          </div>
+          {/* Group 2: WeatherDateTime and ProfileDropdown */}
+          <div className="header-group weather-profile-group">
+            <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
+            <ProfileDropdown onLoginClick={handleLoginClick} />
+          </div>
+        </div>
+      </div>
+
+      {/* Search Handler: This component is assumed to be a floating panel or similar,
+          and its positioning should be managed separately if it's not part of the top bar. */}
+      {selectedSearchPlace && (
+          <>
+            <SearchHandler selectedSearchPlace={selectedSearchPlace} setSearchNearbyPlaces={setSearchNearbyPlaces} />
+            {/* The AdvancedMarkers for search and nearby places also need to be outside the top-header-container if they are map overlays */}
+            <AdvancedMarker
+              position={{
+                lat: selectedSearchPlace.latitude,
+                lng: selectedSearchPlace.longitude
+              }}
+              title={selectedSearchPlace.name}
+            />
+            {searchNearbyPlaces.map((place, index) => (
+            <AdvancedMarker
+              key={index}
+              position={{ lat: place.latitude, lng: place.longitude }}
+              title={place.name}
+            />
+          ))}
+        </>
+      )}
 
       {/* Locations based on type */}
       <MarkerManager 
@@ -714,93 +753,61 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
 
         {renderNearbyPlaces()}
 
-        {/* Search bar marker */}
-        <SearchBar onPlaceSelected={setSelectedSearchPlace} setShowRecent={setShowRecent}/>
-        {selectedSearchPlace && (
-          <>
-            <SearchHandler selectedSearchPlace={selectedSearchPlace} setSearchNearbyPlaces={setSearchNearbyPlaces} />
-            <AdvancedMarker
-              position={{
-                lat: selectedSearchPlace.latitude,
-                lng: selectedSearchPlace.longitude
-              }}
-              title={selectedSearchPlace.name}
-            />
-            {searchNearbyPlaces.map((place, index) => (
-            <AdvancedMarker
-              key={index}
-              position={{ lat: place.latitude, lng: place.longitude }}
-              title={place.name}
-            />
-          ))}
-        </>
+      {/* Direction services */}
+      <Directions 
+        startingPoint={startingPoint}
+        destination={destination}
+        addDestinations={addDestinations}
+        selectedVehicle={selectedVehicle}
+        nearbyPlaces={nearbyPlaces}
+        selectedCategory={selectedCategory}
+        selectedRouteIndex={selectedRouteIndex}
+      />
+
+      {selectedLocation && !showReviewPage && (
+        <InfoWindow
+          position={{
+            lat: selectedLocation.latitude,
+            lng: selectedLocation.longitude,
+          }}
+          onCloseClick={() => {
+            setSelectedLocation(null);
+            setShowReviewPage(false);
+          }}
+        >
+          <CustomInfoWindow
+            location={{
+              name: selectedLocation.name,
+              image: selectedLocation.image || 'default-image.jpg',
+              description: selectedLocation.description || "No description available.",
+              latitude: selectedLocation.latitude || "N/A",
+              longitude: selectedLocation.longitude || "N/A",
+              url: selectedLocation.url || 'No URL provided',
+              rating: selectedLocation.rating,
+              openNowText: selectedLocation.openNowText,
+              open24Hours: selectedLocation.open24Hours,
+            }}
+            addBookmark={addBookmark}
+            onCloseClick={() => setSelectedLocation(null)}
+            onShowReview={() => setShowReviewPage(true)}
+            onOpenLoginModal={() => setShowLoginModal(true)}
+          />
+        </InfoWindow>
       )}
 
-        {/* Direction services */}
-        <Directions 
-          startingPoint={startingPoint}
-          destination={destination}
-          addDestinations={addDestinations}
-          selectedVehicle={selectedVehicle}
-          nearbyPlaces={nearbyPlaces}
-          selectedCategory={selectedCategory}
-          selectedRouteIndex={selectedRouteIndex}
-        />
-
-        {selectedLocation && !showReviewPage && (
-          <InfoWindow
-            position={{
-              lat: selectedLocation.latitude,
-              lng: selectedLocation.longitude,
-            }}
-            onCloseClick={() => {
-              setSelectedLocation(null);
-              setShowReviewPage(false);
-            }}
-          >
-            <CustomInfoWindow
-              location={{
-                name: selectedLocation.name,
-                image: selectedLocation.image || 'default-image.jpg',
-                description: selectedLocation.description || "No description available.",
-                latitude: selectedLocation.latitude || "N/A",
-                longitude: selectedLocation.longitude || "N/A",
-                url: selectedLocation.url || 'No URL provided',
-                rating: selectedLocation.rating,
-                openNowText: selectedLocation.openNowText,
-                open24Hours: selectedLocation.open24Hours,
-              }}
-              addBookmark={addBookmark}
-              onCloseClick={() => setSelectedLocation(null)}
-              onShowReview={() => setShowReviewPage(true)}
-              onOpenLoginModal={() => setShowLoginModal(true)}
-            />
-          </InfoWindow>
-        )}
-
-        {/* {showReviewPage && selectedLocation && (
-          <div className="review-overlay-wrapper">
-            <ReviewPage onClose={() => setShowReviewPage(false)} />
-          </div>
-        )} */}
-        {showReviewPage && selectedLocation && (
-          <div className="review-overlay-wrapper">
-            <ReviewPage
-              onClose={() => setShowReviewPage(false)}
-              rating={selectedLocation.rating || 0}
-              placeName={selectedLocation.name}
-              // You can also pass `selectedLocation.reviews` here if it's available
-            />
-          </div>
-        )}
-        <ProfileDropdown onLoginClick={handleLoginClick} />
-        <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
-        {/* <MapViewMenu onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)}/> */}
-        <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} /> 
-        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-        {selectedLocation && (
-          <TouristInfoSection selectedLocation={selectedLocation} />
-        )}
+      {showReviewPage && selectedLocation && (
+        <div className="review-overlay-wrapper">
+          <ReviewPage
+            onClose={() => setShowReviewPage(false)}
+            rating={selectedLocation.rating || 0}
+            placeName={selectedLocation.name}
+          />
+        </div>
+      )}
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      {selectedLocation && (
+        <TouristInfoSection selectedLocation={selectedLocation} />
+      )}
       </Map>
     </APIProvider>
   );

@@ -5,14 +5,15 @@
   position: fixed;
   top: 0;
   left: 0;
-  height: 80px; /* define height explicitly */
+  height: 80px;
   width: 100vw;
   z-index: 9999;
-  /* background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%); */ /* User requested to ignore background */
-  display: flex;
+  background: linear-gradient(90deg, #e6eaf0 0%, #ffffff 100%);
+  /* background-color: #e6eaf0; */
+  display: flex; /* Use flexbox for direct children */
   align-items: center;
-  justify-content: center; /* Center the menu wrapper by default */
-  padding: 10px 20px;
+  justify-content: space-between; /* Distribute space between logo, menu, and profile */
+  padding: 10px 20px; /* Add padding to prevent content from touching edges */
   box-sizing: border-box;
 }
 
@@ -20,14 +21,17 @@
   flex: 1;
   display: flex;
   justify-content: center;
+  margin: 0 10px;
+  min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 /* Logo positioning to the left */
 .nav-logo {
-  position: absolute;
-  left: 20px;
+  /* position: absolute; */ /* REMOVED: No longer absolutely positioned */
+  /* left: 20px; */ /* REMOVED: Not needed with flex layout */
   display: flex;
   align-items: center;
+  /* flex-shrink: 0; */ /* Optional: prevents logo from shrinking if space is tight */
 }
 
 .logo-image {
@@ -55,7 +59,7 @@
   overflow-x: auto;
   white-space: nowrap;
   height: 60px;
-  max-width: 100%;
+  width: auto;
   box-sizing: border-box;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -145,8 +149,8 @@
 
 .menu-item3:hover .menu-text3 {
   color: #007AFF;
-  /* animation: marquee 2s linear infinite; */ /* Commented out as it might not be desired for all cases */
-  /* padding-left: 20%; */ /* This padding is unusual for marquee effect, can be removed or adjusted */
+  animation: marquee 2s linear infinite; 
+  padding-left: 20%; 
 }
 
 /* Common focus styles for links/buttons */
@@ -185,11 +189,12 @@
 
 /* Mobile Dropdown Wrapper (Initially hidden) */
 .mobile-menu-dropdown-wrapper {
-  display: none; /* Hidden by default on desktop */
-  position: relative; /* For absolute positioning of dropdown menu */
-  z-index: 100; /* Ensure it's above other navbar elements if needed */
-  flex: 1; /* Allow it to take flexible space in navbar */
-  justify-content: center; /* Center the toggle button */
+  display: flex;
+  position: relative;
+  z-index: 100;
+  flex: 1;
+  justify-content: center;
+  min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 /* Dropdown Toggle Button */
@@ -197,17 +202,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #ECE6F0; /* Matches the image background color */
+  background-color: #ECE6F0;
   border: none;
-  border-radius: 30px; /* Pill shape */
+  border-radius: 30px;
   padding: 8px 15px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   color: #555;
   transition: all 0.2s ease;
-  min-width: 150px; /* Minimum width for the button */
-  justify-content: center; /* Center content within button */
+  min-width: 120px; /* Reduced minimum width */
+  max-width: 200px; /* Added maximum width */
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dropdown-toggle-button:hover {
@@ -222,18 +231,18 @@
 /* Dropdown Menu List */
 .dropdown-menu-list {
   position: absolute;
-  top: calc(100% + 10px); /* Position below the toggle button with some gap */
+  top: calc(100% + 10px);
   left: 50%;
-  transform: translateX(-50%); /* Center horizontally */
-  background-color: white;
+  transform: translateX(-50%);
+  background-color: #ECE6F0;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-  width: 200px; /* Fixed width for the dropdown menu */
-  max-height: 300px; /* Max height before scrolling */
-  overflow-y: auto; /* Enable scrolling for long lists */
-  z-index: 1000; /* Ensure it's on top */
+  width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
   padding: 8px 0;
-  animation: dropdownFadeIn 0.2s ease-out; /* Fade-in animation */
+  animation: dropdownFadeIn 0.2s ease-out;
 }
 
 @keyframes dropdownFadeIn {

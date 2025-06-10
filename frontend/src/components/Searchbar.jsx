@@ -239,25 +239,27 @@ function SearchBar({ onPlaceSelected, setShowRecent }) {
         }}
       />
 
-      {(isFocused || inputValue) && (
-        <>
-          <FiMic className="styled-mic-icon" onClick={handleMicClick} />
-          <FiX className="styled-clear-icon" onClick={() => {
-            setInputValue('');
-            inputRef.current.value = '';
-            inputRef.current.focus(); 
-            onPlaceSelected(null);
-          }} />
-        </>
-      )}
-
-      <FiSearch
-        className="styled-search-icon"
-        onClick={() => {
-          const prediction = predictions[0];
-          if (prediction) handlePredictionClick(prediction);
-        }}
-      />
+      {/* New wrapper for all icons on the right */}
+      <div className="searchbar-right-icons">
+        {(isFocused || inputValue) && (
+          <>
+            <FiX className="styled-clear-icon" onClick={() => {
+              setInputValue('');
+              inputRef.current.value = '';
+              inputRef.current.focus();
+              onPlaceSelected(null);
+            }} />
+            <FiMic className="styled-mic-icon" onClick={handleMicClick} />
+          </>
+        )}
+        <FiSearch
+          className="styled-search-icon"
+          onClick={() => {
+            const prediction = predictions[0];
+            if (prediction) handlePredictionClick(prediction);
+          }}
+        />
+      </div>
 
       {isFocused && (
         <div className="recent-dropdown5">
@@ -271,7 +273,7 @@ function SearchBar({ onPlaceSelected, setShowRecent }) {
                 <FiClock className="recent-icon5" />
                 <span>{prediction.description}</span>
               </div>
-            ))   
+            ))
           ) : recentSearches.length > 0 ? (
             <>
               {recentSearches.map((place, idx) => (
