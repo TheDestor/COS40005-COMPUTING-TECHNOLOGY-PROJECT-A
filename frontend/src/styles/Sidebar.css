@@ -10,6 +10,7 @@
   left: 0;
   z-index: 100;
   overflow-y: auto;
+  transition: all 0.3s ease;
 }
 
 .sidebar-header {
@@ -101,13 +102,14 @@
   transition: all 0.3s ease;
 }
 
-.sidebar-menu a .icon {
+.sidebar-menu a .icon123 {
   font-size: 1.2rem;
   min-width: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  color: #5a4bbd;
 }
 
 .menu-text {
@@ -120,7 +122,7 @@
   background-color: #6c5dd3;
 }
 
-.sidebar-menu a:hover .icon {
+.sidebar-menu a:hover .icon123 {
   transform: translateY(-2px);
   color: #ffffff;
 }
@@ -139,7 +141,7 @@
   opacity: 1;
 }
 
-.sidebar-menu a.active .icon {
+.sidebar-menu a.active .icon123 {
   color: #ffffff;
 }
 
@@ -165,7 +167,7 @@
   color: #ffffff;
 }
 
-.logout-btn:hover .icon {
+.logout-btn:hover .icon123 {
   color: #ffffff;
 }
 
@@ -178,4 +180,148 @@ body, html {
 
 * {
   box-sizing: border-box;
+}
+
+/* ============================
+   RESPONSIVE DESIGN
+   ============================ */
+
+/* Mobile Sidebar Toggle Button (Hamburger) */
+.mobile-sidebar-toggle {
+  display: none; /* Hidden by default on desktop */
+  position: fixed;
+  top: 15px; /* Adjust as needed to align with your top header */
+  left: 20px; /* Adjust as needed */
+  z-index: 101; /* Ensure it's above other content but below the open sidebar */
+  background-color: #6c5dd3;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.mobile-sidebar-toggle:hover {
+  background-color: #5a4bbd;
+  transform: translateY(-1px);
+}
+
+/* Sidebar Backdrop for Mobile Overlay */
+.sidebar-backdrop {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+  z-index: 99; /* Below sidebar, above other content */
+}
+
+.sidebar-backdrop.active {
+  display: block; /* Show when sidebar is open */
+}
+
+/* Optional: Close button inside sidebar header for mobile */
+.close-sidebar-btn {
+  display: none; /* Hidden by default on desktop */
+  position: relative;
+  margin-top: auto;
+  margin-left: auto;
+  font-size: 1.8rem;
+  color: #555;
+  cursor: pointer;
+  z-index: 102; /* Ensure it's above sidebar content */
+  transition: color 0.2s ease;
+}
+
+.close-sidebar-btn:hover {
+  color: #333;
+}
+
+/* For screens smaller than 992px (e.g., tablets and mobile) */
+@media (max-width: 992px) {
+  .sidebar {
+    width: 250px; /* Mobile width for the sidebar */
+    transform: translateX(-100%); /* Hide sidebar by default */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Stronger shadow for overlay effect */
+  }
+
+  .sidebar.open {
+    transform: translateX(0%); /* Slide sidebar into view */
+  }
+
+  /* Make mobile toggle visible */
+  .mobile-sidebar-toggle {
+    display: flex;
+  }
+
+  /* Make close button visible inside sidebar */
+  .close-sidebar-btn {
+    display: block;
+  }
+}
+
+/* You might want to adjust more styles for smaller screens if needed */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 80%; /* Adjust width for very small mobile screens if 250px is too wide */
+  }
+
+  .mobile-sidebar-toggle {
+    top: 10px;
+    left: 10px;
+    padding: 8px 10px;
+    font-size: 1rem;
+  }
+
+  .close-sidebar-btn {
+    font-size: 1.5rem;
+    top: 10px;
+    right: 10px;
+  }
+
+  .sidebar-header {
+    padding: 15px;
+  }
+
+  .logo-img {
+    width: 35px;
+    height: 35px;
+  }
+
+  .sidebar-name {
+    font-size: 1rem;
+    margin-left: 10px;
+  }
+
+  .menu-item {
+    margin: 6px 10px;
+  }
+
+  .sidebar-menu a {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+
+  .sidebar-menu a .icon123 {
+    font-size: 1.1rem;
+  }
+
+  .menu-text {
+    margin-left: 10px;
+  }
+
+  .sidebar-footer {
+    padding: 10px;
+  }
+
+  .logout-btn {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
 }

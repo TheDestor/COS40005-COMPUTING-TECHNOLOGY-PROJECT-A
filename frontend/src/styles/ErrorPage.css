@@ -1,55 +1,123 @@
-.error-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    width: 100vw;
-    text-align: center;
-    background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%);
-  }
-  
-  .error-page h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-  
-  .error-page p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-  }
-  
-  .error-page button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
-  .lottie-error {
-    width: 300px;
-    margin-bottom: 2rem;
-  }
+/*
+ * Error Page Styles
+ *
+ * This stylesheet defines the visual appearance and responsive behavior
+ * for the generic error page.
+ */
 
-  .back-home {
-  background: linear-gradient(to right, #007bff, #66b2ff);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  padding: 10px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+/* ============================
+   1. Base Layout Styles
+============================ */
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; 
+  width: 100vw; 
+  text-align: center;
+  background: linear-gradient(90deg, #cce5ff 0%, #ffffff 100%); 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+/* ============================
+   2. Heading & Paragraph Styles
+============================ */
+.error-page h1 {
+  font-size: 3rem;      
+  margin-bottom: 1rem;
+  color: #333;           
+}
+
+.error-page p {
+  font-size: 1.2rem;     
+  color: #333;
+}
+
+/* ============================
+   3. Lottie Animation Styles
+============================ */
+.lottie-error {
+  width: 300px;           
+  margin-bottom: 2rem;
+}
+
+/* ============================
+   4. Button Styles
+============================ */
+.back-home {
+  background: linear-gradient(to right, #007bff, #66b2ff); 
+  color: white;             
+  border: none;             
+  border-radius: 8px;      
+  transition: all 0.3s ease; 
+  padding: 10px 20px;       
+  font-size: 1rem;          
+  cursor: pointer;         
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); 
 }
 
 .back-home:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
-  background: linear-gradient(to right, #0056b3, #3399ff);
+  transform: scale(1.05);  
+  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4); 
+  background: linear-gradient(to right, #0056b3, #3399ff); 
 }
 
 .back-home:active {
-  transform: scale(0.95);
+  transform: scale(0.98);   
 }
 
+/* ============================
+   5. Responsive Design
+   ============================ */
+
+/* For screens smaller than 768px (e.g., tablets) */
+@media (max-width: 768px) {
+  .error-page h1 {
+    font-size: 2.5rem; 
+    margin-bottom: 0.8rem;
+  }
+
+  .error-page p {
+    font-size: 1.1rem; 
+    margin-bottom: 1.5rem;
+  }
+
+  .lottie-error {
+    width: 250px; 
+    margin-bottom: 1.5rem;
+  }
+
+  .back-home {
+    padding: 8px 18px; 
+    font-size: 0.95rem;
+  }
+}
+
+/* For screens smaller than 480px (e.g., mobile phones) */
+@media (max-width: 480px) {
+  .error-page {
+    padding: 15px;
+  }
+
+  .error-page h1 {
+    font-size: 2rem; 
+    margin-bottom: 0.6rem;
+  }
+
+  .error-page p {
+    font-size: 1rem; 
+    margin-bottom: 1rem;
+  }
+
+  .lottie-error {
+    width: 200px;
+    margin-bottom: 1rem;
+  }
+
+  .back-home {
+    padding: 7px 15px; 
+    font-size: 0.9rem;
+  }
+}
   

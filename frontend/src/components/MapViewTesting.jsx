@@ -24,7 +24,7 @@ const menuItems = [
 
 const sarawakDivisions = [
   { name: 'Kuching', latitude: 1.5534, longitude: 110.3594 },
-  { name: 'Samarahan', latitude: 1.4591, longitude: 100.4883 },
+  { name: 'Samarahan', latitude: 1.4599, longitude: 110.4883 },
   { name: 'Serian', latitude: 1.1670, longitude: 110.5665 },
   { name: 'Sri Aman', latitude: 1.2370, longitude: 111.4621 },
   { name: 'Betong', latitude: 1.4115, longitude: 111.5290 },
@@ -236,6 +236,7 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
       {isMobileMenu ? (
         <div className="mapview-dropdown-wrapper">
           <button className="dropdown-toggle-mapview-button" onClick={handleDropdownToggle}>
+            <span className="dropdown-toggle-mapview-icon">{selectedMobileMenuItem.icon}</span>
             <span className="dropdown-toggle-mapview-text">{selectedMobileMenuItem.name}</span>
             <span className="dropdown-toggle-mapview-icon">
               {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}

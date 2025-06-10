@@ -7,7 +7,7 @@
   pointer-events: all;
   display: flex;
   justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
   min-width: 0;
 }
 
@@ -32,6 +32,7 @@
   align-items: center;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
 .menu-container::-webkit-scrollbar {
   display: none;
 }
@@ -96,6 +97,8 @@
 .menu-item2:hover .menu-icon {
   transform: scale(1.2);
   color: #007AFF;
+  outline: none;
+  border: none;
 }
 
 /* ============================
@@ -138,12 +141,6 @@
 
 .menu-item2:hover .menu-text2 {
   color: #007AFF;
-}
-
-.menu-item2 button:focus,
-.menu-item2 a:focus {
-  outline: none;
-  border: none;
 }
 
 /* ============================
@@ -211,6 +208,9 @@
   color: #555;
 }
 
+/* ============================
+   8. Dropdown Menu List Styles
+============================ */
 .mapview-dropdown-menu-list {
   position: absolute;
   top: calc(100% + 10px);
@@ -220,7 +220,7 @@
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   width: 200px;
-  max-height: 300px;
+  max-height: 350px;
   overflow-y: auto;
   z-index: 1000;
   padding: 8px 0;
@@ -243,11 +243,20 @@
   box-sizing: border-box;
   text-align: left;
   background-color: #ECE6F0;
+  outline: none;
+  border: none;
 }
 
 .mapview-dropdown-menu-item:hover {
   background-color: #f0f7ff;
   color: #007bff;
+  outline: none;
+  border: none;
+}
+
+.mapview-dropdown-menu-item:focus {
+  outline: none;
+  border: none;
 }
 
 .mapview-dropdown-menu-item.active-mapview-dropdown-item {
@@ -266,73 +275,146 @@
   color: #007bff;
 }
 
+/* ============================
+   9. Animation Styles
+============================ */
 @keyframes dropdownFadeIn {
   from { opacity: 0; transform: translate(-50%, -10px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ============================
-   10. Responsive Styles (Media Queries)
+   10. Responsive Styles
 ============================ */
-@media screen and (max-width: 992px) {
+
+/* Tablet Landscape/Small Laptop (992px to 769px) */
+@media screen and (max-width: 992px) and (min-width: 769px) {
+  .mapview-container {
+    flex-shrink: 1;
+    width: auto;
+    max-width: 100%;
+    min-width: 200px;
+  }
+
+  .menu-container {
+    display: flex;
+    max-width: 100%;
+    padding: 2px;
+    height: 50px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .menu-item2 {
+    padding: 10px 6px;
+    min-width: 55px;
+    width: 70px;
+    font-size: 12px;
+  }
+
+  .icon-container {
+    width: 26px;
+    height: 26px;
+  }
+
+  .menu-icon {
+    font-size: 13px;
+  }
+
+  .menu-text2 {
+    font-size: 0.75rem;
+  }
+
+  .mapview-dropdown-wrapper {
+    display: none;
+  }
+}
+
+/* Tablet Portrait/Mobile (768px and below) */
+@media screen and (max-width: 768px) {
+  .mapview-container {
+    flex-shrink: 1;
+    min-width: unset;
+  }
+
   .menu-container {
     display: none;
   }
+
   .mapview-dropdown-wrapper {
     display: flex;
     width: 200px;
     max-width: unset;
   }
 
-  .mapview-container {
-    flex-shrink: 1;
-    width: auto;
-    max-width: unset;
+  .dropdown-toggle-mapview-button {
+    font-size: 13px;
+    padding: 8px 15px;
+    min-width: 120px;
+  }
+
+  .dropdown-toggle-mapview-icon {
+    font-size: 16px;
+  }
+
+  .mapview-dropdown-menu-list {
+    width: 200px;
+    font-size: 14px;
+    padding: 8px 0;
+  }
+
+  .mapview-dropdown-menu-item {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+
+  .mapview-dropdown-item-icon {
+    font-size: 16px;
   }
 }
 
+/* Mobile Phones (600px and below) */
 @media screen and (max-width: 600px) {
   .mapview-dropdown-wrapper {
     width: 180px;
-    max-width: unset;
   }
+
   .dropdown-toggle-mapview-button {
     font-size: 13px;
     padding: 6px 12px;
-    min-width: 120px;
+    min-width: 100px;
   }
-  .dropdown-toggle-mapview-icon {
-    font-size: 14px;
-  }
+
   .mapview-dropdown-menu-list {
     width: 180px;
     font-size: 13px;
     padding: 6px 0;
   }
+
   .mapview-dropdown-menu-item {
     padding: 8px 12px;
     font-size: 13px;
   }
-  .mapview-dropdown-item-icon {
-    font-size: 14px;
-  }
 }
 
+/* Small Mobile Phones (480px and below) */
 @media screen and (max-width: 480px) {
   .mapview-dropdown-wrapper {
     width: 160px;
-    max-width: unset;
   }
+
   .dropdown-toggle-mapview-button {
     font-size: 12px;
     padding: 5px 10px;
-    min-width: 100px;
+    min-width: 80px;
   }
+
   .mapview-dropdown-menu-list {
     width: 160px;
     font-size: 12px;
     padding: 5px 0;
   }
+
   .mapview-dropdown-menu-item {
     padding: 7px 10px;
     font-size: 12px;

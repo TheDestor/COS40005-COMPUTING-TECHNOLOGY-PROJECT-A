@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark } from 'react-icons/fi';
-import { FaUser } from "react-icons/fa";
+import { FaRegUserCircle, FaUser } from "react-icons/fa";
+import { AiOutlineDashboard } from "react-icons/ai";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
+import { toast } from 'react-toastify';
 
 const ProfileDropdown = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,14 +15,22 @@ const ProfileDropdown = ({ onLoginClick }) => {
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const handleSuccess = (msg) => {
+    toast.success(msg, { position: 'bottom-right' });
+  };
+
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    window.location.href = '/';
+    // navigate('/');
     setIsOpen(false);
+    handleSuccess("Logged out successfully!");
   };
 
   const profileImage = user?.avatarUrl || defaultUserImage;
   const displayName = user?.firstName || 'Guest';
+
+  const isCBTAdmin = isLoggedIn && user?.role === 'cbt_admin';
 
   const profileIcon = isLoggedIn ? (
     <img src={profileImage} alt="Profile" className="profile-icon3" />
@@ -56,11 +66,11 @@ const ProfileDropdown = ({ onLoginClick }) => {
               </div>
               <div className="divider3" />
               <div>
-                <button className="menu-item51" onClick={() => navigate('/settings')}>
+                <button className="menu-item51" onClick={() => { navigate('/settings'); setIsOpen(false); }}>
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item51" onClick={() => navigate('/contact-us')}>
+                <button className="menu-item51" onClick={() => { navigate('/contact-us'); setIsOpen(false); }}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>
@@ -79,23 +89,28 @@ const ProfileDropdown = ({ onLoginClick }) => {
               </div>
               <div className="divider3" />
               <div>
-                <button className="menu-item51" onClick={() => navigate('/settings')}>
+                <button className="menu-item51" onClick={() => { navigate('/settings'); setIsOpen(false); }}>
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item51" onClick={() =>{ navigate('/', { state: { openBookmark: true } });
-                    setIsOpen(false);}}>
+                <button className="menu-item51" onClick={() =>{ navigate('/', { state: { openBookmark: true } }); setIsOpen(false);}}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
-                <button className="menu-item51" onClick={() => navigate('/profile-settings')}>
-                  <FaUser size={18} />
+                <button className="menu-item51" onClick={() => { navigate('/profile-settings'); setIsOpen(false); }}>
+                  <FaRegUserCircle size={18} />
                   Profile Setting
                 </button>
-                <button className="menu-item51" onClick={() => navigate('/contact-us')}>
+                <button className="menu-item51" onClick={() => { navigate('/contact-us'); setIsOpen(false); }}>
                   <FiInfo size={18} />
                   Contact Us
                 </button>
+                {isCBTAdmin && (
+                  <button className="menu-item51" onClick={() => { navigate('/dashboard'); setIsOpen(false); }}>
+                    <AiOutlineDashboard size={18} />
+                    Dashboard
+                  </button>
+                )}
               </div>
             </>    
           )}

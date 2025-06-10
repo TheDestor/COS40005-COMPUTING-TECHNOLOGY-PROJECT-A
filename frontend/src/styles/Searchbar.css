@@ -1,10 +1,13 @@
+/* ============================
+   1. Searchbar Container Styles
+============================ */
 .styled-searchbar-container {
   z-index: 999;
   background-color: #f2ecf7;
   border-radius: 999px;
   padding: 4px 16px;
   display: flex;
-  margin: 0 auto;
+  margin-right: auto;
   align-items: center;
   pointer-events: all;
   flex-grow: 1;
@@ -12,6 +15,13 @@
   position: relative;
 }
 
+.styled-searchbar-container.focused {
+  border-radius: 10px 10px 0px 0px;
+}
+
+/* ============================
+   2. Searchbar Input Styles
+============================ */
 .styled-searchbar-input {
   border: none;
   outline: none;
@@ -26,13 +36,8 @@
 
 .styled-searchbar-input:focus {
   padding-left: 6px;
-  /* transition: all 0.3s ease-in-out; */
   box-shadow: none;
   transform: none;
-}
-
-.styled-searchbar-container.focused {
-  border-radius: 10px 10px 0px 0px; 
 }
 
 .styled-searchbar-input::placeholder {
@@ -40,6 +45,9 @@
   font-weight: 400;
 }
 
+/* ============================
+   3. Searchbar Icons Styles
+============================ */
 .searchbar-right-icons {
   display: flex;
   align-items: center;
@@ -75,7 +83,9 @@
   flex-shrink: 0;
 }
 
-/* ===== Autocomplete Dropdown Styles ===== */
+/* ============================
+   4. Google Places Autocomplete Styles
+============================ */
 .pac-container {
   margin-top: 14px !important;
   background-color: #f2ecf7 !important;
@@ -90,25 +100,24 @@
   width: calc(100% - 32px) !important;
 }
 
-/* Individual suggestion item */
 .pac-item {
   padding: 12px 16px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
 }
 
-/* Hover effect on suggestion */
 .pac-item:hover {
   background-color: #f2f2f2;
 }
 
-/* Highlighted text inside suggestions */
 .pac-item-query {
   font-weight: bold;
   color: #333 !important;
 }
 
-/* Recent dropdown */
+/* ============================
+   5. Recent Searches Dropdown Styles
+============================ */
 .recent-dropdown5 {
   position: absolute;
   top: 100%;
@@ -185,13 +194,15 @@
   transform: scale(1.01);
 }
 
-/* Highlighted item style */
 .recent-item5.highlighted {
   background-color: #dcd4ff;
   font-weight: bold;
   color: #333;
 }
 
+/* ============================
+   6. Animation Styles
+============================ */
 @keyframes fadeInSlide {
   from {
     opacity: 0;
@@ -203,6 +214,11 @@
   }
 }
 
+/* ============================
+   7. Responsive Styles
+============================ */
+
+/* Large Tablets and Small Laptops (992px and below) */
 @media (max-width: 992px) {
   .styled-searchbar-container {
     max-width: 300px;
@@ -211,7 +227,7 @@
 
   .styled-searchbar-input {
     font-size: 13px;
-    padding-right: 40px;
+    padding-right: 60px;
   }
 
   .searchbar-right-icons {
@@ -237,6 +253,7 @@
   }
 }
 
+/* Tablets (767px and below) */
 @media (max-width: 767px) {
   .styled-searchbar-container {
     max-width: 250px;
@@ -244,7 +261,7 @@
   }
 
   .styled-searchbar-input {
-    font-size: 12px;
+    font-size: 13px;
     padding-right: 10px;
     max-width: 130px;
   }
@@ -272,6 +289,7 @@
   }
 }
 
+/* Mobile Phones (480px and below) */
 @media (max-width: 480px) {
   .styled-searchbar-container {
     max-width: 280px;

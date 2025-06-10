@@ -610,13 +610,12 @@ function MapComponent({ startingPoint, destination, addDestinations=[], selected
       <div className="top-header-container">
         {/* Main wrapper for all header elements: controls desktop row vs. mobile column */}
         <div className="header-elements-wrapper">
-          {/* Group 1: SearchBar and MapViewTesting */}
-          <div className="header-group search-mapview-group">
+          {/* New group for SearchBar and MapViewTesting */}
+          <div className="search-mapview-group">
             <SearchBar onPlaceSelected={setSelectedSearchPlace} setShowRecent={setShowRecent}/>
             <MapViewTesting onSelect={handleMenuSelect} activeOption={activeOption} locations={setLocations} onRoutesCalculated={(data) => console.log(data)} />
           </div>
-          {/* Group 2: WeatherDateTime and ProfileDropdown */}
-          <div className="header-group weather-profile-group">
+          <div className="weather-profile-group"> {/* Existing group for WeatherDateTime and ProfileDropdown */}
             <WeatherDateTime currentTown={currentTown} setCurrentTown={handleTownChange} />
             <ProfileDropdown onLoginClick={handleLoginClick} />
           </div>

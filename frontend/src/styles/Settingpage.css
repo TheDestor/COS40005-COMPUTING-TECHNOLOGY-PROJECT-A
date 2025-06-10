@@ -1,13 +1,15 @@
-/* ------------------ Container Layout ------------------ */
+/* ============================
+   1. Main Container Layout
+============================ */
 .settings-container {
-    display: flex;
-    min-height: 100vh;
-    height: calc(100vh - 80px); /* subtract the fixed navbar height */
-    margin-top: 60px;            /* push content below the fixed navbar */
-    width: 100vw;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  
+  display: flex;
+  min-height: 100vh;
+  height: calc(100vh - 80px);
+  margin-top: 60px;
+  width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .settings-heading {
   font-size: 24px;
   font-weight: 700;
@@ -16,318 +18,307 @@
   padding: 0px 10px;
 }
 
-  /* ------------------ Sidebar Styling ------------------ */
-  .sidebar3 {
-    width: 250px;
-    height: 100vh;
-    background-color: #ffffff; /* Default background for desktop */
-    padding: 20px;
-    border-right: 1px solid #ddd;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-  }
-  
-  .sidebar-item {
-    position: relative;
-    padding: 12px 15px;
-    margin: 20px 0;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-size: 16px;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    overflow: hidden;
-  }
-  
-  .sidebar-item:hover {
-    background-color: #f5faff;
-    border-left: 6px solid #007bff;
-    transform: translateX(5px);
-  }
-  
-  /* Remove the ::before indicator for the new design */
-  .sidebar-item::before {
-    display: none; /* Hide the previous visual indicator */
-  }
-  
-  .sidebar-item.active {
-    background-color: #007bff; /* Default active background for desktop */
-    color: white;
-    font-weight: bold;
-    /* Remove border-left for active state here, as it will be handled by mobile styles */
-  }
-  
-  .sidebar-item .sidebar-icon {
-    font-size: 18px;
-    color: black; /* Default icon color for desktop */
-    transition: color 0.2s;
-  }
-  
-  .sidebar-item.active .sidebar-icon {
-    color: white; /* Default active icon color for desktop */
-  }
-  
-  /* Ripple effect on click */
-  .sidebar-item:active::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(0, 123, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: ripple 0.6s ease-out;
-    z-index: 0;
-  }
-  @keyframes ripple {
-    to {
-      width: 300px;
-      height: 300px;
-      opacity: 0;
-    }
-  }
-  
-  /* ------------------ Main Content Styling ------------------ */
-  .main-content {
-    flex: 1;
-    padding: 40px;
-    background-color: #fff;
-    animation: fadeInUp 0.4s ease forwards;
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Section Header */
-  .content-section h2 {
-    color: #333;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 25px;
-  }
-  
-  .icon-setting {
-    font-size: 22px;
-  }
-  
-  /* ------------------ General Settings Toggle ------------------ */
-  .setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f5f5f5;
-    padding: 14px 20px;
-    margin-bottom: 15px;
-    border-radius: 999px;
-    transition: background 0.3s ease;
-    width: 40%;
-  }
-  
-  .setting-item:hover {
-    background: #eaeaea;
-  }
-  
-  .setting-item span {
-    flex-grow: 1;
-    font-size: 16px;
-    font-weight: 500;
-    color: #444;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  /* Toggle Switch */
-  .toggle-switch { /* This targets the default react-switch styling */
-    position: relative;
-    width: 50px;
-    height: 24px;
-    background-color: #ccc;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .toggle-switch::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-    transition: left 0.3s ease;
-  }
-  
-  .toggle-switch.on {
-    background-color: #007bff;
-  }
-  
-  .toggle-switch.on::after {
-    left: 28px;
-  }
-  
-  /* ------------------ Language Settings ------------------ */
-  .language-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 18px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin-bottom: 12px;
-    background-color: #f9f9f9;
-  }
-  
-  .language-option:hover {
-    background-color: #eaeaea;
-  }
-  
-  .language-option.selected {
-    background-color: #007bff;
-    color: white;
-    font-weight: 500;
-  }
-  
-  .language-option .tick-mark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    margin-left: 10px;
-    color: white;
-    font-size: 14px;
-  }
-  
-  .language-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin-top: 15px;
-  }
-  
-  .language-list li {
-    padding: 14px 20px;
-    margin-bottom: 15px;
-    background-color: #f5f5f5;
-    border-radius: 999px;
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    width: 40%;
-    color: #444;
-  }
-  
-  /* ------------------ Settings List (General) ------------------ */
-  .settings-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin-top: 15px;
-  }
-  
-  .settings-list li {
-    padding: 14px 20px;
-    margin-bottom: 15px;
-    background-color: #f5f5f5;
-    border-radius: 999px;
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    width: 40%;
-    color: #444;
-  }
-  
-  .settings-list li:hover {
-    background-color: #e0e0e0;
-  }
-  
-  /* ------------------ Help Centre Section ------------------ */
-  .help-list {
-    list-style: none;
-    padding-left: 0;
-    margin-bottom: 30px;
-  }
-  
-  .help-list li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 20px;
-    margin-bottom: 12px;
-    background-color: #f0f8ff;
-    border-radius: 999px;
-    color: #007bff;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    width: 40%;
-  }
-  
-  .help-list li:hover {
-    background-color: #e6f0ff;
-  }
-  
-  .help-icon {
-    font-size: 18px;
-  }
-  
-  /* FAQ Section */
-  .faq-section {
-    margin-top: 30px;
-  }
-  
-  .faq-section h3 {
-    color: #333;
-    font-size: 20px;
-    margin-bottom: 15px;
-  }
-  
-  .faq-list {
-    padding-left: 0;
-    list-style-type: none;
-    display: grid;
-    gap: 16px;
-  }
-  
-  .faq-list li {
-    background-color: #f9f9f9;
-    border-radius: 999px;
-    padding: 18px 22px;
-    font-size: 16px;
-    color: #333;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    width: 40%;
-  }
-  
-  .faq-list li:hover {
-    background-color: #e6f0ff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-  }
-  
-/* =========================================
-   RESPONSIVE DESIGN (MEDIA QUERIES)
-   ========================================= */
+/* ============================
+   2. Sidebar Styles
+============================ */
+.sidebar3 {
+  width: 250px;
+  height: 100vh;
+  background-color: #ffffff;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
 
-/* For screens smaller than 1024px (e.g., larger tablets, small laptops) */
+.sidebar-item {
+  position: relative;
+  padding: 12px 15px;
+  margin: 20px 0;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.sidebar-item:hover {
+  background-color: #f5faff;
+  border-left: 6px solid #007bff;
+  transform: translateX(5px);
+}
+
+.sidebar-item::before {
+  display: none;
+}
+
+.sidebar-item.active {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+.sidebar-item .sidebar-icon {
+  font-size: 18px;
+  color: black;
+  transition: color 0.2s;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: white;
+}
+
+/* Sidebar Ripple Effect */
+.sidebar-item:active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(0, 123, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple 0.6s ease-out;
+  z-index: 0;
+}
+
+@keyframes ripple {
+  to {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+
+/* ============================
+   3. Main Content Styles
+============================ */
+.main-content {
+  flex: 1;
+  padding: 40px;
+  background-color: #fff;
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-section h2 {
+  color: #333;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.icon-setting {
+  font-size: 22px;
+}
+
+/* ============================
+   4. Settings Components
+============================ */
+
+/* General Settings Toggle */
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 14px 20px;
+  margin-bottom: 15px;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+  width: 40%;
+}
+
+.setting-item:hover {
+  background: #eaeaea;
+}
+
+.setting-item span {
+  flex-grow: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.3s ease;
+}
+
+.toggle-switch.on {
+  background-color: #007bff;
+}
+
+.toggle-switch.on::after {
+  left: 28px;
+}
+
+/* Language Settings */
+.language-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+}
+
+.language-option:hover {
+  background-color: #eaeaea;
+}
+
+.language-option.selected {
+  background-color: #007bff;
+  color: white;
+  font-weight: 500;
+}
+
+.language-option .tick-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  margin-left: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+/* Settings Lists */
+.settings-list, .language-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 15px;
+}
+
+.settings-list li, .language-list li {
+  padding: 14px 20px;
+  margin-bottom: 15px;
+  background-color: #f5f5f5;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  width: 40%;
+  color: #444;
+}
+
+.settings-list li:hover {
+  background-color: #e0e0e0;
+}
+
+/* ============================
+   5. Help Centre Styles
+============================ */
+.help-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 30px;
+}
+
+.help-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  margin-bottom: 12px;
+  background-color: #f0f8ff;
+  border-radius: 999px;
+  color: #007bff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 40%;
+}
+
+.help-list li:hover {
+  background-color: #e6f0ff;
+}
+
+.help-icon {
+  font-size: 18px;
+}
+
+/* FAQ Section */
+.faq-section {
+  margin-top: 30px;
+}
+
+.faq-section h3 {
+  color: #333;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.faq-list {
+  padding-left: 0;
+  list-style-type: none;
+  display: grid;
+  gap: 16px;
+}
+
+.faq-list li {
+  background-color: #f9f9f9;
+  border-radius: 999px;
+  padding: 18px 22px;
+  font-size: 16px;
+  color: #333;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 40%;
+}
+
+.faq-list li:hover {
+  background-color: #e6f0ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+/* ============================
+   6. Responsive Styles
+============================ */
+
+/* Large Tablets and Small Laptops (1024px and below) */
 @media screen and (max-width: 1024px) {
   .settings-container {
     margin-top: 70px; /* Adjust top margin for smaller screen header */
@@ -376,7 +367,7 @@
   }
 }
 
-/* For screens smaller than 768px (e.g., tablets in portrait) */
+/* Tablets (768px and below) */
 @media screen and (max-width: 768px) {
   .settings-container {
     flex-direction: column; /* Stack sidebar and main content vertically */
@@ -570,7 +561,7 @@
   }
 }
 
-/* For screens smaller than 480px (e.g., most mobile phones) */
+/* Mobile Phones (480px and below) */
 @media screen and (max-width: 480px) {
   .settings-container {
     margin-top: 50px; /* Further adjust top margin */

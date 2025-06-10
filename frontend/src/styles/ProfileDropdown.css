@@ -1,14 +1,21 @@
 /* ProfileDropdown.css */
 /* CSS for ProfileDropdown component */
 
+/* ============================
+   1. Profile Dropdown Container
+============================ */
 .profile-dropdown {
   position: relative;
-  display: inline-block; 
+  display: inline-block;
   z-index: 9999;
-  flex-shrink: 0; 
-  min-width: fit-content; 
+  flex-shrink: 0;
+  min-width: fit-content;
+  pointer-events: auto;
 }
 
+/* ============================
+   2. Profile Button Styles
+============================ */
 .profile-button {
   width: 40px;
   height: 40px;
@@ -28,6 +35,9 @@
   background: linear-gradient(145deg, #d7c3e2, #f3ebf9);
 }
 
+/* ============================
+   3. Dropdown Menu Styles
+============================ */
 .dropdown-menu {
   position: absolute;
   right: 0;
@@ -43,6 +53,9 @@
   animation: dropdownFade 0.3s ease-out;
 }
 
+/* ============================
+   4. Login/Logged-in Section Styles
+============================ */
 .login-section,
 .loggedin-section {
   display: flex;
@@ -78,6 +91,9 @@
   color: white;
 }
 
+/* ============================
+   5. User Info Styles
+============================ */
 .user-info {
   display: flex;
   align-items: center;
@@ -116,6 +132,9 @@
   color: #cacaca;
 }
 
+/* ============================
+   6. Menu Item Styles
+============================ */
 .divider3 {
   border-top: 2px solid #ccc;
   margin: 12px 20px;
@@ -143,6 +162,9 @@
   border-radius: 8px;
 }
 
+/* ============================
+   7. Animation Styles
+============================ */
 @keyframes dropdownFade {
   from {
     opacity: 0;
@@ -154,80 +176,80 @@
   }
 }
 
-/* =========================================
-   RESPONSIVE DESIGN
-   ========================================= */
+/* ============================
+   8. Responsive Styles
+============================ */
 
-/* For screens smaller than 768px (e.g., tablets) */
+/* Tablets (768px and below) */
 @media (max-width: 768px) {
   .profile-dropdown {
-    top: 5px; 
-    right: 1%; 
-    flex-shrink: 1; /* Allow it to shrink when stacked */
+    top: 5px;
+    right: 1%;
+    flex-shrink: 1;
   }
 
   .profile-button {
-    width: 36px; /* Slightly smaller button */
+    width: 36px;
     height: 36px;
     font-size: 16px;
   }
 
   .profile-icon3 {
-    width: 36px; /* Match button size */
+    width: 36px;
     height: 36px;
   }
 
   .icon-wrapper2 {
-    width: 32px; /* Smaller wrapper for default user icon */
+    width: 32px;
     height: 32px;
   }
 
   .dropdown-menu {
-    top: 100%; /* Ensure it still drops down correctly */
-    margin-top: 8px; /* Adjust margin for smaller screens */
-    width: 220px; /* Reduce dropdown width */
-    padding: 8px 0; /* Adjust padding */
+    top: 100%;
+    margin-top: 8px;
+    width: 220px;
+    padding: 8px 0;
     border-radius: 12px;
   }
 
   .login-section,
   .loggedin-section {
-    padding: 8px; /* Adjust padding */
-    font-size: 13px; /* Smaller font size */
-    margin: 6px; /* Adjust margin */
+    padding: 8px;
+    font-size: 13px;
+    margin: 6px;
   }
 
   .login-button2,
   .logout-button {
-    padding: 8px 20px; /* Adjust button padding */
-    font-size: 13px; /* Smaller font size */
+    padding: 8px 20px;
+    font-size: 13px;
   }
 
   .user-avatar2 {
-    width: 30px; /* Smaller avatar */
+    width: 30px;
     height: 30px;
   }
 
   .divider3 {
-    margin: 10px 15px; /* Adjust divider margin */
+    margin: 10px 15px;
   }
 
   .menu-item51 {
-    padding: 10px 15px; /* Adjust menu item padding */
-    font-size: 13px; /* Smaller font size */
-    gap: 10px; /* Adjust gap */
+    padding: 10px 15px;
+    font-size: 13px;
+    gap: 10px;
   }
 }
 
-/* For screens smaller than 480px (e.g., mobile phones) */
+/* Mobile Phones (480px and below) */
 @media (max-width: 480px) {
   .profile-dropdown {
     top: 5px;
-    right: 1%; 
+    right: 1%;
   }
 
   .profile-button {
-    width: 32px; /* Even smaller button */
+    width: 32px;
     height: 32px;
     font-size: 14px;
   }
@@ -243,59 +265,58 @@
   }
 
   .dropdown-menu {
-    top: 100%; /* Ensure it still drops down correctly */
-    margin-top: 6px; /* Adjust margin for smaller screens */
-    width: calc(100vw - 30px); /* Make dropdown span almost full screen width */
-    max-width: 250px; /* Prevent it from becoming too wide on slightly larger phones */
-    padding: 5px 0; /* Further reduced padding */
-    right: 0; /* Align right with the button */
-    /* You might want to adjust the right of .profile-dropdown if it hits the very edge */
+    top: 100%;
+    margin-top: 6px;
+    width: calc(100vw - 30px);
+    max-width: 250px;
+    padding: 5px 0;
+    right: 0;
   }
 
   .login-section,
   .loggedin-section {
-    flex-direction: column; /* Stack elements vertically */
-    align-items: flex-start; /* Align stacked items to the left */
-    gap: 5px; /* Reduce gap */
-    padding: 5px; /* Adjust padding */
-    margin: 5px; /* Adjust margin */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 5px;
+    margin: 5px;
     font-size: 12px;
   }
 
   .login-button2,
   .logout-button {
-    width: 100%; /* Make buttons full width when stacked */
-    text-align: center; /* Center text in button */
+    width: 100%;
+    text-align: center;
     padding: 8px 15px;
     font-size: 12px;
   }
 
   .user-avatar2 {
-    width: 28px; /* Smaller avatar */
+    width: 28px;
     height: 28px;
   }
 
   .user-info span {
-    font-size: 12px; /* Ensure display name is readable */
+    font-size: 12px;
   }
 
   .divider3 {
-    margin: 8px 10px; /* Further adjust divider margin */
+    margin: 8px 10px;
   }
 
   .menu-item51 {
-    padding: 8px 10px; /* Further adjust menu item padding */
-    font-size: 12px; /* Smaller font size */
-    gap: 8px; /* Adjust gap */
+    padding: 8px 10px;
+    font-size: 12px;
+    gap: 8px;
   }
 
-  .menu-item51 svg { /* Target icons inside menu items */
+  .menu-item51 svg {
     width: 16px;
     height: 16px;
   }
 }
 
-/* For very small screens smaller than 320px */
+/* Small Mobile Phones (320px and below) */
 @media (max-width: 320px) {
   .profile-button {
     width: 28px;
@@ -314,10 +335,10 @@
   }
 
   .dropdown-menu {
-    top: 100%; /* Ensure it still drops down correctly */
-    margin-top: 4px; /* Adjust margin for smallest screens */
-    width: calc(100vw - 20px); /* Even tighter width */
-    max-width: 200px; /* Cap max-width */
+    top: 100%;
+    margin-top: 4px;
+    width: calc(100vw - 20px);
+    max-width: 200px;
   }
 
   .login-section,

@@ -115,7 +115,7 @@ const HomePage = () => {
         setSelectedPlace={setSelectedPlace}
       />
 
-      {/* <LeftSidebar
+      <LeftSidebar
         startingPoint={startingPoint}
         destination={destination}
         addDestinations={addDestinations}
@@ -128,7 +128,7 @@ const HomePage = () => {
         nearbyPlaces={nearbyPlaces}
         selectedPlace={selectedPlace}
         setSelectedPlace={setSelectedPlace}
-      /> */}
+      />
 
       {/* <MapZoomHandler selectedPlace={selectedPlace} /> */}
       

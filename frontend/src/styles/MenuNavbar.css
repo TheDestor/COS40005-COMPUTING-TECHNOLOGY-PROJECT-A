@@ -1,5 +1,5 @@
 /* ============================
-   0. Wrapper with Logo + Menu Centered
+   1. Navbar Container Styles
 ============================ */
 .mapview-navbar {
   position: fixed;
@@ -9,29 +9,19 @@
   width: 100vw;
   z-index: 9999;
   background: linear-gradient(90deg, #e6eaf0 0%, #ffffff 100%);
-  /* background-color: #e6eaf0; */
-  display: flex; /* Use flexbox for direct children */
+  display: flex; 
   align-items: center;
-  justify-content: space-between; /* Distribute space between logo, menu, and profile */
-  padding: 10px 20px; /* Add padding to prevent content from touching edges */
+  justify-content: space-between; 
+  padding: 10px 20px; 
   box-sizing: border-box;
 }
 
-.menu-wrapper {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  margin: 0 10px;
-  min-width: 0; /* Allow flex item to shrink below content size */
-}
-
-/* Logo positioning to the left */
+/* ============================
+   2. Logo Styles
+============================ */
 .nav-logo {
-  /* position: absolute; */ /* REMOVED: No longer absolutely positioned */
-  /* left: 20px; */ /* REMOVED: Not needed with flex layout */
   display: flex;
   align-items: center;
-  /* flex-shrink: 0; */ /* Optional: prevents logo from shrinking if space is tight */
 }
 
 .logo-image {
@@ -40,14 +30,18 @@
 }
 
 /* ============================
-   1. Base Container Styles (Not directly used by MenuNavbar, but good to keep)
+   3. Menu Wrapper Styles
 ============================ */
-.mapview-container2 {
-  position: relative;
+.menu-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 10px;
+  min-width: 0;
 }
 
 /* ============================
-   2. Horizontal Menu Styles (Desktop View)
+   4. Horizontal Menu Styles (Desktop)
 ============================ */
 .menu-container2 {
   display: flex;
@@ -72,7 +66,7 @@
 }
 
 /* ============================
-   3. Menu Item Styles (Horizontal Menu)
+   5. Menu Item Styles
 ============================ */
 .menu-item3 {
   display: flex;
@@ -102,7 +96,7 @@
 }
 
 /* ============================
-   4. Icon Container & Icon Effects (Horizontal Menu)
+   6. Icon Styles
 ============================ */
 .icon-container2 {
   width: 30px;
@@ -134,7 +128,7 @@
 }
 
 /* ============================
-   5. Menu Text Styles (Horizontal Menu)
+   7. Menu Text Styles
 ============================ */
 .menu-text3 {
   font-size: 0.8rem;
@@ -163,7 +157,7 @@
 }
 
 /* ============================
-   6. Active State Styles (Horizontal Menu)
+   8. Active State Styles
 ============================ */
 .active-icon-container2 {
   background-color: #007AFF;
@@ -184,8 +178,8 @@
 }
 
 /* =========================================
-   7. MOBILE DROPDOWN MENU STYLES
-   ========================================= */
+   9. Mobile Dropdown Styles
+============================ */
 
 /* Mobile Dropdown Wrapper (Initially hidden) */
 .mobile-menu-dropdown-wrapper {
@@ -287,10 +281,18 @@
 }
 
 /* =========================================
-   8. RESPONSIVE DESIGN (MEDIA QUERIES)
-   ========================================= */
+   10. Animation Styles
+============================ */
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 
-/* Media Query to switch between horizontal and dropdown */
+/* =========================================
+   11. Responsive Styles
+============================ */
+
+/* Large Tablets and Small Laptops (992px and below) */
 @media screen and (max-width: 992px) {
   .menu-wrapper {
     display: none; /* Hide horizontal menu */
@@ -311,7 +313,7 @@
   }
 }
 
-/* Further adjustments for smaller screens (e.g., small tablets/large phones) */
+/* Tablets and Large Phones (600px and below) */
 @media screen and (max-width: 600px) {
   .dropdown-toggle-button {
     font-size: 13px;
@@ -333,7 +335,7 @@
   }
 }
 
-/* Adjustments for typical mobile phone screens */
+/* Mobile Phones (480px and below) */
 @media screen and (max-width: 480px) {
   .mapview-navbar {
     height: 70px; /* Slightly shorter navbar */
