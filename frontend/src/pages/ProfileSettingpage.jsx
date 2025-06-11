@@ -465,34 +465,37 @@ const ProfileSettingsPage = () => {
       <Navbar />
       <div className="profile-settings-container">
         <div className="sidebar50">
+          <h3 className="settings-heading">Profile Settings</h3>
           <div
-            className={`sidebar-item ${activeSection === 'account' ? 'active' : ''}`}
+            className={`sidebar-item123 ${activeSection === 'account' ? 'active' : ''}`}
             onClick={() => handleSectionChange('account')}
           >
-            <MdPerson className="sidebar-icon" /> Account preferences
+            <MdPerson className="sidebar-icon123" />
+            <span>Account</span>
           </div>
           <div
-            className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`}
+            className={`sidebar-item123 ${activeSection === 'security' ? 'active' : ''}`}
             onClick={() => handleSectionChange('security')}
           >
-            <MdSecurity className="sidebar-icon" /> Sign in & security
+            <MdSecurity className="sidebar-icon123" />
+            <span>Security</span>
           </div>
           <div
-            className={`sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`}
+            className={`sidebar-item123 ${activeSection === 'notifications' ? 'active' : ''}`}
             onClick={() => handleSectionChange('notifications')}
           >
-            <MdNotificationsNone className="sidebar-icon" /> Notifications
+            <MdNotificationsNone className="sidebar-icon123" />
+            <span>Notifications</span>
           </div>
           <div
-            className={`sidebar-item ${activeSection === 'subscriptions' ? 'active' : ''}`}
+            className={`sidebar-item123 ${activeSection === 'subscriptions' ? 'active' : ''}`}
             onClick={() => handleSectionChange('subscriptions')}
           >
-            <MdSubscriptions className="sidebar-icon" /> Subscriptions
+            <MdSubscriptions className="sidebar-icon123" />
+            <span>Subscriptions</span>
           </div>
-          {/* <div className={`sidebar-item ${activeSection === 'security' ? 'active' : ''}`} onClick={() => setActiveSection('security')}><MdSecurity className="sidebar-icon" /> Sign in & security</div>
-          <div className={`sidebar-item ${activeSection === 'notifications' ? 'active' : ''}`} onClick={() => setActiveSection('notifications')}><MdNotificationsNone className="sidebar-icon" /> Notifications</div>
-          <div className={`sidebar-item ${activeSection === 'subscriptions' ? 'active' : ''}`} onClick={() => setActiveSection('subscriptions')}><MdSubscriptions className="sidebar-icon" /> Subscriptions</div> */}
         </div>
+
         <div className="main-content">
           {renderContent()}
         </div>

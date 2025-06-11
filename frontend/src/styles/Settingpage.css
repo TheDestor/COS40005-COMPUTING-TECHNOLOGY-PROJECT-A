@@ -439,6 +439,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
     transform: translateY(-3px); /* Stronger lift on hover */
     border-radius: 6px solid #007bff;
+    color: #007bff;
   }
   
   .sidebar-item.active {

@@ -81,7 +81,7 @@ const ChangeNewPassword = () => {
   
   return (
     <div className="change-password-container">
-      <h2><MdSecurity size={20} /> Sign in & security</h2>
+      <h2><MdSecurity size={20} /> Sign In & Security</h2>
 
       <div className="form-group2">
         <label htmlFor="currentPassword">Current password</label>
@@ -93,7 +93,6 @@ const ChangeNewPassword = () => {
             name="currentPassword"
             onChange={handleInputChange}
             placeholder="Enter current password"
-            className="input-field"
           />
           <button onClick={() => setShowCurrent(!showCurrent)}>
             {showCurrent ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -111,7 +110,6 @@ const ChangeNewPassword = () => {
             name="newPassword"
             onChange={handleInputChange}
             placeholder="New password"
-            className="input-field"
           />
           <button onClick={() => setShowNew(!showNew)}>
             {showNew ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
@@ -132,7 +130,6 @@ const ChangeNewPassword = () => {
             name="confirmPassword"
             onChange={handleInputChange}
             placeholder="Confirm password"
-            className="input-field"
             />
             <button onClick={() => setShowConfirm(!showConfirm)}>
             {showConfirm ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
