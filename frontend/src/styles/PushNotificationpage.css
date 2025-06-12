@@ -1,43 +1,49 @@
+/* ===== LAYOUT & CONTAINER ===== */
 .push-notification-container {
-    margin: 2rem auto;
-    /* border-radius: 12px; */
+    margin: auto;
     background-color: #fff;
-  }
-  
-  .push-notification-container h2 {
+    padding: 0 1rem;
+    max-width: 100%;
+    color: #333;
+}
+
+/* ===== HEADER ===== */
+.push-notification-container h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 1.4rem;
     font-weight: 600;
     margin-bottom: 2rem;
-  }
-  
-  .notification-item {
+}
+
+/* ===== NOTIFICATION ITEMS ===== */
+.notification-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1.5rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 500;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     transition: background 0.3s;
     width: 100%;
-    max-width: 400px; /* Optional: sets a clean limit */
-  }
-  
-  .notification-item span {
-    flex: 1;
-    margin-right: 1rem; /* Creates consistent spacing before switch */
-  }
-  
-  
-  .notification-item:hover {
-    background-color: #f5faff;
-  }
+    max-width: 400px;
+    margin-right: auto;
+}
 
-  .confirmation-modal {
+.notification-item span {
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.notification-item:hover {
+    background-color: #f5faff;
+}
+
+/* ===== MODAL ===== */
+.confirmation-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -48,39 +54,75 @@
     align-items: center;
     justify-content: center;
     z-index: 999;
-  }
-  
-  .modal-content {
+}
+
+.modal-content {
     background-color: #fff;
     padding: 1.5rem 2rem;
     border-radius: 12px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
     max-width: 400px;
     text-align: center;
-  }
-  
-  .modal-buttons {
+}
+
+/* ===== BUTTONS ===== */
+.modal-buttons {
     display: flex;
     justify-content: center;
     margin-top: 1rem;
     gap: 1rem;
-  }
-  
-  .confirm-btn {
+}
+
+.confirm-btn {
     background-color: #dc2626;
     color: white;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-  }
-  
-  .cancel-btn7 {
+}
+
+.cancel-btn7 {
     background-color: #e5e7eb;
     color: black;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-  }
+}
+
+/* ===== RESPONSIVE STYLES ===== */
+/* Tablet */
+@media screen and (max-width: 768px) {
+    .push-notification-container {
+        margin: 1rem auto;
+    }
+
+    .push-notification-container h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .notification-item {
+        font-size: 1rem;
+        padding: 0.6rem 0.8rem;
+    }
+}
+
+/* Mobile */
+@media screen and (max-width: 480px) {
+    .push-notification-container h2 {
+        font-size: 1.2rem;
+    }
+
+    .notification-item {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.7rem;
+    }
+
+    .modal-content {
+        padding: 1rem;
+        margin: 0 1rem;
+    }
+}
   

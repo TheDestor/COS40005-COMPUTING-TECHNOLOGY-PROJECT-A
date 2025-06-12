@@ -86,10 +86,29 @@
   color: #2c3345;
   width: 100%;
   height: 100%;
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  appearance: none; /* For other browsers */
 }
 
 .search-bar input::placeholder {
   color: #a0aec0;
+}
+
+/* Remove focus outline */
+.search-bar input:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Remove default browser styles */
+.search-bar input::-webkit-search-decoration,
+.search-bar input::-webkit-search-cancel-button,
+.search-bar input::-webkit-search-results-button,
+.search-bar input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .action-icons {
@@ -697,6 +716,7 @@ svg {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  line-clamp: 3;
   line-height: 1.4;
   font-size: 13px;
   position: relative;
@@ -904,6 +924,11 @@ svg {
 
 /* To make dashboard area adjusts to sidebar */
 @media (max-width: 1200px) {
+  .dashboard-content {
+    margin-left: 280px; /* Match sidebar width */
+    width: calc(100% - 280px);
+  }
+
   .dashboard-visualizations {
     grid-template-columns: 1fr;
   }
@@ -931,39 +956,50 @@ svg {
 
 @media (max-width: 992px) {
   .dashboard-content {
-    margin-left: 250px;
-    width: calc(100% - 250px);
+    margin-left: 0; /* Remove margin when sidebar is hidden */
+    width: 100vw;
+    padding: 20px;
   }
   
   .stat-cards-container {
     gap: 16px;
   }
-}
 
-@media (max-width: 768px) {
-  .dashboard-content {
-    margin-left: 220px;
-    padding: 20px;
-    width: calc(100% - 220px);
+  .greeting h3, p{
+    text-align: center;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
-    align-items: flex-start;
     gap: 20px;
   }
-  
+
   .dashboard-actions {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .search-bar {
     width: 60%;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 15px;
+  }
+  
+  .dashboard-header {
+    margin-bottom: 20px;
   }
   
   .greeting h3 {
     font-size: 24px;
+    text-align: center;
+  }
+
+  .greeting p{
+    text-align: center;
   }
   
   .stat-cards-container {
@@ -973,25 +1009,318 @@ svg {
   .stat-card {
     width: 100%;
   }
+
+  .stat-value{
+    text-align: center;
+  }
+
+  /* Table responsive styles */
+  .reviews-table, .users-table {
+    display: block;
+  }
   
-  .legend {
+  .reviews-table thead, .users-table thead {
+    display: none;
+  }
+  
+  .reviews-table tbody, .users-table tbody {
+    display: block;
+    justify-content: left;
+  }
+  
+  .reviews-table tr, .users-table tr {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-bottom: 1px solid #e5e7eb;
     position: relative;
-    margin-top: 20px;
+  }
+  
+  .reviews-table td, .users-table td {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: none;
+  }
+  
+  .reviews-table td:before, .users-table td:before {
+    /* content: attr(data-label); */
+    width: auto;
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  .review-content {
+    max-width: 100%;
+  }
+
+  .review-action {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+
+  .users-table td.actions-cell{
+    display: flex;
+    margin-left: auto;
   }
 }
 
 @media (max-width: 576px) {
   .dashboard-content {
-    margin-left: 0;
-    width: 100%;
+    padding: 10px;
   }
   
   .dashboard-actions {
     flex-direction: column;
     align-items: flex-start;
+    gap: 15px;
+  }
+
+  .greeting h3, p{
+    text-align: center;
   }
   
   .search-bar {
     width: 100%;
+  }
+
+  .action-icons {
+    width: auto;
+    justify-content: space-between;
+  }
+
+  .icon-wrapper {
+    width: 35px;
+    height: 35px;
+  }
+
+  .action-icon {
+    font-size: 14px;
+  }
+
+  .badge {
+    height: 16px;
+    width: 16px;
+    font-size: 9px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-icon-wrapper {
+    width: 45px;
+    height: 45px;
+  }
+
+  .stat-icon {
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 13px;
+  }
+
+  .visualization-card {
+    padding: 15px;
+  }
+
+  .viz-header h3 {
+    font-size: 18px;
+  }
+
+  .viz-header p {
+    font-size: 13px;
+  }
+
+  .section-header h3 {
+    font-size: 16px;
+  }
+
+  .view-all-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .reviews-table td:before, .users-table td:before {
+    width: auto;
+  }
+
+  .users-table td.actions-cell{
+    display: flex;
+    margin-left: auto;
+  }
+}
+
+/* Small Mobile (480px and below) */
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 8px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 15px;
+  }
+
+  .greeting h3 {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .greeting p {
+    font-size: 14px;
+    text-align: center  ;
+  }
+
+  /* Stat Cards */
+  .stat-cards-container {
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .stat-icon {
+    font-size: 16px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  /* Visualization Cards */
+  .visualization-card {
+    padding: 12px;
+    min-height: 400px;
+  }
+
+  .viz-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .viz-header h3 {
+    font-size: 16px;
+  }
+
+  .viz-header p {
+    font-size: 12px;
+  }
+
+  /* Tables */
+  .reviews-table tr, .users-table tr {
+    padding: 12px;
+  }
+
+  .reviews-table td:before, .users-table td:before {
+    width: auto;
+    font-size: 12px;
+  }
+
+  .reviews-table td, .users-table td {
+    font-size: 12px;
+  }
+
+  .users-table td .actions-cell{
+    display: flex;
+    margin-left: auto;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Review Actions */
+  .review-action {
+    gap: 6px;
+  }
+
+  .approve-btn, .reject-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  /* Section Headers */
+  .section-header {
+    margin-bottom: 15px;
+  }
+
+  .section-header h3 {
+    font-size: 15px;
+  }
+
+  .view-all-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  /* Search and Icons */
+  .search-bar {
+    height: 36px;
+  }
+
+  .search-icon {
+    font-size: 14px;
+  }
+
+  .search-bar input {
+    font-size: 13px;
+  }
+
+  .icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+
+  .action-icons{
+    width: auto;
+  }
+
+  .action-icon {
+    font-size: 13px;
+  }
+
+  .badge {
+    height: 14px;
+    width: 14px;
+    font-size: 8px;
+  }
+
+  /* Star Rating */
+  .star {
+    font-size: 16px;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .stat-value{
+    text-align: center;
   }
 }
