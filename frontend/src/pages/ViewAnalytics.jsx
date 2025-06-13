@@ -5,6 +5,8 @@ import Sidebar from '../components/Sidebar';
 import { FaSearch, FaBell, FaEnvelope, FaMapMarkerAlt, FaChartLine, FaEnvelopeOpen, FaFileAlt } from 'react-icons/fa';
 import html2canvas from 'html2canvas'; // install this package if not already
 import '../styles/ViewAnalytics.css';
+import { FaRegEye, FaFileExport, FaTrash } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 // Add this new component at the top level of your file (but not inside another component)
 function RestoreChartsModal({ visibleCharts, onRestore, onClose }) {
@@ -115,7 +117,7 @@ export default function ViewAnalyticsOverview() {
       <div className="dashboard-content">
         {/* Dashboard Header Section */}
         <div className="dashboard-header">
-          <div className="TitleVA">
+          <div className="greeting">
             <h3>Analytics</h3>
             <p>View different interactive analytics chart</p>
           </div>
@@ -358,12 +360,12 @@ function OrganicTrafficChart({ onRemove }) {
                 <option value="year">Year</option>  
               </select>
               <div className="ue-menu-container">
-                <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}>⋮</button>
+                <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}><BsThreeDotsVertical /></button>
                 {menuOpen && (
                   <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-                    <div className="ue-menu-item" onClick={() => setShowModal(true)}>👁 View</div>
-                    <div className="ue-menu-item" onClick={handleExport}>📤 Export</div>
-                    <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+                    <div className="ue-menu-item" onClick={() => setShowModal(true)}><FaRegEye /> View</div>
+                    <div className="ue-menu-item" onClick={handleExport}><FaFileExport /> Export</div>
+                    <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
                   </div>
                 )}
               </div>
@@ -601,17 +603,17 @@ function UserEngagementChart({ onRemove }) {
               className="ue-menu-btn"
               onClick={() => setMenuOpen((open) => !open)}
             >
-              ⋮
+              <BsThreeDotsVertical />
             </button>
             {menuOpen && (
               <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                 <div className="ue-menu-item" onClick={() => setShowModal(true)}>
-                  👁 View
+                  <FaRegEye /> View
                 </div>
                 <div className="ue-menu-item" onClick={handleExport}>
-                  📤 Export
+                  <FaFileExport /> Export
                 </div>
-                <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+                <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
               </div>
             )}
           </div>
@@ -769,24 +771,24 @@ function BusinessParticipationChart({onRemove}) {
         <div className="bp-header">
           <div>
             <h1 className="bp-title">Business Participation</h1>
-            <p className="bp-total">Percentage of Active vs. inactive Businesses</p>
+            <p className="bp-total">Percentage of Active vs. Inactive Businesses</p>
           </div>
           <div className="ue-menu-container">
             <button
               className="ue-menu-btn"
               onClick={() => setMenuOpen(open => !open)}
             >
-              ⋮
+              <BsThreeDotsVertical />
             </button>
             {menuOpen && (
               <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
                 <div className="ue-menu-item" onClick={() => setShowModal(true)}>
-                  👁 View
+                <FaRegEye /> View
                 </div>
                 <div className="ue-menu-item" onClick={handleExport}>
-                  📤 Export
+                <FaFileExport /> Export
                 </div>
-                <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+                <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
               </div>
             )}
           </div>
@@ -958,14 +960,14 @@ function SessionDeviceChart({onRemove}) {
     <div className="device-chart-card" style={{ position: 'relative' }} ref={chartContainerRef}>
       {/* Header */}
       <div className="session-device-header">
-        <h2 className="device-title">Session device</h2>
+        <h2 className="device-title">Session Device</h2>
         <div className="ue-menu-container">
-          <button className="ue-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>⋮</button>
+          <button className="ue-menu-btn" onClick={() => setMenuOpen(!menuOpen)}><BsThreeDotsVertical /></button>
           {menuOpen && (
             <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-              <div className="ue-menu-item" onClick={() => setShowModal(true)}>👁 View</div>
-              <div className="ue-menu-item" onClick={handleExport}>📤 Export</div>
-              <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+              <div className="ue-menu-item" onClick={() => setShowModal(true)}><FaRegEye /> View</div>
+              <div className="ue-menu-item" onClick={handleExport}><FaFileExport /> Export</div>
+              <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
             </div>
           )}
         </div>
@@ -1172,7 +1174,7 @@ function BrowserUsageChart({onRemove}) {
       <div className="browser-card" ref={chartRef}>
         <div
           className="browser-header">
-          <h3>Browser usage</h3>
+          <h3>Browser Usage</h3>
 
           <div className="BU-dropdown-container" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <select
@@ -1186,12 +1188,12 @@ function BrowserUsageChart({onRemove}) {
             </select>
 
             <div className="ue-menu-container" style={{ position: "relative" }}>
-              <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}>⋮</button>
+              <button className="ue-menu-btn" onClick={() => setMenuOpen((open) => !open)}><BsThreeDotsVertical /></button>
               {menuOpen && (
                 <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-                  <div className="ue-menu-item" onClick={() => { setShowModal(true); setMenuOpen(false); }}>👁 View</div>
-                  <div className="ue-menu-item" onClick={() => { handleExport(); setMenuOpen(false); }}>📤 Export</div>
-                  <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+                  <div className="ue-menu-item" onClick={() => { setShowModal(true); setMenuOpen(false); }}><FaRegEye /> View</div>
+                  <div className="ue-menu-item" onClick={() => { handleExport(); setMenuOpen(false); }}><FaFileExport /> Export</div>
+                  <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
                 </div>
               )}
             </div>
@@ -1593,12 +1595,12 @@ return (
           <option value="Monthly">Monthly</option>
         </select>
         <div className="ue-menu-container" style={{ position: "relative" }}>
-          <button className="ue-menu-btn" onClick={() => setMenuOpen(prev => !prev)}>⋮</button>
+          <button className="ue-menu-btn" onClick={() => setMenuOpen(prev => !prev)}><BsThreeDotsVertical /></button>
           {menuOpen && (
             <div className="ue-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-              <div className="ue-menu-item" onClick={() => { setShowModal(true); setMenuOpen(false); }}>👁 View</div>
-              <div className="ue-menu-item" onClick={() => { handleExport(); setMenuOpen(false); }}>📤 Export</div>
-              <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}>🗑 Remove</div>
+              <div className="ue-menu-item" onClick={() => { setShowModal(true); setMenuOpen(false); }}><FaRegEye /> View</div>
+              <div className="ue-menu-item" onClick={() => { handleExport(); setMenuOpen(false); }}><FaFileExport /> Export</div>
+              <div className="ue-menu-item ue-menu-item--danger" onClick={onRemove}><FaTrash /> Remove</div>
             </div>
           )}
         </div>

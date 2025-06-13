@@ -19,13 +19,20 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   }
   
-  .section-header {
+  .section-header-profile {
     display: flex; 
     justify-content: space-between;
     align-items: center;
   }
 
   .profile-section h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .section-header-profile h2 {
     margin-bottom: 20px;
     color: #333;
     font-size: 1.5rem;
@@ -589,6 +596,10 @@
 
   .profile-section {
     width: 100%;
+  }
+
+  .profile-section h2 {
+    font-size: 1.4rem;
   }
 
   .profile-row {

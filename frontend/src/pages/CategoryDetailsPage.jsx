@@ -333,7 +333,7 @@ const CategoryDetailsPage = () => {
         </div>
         
         <div className="search-filter-container">
-          <div className="search-bar">
+          <div className="search-bar-category">
             <input
               type="text"
               placeholder="Search locations by name..."
@@ -341,7 +341,7 @@ const CategoryDetailsPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            <i className="search-icon fas fa-search"></i>
+            <i className="search-icon-category fas fa-search"></i>
           </div>
           
           <div className="category-filter-bar">

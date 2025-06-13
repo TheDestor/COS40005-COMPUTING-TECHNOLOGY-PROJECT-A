@@ -203,7 +203,7 @@
   margin-bottom: 2rem;
 }
 
-.search-bar {
+.search-bar-category {
   position: relative;
   max-width: 600px;
   margin: 0 auto 1.5rem;
@@ -225,7 +225,7 @@
   outline: none;
 }
 
-.search-icon {
+.search-icon-category {
   position: absolute;
   left: 1.2rem;
   top: 50%;
@@ -688,7 +688,7 @@
     padding-left: 2.5rem;
   }
   
-  .search-icon {
+  .search-icon-category {
     left: 1rem;
   }
 

@@ -357,7 +357,7 @@ const ProfileSettingsPage = () => {
 
         return (
           <div className="profile-section">
-            <div className="section-header">
+            <div className="section-header-profile">
               <h2><MdPerson /> Account Preferences</h2>
               {!isEditingProfile && (
                 <button className="edit-profile-btn" onClick={() => setIsEditingProfile(true)}>

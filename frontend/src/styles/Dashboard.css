@@ -511,6 +511,7 @@ svg {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
   padding: 20px;
+  margin-top: 24px;
 }
 
 .section-header {
@@ -1071,7 +1072,7 @@ svg {
   }
   
   .dashboard-actions {
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: flex-start;
     gap: 15px;
   }
@@ -1081,7 +1082,7 @@ svg {
   }
   
   .search-bar {
-    width: 100%;
+    width: 40%;
   }
 
   .action-icons {
@@ -1287,8 +1288,9 @@ svg {
     font-size: 14px;
   }
 
-  .search-bar input {
+  .dashboard-actions .search-bar input {
     font-size: 13px;
+    width: 150px;
   }
 
   .icon-wrapper {
