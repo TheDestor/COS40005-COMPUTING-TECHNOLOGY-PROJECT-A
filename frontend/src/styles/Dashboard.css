@@ -1166,6 +1166,7 @@ svg {
 @media (max-width: 480px) {
   .dashboard-content {
     padding: 8px;
+    margin-top: 50px;
   }
 
   .dashboard-header {

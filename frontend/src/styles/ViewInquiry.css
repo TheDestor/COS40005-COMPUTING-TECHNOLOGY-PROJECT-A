@@ -38,18 +38,6 @@
     background-color: rgba(0, 0, 0, 0.1);
   }
   
-  .stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: #2c3345;
-  }
-  
-  .stat-label {
-    font-size: 14px;
-    color: #6b7280;
-    margin-top: 5px;
-  }
-  
   .inquiry-filters {
     position: relative;
   }
@@ -80,9 +68,9 @@
   .filter-dropdown {
     position: absolute;
     right: auto;
-    left: -180px; /* This will position it more toward the statistics area */
+    left: -130px; /* This will position it more toward the statistics area */
     top: calc(100% + 10px);
-    width: 240px;
+    width: 200px;
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
@@ -348,6 +336,7 @@
   .inquiry-user-info {
     display: flex;
     align-items: center;
+    order: 1;
   }
   
   .detail-avatar {
@@ -369,6 +358,14 @@
     margin: 0;
     font-size: 14px;
     color: #6b7280;
+  }
+  
+  .header-top-row {
+    display: flex;
+    justify-content: flex-end;
+    width: auto;
+    gap: 10px;
+    order: 2;
   }
   
   .inquiry-actions {
@@ -439,11 +436,12 @@
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
     width: 150px;
     overflow: hidden;
-    display: none;
+    display: none; /* Default to hidden */
     z-index: 10;
   }
   
-  .more-actions:hover .more-dropdown {
+  /* NEW: Show dropdown when it has the 'active' class */
+  .more-dropdown.active {
     display: block;
   }
   
@@ -533,6 +531,7 @@
     margin-bottom: 16px;
     resize: vertical;
     transition: all 0.2s ease;
+    background-color: #f9fafb;
   }
   
   .inquiry-reply textarea:focus {
@@ -603,14 +602,6 @@
 
     .inquiry-statistics {
       gap: 20px; /* Reduce gap between stats */
-    }
-
-    .stat-value {
-      font-size: 20px; /* Slightly smaller stats font */
-    }
-
-    .stat-label {
-      font-size: 13px;
     }
 
     .filter-button {
@@ -739,14 +730,6 @@
       gap: 15px;
     }
 
-    .stat-value {
-      font-size: 18px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-    }
-
     .inquiry-filters {
       width: 100%;
       display: flex;
@@ -800,186 +783,148 @@
     }
 
     .inquiry-detail-header {
-      flex-direction: column; /* Stack header content */
-      align-items: flex-start;
+      flex-direction: column; /* Stack children (top-row and user-info) vertically */
+      align-items: flex-start; /* Align all children to the left by default */
       padding: 15px;
       gap: 10px;
+    }
+
+    .header-top-row {
+      width: 100%; /* Take full width of the parent to allow justify-content: space-between to work */
+      display: flex;
+      justify-content: space-between; /* Push back button to left, actions to right */
+      align-items: center; /* Vertically align items in the row */
+      gap: 10px; /* Space between the back button and the group of actions */
+      align-self: flex-end; /* Push this row to the right within the column layout */
+      order: unset;
     }
 
     .inquiry-user-info {
-      width: 100%; /* Take full width */
+      width: 100%; /* Take full width to ensure it's on its own line */
+      flex-direction: row; /* Keep avatar and text side-by-side within user info */
+      align-items: center;
+      margin-top: 5px; /* Add a small top margin for spacing from the top row */
+      order: unset;
     }
 
     .inquiry-actions {
-      width: 100%;
-      justify-content: space-between; /* Distribute action buttons */
-    }
-
-    .detail-avatar {
-      width: 40px;
-      height: 40px;
-      margin-right: 10px;
-    }
-
-    .detail-name {
-      font-size: 16px;
-    }
-
-    .detail-email {
-      font-size: 12px;
-    }
-
-    .inquiry-action-btn {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .more-actions {
-      width: 30px;
-      height: 30px;
-      font-size: 1rem;
-    }
-
-    .more-dropdown {
-      width: 120px;
-    }
-
-    .more-dropdown button {
-      padding: 8px 12px;
-      font-size: 12px;
-    }
-
-    .inquiry-detail-content {
-      padding: 15px;
-    }
-
-    .inquiry-meta {
-      grid-template-columns: 1fr; /* Stack meta items vertically */
-      gap: 10px;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-    }
-
-    .meta-label {
-      font-size: 11px;
-    }
-
-    .meta-value {
-      font-size: 13px;
-    }
-
-    .inquiry-message h4,
-    .inquiry-reply h4 {
-      font-size: 15px;
-      margin-bottom: 8px;
-    }
-
-    .message-body {
-      font-size: 13px;
-      padding: 12px;
-    }
-
-    .inquiry-reply textarea {
-      min-height: 100px; /* Smaller textarea */
-      padding: 10px;
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
-
-    .send-reply-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-    }
-
-    .no-inquiry-selected, .no-inquiries {
-      font-size: 14px;
-      padding: 20px;
-      text-align: center;
+      flex-wrap: wrap; /* Allow buttons to wrap if they exceed row space */
+      justify-content: flex-end; /* Align actions to the right within their container */
+      gap: 8px; /* Space between action buttons */
+      flex-grow: 1; /* Allow actions to grow and fill available space */
     }
   }
 
   /* For screens smaller than 600px (e.g., standard phones) */
   @media (max-width: 600px) {
     .inquiry-container {
-      /* When on a phone, we'll implement a logic in JS to show either list or detail */
-      /* This CSS simply ensures they are styled correctly when visible */
+      /* Revert grid-template-columns to 1fr from 992px breakpoint */
+      grid-template-columns: 1fr;
+      overflow: hidden; /* Hide overflow for sliding panels */
+      position: relative; /* Essential for absolutely positioned children */
+      height: calc(100vh - 230px); /* Maintain fixed height for the container */
     }
 
-    /* To manage visibility on mobile, you'd typically add a class
-       e.g., .inquiry-list.hidden { display: none; }
-       and .inquiry-detail.hidden { display: none; }
-       and toggle them via JavaScript.
-    */
-
-    .inquiry-statistics {
-      flex-direction: column; /* Stack stats even tighter */
-      align-items: flex-start;
+    /* Apply absolute positioning and transforms for sliding effect */
+    .inquiry-list,
+    .inquiry-detail {
+        position: absolute; /* Take them out of normal flow */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%; /* Fill the parent container */
+        transition: transform 0.3s ease-in-out;
+        box-shadow: none; /* Remove shadows when transitioning/overlaying */
+        border: none; /* Remove borders */
+        background-color: white; /* Ensure consistent background */
     }
 
-    .stat {
-      width: 100%; /* Each stat takes full width */
-      align-items: flex-start;
+    .inquiry-list {
+        transform: translateX(0); /* Default: show list */
+        z-index: 2; /* Ensure list is above detail initially */
+        pointer-events: auto; /* Enable pointer events for the list */
     }
 
-    .stat-value {
-      font-size: 20px; /* Slightly larger again for readability when stacked */
+    .inquiry-detail {
+        transform: translateX(100%); /* Default: hide detail off-screen to the right */
+        z-index: 1; /* Ensure detail is below list initially */
+        display: flex; /* Always keep display flex for detail on mobile for its internal layout */
+        flex-direction: column;
+        pointer-events: none; /* Disable pointer events for the hidden detail */
     }
 
-    .stat-label {
-      font-size: 14px;
+    /* When mobile-detail-active, slide list out and detail in */
+    .inquiry-container.mobile-detail-active .inquiry-list {
+        transform: translateX(-100%); /* Slide list off-screen to the left */
+        pointer-events: none; /* Disable pointer events for the hidden list */
     }
 
-    .inquiry-filters {
-      justify-content: flex-start; /* Align filter button to start */
+    .inquiry-container.mobile-detail-active .inquiry-detail {
+        transform: translateX(0); /* Slide detail into view */
+        z-index: 3; /* Bring detail to front when active */
+        pointer-events: auto; /* Enable pointer events for the active detail */
     }
 
-    .filter-dropdown {
-      right: auto;
-      left: 0; /* Align dropdown to the left */
-      width: 100%; /* Full width dropdown */
-      max-width: 250px; /* Limit max width */
-      padding: 10px;
+    /* Adjust inquiry detail header for mobile to stack items */
+    .inquiry-detail-header {
+      flex-direction: column; /* Stack children vertically */
+      align-items: flex-start; /* Align children to the start */
+      padding: 15px;
+      gap: 10px; /* Space between the rows (top-row and user-info) */
     }
 
-    .filter-dropdown::before {
-      left: 20px; /* Adjust triangle pointer */
-      right: auto;
+    /* New style for the top row containing back button and actions */
+    .header-top-row {
+      display: flex;
+      justify-content: space-between; /* Push back button left, actions right */
+      align-items: center;
+      width: 100%; /* Take full width */
+      gap: 10px; /* Space between the back button and the group of actions */
     }
 
-    .filter-group select {
-      font-size: 13px;
-      padding: 8px;
+    /* Style for the new back button */
+    .back-button {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 12px;
+        background-color: #f4f5f7;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #2c3345;
+        transition: background-color 0.2s ease;
+        flex-shrink: 0; /* Prevent button from shrinking */
     }
 
-    .clear-filters {
-      font-size: 13px;
-      padding: 8px;
+    .back-button:hover {
+        background-color: #e2e8f0;
+    }
+
+    .inquiry-user-info {
+        width: 100%; /* Ensure user info takes full width to be on its own line */
+        flex-direction: row; /* Keep avatar and text side-by-side within user info */
+        align-items: center;
+        margin-top: 5px; /* Add a small top margin for spacing from the top row */
     }
 
     .inquiry-actions {
-      flex-wrap: wrap; /* Allow action buttons to wrap */
-      justify-content: center;
-      gap: 8px;
+        margin-left: 0; /* Override any previous margin-left: auto; if it conflicts with space-between */
+        flex-wrap: wrap; /* Allow buttons to wrap if they exceed row space */
+        justify-content: flex-end; /* Keep actions right-aligned within their container */
+        gap: 8px;
+        flex-grow: 1; /* Allow actions to grow and fill available space */
     }
 
-    .inquiry-action-btn {
-      flex-grow: 1; /* Allow buttons to grow and fill space */
-      text-align: center;
+    .inquiry-actions .more-actions{
+      width: 35px;
+      height: 35px;
     }
   }
 
   /* For very small screens smaller than 480px (e.g., small phones) */
   @media (max-width: 480px) {
-    .dashboard-header {
-      flex-direction: column; /* Stack header elements */
-      align-items: flex-start;
-      gap: 15px;
-    }
-
-    .search-bar {
-      width: 100%; /* Full width search bar */
-    }
-
     .inquiry-options {
       padding: 10px;
       gap: 10px;
@@ -989,17 +934,9 @@
       gap: 10px;
     }
 
-    .stat-value {
-      font-size: 16px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-    }
-
-    .inquiry-list {
+    .inquiry-list, .inquiry-detail {
       min-height: 200px;
-      max-height: 350px;
+      max-height: 100vh;
     }
 
     .inquiry-item {
@@ -1065,14 +1002,15 @@
     }
 
     .inquiry-actions {
-      flex-direction: column; /* Stack action buttons */
-      gap: 5px;
+      flex-direction: row; /* Ensure action buttons stay in a row */
+      gap: 5px; /* Smaller gap between individual action buttons */
+      align-items: center;
+      flex-wrap: wrap; /* Allow wrapping */
+      justify-content: flex-end;
     }
-
-    .inquiry-action-btn, .send-reply-btn {
-      width: 100%; /* Full width buttons */
-      font-size: 12px;
-      padding: 8px;
+    .inquiry-action-btn {
+        width: auto; /* Let buttons size naturally */
+        text-align: center; /* Center text within button */
     }
 
     .inquiry-detail-content {
@@ -1109,5 +1047,14 @@
       padding: 8px;
       font-size: 12px;
       margin-bottom: 10px;
+      color: #333;
+    }
+
+    /* Ensure header-top-row maintains row layout */
+    .header-top-row {
+      flex-direction: row; /* Keep elements in a row */
+      justify-content: space-between; /* Distribute back button and actions */
+      align-items: center; /* Vertically align items */
+      gap: 5px; /* Small gap between back button and actions group */
     }
   }

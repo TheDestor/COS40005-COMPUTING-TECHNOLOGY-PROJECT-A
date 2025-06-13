@@ -175,7 +175,7 @@
 /* ==========================
    Status Badges & Actions
 ============================= */
-.status-badge {
+.status-badge-user {
     display: inline-block;
     padding: 5px 10px;
     border-radius: 16px;
@@ -185,32 +185,32 @@
     color: #fff;
 }
 
-.status-badge.system-admin {
+.status-badge-user.system-admin {
     background-color: #6a1b9a; /* purple */
     color: white;
   }
   
-  .status-badge.cbt-admin {
+  .status-badge-user.cbt-admin {
     background-color: #1976d2; /* blue */
     color: white;
   }
   
-  .status-badge.business-user {
+  .status-badge-user.business-user {
     background-color: #ef6c00; /* orange */
     color: white;
   }
   
-  .status-badge.user {
+  .status-badge-user.user {
     background-color: #43a047; /* green */
     color: white;
   }
   
-  .status-badge.active {
+  .status-badge-user.active {
     background-color: #4caf50; /* green */
     color: white;
   }
   
-  .status-badge.inactive {
+  .status-badge-user.inactive {
     background-color: #f44336; /* red */
     color: white;
   }  
@@ -304,7 +304,7 @@
     position: relative;
   }
   
-  .filter-dropdown {
+  .filter-dropdown-user {
     position: absolute;
     top: 110%;
     right: 0;
@@ -321,12 +321,12 @@
     flex-wrap: wrap; /* wrap if not enough space */
   }
   
-  .filter-group {
+  .filter-group-user {
     margin-right: 2rem;
     margin-bottom: 0; /* remove bottom margin if displayed inline */
   }
   
-  .filter-group h4 {
+  .filter-group-user h4 {
     margin-top: 0;
     margin-bottom: 1rem;
     color: #007bff;

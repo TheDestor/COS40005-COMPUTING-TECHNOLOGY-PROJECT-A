@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FaSearch,
   FaBell,
@@ -10,7 +10,8 @@ import {
   FaReply,
   FaExclamationTriangle,
   FaStar,
-  FaClock
+  FaClock,
+  FaArrowLeft
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -37,100 +38,42 @@ const ViewInquiry = () => {
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [replyText, setReplyText] = useState('');
   const { accessToken } = useAuth();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const [showInquiryDetail, setShowInquiryDetail] = useState(false);
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+  const moreActionsRef = useRef(null);
 
-  // Dummy data for inquiries
   useEffect(() => {
-    // const dummyInquiries = [
-    //   {
-    //     id: 1,
-    //     name: 'Gokul Kalla',
-    //     email: 'gokulkalla@gmail.com',
-    //     subject: 'Information about business registration',
-    //     message: 'Hello, I would like to know more about how to register my business on your platform. What are the requirements and associated costs? Do you have any special offers for new businesses?',
-    //     date: '2025-04-20T14:25:00',
-    //     status: 'unread',
-    //     priority: 'medium',
-    //     avatar: profile1
-    //   },
-    //   {
-    //     id: 2,
-    //     name: 'Carlos Sainz',
-    //     email: 'carlos.sainz@gmail.com',
-    //     subject: 'Technical support needed',
-    //     message: 'I am experiencing issues with uploading photos to my business profile. The system keeps showing an error message. I have tried different browsers but the problem persists. Can you please help me resolve this issue as soon as possible? My business ID is BUS-2023-456.',
-    //     date: '2025-04-19T09:12:00',
-    //     status: 'in-progress',
-    //     priority: 'high',
-    //     avatar: profile2
-    //   },
-    //   {
-    //     id: 3,
-    //     name: 'Kenneth',
-    //     email: 'kenneth@gmail.com',
-    //     subject: 'Feedback on recent features',
-    //     message: 'I wanted to share some feedback on the new booking feature. It has significantly improved my business workflow. However, I would suggest adding a calendar sync option to avoid double bookings with my existing systems. Overall, great work with the platform improvements!',
-    //     date: '2025-04-18T16:35:00',
-    //     status: 'resolved',
-    //     priority: 'low',
-    //     avatar: profile3
-    //   },
-    //   {
-    //     id: 4,
-    //     name: 'Daniel',
-    //     email: 'daniel@gmail.com',
-    //     subject: 'Complaint about review system',
-    //     message: 'I believe there are some fake reviews on my business profile. I have noticed several 1-star reviews from accounts with no other activity. Could you please investigate this matter? This is severely affecting my business reputation. I can provide more details if needed.',
-    //     date: '2025-04-17T11:20:00',
-    //     status: 'unread',
-    //     priority: 'high',
-    //     avatar: profile4
-    //   },
-    //   {
-    //     id: 5,
-    //     name: 'Steph',
-    //     email: 'steph12@gmail.com',
-    //     subject: 'Partnership proposal',
-    //     message: 'I represent a tourism board in the Sunshine Coast region. We are interested in forming a strategic partnership with your platform to promote local businesses. Could someone from your business development team contact me to discuss potential collaboration opportunities?',
-    //     date: '2025-04-16T14:50:00',
-    //     status: 'in-progress',
-    //     priority: 'medium',
-    //     avatar: profile5
-    //   },
-    //   {
-    //     id: 6,
-    //     name: 'Alvin',
-    //     email: 'alvin@gmail.com',
-    //     subject: 'Account deletion request',
-    //     message: 'I would like to request the deletion of my business account. I have closed my business and no longer need the listing. Please confirm when this has been completed. My business ID is BUS-2021-789.',
-    //     date: '2025-04-15T08:05:00',
-    //     status: 'resolved',
-    //     priority: 'low',
-    //     avatar: profile6
-    //   },
-    //   {
-    //     id: 7,
-    //     name: 'Gary',
-    //     email: 'gary@gmail.com',
-    //     subject: 'Issue with payment processing',
-    //     message: 'I attempted to pay for the premium subscription but the transaction failed multiple times. My card has sufficient funds and works on other platforms. Can you please check if there are any issues with your payment gateway? I would like to upgrade as soon as possible.',
-    //     date: '2025-04-14T13:15:00',
-    //     status: 'unread',
-    //     priority: 'high',
-    //     avatar: profile7
-    //   },
-    //   {
-    //     id: 8,
-    //     name: 'Lara Wilson',
-    //     email: 'lauren.wilson@gmail.com',
-    //     subject: 'Question about analytics feature',
-    //     message: 'I recently upgraded to your premium plan but I am having trouble understanding some of the analytics data. Specifically, the conversion metrics seem confusing. Could you provide some guidance or documentation on how to interpret these numbers?',
-    //     date: '2025-04-13T15:40:00',
-    //     status: 'in-progress',
-    //     priority: 'medium',
-    //     avatar: profile8
-    //   }
-    // ];
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600);
+      if (window.innerWidth > 600 && showInquiryDetail) {
+        setShowInquiryDetail(false);
+      }
+    };
 
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showInquiryDetail]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreActionsRef.current && !moreActionsRef.current.contains(event.target)) {
+        setShowMoreDropdown(false);
+      }
+    };
+
+    if (showMoreDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMoreDropdown]);
+
+  useEffect(() => {
     const fetchInquiries = async () => {
       try {
         const response = await ky.get(
@@ -161,13 +104,18 @@ const ViewInquiry = () => {
             const firstInquiry = mappedInquiries[0];
             if (firstInquiry.status === "Unread") {
               firstInquiry.status = "in-progress";
-              mappedInquiries[0] = firstInquiry;
-              setInquiries([...mappedInquiries]);
+              const updatedMappedInquiries = mappedInquiries.map(item => item.id === firstInquiry.id ? firstInquiry : item);
+              setInquiries(updatedMappedInquiries);
+              setSelectedInquiry(firstInquiry);
             } else {
-              setInquiries([...mappedInquiries]);
+              setInquiries(mappedInquiries);
+              setSelectedInquiry(firstInquiry);
             }
-            setSelectedInquiry(firstInquiry);
+            if (isMobile) {
+              setShowInquiryDetail(false);
+            }
           } else {
+            setInquiries([]);
             setSelectedInquiry(null);
           }
         } else {
@@ -179,9 +127,8 @@ const ViewInquiry = () => {
     }
 
     fetchInquiries();
-  }, []);
+  }, [accessToken, isMobile]);
 
-  // readable string format of date
   const formatDate = (dateString) => {
     const options = {
       year: 'numeric',
@@ -193,11 +140,12 @@ const ViewInquiry = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Function to handle inquiry selection
   const handleSelectInquiry = (inquiry) => {
     setSelectedInquiry(inquiry);
+    if (isMobile) {
+      setShowInquiryDetail(true);
+    }
 
-    // If the inquiry was unread, mark it as in-progress
     if (inquiry.status === 'Unread') {
       const updatedInquiries = inquiries.map(item => {
         if (item.id === inquiry.id) {
@@ -211,7 +159,11 @@ const ViewInquiry = () => {
     }
   };
 
-  // Handler for marking an inquiry as resolved
+  const handleBackToList = () => {
+    setShowInquiryDetail(false);
+    setSelectedInquiry(null);
+  };
+
   const handleMarkResolved = async (id) => {
     try {
       const payload = {
@@ -227,12 +179,12 @@ const ViewInquiry = () => {
       ).json();
 
       if (response.success) {
-        console.log("test");
+        console.log("Inquiry marked as resolved on backend.");
       } else {
-        console.log("failed");
+        console.log("Failed to mark inquiry as resolved on backend.");
       }
     } catch (error) {
-
+      console.error("Error updating inquiry status:", error);
     }
     const updatedInquiries = inquiries.map(item => {
       if (item.id === id) {
@@ -248,36 +200,31 @@ const ViewInquiry = () => {
     }
   };
 
-  // Handler for deleting an inquiry
   const handleDeleteInquiry = (id) => {
     const updatedInquiries = inquiries.filter(item => item.id !== id);
     setInquiries(updatedInquiries);
 
-    // If the deleted inquiry was selected, select the first one from the updated list
     if (selectedInquiry && selectedInquiry.id === id) {
       setSelectedInquiry(updatedInquiries.length > 0 ? updatedInquiries[0] : null);
+      if (isMobile && updatedInquiries.length === 0) {
+        setShowInquiryDetail(false);
+      }
     }
   };
 
-  // Handler for submitting a reply
   const handleSubmitReply = (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
 
-    // WE CAN USE THIS FOR BACKEND PURPOSE
     console.log(`Reply to inquiry #${selectedInquiry.id}:`, replyText);
 
-    // Mark as resolved
     handleMarkResolved(selectedInquiry.id);
 
-    // Reset reply field
     setReplyText('');
 
-    // Show success message (we might use a toast notification)
     alert("Reply sent successfully!");
   };
 
-  // Filter inquiries based on search query and filters
   const filteredInquiries = inquiries.filter(inquiry => {
     const matchesSearch =
       inquiry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -291,7 +238,6 @@ const ViewInquiry = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  // Helper function to get status badge styling
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'Unread':
@@ -305,7 +251,6 @@ const ViewInquiry = () => {
     }
   };
 
-  // Helper function to get priority badge styling
   const getPriorityBadgeClass = (priority) => {
     switch (priority) {
       case 'high':
@@ -319,7 +264,6 @@ const ViewInquiry = () => {
     }
   };
 
-  // Helper function to display priority icon
   const renderPriorityIcon = (priority) => {
     switch (priority) {
       case 'high':
@@ -366,7 +310,6 @@ const ViewInquiry = () => {
         </div>
 
         <div className="inquiry-content">
-          {/* Filters and options */}
           <div className="inquiry-options">
             <div className="inquiry-statistics">
               <div className="stat">
@@ -439,14 +382,13 @@ const ViewInquiry = () => {
             </div>
           </div>
 
-          <div className="inquiry-container">
-            {/* Left panel - Inquiry list */}
+          <div className={`inquiry-container ${isMobile && showInquiryDetail ? 'mobile-detail-active' : ''}`}>
             <div className="inquiry-list">
               {filteredInquiries.length > 0 ? (
                 filteredInquiries.map(inquiry => (
                   <div
                     key={inquiry.id}
-                    className={`inquiry-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'unread' ? 'unread' : ''}`}
+                    className={`inquiry-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'Unread' ? 'unread' : ''}`}
                     onClick={() => handleSelectInquiry(inquiry)}
                   >
                     <div className="inquiry-avatar">
@@ -480,39 +422,49 @@ const ViewInquiry = () => {
               )}
             </div>
 
-            {/* Right panel - Selected inquiry detail */}
             {selectedInquiry ? (
               <div className="inquiry-detail">
                 <div className="inquiry-detail-header">
+                  <div className="header-top-row">
+                    {isMobile && (
+                      <button className="back-button" onClick={handleBackToList}>
+                        <FaArrowLeft /> Back
+                      </button>
+                    )}
+                    <div className="inquiry-actions">
+                      <button
+                        className={`inquiry-action-btn resolve-btn ${selectedInquiry.status === 'Resolved' ? 'disabled' : ''}`}
+                        onClick={() => handleMarkResolved(selectedInquiry.id)}
+                        disabled={selectedInquiry.status === 'Resolved'}
+                      >
+                        <FaCheck /> {selectedInquiry.status === 'Resolved' ? 'Resolved' : 'Mark Resolved'}
+                      </button>
+                      <button
+                        className="inquiry-action-btn delete-btn"
+                        onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                      <div
+                        className="more-actions"
+                        ref={moreActionsRef}
+                        onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                      >
+                        <FaEllipsisV />
+                        <div className={`more-dropdown ${showMoreDropdown ? 'active' : ''}`}>
+                          <button>Forward</button>
+                          <button>Print</button>
+                          <button>Block Sender</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="inquiry-user-info">
                     <img src={selectedInquiry.avatar} alt={`${selectedInquiry.name}'s avatar`} className="detail-avatar" />
                     <div>
                       <h3 className="detail-name">{selectedInquiry.name}</h3>
                       <p className="detail-email">{selectedInquiry.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="inquiry-actions">
-                    <button
-                      className={`inquiry-action-btn resolve-btn ${selectedInquiry.status === 'resolved' ? 'disabled' : ''}`}
-                      onClick={() => handleMarkResolved(selectedInquiry.id)}
-                      disabled={selectedInquiry.status === 'resolved'}
-                    >
-                      <FaCheck /> {selectedInquiry.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
-                    </button>
-                    <button
-                      className="inquiry-action-btn delete-btn"
-                      onClick={() => handleDeleteInquiry(selectedInquiry.id)}
-                    >
-                      <FaTrash /> Delete
-                    </button>
-                    <div className="more-actions">
-                      <FaEllipsisV />
-                      <div className="more-dropdown">
-                        <button>Forward</button>
-                        <button>Print</button>
-                        <button>Block Sender</button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -556,13 +508,13 @@ const ViewInquiry = () => {
                         placeholder="Type your reply here..."
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        disabled={selectedInquiry.status === 'resolved'}
+                        disabled={selectedInquiry.status === 'Resolved'}
                       ></textarea>
                       <div className="reply-actions">
                         <button
                           type="submit"
                           className="send-reply-btn"
-                          disabled={selectedInquiry.status === 'resolved' || !replyText.trim()}
+                          disabled={selectedInquiry.status === 'Resolved' || !replyText.trim()}
                         >
                           <FaReply /> Send Reply
                         </button>
@@ -572,9 +524,11 @@ const ViewInquiry = () => {
                 </div>
               </div>
             ) : (
-              <div className="no-inquiry-selected">
-                <p>Select an inquiry to view details</p>
-              </div>
+              !isMobile && (
+                <div className="no-inquiry-selected">
+                  <p>Select an inquiry to view details</p>
+                </div>
+              )
             )}
           </div>
         </div>

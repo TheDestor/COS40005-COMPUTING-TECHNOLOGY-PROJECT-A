@@ -124,7 +124,7 @@ const UserManagementPage = () => {
               <FaFilter className="add-user-icon" /> Filter
             </button>
             {showFilters && (
-              <div className="filter-dropdown">
+              <div className="filter-dropdown-user">
                 <div className="filter-group">
                   <h4>Role</h4>
                   <div className="filter-options">

@@ -53,7 +53,7 @@
     position: relative;
   }
   
-  .filter-dropdown-container {
+  /* .filter-dropdown-container {
     position: relative;
   }
   
@@ -87,7 +87,7 @@
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
     padding: 16px;
     z-index: 10;
-  }
+  } */
   
   .filter-dropdown::before {
     content: '';
