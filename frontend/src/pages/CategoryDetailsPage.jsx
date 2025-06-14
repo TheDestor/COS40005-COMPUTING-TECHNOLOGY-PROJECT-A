@@ -211,49 +211,33 @@ const CategoryDetailsPage = () => {
 
   const centerIndex = carouselStart + 2;
 
-  const handlePrev = () => {
-    if (filteredItems.length < 5) {
-      // For <5 cards, rotate the array left
-      const arr = [...filteredItems];
-      arr.unshift(arr.pop());
-      // Rebuild visibleCards logic by updating filteredItems order
-      setDivisionItems(prev => prev.map(item => arr.find(a => a._id === item._id) || item));
-    } else {
-      if (carouselStart > 0) {
-        setCarouselStart(carouselStart - 1);
-      } else {
-        setCarouselStart(filteredItems.length - 5);
-      }
+  const handleNext = () => {
+    if (filteredItems.length > 1) {
+      setCarouselStart((prev) => (prev + 1) % filteredItems.length);
     }
   };
 
-  const handleNext = () => {
-    if (filteredItems.length < 5) {
-      // For <5 cards, rotate the array right
-      const arr = [...filteredItems];
-      arr.push(arr.shift());
-      setDivisionItems(prev => prev.map(item => arr.find(a => a._id === item._id) || item));
-    } else {
-      if (carouselStart < filteredItems.length - 5) {
-        setCarouselStart(carouselStart + 1);
-      } else {
-        setCarouselStart(0);
-      }
+  const handlePrev = () => {
+    if (filteredItems.length > 1) {
+      setCarouselStart((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
     }
   };
 
   let visibleCards = [];
-  if (filteredItems.length < 5) {
-    if (filteredItems.length === 1) {
-      visibleCards = [null, null, filteredItems[0], null, null];
-    } else if (filteredItems.length === 2) {
-      visibleCards = [null, filteredItems[0], null, filteredItems[1], null];
-    } else if (filteredItems.length === 3) {
-      visibleCards = [null, filteredItems[0], filteredItems[1], filteredItems[2], null];
-    } else if (filteredItems.length === 4) {
-      visibleCards = [filteredItems[0], filteredItems[1], filteredItems[2], filteredItems[3], null];
-    }
+  if (filteredItems.length === 1) {
+    // Only center
+    visibleCards = [null, null, filteredItems[0], null, null];
+  } else if (filteredItems.length === 2) {
+    // Center and right1
+    visibleCards = [null, null, filteredItems[0], filteredItems[1], null];
+  } else if (filteredItems.length === 3) {
+    // left1, center, right1
+    visibleCards = [null, filteredItems[0], filteredItems[1], filteredItems[2], null];
+  } else if (filteredItems.length === 4) {
+    // left2, left1, center, right1
+    visibleCards = [filteredItems[0], filteredItems[1], filteredItems[2], filteredItems[3], null];
   } else {
+    // 5 or more: normal carousel
     for (let i = 0; i < 5; i++) {
       const item = filteredItems[(carouselStart + i) % filteredItems.length];
       visibleCards.push(item);
@@ -365,31 +349,37 @@ const CategoryDetailsPage = () => {
             {visibleCards.map((item, idx) =>
               item ? (
                 <div
-                  key={item._id || item.name}
+                  key={item._id}
                   className={`carousel-card ${getCardPositionClass(idx)}${idx === 2 ? ' active' : ''}`}
                   onClick={() => {
-                    if (idx !== 2 && item && filteredItems.length > 1) {
-                      // Calculate the index of the clicked item in filteredItems
-                      let itemIndex = (carouselStart + idx) % filteredItems.length;
-                      // Calculate new carouselStart so that clicked card is at center (idx 2)
-                      let newStart = (itemIndex - 2 + filteredItems.length) % filteredItems.length;
-                      // For < 5 cards, always 0
-                      if (filteredItems.length <= 5) newStart = 0;
+                    if (item && filteredItems.length > 1) {
+                      const positionsToMove = idx - 2;
+                      let newStart;
+                      if (positionsToMove > 0) {
+                        // Move left (current behavior for right side)
+                        newStart = (carouselStart + positionsToMove + filteredItems.length) % filteredItems.length;
+                      } else if (positionsToMove < 0) {
+                        // Move right (new behavior for left side)
+                        newStart = (carouselStart + positionsToMove + filteredItems.length * 2) % filteredItems.length;
+                      } else {
+                        // Already center, do nothing
+                        return;
+                      }
                       setCarouselStart(newStart);
                     }
                   }}
-                  style={{ cursor: idx !== 2 && item ? 'pointer' : 'default' }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <img src={item.image || defaultImage} alt={item.name} />
-                  <span className="category-tag">{item.type}</span>
+                  <div className="card-reflection">
+                    <img src={item.image || defaultImage} alt="" aria-hidden="true" />
+                  </div>
                   <div className="carousel-card-hover-info">
                     <div>{item.name}</div>
                     <div style={{ fontSize: '0.95rem', fontWeight: 400, marginTop: 4 }}>{item.type}</div>
                   </div>
                 </div>
-              ) : (
-                <div key={idx} className="carousel-card empty"></div>
-              )
+              ) : null
             )}
           </div>
           <button className="carousel-arrow" onClick={handleNext}>
@@ -397,26 +387,40 @@ const CategoryDetailsPage = () => {
           </button>
         </div>
 
-        {filteredItems[centerIndex] && (
-          <div className="carousel-description">
-            <p>{filteredItems[centerIndex].description}</p>
-            <Link
-              to={`/discover/${filteredItems[centerIndex].slug}`}
-              state={{
-                name: filteredItems[centerIndex].name,
-                image: filteredItems[centerIndex].image,
-                desc: filteredItems[centerIndex].description,
-                coordinates: [filteredItems[centerIndex].latitude, filteredItems[centerIndex].longitude]
-              }}
-              className="explore-btn"
-            >
-              Explore more
-            </Link>
-          </div>
-        )}
+        <div className="carousel-description-section">
+          {visibleCards[2] && (
+            <>
+              <p className="carousel-description-text">
+                {visibleCards[2].description || "No description available."}
+              </p>
+              <div className="carousel-description-actions">
+                <Link
+                  to={`/discover/${visibleCards[2].slug}`}
+                  state={{
+                    name: visibleCards[2].name,
+                    image: visibleCards[2].image,
+                    desc: visibleCards[2].description,
+                    coordinates: [visibleCards[2].latitude, visibleCards[2].longitude]
+                  }}
+                  className="explore-btn"
+                >
+                  Explore more
+                </Link>
+                <a
+                  href={visibleCards[2].officialSite || "#"}
+                  className={`official-site-btn${visibleCards[2].officialSite ? "" : " disabled"}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  tabIndex={visibleCards[2].officialSite ? 0 : -1}
+                >
+                  Official Site
+                </a>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {showLogin && <LoginPage onClose={closeLogin} />}
       <Footer />
     </div>
   );
