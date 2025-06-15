@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaDownload } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import DatePicker from 'react-datepicker';
@@ -139,14 +139,6 @@ const ManageReviews = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    const handleStatusChange = (id, newStatus) => {
-      setReviews(prevReviews =>
-        prevReviews.map(review =>
-          review.id === id ? { ...review, status: newStatus } : review
-        )
-      );
-    };    
   };
 
   return (
@@ -154,7 +146,7 @@ const ManageReviews = () => {
       <Sidebar />
       <div className="MRdashboard-content">
         <div className="dashboard-header">
-          <div className="TitleMR">
+          <div className="greeting">
             <h3>Manage Reviews</h3>
             <p>Approve or Flag on users reivews</p>
           </div>
@@ -183,7 +175,7 @@ const ManageReviews = () => {
 
         {/* Filters and Download */}
         <div className="filters-actions-row">
-          <div className="mr-search-bar">
+          {/* <div className="mr-search-bar">
             <FaSearch className="search-icon" />
             <input
               type="text"
@@ -191,20 +183,7 @@ const ManageReviews = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
-
-          <div className="filter-dropdown-mr">
-            <select
-              className="status-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Flagged">Flagged</option>
-            </select>
-          </div>
+          </div> */}
 
           <div className="date-picker">
             <DatePicker
@@ -228,59 +207,73 @@ const ManageReviews = () => {
             />
           </div>
 
+          <div className="filter-dropdown-mr">
+            <select
+              className="status-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Flagged">Flagged</option>
+            </select>
+          </div>
+
           <button className="download-button" onClick={downloadCSV}>
             <FaDownload /> Download
           </button>
         </div>
 
         {/* Reviews Table */}
-          <div className="reviews-table-container">
-            <div className="table-header">
-              <div className="header-cell destination-id">Destination/ID</div>
-              <div className="header-cell">User Name</div>
-              <div className="header-cell review-content">Review Content</div>
-              <div className="header-cell">Date & Time</div>
-              <div className="header-cell">Status</div>
-              <div className="header-cell">Action</div>
-            </div>
+        <div className="reviews-table-container">
+          <div className="table-header">
+            <div className="header-cell destination-id">Destination/ID</div>
+            <div className="header-cell">User Name</div>
+            <div className="header-cell">Date & Time</div>
+            <div className="header-cell">Review Content</div>
+            <div className="header-cell">Status</div>
+            <div className="header-cell">Action</div>
+          </div>
 
-            {filteredReviews.map((review) => (
-              <div key={review.id} className="table-row">
-                <div className="table-cell destination-cell">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(review.id)}
-                    onChange={() => toggleSelection(review.id)}
-                  />
-                  <div>
-                    <div className="destination-name">{review.destination}</div>
-                    <div className="destination-id">{review.id}</div>
-                  </div>
+          {filteredReviews.map((review) => (
+            <div key={review.id} className="table-row">
+              <div className="table-cell destination-cell">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(review.id)}
+                  onChange={() => toggleSelection(review.id)}
+                />
+                <div>
+                  <div className="destination-name">{review.destination}</div>
+                  <div className="destination-id">{review.id}</div>
                 </div>
+              </div>
 
-                <div className="table-cell">{review.userName}</div>
+              <div className="table-cell">{review.userName}</div>
 
-                <div className="table-cell review-content">{review.content}</div>
-
-                <div className="table-cell">
-                {new Date(review.date).toLocaleDateString('en-GB')}, {new Date(review.date).toLocaleTimeString('en-GB', { 
-                  hour: '2-digit', 
-                  minute: '2-digit', 
-                  hour12: true 
+              <div className="table-cell">
+                {new Date(review.date).toLocaleDateString('en-GB')}, {new Date(review.date).toLocaleTimeString('en-GB', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
                 })}
-                </div>
+              </div>
 
+              <div className="table-cell">
+                <ReviewContentDisplay content={review.content} />
+              </div>
 
-                <div className="table-cell">
-                  <span className={`status-badge ${getStatusStyle(review.status)}`}>
-                    {review.status}
-                  </span>
-                </div>
+              <div className="table-cell">
+                <span className={`status-badge-mr ${getStatusStyle(review.status)}`}>
+                  {review.status}
+                </span>
+              </div>
 
-                <div className="table-cell action-cell">
+              <div className="table-cell action-cell">
                 {/* Approve Button */}
                 <button
-                  className={`action-button approve-btn ${review.status === 'Approved' ? 'approved' : ''}`}
+                  className={`action-button approve-btn-mr ${review.status === 'Approved' ? 'approved' : ''}`}
                   disabled={review.status === 'Approved'}
                   onClick={() => handleStatusChange(review.id, 'Approved')}
                   title={review.status === 'Approved' ? 'Approved - Cannot click' : 'Approve'}
@@ -298,11 +291,44 @@ const ManageReviews = () => {
                   <FaTimes />
                 </button>
               </div>
-
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
       </div>
+    </div>
+  );
+};
+
+// New helper component for expandable review content
+const ReviewContentDisplay = ({ content }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showButton, setShowButton] = useState(false);
+  const contentRef = useRef(null);
+
+  // Determine if content has more than 10 words
+  useEffect(() => {
+    const words = content.split(/\s+/).filter(word => word.length > 0); // Split by one or more spaces
+    setShowButton(words.length > 10);
+  }, [content]);
+
+  const toggleExpand = () => {
+    setIsExpanded(prev => !prev);
+  };
+
+  return (
+    <div className="review-content-wrapper">
+      <p
+        ref={contentRef}
+        // Apply 'limited' class if button is shown and content is not expanded
+        className={`review-text ${showButton && !isExpanded ? 'limited' : 'full-display'}`}
+      >
+        {content}
+      </p>
+      {showButton && ( // Only show button if content is longer than 10 words
+        <button onClick={toggleExpand} className="show-more-less-btn">
+          {isExpanded ? 'Show Less' : 'Show More'}
+        </button>
+      )}
     </div>
   );
 };

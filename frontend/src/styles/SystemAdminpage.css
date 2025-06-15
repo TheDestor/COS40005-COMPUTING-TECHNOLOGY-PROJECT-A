@@ -178,7 +178,7 @@
     overflow: hidden; /* Prevent overflow that might cause horizontal scrolling */
 }
 
-.table-header {
+.table-header-admin {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -186,7 +186,7 @@
 }
 
 /* Align h3 and icon in the table-header */
-.table-header h3 {
+.table-header-admin h3 {
     display: flex;
     align-items: center;
     gap: 8px;

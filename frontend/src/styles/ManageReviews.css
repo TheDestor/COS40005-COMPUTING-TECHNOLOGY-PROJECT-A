@@ -57,9 +57,13 @@
     padding: 12px 20px;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+  }
   
+  .filters-actions-row:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   
   /* Search Bar */
@@ -71,11 +75,18 @@
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid #e9ecef;
-    transition: border-color 0.2s1 1 50px
+    transition: all 0.3s ease;
   }
   
   .mr-search-bar:hover {
-    border-color: #ced4da;
+    border-color: #b0b8c2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  .mr-search-bar:focus-within {
+    border-color: #e9ecef;
+    box-shadow: none;
+    background-color: #ffffff;
   }
   
   .mr-search-bar input {
@@ -84,6 +95,7 @@
     flex: 1;
     font-size: 14px;
     color: #495057;
+    outline: none;
   }
   
   /* Filter Dropdown */
@@ -92,7 +104,14 @@
     min-width: 200px;
     background-color: #f8f9fa;
     position: relative;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+  }
   
+  .filter-dropdown-mr:hover {
+    border-color: #b0b8c2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   }
   
   .status-filter {
@@ -100,35 +119,64 @@
     width: 100%;
     padding: 8px 12px;
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: none;
     background-color: #f8f9fa;
     font-size: 14px;
     color: #495057;
-    display: flex;
-    justify-content: center; /* Centers text horizontally */
-    align-items: center;    /* Centers text vertically */
-    text-align: center;     /* Ensures text alignment */
-    text-align-last: center; /* Aligns selected value */
-    padding: 8px 12px 8px 12px; /* Right padding for arrow */
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13%205.1L146.2%20202.7%2018.8%2074.5a17.6%2017.6%200%200%200-25.2%200%2017.6%2017.6%200%200%200%200%2025.2l130.4%20128.2a17.6%2017.6%200%200%200%2025.2%200l130.4-128.2a17.6%2017.6%200%200%200%200-25.2z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 30px;
+    cursor: pointer;
+    outline: none;
   }
   
-  /* Dropdown options alignment */
-  .status-filter option {
-    text-align: center;
-    padding: 8px 12px;
-    direction: rtl; /* Helps center-align in some browsers */
+  .status-filter:focus {
+    border-color: #e9ecef;
+    box-shadow: none;
   }
-  
   
   /* Date Picker */
   .date-picker {
     flex: 1 1 0px;
     display: flex;
-    justify-content: center; /* Centers horizontally */
-    align-items: center;    /* Centers vertically */
+    justify-content: center;
+    align-items: center;
     height: 100%; 
+    color: #333;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    gap: 8px;
   }
   
+  .date-picker:hover {
+    border-color: #b0b8c2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  /* Specific styling for DatePicker input fields */
+  .react-datepicker__input-container input {
+    background-color: #f8f9fa;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #495057;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #e9ecef;
+  }
+  
+  .react-datepicker__input-container input:focus {
+    border-color: #e9ecef;
+    box-shadow: none;
+    background-color: #ffffff;
+  }
   
   /* Download Button */
   .download-button {
@@ -143,47 +191,82 @@
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
     justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
   .download-button:hover {
     background-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  
+  .download-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
   
   /* Reviews Table */
   .reviews-table-container {
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
   }
   
-  /* Fixed the columns to 6 */
-  .table-header {
+  .reviews-table-container:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  
+  /* Updated grid template columns for better readability (desktop and 992px) */
+  .table-header,
+  .table-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 3fr 1.5fr 1fr 1.5fr;
+    /* Columns: Destination/ID | User Name | Review Content | Date & Time | Status | Action */
+    grid-template-columns: 1.8fr 1fr 1.5fr 3.5fr 2fr 1fr; /* Adjusted proportions */
     gap: 15px;
-    padding: 12px 20px;
+    padding: 12px 20px; 
+    align-items: center;
+  }
+  
+  .table-header {
     background: #f8f9fa;
     font-weight: 600;
     color: #495057;
     border-bottom: 2px solid #e9ecef;
+    font-size: 14px; /* Ensure header font size is consistent */
+    white-space: nowrap; /* Prevent header text from wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Ensure individual header cells also handle overflow if their content is too long for the allocated fraction */
+  .header-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .table-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 3fr 1.5fr 1fr 1.5fr;
-    gap: 15px;
     padding: 15px 20px;
     border-bottom: 1px solid #e9ecef;
-    align-items: center;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .table-row:hover {
+    background-color: #fcfdff;
+    box-shadow: inset 3px 0 0 0 #3b82f6;
   }
   
   .table-cell {
     display: flex;
     align-items: center;
     font-size: 14px;
+    color: #495057; /* Consistent text color for cells */
+    line-height: 1.4; /* Improve line spacing for readability */
   }
   
   .destination-cell {
@@ -192,29 +275,76 @@
     gap: 15px;
   }
   
+  .destination-cell input[type="checkbox"] {
+    /* Set the background color for the checkbox */
+    background-color: #f8f9fa;
+    /* You might also want to style the border and appearance to match your theme */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    width: 18px; /* Adjust size if needed */
+    height: 18px; /* Adjust size if needed */
+    appearance: none; /* Remove default browser styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    outline: none; /* Remove default focus outline */
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  /* Style for when the checkbox is checked */
+  .destination-cell input[type="checkbox"]:checked {
+    background-color: #3b82f6; /* Example: blue when checked */
+    border-color: #3b82f6;
+  }
+  
+  /* Custom checkmark for the checkbox */
+  .destination-cell input[type="checkbox"]:checked::before {
+    content: '\2713'; /* Unicode checkmark character */
+    display: block;
+    color: white;
+    font-size: 14px; /* Adjust size of the checkmark */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .destination-cell input[type="checkbox"]:hover {
+    border-color: #3b82f6; /* Highlight border on hover */
+  }
+  
+  /* Remove border change and shadow on focus */
+  .destination-cell input[type="checkbox"]:focus {
+    border-color: #ced4da; /* Keep original border color on focus */
+    box-shadow: none; /* Ensure no shadow is applied on focus */
+  }
+  
   .destination-name {
     font-weight: 500;
     margin-bottom: 4px;
   }
   
   .destination-id {
-    color: #6c757d;
-    font-size: 0.9em;
+    color: #6c757d; /* Reverted to original lighter grey for better contrast */
+    font-size: 0.9em; /* Keep it slightly smaller than the destination name */
   }
   
+  /* Allow review content to wrap */
   .review-content {
-    color: #495057;
-    line-height: 1.4;
+    white-space: normal; /* Allow text to wrap naturally */
+    overflow-wrap: break-word; /* Modern and more robust way to break long words */
+    word-wrap: break-word; /* Fallback for older browsers */
+    overflow: visible; /* Ensure content is not hidden if it expands vertically */
   }
   
   /* Status Badges */
-  .status-badge {
+  .status-badge-mr {
     padding: 4px 12px;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     display: inline-block;
     font-weight: 700;
-  
   }
   
   .status-pending {
@@ -239,51 +369,428 @@
   }
   
   .action-button {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 18px;
+    font-size: 16px;
     border: none;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   }
   
   /* Approve Button */
-  .approve-btn {
-    background-color: #2ee61e;
+  .approve-btn-mr {
+    background-color: #28a745;
     color: white;
   }
   
   /* Flagged Button */
   .flagged-btn {
-    background-color: #f2022a;
+    background-color: #dc3545;
     color: white;
   }
   
   /* Darken buttons and make them unclickable when approved or flagged */
-  .approve-btn.approved {
-    cursor: not-allowed;
-    opacity:50%; /* No symbol cursor */
-  }
-  
+  .approve-btn-mr.approved,
   .flagged-btn.flagged {
-    cursor: not-allowed; /* No symbol cursor */
-    opacity:40%;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
   }
   
-  
-  /* Remove tooltip and add "No Symbol" cursor for disabled buttons */
-  .approve-btn.approved:hover,
+  /* Remove hover effects for disabled buttons */
+  .approve-btn-mr.approved:hover,
   .flagged-btn.flagged:hover {
-    cursor: not-allowed; /* No Symbol cursor on hover */
+    transform: none;
+    box-shadow: none;
   }
   
   /* Button hover effect */
-  .action-button:hover {
-    opacity: 0.7;
+  .action-button:hover:not(.approved):not(.flagged) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  
+  .action-button:active:not(.approved):not(.flagged) {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  /* New styles for review content display */
+  .review-content-wrapper {
+    display: flex;
+    flex-direction: column; /* Allows button to be below text */
+    align-items: flex-start; /* Align text and button to the start */
+    width: 100%;
+  }
+  
+  .review-text {
+    margin: 0; /* Remove default paragraph margin */
+    padding: 0;
+    width: 100%;
+    line-height: 1.4; /* Consistent line height */
+  }
+  
+  /* Styles for multi-line truncation with ellipsis */
+  .review-text.limited {
+    display: -webkit-box; /* Required for -webkit-line-clamp */
+    -webkit-line-clamp: 2; /* Show only 2 lines by default */
+    line-clamp: 2;
+    -webkit-box-orient: vertical; /* Required for -webkit-line-clamp */
+    overflow: hidden; /* Hides content beyond the line limit */
+    text-overflow: ellipsis; /* Adds ellipsis if content overflows */
+    /* max-height is no longer needed here as -webkit-line-clamp handles it */
+  }
+  
+  /* Styles for full display when expanded or if not limited */
+  .review-text.full-display {
+    white-space: normal; /* Allows text to wrap naturally */
+    overflow: visible; /* Ensures all content is visible */
+    text-overflow: clip; /* Removes ellipsis */
+    max-height: none; /* Allows content to expand fully */
+  }
+  
+  .show-more-less-btn {
+    background: none;
+    border: none;
+    color: #3b82f6; /* Blue color for the link */
+    font-size: 13px; /* Slightly smaller font for the button */
+    cursor: pointer;
+    padding: 0;
+    margin-top: 4px; /* Space between text and button */
+    text-align: left; /* Align button text to the left */
+    outline: none; /* Remove default focus outline */
+    transition: color 0.2s ease;
+  }
+  
+  .show-more-less-btn:hover {
+    color: #2563eb; /* Darker blue on hover */
+    text-decoration: underline; /* Underline on hover */
+  }
+  
+  /* MR Dashboard Content - Responsive adjustments */
+  .MRdashboard-content {
+    min-height: 100vh;
+    padding-bottom: 100px;
+    flex: 1;
+    padding: 30px; /* Default desktop padding */
+    margin-left: 280px; /* Default desktop sidebar margin */
+    box-sizing: border-box;
+    width: calc(100% - 280px); /* Default desktop width */
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow-y: auto;
+  }
+  
+  /* Filters Actions Row */
+  .filters-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 12px 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+  }
+  
+  /* --- Responsive Styles --- */
+  
+  /* For screens up to 992px (Tablet landscape / smaller desktop) */
+  @media screen and (max-width: 992px) {
+    .MRdashboard-content {
+      margin-left: 0; /* Sidebar collapses, content takes full width */
+      width: 100%;
+      padding: 20px; /* Maintain good padding */
+    }
+  
+    .filters-actions-row {
+      flex-wrap: wrap; /* Allow items to wrap to next line */
+      justify-content: space-between; /* Distribute items */
+      gap: 10px; /* Reduce gap slightly */
+      padding: 10px 15px; /* Adjust padding */
+    }
+  
+    /* Make filter row items flexible to take up available space */
+    .mr-search-bar,
+    .filter-dropdown-mr,
+    .date-picker,
+    .download-button {
+      flex: 1 1 calc(50% - 10px); /* Two items per row, with gap */
+      min-width: unset; /* Allow them to shrink */
+    }
+  
+    /* Table adjustments for 992px */
+    .table-header,
+    .table-row {
+      /* Compress columns slightly, but keep all 6 */
+      grid-template-columns: 2fr 1fr 1.5fr 3fr 1.2fr 0.8fr;
+      gap: 10px; /* Reduce gap */
+      padding: 10px 15px; /* Adjust padding */
+      font-size: 13px; /* Slightly reduce font size */
+    }
+  
+    .status-badge-mr {
+      font-size: 0.8rem; /* Adjust status badge font size */
+      padding: 3px 8px;
+    }
+  
+    .action-button {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+  }
+  
+  /* For screens up to 768px (Tablet portrait / Card View) */
+  @media screen and (max-width: 768px) {
+    .MRdashboard-content {
+      padding: 15px; /* Further reduce padding */
+    }
+  
+    .filters-actions-row {
+      flex-direction: column; /* Stack all items vertically */
+      align-items: stretch; /* Make them take full width */
+      gap: 10px;
+      padding: 10px;
+    }
+  
+    .mr-search-bar,
+    .filter-dropdown-mr,
+    .date-picker,
+    .download-button {
+      width: 100%; /* Ensure they take full width */
+      flex: 1 1 auto; /* Allow growth */
+    }
+  
+    /* Hide the table header entirely in card view */
+    .table-header {
+      display: none;
+    }
+  
+    /* Remove background from table container */
+    .reviews-table-container {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+    }
+
+    .reviews-table-container:hover {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+    }
+  
+    /* Transform table rows into cards */
+    .table-row {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: #ffffff;
+      position: relative;
+    }
+  
+    .table-row:hover {
+      transform: translateY(-4px);
+    }
+  
+    /* Add hover effect to cells */
+    .table-cell {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      /* border-bottom: 1px dashed rgba(0,0,0,0.08); */
+      color: #495057;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+  
+    /* Adjust destination cell layout */
+    .destination-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* padding-right: 100px;  */
+    }
+  
+    /* Enhance status badge */
+    .status-badge-mr {
+      transition: all 0.3s ease;
+      position: absolute;
+      top: 30px;
+      right: 20px;
+    }
+  
+    .table-row:hover .status-badge-mr {
+      transform: scale(1.05);
+    }
+  
+    /* Enhance action buttons */
+    .action-button {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  
+    .action-button:hover:not(.approved):not(.flagged) {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+  
+    /* Add subtle animation to destination name */
+    .destination-name {
+      transition: all 0.2s ease;
+    }
+  
+    .table-row:hover .destination-name {
+      color: #3b82f6;
+    }
+  
+    /* Enhance review content wrapper */
+    .review-content-wrapper {
+      transition: all 0.2s ease;
+      background-color: #f8f9fa;
+      padding: 15px 10px;
+      border-radius: 8px;
+      height: auto;
+    }
+
+    .review-text.full-display {
+      text-align: left;
+    }
+  
+    /* Add subtle pulse animation to show more/less button */
+    .show-more-less-btn {
+      transition: all 0.2s ease;
+    }
+  
+    .show-more-less-btn:hover {
+      transform: translateX(4px);
+      color: #2563eb;
+    }
+  
+    /* Add subtle animation to labels */
+    .table-cell::before {
+      transition: all 0.2s ease;
+    }
+  
+    .table-cell:hover::before {
+      color: #3b82f6;
+      transform: translateX(4px);
+    }
+
+    .action-cell {
+      display: flex;
+      justify-content: flex-end; /* Space out action buttons */
+    }
+
+    /* Adjust font sizes for 768px */
+    .TitleMR h3 {
+      font-size: 24px;
+    }
+    .TitleMR p {
+      font-size: 14px;
+    }
+    .mr-search-bar input,
+    .status-filter,
+    .react-datepicker__input-container input,
+    .download-button {
+      font-size: 13px;
+    }
+    .table-cell {
+      font-size: 14px; /* Default table cell font size */
+    }
+
+    /* Bigger font size for User Name in card view */
+    .table-row .table-cell:nth-child(2) { /* Targets the User Name cell */
+      font-size: 16px; /* Adjust to desired larger size */
+      font-weight: 600; /* Make it bold for prominence */
+    }
+
+    .destination-name {
+      font-size: 14px;
+    }
+    .destination-id {
+      font-size: 0.8em;
+    }
+    .status-badge-mr {
+      font-size: 0.9rem; /* Match general text size */
+      padding: 4px 12px; /* Slightly larger badge */
+    }
+    .action-button {
+      width: 36px; /* Larger buttons as per image */
+      height: 36px;
+      font-size: 16px;
+    }
+    .show-more-less-btn {
+      font-size: 13px;
+    }
+  }
+  
+  /* For screens up to 480px (Smaller mobile phones) */
+  @media screen and (max-width: 480px) {
+    .MRdashboard-content {
+      padding: 10px; /* Minimal padding */
+    }
+  
+    .filters-actions-row {
+      padding: 8px; /* Further reduce padding */
+    }
+  
+    .table-row {
+      padding: 10px; /* Reduce card padding */
+      margin-bottom: 20px; /* Reduce space between cards */
+    }
+  
+    .table-cell {
+      padding: 6px 0; /* Reduce padding between card sections */
+      font-size: 12px; /* Further reduce font size */
+    }
+    .table-cell::before {
+      font-size: 12px;
+    }
+  
+    .destination-cell {
+      gap: 10px;
+    }
+    .destination-name {
+      font-size: 14px;
+    }
+    .destination-id {
+      font-size: 0.9em;
+    }
+  
+    /* Adjust font sizes for 480px */
+    .mr-search-bar input,
+    .status-filter,
+    .react-datepicker__input-container input,
+    .download-button {
+      font-size: 12px;
+    }
+    .status-badge-mr {
+      font-size: 0.9rem;
+      padding: 4px 8px;
+    }
+    .action-button {
+      width: 40px;
+      height: 40px;
+      font-size: 12px;
+    }
+    .show-more-less-btn {
+      font-size: 11px;
+    }
   }
   
