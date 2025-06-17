@@ -17,7 +17,6 @@
   top: 0;
   bottom: 0;
   overflow-y: auto;
-  box-sizing: border-box;
 }
 
 /* Header Styles */
@@ -40,7 +39,6 @@
   font-weight: 700;
   color: #2c3345;
   letter-spacing: -0.5px;
-  margin:0;
 }
 
 .TitleML p {
@@ -59,21 +57,23 @@
   padding: 12px 20px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e9ecef;
-
+  transition: all 0.3s ease;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
-/* Search Bar */
 .ml-search-bar {
-  flex: 1 1 0px;
+  flex: 1 1 250px;
   display: flex;
   align-items: center;
   background-color: #f8f9fa;
   padding: 8px 12px;
   border-radius: 6px;
   border: 1px solid #e9ecef;
-  transition: border-color 0.2s1 1 50px
+  transition: all 0.3s ease;
+  min-width: 200px;
 }
 
 .mr-search-bar:hover {
@@ -109,34 +109,31 @@
 
 /* Filter Dropdown */
 .filter-dropdown-ml {
-  flex: 1 0 50px;
-  min-width: 200px;
+  flex: 1 1 180px;
   background-color: #f8f9fa;
-  position: relative;
-
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  min-width: 180px;
 }
 
 .status-filter {
-  flex: 1 1 0px;
   width: 100%;
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: none;
   background-color: #f8f9fa;
   font-size: 14px;
   color: #495057;
-  display: flex;
-  justify-content: center;
-  /* Centers text horizontally */
-  align-items: center;
-  /* Centers text vertically */
-  text-align: center;
-  /* Ensures text alignment */
-  text-align-last: center;
-  /* Aligns selected value */
-  padding: 8px 12px 8px 12px;
-  /* Right padding for arrow */
+  appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 30px;
+  cursor: pointer;
+  outline: none;
 }
+
 
 /* Dropdown options alignment */
 .status-filter option {
@@ -149,13 +146,16 @@
 
 /* Date Picker */
 .date-picker {
-  flex: 1 1 0px;
+  flex: 1 1 180px;
   display: flex;
   justify-content: center;
-  /* Centers horizontally */
   align-items: center;
-  /* Centers vertically */
   height: 100%;
+  color: #333;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  gap: 8px;
+  min-width: 180px;
 }
 
 /* Status select dropdown styling */
@@ -194,7 +194,7 @@
 
 /* Download Button */
 .download-button {
-  flex: 1 1 0px;
+  flex: 1 1 150px;
   background-color: #3b82f6;
   color: white;
   border: none;
@@ -205,8 +205,10 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
   justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
 }
 
 .download-button:hover {
@@ -504,28 +506,30 @@
   background-color: #681db3;
 }
 
-/* === Action Buttons in Table === */
-.edit-button,
-.delete-button {
-  padding: 6px 12px;
+/* Table Buttons */
+.edit-button, .delete-button {
   margin-right: 8px;
+  min-width: 80px;
+  padding: 6px 12px;
+  font-size: 13px;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
 }
 
-/* === Edit Button Style === */
 .edit-button {
   background-color: #f2eaff;
   color: #6a0dad;
   border: 1px solid #d6b3ff;
 }
 
-.edit-button:hover {
-  background-color: #e4d4ff;
+.delete-button {
+  background-color: #ffe0e0;
+  color: #c0392b;
+  border: 1px solid #ffc2c2;
 }
 
 /* === Delete Button Style === */
@@ -562,4 +566,139 @@
   font-size: 12px;
   margin-top: -10px;
   margin-bottom: 10px;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 992px) {
+  .MLdashboard-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .TitleML h2 {
+    font-size: 24px;
+  }
+
+  .TitleML p {
+    font-size: 14px;
+  }
+
+
+  .MLdashboard-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .filters-actions-row {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 15px;
+  }
+
+  .ml-search-bar,
+  .filter-dropdown-ml,
+  .date-picker,
+  .download-button {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 180px;
+  }
+
+  .MLtable-header,
+  .MLtable-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+
+  .MLdashboard-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .TitleML h2 {
+    font-size: 24px;
+  }
+
+  .TitleML p {
+    font-size: 14px;
+  }
+
+  .filters-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .MLtable-header-wrapper {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 16px;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .MLtable-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .table-cell {
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  
+
+  .MLdashboard-content {
+    padding: 12px;
+  }
+  
+
+  .filters-actions-row {
+    padding: 8px;
+  }
+
+  .MLtable-row {
+    padding: 12px;
+  }
+
+  .table-cell {
+    font-size: 12px;
+  }
+
+  .add-location-button,
+  .download-button,
+  .edit-button,
+  .delete-button {
+    font-size: 12px;
+    padding: 6px 10px;
+    min-width: 90px;
+  }
+
+  .ml-search-bar,
+  .filter-dropdown-ml,
+  .date-picker,
+  .download-button {
+    min-width: 100%;
+  }
 }
