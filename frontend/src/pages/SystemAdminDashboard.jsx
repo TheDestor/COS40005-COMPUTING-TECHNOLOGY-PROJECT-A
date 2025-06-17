@@ -1,15 +1,51 @@
 import React, { useEffect, useRef } from 'react';
-import { FaTachometerAlt, FaUsers, FaSave, FaUserCog, FaExclamationTriangle, FaChartBar } from 'react-icons/fa';
+import { FaTachometerAlt, FaRegSave, FaUserCog, FaExclamationTriangle, FaChartBar, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { MdSpeed } from 'react-icons/md';
+import { AiOutlineFundView } from "react-icons/ai";
+import { IoIosTrendingUp } from "react-icons/io";
 import * as d3 from 'd3';
+import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
 const SystemAdminDashboard = () => {
   const chartRef = useRef(null);
 
   const summaryData = [
-    { title: 'Active Today', value: '250 users', status: '+5% over the last day', class: 'positive', icon: <FaUsers /> },
-    { title: 'System Performance', value: '99.98% uptime', status: '+0% over the last day', class: 'neutral', icon: <MdSpeed /> },
-    { title: 'Data Integrity', value: 'Backup up to date', status: 'Today 2am', class: 'positive', icon: <FaSave /> },
+    {
+      title: 'Today Page Views',
+      value: '45',
+      icon: <AiOutlineFundView />,
+      cardClass: 'purple-theme',
+      iconBgClass: 'purple-bg',
+      trend: '15.8%',
+      trendType: 'positive'
+    },
+    {
+      title: 'Destination Trending',
+      value: '12',
+      icon: <IoIosTrendingUp />,
+      cardClass: 'blue-theme',
+      iconBgClass: 'blue-bg',
+      trend: '5.2%',
+      trendType: 'positive'
+    },
+    {
+      title: 'System Performance',
+      value: '98%',
+      icon: <MdSpeed />,
+      cardClass: 'green-theme',
+      iconBgClass: 'green-bg',
+      trend: '1%',
+      trendType: 'negative'
+    },
+    {
+      title: 'Data Integrity',
+      value: 'Backup up to date',
+      icon: <FaRegSave />,
+      cardClass: 'teal-theme',
+      iconBgClass: 'teal-bg',
+      trend: 'Today 2am',
+      trendType: 'positive'
+    },
   ];
 
   const adminActivities = [
@@ -114,12 +150,12 @@ const SystemAdminDashboard = () => {
       .style('text-anchor', 'middle')
       .style('font-size', '14px')
       .style('fill', '#555')
-      .text('User Count');
+      .text('Page Views Count');
 
-    // Color scale
+    // Color scale - adjusted to use a more defined blue range
     const color = d3.scaleLinear()
       .domain([0, d3.max(monthlyUsageData, d => d.users)])
-      .range(['#74b9ff', '#0056d2']);
+      .range(['#92caff', '#007bff']); // A lighter blue to primary blue gradient
 
     // Add tooltip
     const tooltip = d3.select(chartRef.current)
@@ -148,22 +184,22 @@ const SystemAdminDashboard = () => {
       .attr('rx', 3) // Rounded corners
       .attr('fill', d => color(d.users))
       .on('mouseover', function(event, d) {
-        // Highlight bar on hover
+        // Highlight bar on hover with a consistent hover blue
         d3.select(this)
           .transition()
           .duration(200)
-          .attr('fill', '#0069ff')
+          .attr('fill', '#0056b3') // A darker, more prominent blue on hover
           .attr('opacity', 1);
         
         // Show tooltip
         tooltip
           .style('visibility', 'visible')
-          .html(`<strong>${d.month}:</strong> ${d.users.toLocaleString()} users`)
+          .html(`<strong>${d.month}:</strong> ${d.users.toLocaleString()} views`)
           .style('left', `${event.pageX - chartRef.current.offsetLeft}px`)
           .style('top', `${event.pageY - chartRef.current.offsetTop - 40}px`);
       })
       .on('mouseout', function(event, d) {
-        // Reset bar on mouseout
+        // Reset bar on mouseout to its original gradient color
         d3.select(this)
           .transition()
           .duration(200)
@@ -173,7 +209,7 @@ const SystemAdminDashboard = () => {
         // Hide tooltip
         tooltip.style('visibility', 'hidden');
       })
-      .transition() // Animate bars growing from bottom
+      .transition()
       .duration(1000)
       .delay((d, i) => i * 100)
       .attr('y', d => y(d.users))
@@ -186,13 +222,13 @@ const SystemAdminDashboard = () => {
       .attr('text-anchor', 'middle')
       .style('font-size', '16px')
       .style('font-weight', '600')
-      .style('fill', '#333')
+      .style('fill', '#333') // Keep text dark for readability
       .style('dominant-baseline', 'middle')
-      .text('Monthly User Activity');
+      .text('Monthly Page Views Analytics');
 
-    // Add hover effect to grid lines
+    // Add hover effect to grid lines (if desired, currently this is just stroke/dasharray)
     svg.selectAll('.tick line')
-      .style('stroke', '#ddd')
+      .style('stroke', '#ccc') // Lighter grid lines
       .style('stroke-dasharray', '2,2');
   };
 
@@ -212,9 +248,9 @@ const SystemAdminDashboard = () => {
 
   const renderTable = (title, headers, data, icon) => (
     <div className="table-section">
-      <div className="table-header">
+      <div className="table-header-admin">
         <h3>
-          <span className="header-icon">{icon}</span>
+          <span className="header-icon-admin">{icon}</span>
           {title}
         </h3>
         <button className="view-all">View All</button>
@@ -245,28 +281,34 @@ const SystemAdminDashboard = () => {
   );
 
   return (
+    <div className="admin-container">
+    <SystemAdminSidebar />
     <div className="content-section2">
       <h2><FaTachometerAlt /> Dashboard</h2>
 
       <div className="summary-container">
         {summaryData.map((item, idx) => (
-          <div className="summary-box" key={idx}>
-            <h3>
-              <span className="summary-icon">{item.icon}</span>
-              {item.title}
-            </h3>
+          <div className={`summary-box ${item.cardClass}`} key={idx}>
+            <div className={`summary-icon-wrapper ${item.iconBgClass}`}>
+              <div className='summary-icon'>{item.icon}</div>
+            </div>
+            <h3>{item.title}</h3>
             <p className="value">{item.value}</p>
-            <p className={`status ${item.class}`}>{item.status}</p>
+            {item.trend && (
+              <div className={`summary-trend ${item.trendType}`}>
+                {item.trend} {item.trendType === 'positive' ? <FaArrowUp /> : <FaArrowDown />}
+              </div>
+            )}
           </div>
         ))}
       </div>
 
       {/* User Usage Chart Section */}
       <div className="table-section">
-        <div className="table-header">
+        <div className="table-header-admin">
           <h3>
-            <span className="header-icon"><FaChartBar /></span>
-            User Usage Analytics
+            <span className="header-icon-admin"><FaChartBar /></span>
+            Page Views Analytics
           </h3>
           <button className="view-all">Export Data</button>
         </div>
@@ -276,16 +318,18 @@ const SystemAdminDashboard = () => {
           style={{ 
             height: '450px', 
             width: '100%', 
-            position: 'relative',
-            marginBottom: '20px',
+            // position: 'relative',
+            // marginBottom: '20px',
             padding: '20px 0', 
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            color: '#333',
           }}
         ></div>
       </div>
 
       {renderTable('Recent Admin Activity', ['Admin', 'Action', 'Date', 'Status'], adminActivities, <FaUserCog />)}
       {renderTable('System Alerts', ['Alert', 'Message', 'Date', 'Status'], systemAlerts, <FaExclamationTriangle />)}
+    </div>
     </div>
   );
 };

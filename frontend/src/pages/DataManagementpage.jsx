@@ -3,6 +3,7 @@ import '../styles/DataManagementpage.css';
 import BackupConfigurationModal from "../components/BackupConfigmodal.jsx";
 import { FaDatabase, FaUsers, FaUserClock, FaUserCheck } from "react-icons/fa";
 import { FaDownload, FaTrash, FaCog, FaPlay } from "react-icons/fa";
+import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
 const backups = [
   {
@@ -62,6 +63,8 @@ const DataManagementPage = () => {
   };
 
   return (
+    <div className="admin-container">
+      <SystemAdminSidebar />
     <div className="content-section2">
       <h2><FaDatabase /> Data Management</h2>
       
@@ -146,6 +149,7 @@ const DataManagementPage = () => {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 };

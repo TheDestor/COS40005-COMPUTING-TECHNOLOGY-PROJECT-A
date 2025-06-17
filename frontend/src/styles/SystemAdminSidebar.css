@@ -1,0 +1,567 @@
+/* ==========================
+   Admin Container Styles
+============================= */
+.admin-container {
+    display: flex;  
+    min-height: 100vh; /* Ensure container takes full viewport height */
+    width: 100%; /* Take full width */
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8f9fc;
+}
+
+/* ==========================
+   Sidebar Styles (Replicated from Sidebar.css with Blue Theme)
+============================= */
+.username {
+    color: #333333;
+    font-size: 1.1rem;
+    font-weight: 600; 
+    white-space: nowrap;
+    margin-left: 20px;
+}
+
+.sidebar-icon2 {
+    font-size: 1.2rem; 
+    min-width: 20px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: #007bff; /* Changed to primary blue */
+    margin-right: 6px; 
+}
+
+.sidebar-menu-admin {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.sidebar-menu-admin a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #555555;
+    text-decoration: none;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-menu-admin a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background-color: #007bff; /* Changed to primary blue */
+    border-radius: 0 3px 3px 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu-admin a .sidebar-icon2 {
+    font-size: 1.2rem;
+    min-width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    color: #007bff; /* Changed to primary blue */
+}
+
+/* ===== 6. MENU HOVER & ACTIVE STATES ===== */
+.sidebar-menu-admin a:hover {
+    color: #ffffff;
+    background-color: #007bff; /* Changed to primary blue */
+}
+
+.sidebar-menu-admin a:hover .sidebar-icon2 {
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.sidebar-menu-admin a:hover::before {
+    opacity: 1;
+}
+
+.sidebar-menu-admin a.active {
+    background-color: #007bff; /* Changed to primary blue */
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.sidebar-menu-admin a.active::before {
+    opacity: 1;
+}
+
+.sidebar-menu-admin a.active .sidebar-icon2 {
+    color: #ffffff;
+}
+
+.logout-btn:hover .sidebar-icon2 {
+    color: #ffffff;
+  }
+
+/* ==========================
+   Main Content Styles
+============================= */
+.main-content2 {
+    flex-grow: 1;
+    padding: 30px 40px;
+    box-sizing: border-box;
+    height: 100vh; /* Ensure it matches fixed sidebar height */
+    overflow-y: auto; /* Enable scrolling for main content */
+    margin-left: 280px; /* Offset for the fixed sidebar width on desktop */
+}
+
+.main-content2::-webkit-scrollbar {
+    width: 8px;
+}
+.main-content2::-webkit-scrollbar-track {
+    background: transparent;
+}
+.main-content2::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+}
+
+/* ==========================
+   Content Section Styles
+============================= */
+.content-section2 {
+    background-color: transparent;
+    flex: 1; 
+    padding: 30px;
+    margin-left: 280px; 
+    box-sizing: border-box;
+    width: calc(100% - 280px); 
+    position: absolute; 
+    right: 0; 
+    top: 0; 
+    bottom: 0;
+    overflow-y: auto;
+  }
+
+.content-section2 h2 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+}
+
+/* ==========================
+   Summary Box Styles - Matched to provided image
+============================= */
+.summary-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.summary-box {
+    flex: 1;
+    min-width: 220px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.summary-box:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.summary-box:active {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Top colored bar */
+.summary-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    z-index: 1;
+    transition: height 0.3s ease;
+}
+
+/* Specific colors for the top bar based on card theme */
+.summary-box.blue-theme::before { background-color: #3D90D7; }
+.summary-box.purple-theme::before { background-color: #3A59D1; }
+.summary-box.teal-theme::before { background-color: #71C0BB; } /* New theme color */
+.summary-box.green-theme::before { background-color: #7AC6D2; } /* New theme color */
+
+/* Icon Container - Background color with 0.5 opacity */
+.summary-icon-wrapper {
+    width: 56px; /* Adjusted icon wrapper size */
+    height: 56px; /* Adjusted icon wrapper size */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px; /* Adjusted margin for new size */
+    position: relative;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.summary-box:hover .summary-icon-wrapper {
+    transform: scale(1.1);
+}
+
+/* Specific background colors for icon wrapper (from dashboard data) with 0.2 opacity */
+.summary-icon-wrapper.blue-bg { background-color: rgba(61, 144, 215, 0.2); } /* Blue with 0.2 opacity */
+.summary-icon-wrapper.purple-bg { background-color: rgba(58, 89, 209, 0.2); } /* Purple with 0.2 opacity */
+.summary-icon-wrapper.teal-bg { background-color: rgba(181, 252, 205, 0.2); } /* Mint with 0.2 opacity */
+.summary-icon-wrapper.green-bg { background-color: rgba(122, 198, 210, 0.2); } /* Green with 0.2 opacity */
+
+
+/* Actual icon styling - Color matches card theme, adjusted size */
+.summary-icon {
+    font-size: 2.2rem; /* Adjusted icon size, proportional to wrapper */
+    transition: color 0.3s ease;
+    display: flex;
+}
+
+/* Specific icon colors (from dashboard data) */
+.summary-box.blue-theme .summary-icon { color: #3D90D7; } /* Icon matches blue theme */
+.summary-box.purple-theme .summary-icon { color: #3A59D1; } /* Icon matches purple theme */
+.summary-box.orange-theme .summary-icon { color: #FF9800; } /* Icon matches orange theme */
+.summary-box.teal-theme .summary-icon { color: #71C0BB; } /* Icon matches mint theme */
+.summary-box.green-theme .summary-icon { color: #7AC6D2; } /* Icon matches green theme */
+
+
+/* Title text - Adjusted font size */
+.summary-box h3 {
+    display: block;
+    font-size: 14px; /* Adjusted font size for title */
+    font-weight: 500;
+    color: #555;
+    margin: 0 0 5px 0;
+    padding: 0;
+}
+
+/* Value text (the large number) - Adjusted font size */
+.summary-box .value {
+    font-size: 24px; /* Adjusted font size for value */
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 10px 0;
+    transition: color 0.3s ease; /* Added transition for smooth color change */
+}
+
+/* Value color on hover - matches card theme */
+.summary-box.blue-theme:hover .value { color: #3D90D7; }
+.summary-box.purple-theme:hover .value { color: #3A59D1; }
+.summary-box.teal-theme:hover .value { color: #71C0BB; }
+.summary-box.green-theme:hover .value { color: #7AC6D2; }
+
+/* Status/Trend Indicator Style matching the image */
+.summary-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-trend svg {
+    font-size: 11px;
+    margin-left: 2px;
+}
+
+/* Trend badge hover effect */
+.summary-trend:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Specific colors for Positive Trend (Green as per image) */
+.summary-trend.positive {
+    background-color: #e6ffe6;
+    color: #28a745;
+}
+
+/* Specific colors for Negative Trend (Example: Red) */
+.summary-trend.negative {
+    background-color: #ffe6e6;
+    color: #dc3545;
+}
+
+/* Large subtle circle at bottom right */
+.summary-box::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: rgba(240, 240, 240, 0.4);
+    z-index: 0;
+    transition: transform 0.4s ease; /* Animate the circle */
+}
+
+.summary-box:hover::after {
+    transform: scale(1.2); /* Slightly enlarge and move the circle on hover */
+    background-color: rgba(240, 240, 240, 0.6); /* Make it a bit more opaque */
+}
+
+/* ==========================
+   Table Section Styles
+============================= */
+.table-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent overflow that might cause horizontal scrolling */
+}
+
+.table-header-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Align h3 and icon in the table-header */
+.table-header-admin h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    color: #333;
+}
+
+.header-icon-admin {
+    font-size: 18px;
+    color: #007bff;
+    display: flex;
+    align-items: center;
+}
+
+
+/* ==========================
+   View All Button Styles
+============================= */
+.view-all {
+    background-color: #007bff;
+    color: white;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-all:hover {
+    background-color: #0065d8;
+}
+
+.view-all:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.view-all:active {
+    transform: scale(0.97);
+}
+
+/* ==========================
+   Enhanced Table Styles
+============================= */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.data-table th {
+    background-color: #f4f7fc; /* Light blue already */
+    color: #555;
+    font-weight: 600;
+    padding: 14px;
+    text-align: left;
+    border-bottom: 2px solid #e6e6e6;
+}
+
+.data-table td {
+    background-color: #fff;
+    padding: 14px;
+    /* border-bottom: 1px solid #f1f1f1; */
+    vertical-align: middle;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.data-table tbody tr:nth-child(even) td {
+    background-color: #f9fbff; /* Very light blue already */
+}
+
+.data-table .status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.data-table .status.success {
+    background-color: #d4f8e8;
+    color: #28a745;
+}
+
+.data-table .status.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.data-table .status.danger {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.data-table .status.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* ==========================
+   Details Button Styles
+============================= */
+.details-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.details-button:hover {
+    background-color: #005ecb;
+}
+
+.details-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.details-button:active {
+    transform: scale(0.97);
+}
+
+
+/* Make sure SVG is responsive and properly sized */
+.chart-container svg {
+    width: 100% !important;
+    height: 100%;
+    display: block;
+    overflow: visible;
+    max-width: 100%; 
+}
+
+/* Chart container adjustments to perfectly match .table-section width */
+.chart-container {
+    /* width: 100%; */
+    min-width: 600px;
+    margin: 0 auto;
+    /* max-width: 1000px; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+/* Improve tooltip positioning */
+.chart-tooltip {
+    position: absolute;
+    z-index: 100;
+}
+
+
+/* Ensure chart container fills the entire width of table-section */
+.table-section .chart-container {
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    overflow-x: auto;
+}
+
+/* ==========================
+   Responsive Styles
+============================= */
+/* Tablet (768px and below) */
+  @media (max-width: 768px) {
+    .username {
+      font-size: 1rem;
+      margin-left: 12px;
+    }
+  
+    .sidebar-menu-admin a {
+      padding: 10px 15px;
+      font-size: 0.95rem;
+    }
+  
+    .sidebar-menu-admin a .sidebar-icon2 {
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* Mobile (480px and below) */
+  @media (max-width: 480px) {
+    .username {
+      font-size: 0.9rem;
+      margin-left: 10px;
+    }
+  
+    .sidebar-menu-admin a {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+  
+    .sidebar-menu-admin a .sidebar-icon2 {
+      font-size: 1rem;
+    }
+  }

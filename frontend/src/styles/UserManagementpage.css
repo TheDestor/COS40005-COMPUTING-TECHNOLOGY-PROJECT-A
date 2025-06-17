@@ -1,4 +1,3 @@
-
 /* ==========================
    Animations
 ============================= */
@@ -114,6 +113,8 @@
     border: 1px solid #ccc;
     border-radius: 999px;
     font-size: 14px;
+    color: #000000;
+    background-color: #ffffff;
 }
 
 .search-input:focus {
@@ -136,8 +137,8 @@
     box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
 }
 
-.filter-button {
-    background-color: none;
+.filter-button-admin {
+    background-color: #fff;
     color: #007bff;
     padding: 10px 16px;
     font-size: 14px;
@@ -156,14 +157,14 @@
     transform: translateY(-2px);
 }
 
-.filter-button:hover {
+.filter-button-admin:hover {
     background-color: #007bff;
     color: white;
     transform: translateY(-2px);
     border: none;
 }
 
-.filter-button:active,
+.filter-button-admin:active,
 .add-user-button:active {
     transform: scale(0.96);
 }
@@ -270,7 +271,7 @@
     border: none;
 }
 
-.filter-box {
+.filter-box-admin {
     display: flex;
     gap: 4rem;
     padding: 1.5rem;
@@ -282,25 +283,25 @@
     flex-wrap: wrap;
   }
   
-  .filter-column {
+  .filter-column-admin {
     display: flex;
     flex-direction: column;
   }
   
-  .filter-column h4 {
+  .filter-column-admin h4 {
     color: #007bff;
     margin-bottom: 1rem;
     font-weight: 600;
   }
   
   @media (max-width: 600px) {
-    .filter-box {
+    .filter-box-admin {
       flex-direction: column;
       gap: 2rem;
     }
   }
 
-  .filter-wrapper {
+  .filter-wrapper-admin {
     position: relative;
   }
   

@@ -4,6 +4,7 @@ import '../styles/SecurityAdminpage.css';
 import { FaShieldAlt } from 'react-icons/fa';
 import { AiOutlineReload } from 'react-icons/ai';
 import { FaCheckCircle, FaBan } from "react-icons/fa";
+import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
 const SecurityAdminPage = () => {
   const [policies, setPolicies] = useState({
@@ -258,6 +259,8 @@ const SecurityAdminPage = () => {
   }, []);
 
   return (
+    <div className="admin-container">
+      <SystemAdminSidebar />
     <div className="content-section2">
       {/* Header */}
       <div className="security-header">
@@ -362,6 +365,7 @@ const SecurityAdminPage = () => {
           </div>
         ))}
       </div>
+    </div>
     </div>
   );
 };

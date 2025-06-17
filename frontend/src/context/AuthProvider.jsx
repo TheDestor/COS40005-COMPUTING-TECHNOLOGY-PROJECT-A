@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }) => {
                 if (userInfo.role === "cbt_admin") {
                     redirectTo = '/dashboard';
                 } else if (userInfo.role === "system_admin") {
-                    redirectTo = '/system-admin';
+                    redirectTo = '/admin-dashboard';
                 }
                 
                 console.log("AuthProvider: Login successful.");

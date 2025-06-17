@@ -3,6 +3,7 @@ import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
 import { RiUserAddLine } from "react-icons/ri";
 import AddUserForm from '../components/AddUserForm.jsx';
+import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
 const UserManagementPage = () => {
   const usersPerPage = 2;
@@ -94,6 +95,8 @@ const UserManagementPage = () => {
   };
 
   return (
+    <div className="admin-container">
+      <SystemAdminSidebar />
     <div className="content-section2">
       <h2><FaUsersCog /> User Management</h2>
       <div className="user-management">
@@ -119,15 +122,15 @@ const UserManagementPage = () => {
         )}
 
         <div className="user-controls">
-          <div className="filter-wrapper" ref={filterRef}>
-            <button className="filter-button" onClick={toggleFilter}>
+          <div className="filter-wrapper-admin" ref={filterRef}>
+            <button className="filter-button-admin" onClick={toggleFilter}>
               <FaFilter className="add-user-icon" /> Filter
             </button>
             {showFilters && (
               <div className="filter-dropdown-user">
-                <div className="filter-group">
+                <div className="filter-group-user">
                   <h4>Role</h4>
-                  <div className="filter-options">
+                  <div className="filter-options-admin">
                     {roleOptions.map((role) => (
                       <label key={role} className="filter-checkbox">
                         <input
@@ -140,9 +143,9 @@ const UserManagementPage = () => {
                     ))}
                   </div>
                 </div>
-                <div className="filter-group">
+                <div className="filter-group-user">
                   <h4>Status</h4>
-                  <div className="filter-options">
+                  <div className="filter-options-admin">
                     {statusOptions.map((status) => (
                       <label key={status} className="filter-checkbox">
                         <input
@@ -227,6 +230,7 @@ const UserManagementPage = () => {
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 };
