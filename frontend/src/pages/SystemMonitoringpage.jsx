@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import '../styles/SystemMonitoringpage.css';
 import { FaExclamationTriangle, FaDatabase, FaLock, FaGlobe, FaServer, FaCog } from 'react-icons/fa';
 import * as d3 from 'd3';
+import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
 // D3.js version of the donut chart using hooks and useEffect
 const D3PerformanceDonutChart = () => {
@@ -247,6 +248,8 @@ const D3ResourceTrendsChart = () => {
 
 const SystemMonitoringPage = () => {
   return (
+    <div className="admin-container">
+      <SystemAdminSidebar />
     <div className="content-section2">
       <h2><FaServer /> System Monitoring</h2>
 
@@ -314,6 +317,7 @@ const SystemMonitoringPage = () => {
       </div>
 
       <D3ResourceTrendsChart />
+    </div>
     </div>
   );
 };
