@@ -21,11 +21,15 @@
   
   .add-event-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-    padding-bottom: 16px;
+    padding-bottom: 20px;
     border-bottom: 1px solid #e5e7eb;
+    width:100%;
+  }
+
+  .heading{
+    flex: 1;
   }
   
   .heading h2 {
@@ -37,11 +41,21 @@
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 16px;
+    font-weight: 400;
   }
   
   .add-event-actions {
     display: flex;
     align-items: center;
+    gap: 25px;
+    justify-content: flex-end;
   }
   
   .search-bar {
@@ -708,6 +722,7 @@
       flex-direction: column;
       gap: 16px;
       align-items: flex-start;
+      justify-content: space-between;
     }
     
     .event-tabs {

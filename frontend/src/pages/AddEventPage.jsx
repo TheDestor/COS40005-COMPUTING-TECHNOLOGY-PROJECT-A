@@ -256,6 +256,7 @@ const AddEventPage = () => {
         <div className="add-event-header">
           <div className="heading">
             <h2>Add Event</h2>
+            <p>Create and publish new event</p>
           </div>
           <div className="add-event-actions">
             <div className="search-bar">
