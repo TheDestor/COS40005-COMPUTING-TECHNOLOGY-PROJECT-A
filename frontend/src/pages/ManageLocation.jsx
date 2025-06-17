@@ -327,7 +327,7 @@ const ManageLocation = () => {
         {/* Header */}
         <div className="MLdashboard-header">
           <div className="TitleML">
-            <h3>Manage Locations</h3>
+            <h2>Manage Locations</h2>
             <p>Manage and monitor locations' status</p>
           </div>
           <div className="dashboard-actions">

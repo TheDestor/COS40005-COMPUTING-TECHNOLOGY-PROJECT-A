@@ -8,7 +8,7 @@
 }
 
 .MLdashboard-content {
-  padding: 20px;
+  padding: 30px;
   margin-left: 280px;
   box-sizing: border-box;
   width: calc(100% - 280px);
@@ -27,18 +27,20 @@
   margin-bottom: 24px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  width:100%;
 }
 
 .TitleML {
   flex: 1;
 }
 
-.TitleML h3 {
+.TitleML h2 {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
   color: #2c3345;
   letter-spacing: -0.5px;
+  margin:0;
 }
 
 .TitleML p {
