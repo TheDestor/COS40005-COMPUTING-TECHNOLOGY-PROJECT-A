@@ -743,3 +743,205 @@
       flex-direction: column;
     }
   }
+
+  /* Responsive styles for smaller screens */
+  @media (max-width: 992px) {
+  .add-event-content {
+    padding: 24px;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .add-event-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .add-event-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .event-form-container {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .form-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .form-actions button {
+    flex: 1 1 45%;
+  }
+
+  .form-group label {
+    font-size: 15px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .date-display,
+  .dropdown-selected,
+  .dropdown-option {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .calendar-title {
+    font-size: 16px;
+  }
+
+  .calendar-nav-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .calendar-day {
+    font-size: 13px;
+    height: 36px;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .search-bar {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .event-tab {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .add-event-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .add-event-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .event-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+  }
+
+  .event-tab {
+    padding: 10px 16px;
+  }
+
+  .event-form-left, .event-form-right {
+    padding: 16px;
+    min-width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .date-display {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .dropdown-selected,
+  .dropdown-option {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .image-upload-container {
+    padding: 20px;
+  }
+
+  .calendar-day {
+    font-size: 13px;
+    height: 34px;
+  }
+
+  .calendar-title {
+    font-size: 15px;
+  }
+
+  .calendar-nav-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .preview-button,
+  .draft-button,
+  .clear-button,
+  .publish-button {
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-event-content {
+    padding: 16px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .date-display,
+  .dropdown-selected,
+  .dropdown-option {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .preview-button,
+  .draft-button,
+  .clear-button,
+  .publish-button {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .calendar-day {
+    font-size: 12px;
+    height: 30px;
+  }
+
+  .calendar-title {
+    font-size: 14px;
+  }
+
+  .calendar-nav-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .image-upload-container {
+    padding: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .heading h2 {
+    font-size: 22px;
+  }
+}
