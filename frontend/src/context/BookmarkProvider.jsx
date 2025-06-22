@@ -36,9 +36,14 @@ export const BookmarkProvider = ({ children }) => {
         }
     }
 
+    const removeBookmark = (bookmark) => {
+        setBookmarks((prev) => prev.filter(b => b.name !== bookmark.name));
+    }
+
     const value = {
         bookmarks,
-        addBookmark
+        addBookmark,
+        removeBookmark
     }
 
     return (

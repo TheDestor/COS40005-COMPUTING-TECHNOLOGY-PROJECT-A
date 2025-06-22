@@ -13,6 +13,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
 import { BiCurrentLocation } from "react-icons/bi";
 import { IoMdAdd } from "react-icons/io";
+import { MdAdd, MdAddLocationAlt } from "react-icons/md";
 // import MapZoomController from './MapZoomController';
 
 const travelModes = {
@@ -44,6 +45,7 @@ const LeftSidebar = ({ onSearch, history, setHistory, showRecent, setShowRecent,
   const [locationError, setLocationError] = useState(null);
   const [isLocationFetching, setIsLocationFetching] = useState(false);
   // const [selectedLocation, setSelectedLocation] = useState(null);
+  const [activeMenu, setActiveMenu] = useState('');
   
   const handleClearStartingPoint = () => {
     setStartingPoint('');
@@ -371,19 +373,63 @@ useEffect(() => {
         <div className="menu-icon100" onClick={toggleSidebar}>
           <FaBars />
         </div>
-        <div className="menu-item100" onClick={toggleRecentHistory}>
+        <div
+          className={`menu-item100${activeMenu === 'recent' ? ' active' : ''}`}
+          onClick={() => {
+            if (activeMenu === 'recent') {
+              setActiveMenu('');
+              toggleRecentHistory();
+            } else {
+              setActiveMenu('recent');
+              toggleRecentHistory();
+            }
+          }}
+        >
           <FaClock className="icon100" />
           <span className="label100">Recent</span>
         </div>
-        <div className="menu-item100" onClick={toggleBookmark}>
+        <div
+          className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
+          onClick={() => {
+            if (activeMenu === 'bookmark') {
+              setActiveMenu('');
+              toggleBookmark();
+            } else {
+              setActiveMenu('bookmark');
+              toggleBookmark();
+            }
+          }}
+        >
           <FaBookmark className="icon100" />
           <span className="label100">Bookmark</span>
         </div>
-        <div className="menu-item100" onClick={toggleBusinessPanel}>
+        <div
+          className={`menu-item100${activeMenu === 'business' ? ' active' : ''}`}
+          onClick={() => {
+            if (activeMenu === 'business') {
+              setActiveMenu('');
+              toggleBusinessPanel();
+            } else {
+              setActiveMenu('business');
+              toggleBusinessPanel();
+            }
+          }}
+        >
           <FaBuilding className="icon100" />
           <span className="label100">Business</span>
         </div>
-        <div className="menu-item101" onClick={toggleLayersPanel}>
+        <div
+          className={`menu-item101${activeMenu === 'layers' ? ' active' : ''}`}
+          onClick={() => {
+            if (activeMenu === 'layers') {
+              setActiveMenu('');
+              toggleLayersPanel();
+            } else {
+              setActiveMenu('layers');
+              toggleLayersPanel();
+            }
+          }}
+        >
           <FaLayerGroup className="icon100" />
           <span className="label100">Layers</span>
         </div>
@@ -476,7 +522,7 @@ useEffect(() => {
 
           <div className="destination-buttons">
             <button className="add-destination" onClick={handleAddDestination}>
-              ➕ Add Destination
+              <MdAddLocationAlt style={{ marginRight: '5px', color:'purple', height:'18px', width:'18px' }}/> Add Destination
             </button>
             <button 
               className="current-location-button" 

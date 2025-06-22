@@ -454,3 +454,110 @@
   50% {opacity: 1;}
   100% {opacity: 0.5;}
 }
+
+/* =================================== */
+/* Responsive Styles for Mobile        */
+/* =================================== */
+@media (max-width: 768px) {
+  /* Reposition the main sidebar to the bottom */
+  .sidebar100 {
+    top: auto; /* Unset top position */
+    bottom: 0;
+    width: 100%; /* Full screen width */
+    height: 65px; /* A good height for a bottom navigation bar */
+    flex-direction: row; /* Arrange items horizontally */
+    justify-content: space-around; /* Distribute items evenly */
+    align-items: center; /* Center items vertically in the bar */
+    padding: 0 10px; /* Add some horizontal padding */
+    background-color: rgba(255,255,255,0.92);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.10), 0 1px 0 #e0e7ef;
+    border-top: 2px solid #e6f0ff;
+    backdrop-filter: blur(8px);
+    box-sizing: border-box;
+  }
+
+  /* Hide text labels to match the image */
+  .label100 {
+    display: none;
+  }
+
+  /* Style each icon container to look like the buttons in the image */
+  .menu-icon100,
+  .menu-item100,
+  .menu-item101 {
+    margin: 0; /* Reset all margins from desktop view */
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height to make it a square */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff; /* White background */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08); /* Subtle shadow for depth */
+    transition: background-color 0.2s, transform 0.2s;
+    position: relative;
+    border: 2px solid transparent;
+  }
+  
+  .menu-item101 {
+    margin-top: 0; /* Reset specific margin for the last item */
+  }
+
+  .menu-icon100:hover,
+  .menu-item100:hover,
+  .menu-item101:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-3px); /* Add a subtle lift on hover */
+  }
+
+  /* Adjust icon styles for better visibility and touch */
+  .icon100,
+  .menu-icon100 > svg { /* Target hamburger and other icons */
+    font-size: 24px;
+    margin-bottom: 0; /* No margin as label is hidden */
+  }
+
+  /* Highlight the active item */
+  .menu-icon100.active,
+  .menu-item100.active,
+  .menu-item101.active {
+    background-color: #e6f0ff;
+    color: #007bff;
+    /* Optionally, add a subtle scale effect */
+    transform: scale(1.08);
+    z-index: 2;
+  }
+
+  /* Make the icon itself blue when active */
+  .menu-item100.active .icon100,
+  .menu-item101.active .icon100,
+  .menu-icon100.active > svg {
+    color: #007bff;
+  }
+
+  .side-panel100 {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    top: auto;
+    width: 100vw;
+    height: 40vh; /* Adjust as needed */
+    min-height: 200px;
+    max-height: 90vh;
+    background: #fff;
+    padding: 18px 10px 10px 10px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, left 0.3s;
+    transform: translateY(100%);
+    overflow-y: auto;
+  }
+
+  .side-panel100.expanded {
+    transform: translateY(0);
+    left: 0;
+    display: flex;
+  }
+}
