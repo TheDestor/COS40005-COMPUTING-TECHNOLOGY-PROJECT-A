@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import '../styles/DataManagementpage.css';
 import BackupConfigurationModal from "../components/BackupConfigmodal.jsx";
-import { FaDatabase, FaUsers, FaUserClock, FaUserCheck } from "react-icons/fa";
+import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaClock } from "react-icons/fa";
 import { FaDownload, FaTrash, FaCog, FaPlay } from "react-icons/fa";
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
@@ -29,37 +29,117 @@ const backups = [
   },
 ];
 
+const DetailModal = ({ children, onClose }) => {
+  return (
+    <div className="data-modal-overlay" onClick={onClose}>
+      <div className="data-modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="data-modal-close" onClick={onClose}>&times;</button>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const DataManagementPage = () => {
   const [showConfig, setShowConfig] = useState(false);
-  const [currentUsers, setCurrentUsers] = useState(0);
-  const [todayUsers, setTodayUsers] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [databaseSize, setDatabaseSize] = useState("15.3 GB");
+  const [uploadsStorage, setUploadsStorage] = useState("24.9 GB");
+  const [dataHealth, setDataHealth] = useState("Healthy");
+  const [modalType, setModalType] = useState(null); // null, 'database', 'storage', or 'health'
 
-  // Simulate real-time data updates
-  useEffect(() => {
-    // Initial values
-    setCurrentUsers(42);
-    setTodayUsers(128);
-    setTotalUsers(5243);
-
-    // Simulate real-time changes
-    const interval = setInterval(() => {
-      // Random fluctuations for demo purposes
-      setCurrentUsers(prev => {
-        const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
-        return Math.max(35, prev + change); // Don't go below 35
-      });
-      
-      setTodayUsers(prev => prev + Math.floor(Math.random() * 3));
-      setTotalUsers(prev => prev + Math.floor(Math.random() * 2));
-    }, 5000); // Update every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  // The useEffect for simulating user data can be removed or repurposed later
+  // for real data metrics.
 
   const handleSaveConfig = (config) => {
     console.log("Backup Config Saved:", config);
     // Save config to server or state
+  };
+
+  const renderModalContent = () => {
+    switch (modalType) {
+      case 'database':
+        const dbItems = [
+          { label: 'Businesses', size: '7.1 GB', percentage: '46.4%', color: '#007bff' },
+          { label: 'Users', size: '5.2 GB', percentage: '34.0%', color: '#28a745' },
+          { label: 'Reviews', size: '3.0 GB', percentage: '19.6%', color: '#ffc107' },
+        ];
+        return (
+          <>
+            <h2><FaDatabase /> Database Size Details</h2>
+            <p className="modal-total">Total Size: <strong>{databaseSize}</strong></p>
+            <div className="progress-bar-container">
+              {dbItems.map(item => (
+                <div key={item.label} className="progress-bar-stack" style={{ width: item.percentage, backgroundColor: item.color }} title={`${item.label}: ${item.size} (${item.percentage})`}></div>
+              ))}
+            </div>
+            <div className="details-grid">
+              {dbItems.map(item => (
+                <React.Fragment key={item.label}>
+                  <div className="grid-item-label">
+                    <span className="legend-color" style={{ backgroundColor: item.color }}></span>
+                    {item.label}
+                  </div>
+                  <div className="grid-item-value">{item.size}</div>
+                  <div className="grid-item-percentage">{item.percentage}</div>
+                </React.Fragment>
+              ))}
+            </div>
+          </>
+        );
+      case 'storage':
+        const storageItems = [
+          { label: 'Business Images', size: '18.5 GB', percentage: 74.3, color: '#17a2b8' },
+          { label: 'User Avatars', size: '6.4 GB', percentage: 25.7, color: '#fd7e14' },
+        ];
+        return (
+          <>
+            <h2><FaHdd /> Uploads Storage Details</h2>
+            <p className="modal-total">Total Usage: <strong>{uploadsStorage}</strong></p>
+            {storageItems.map(item => (
+              <div key={item.label} className="progress-item">
+                <div className="progress-label">
+                  <span>{item.label}</span>
+                  <strong>{item.size}</strong>
+                </div>
+                <div className="progress-bar-wrapper">
+                  <div className="progress-bar" style={{ width: `${item.percentage}%`, backgroundColor: item.color }}></div>
+                </div>
+              </div>
+            ))}
+          </>
+        );
+      case 'health':
+        return (
+          <>
+            <h2><FaShieldAlt /> Data Integrity Report</h2>
+            <div className="details-grid health-grid">
+              <div className="grid-item-label status-healthy">
+                <FaCheckCircle /> Status
+              </div>
+              <div className="grid-item-value status-healthy">
+                <strong>{dataHealth}</strong>
+              </div>
+
+              <div className="grid-item-label">
+                <FaClock /> Last Check
+              </div>
+              <div className="grid-item-value">
+                July 28, 2024, 10:00 AM UTC
+              </div>
+
+              <div className="grid-item-label">
+                <FaExclamationTriangle /> Orphaned Records
+              </div>
+              <div className="grid-item-value">
+                0 Found
+              </div>
+            </div>
+            <p className="modal-footer-note">Next scheduled check: July 29, 2024, 12:00 PM UTC</p>
+          </>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -68,38 +148,38 @@ const DataManagementPage = () => {
     <div className="content-section2">
       <h2><FaDatabase /> Data Management</h2>
       
-      {/* User Statistics Cards */}
+      {/* Data Statistics Cards */}
       <div className="user-stats-container">
-        <div className="stat-card">
-          <div className="stat-icon current-users">
-            <FaUsers />
+        <div className="stat-card clickable" onClick={() => setModalType('database')}>
+          <div className="stat-icon database-size">
+            <FaDatabase />
           </div>
           <div className="stat-content">
-            <h3>Current Users</h3>
-            <p className="stat-number">{currentUsers}</p>
-            <p className="stat-description">Active right now</p>
+            <h3>Database Size</h3>
+            <p className="stat-number">{databaseSize}</p>
+            <p className="stat-description">Total size of collections</p>
           </div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-icon today-users">
-            <FaUserClock />
+        <div className="stat-card clickable" onClick={() => setModalType('storage')}>
+          <div className="stat-icon storage-usage">
+            <FaHdd />
           </div>
           <div className="stat-content">
-            <h3>Today's Users</h3>
-            <p className="stat-number">{todayUsers}</p>
-            <p className="stat-description">Visited today</p>
+            <h3>Uploads Storage</h3>
+            <p className="stat-number">{uploadsStorage}</p>
+            <p className="stat-description">User-uploaded content</p>
           </div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-icon total-users">
-            <FaUserCheck />
+        <div className="stat-card clickable" onClick={() => setModalType('health')}>
+          <div className="stat-icon data-health">
+            <FaShieldAlt />
           </div>
           <div className="stat-content">
-            <h3>Total Users</h3>
-            <p className="stat-number">{totalUsers}</p>
-            <p className="stat-description">Since launch</p>
+            <h3>Data Integrity</h3>
+            <p className="stat-number">{dataHealth}</p>
+            <p className="stat-description">Last check: 2h ago</p>
           </div>
         </div>
       </div>
@@ -114,6 +194,12 @@ const DataManagementPage = () => {
           onClose={() => setShowConfig(false)}
           onSave={handleSaveConfig}
         />
+      )}
+
+      {modalType && (
+        <DetailModal onClose={() => setModalType(null)}>
+          {renderModalContent()}
+        </DetailModal>
       )}
 
       <div className="backup-table">

@@ -2,17 +2,11 @@ import React, { useState, useEffect } from 'react';
 // import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
 import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft } from 'react-icons/fa';
-import { MdOutlineFavoriteBorder } from 'react-icons/md';
-import petrosainsImg from '../assets/petrosains.jpg';
-import borneoImg from '../assets/borneo.jpg';
-import raneeImg from '../assets/ranee.jpg';
-import LoginPage from './Loginpage';
 import { useAuth } from '../context/AuthProvider.jsx';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 
 
 const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
-  const [selectedSection, setSelectedSection] = useState(null);
   const auth = useAuth();
   const { bookmarks } = UseBookmarkContext();
 
@@ -45,7 +39,7 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
 
       <div className="bookmark-sections">
         {bookmarks.map((bookmark) => (
-          <div key={bookmark.name}>
+          <div className="header-text" key={bookmark.name}>
             <div>
               <h4>{bookmark.name}</h4>
             </div>

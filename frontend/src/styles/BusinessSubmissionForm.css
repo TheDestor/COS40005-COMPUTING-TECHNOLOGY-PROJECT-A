@@ -1,20 +1,5 @@
 /* BusinessSubmissionForm.css */
 
-/* for full width */
-/* body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-  } */
-  
-  /* for full width */
-  /* #root {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  } */
-
 /* Overlay styles */
 .business-submission-overlay {
   position: fixed;
@@ -87,6 +72,7 @@
     font-size: 16px;
     opacity: 0.9;
     margin: 0;
+    color: white;
   }
   /* Progress Bar */
   .form-progress {
@@ -170,6 +156,9 @@
     color: #2c3345;
     margin: 0 0 16px;
   }
+  .form-step p {
+    margin: 0 0 16px;
+  }
   
   .form-row {
     display: flex;
@@ -177,17 +166,43 @@
     margin-bottom: 20px;
   }
   
-  .form-group {
+  .form-group-bsf {
     flex: 1;
     margin-bottom: 20px;
   }
   
-  .form-group label {
+  .form-group-bsf label {
     display: block;
     font-size: 14px;
     font-weight: 500;
-    color: #4b5563;
+    color: #3b82f6;
     margin-bottom: 8px;
+  }
+
+  .form-group-bsf input[type="text"],
+  .form-group-bsf input[type="email"],
+  .form-group-bsf input[type="tel"],
+  .form-group-bsf input[type="url"],
+  .form-group-bsf input[type="password"],
+  .form-group-bsf input[type="number"],
+  .form-group-bsf input[type="file"] {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    padding: 8px 10px;
+    color: #2c3345;
+    font-size: 14px;
+  }
+
+  .form-group-bsf textarea, .form-group-bsf select {
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    padding: 8px 10px;
+    color: #2c3345;
+    font-size: 14px;
+    width: 100%;
   }
   
   .form-control {
@@ -222,6 +237,13 @@
   textarea.form-control {
     min-height: 120px;
     resize: vertical;
+  }
+
+  .character-count {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    text-align: right;
   }
   
   .form-check {
@@ -424,6 +446,10 @@
     transition: all 0.2s ease;
     max-width: fit-content;
   }
+
+  .file-input-container .file-button {
+    color: white;
+  }
   
   .file-button:hover {
     background-color: #2563eb;
@@ -465,6 +491,7 @@
   .review-image-container {
     flex: 1;
     min-width: 200px;
+    color: #4b5563;
   }
   
   .review-image {
@@ -507,6 +534,22 @@
     padding: 8px 12px;
     background-color: #f3f4f6;
     border-radius: 6px;
+    /* color: #4b5563; */
+  }
+
+  .review-section {
+    margin-top: 32px;
+    /* background-color: #f9fafb; */
+    border-radius: 12px;
+    color: #2c3345;
+  }
+
+  .checkbox-group input[type="checkbox"] {
+    display: flex;
+    flex-direction: column;
+    background-color: #f9fafb;
+    color: #2c3345;
+    margin-top: 10px;
   }
   
   /* Form Navigation */
@@ -570,6 +613,10 @@
     text-align: center;
     padding: 40px 20px;
   }
+
+  .submission-success h3 {
+    color: #2c3345;
+  }
   
   .success-icon {
     display: inline-flex;
@@ -598,6 +645,19 @@
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .success-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .submit-another-btn {
+    background: linear-gradient(135deg, #6c5dd3 0%, #3b82f6 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
   }
   
   .btn-dashboard {
@@ -712,7 +772,7 @@
     gap: 20px;
   }
   
-  .address-fields .form-group:first-child {
+  .address-fields .form-group-bsf:first-child {
     grid-column: 1 / -1;
   }
 

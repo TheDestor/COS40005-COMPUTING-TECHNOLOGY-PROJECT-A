@@ -311,7 +311,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           Let's start with the basic information about your business and yourself as the owner.
         </p>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="name">
             <FaBuilding /> Business Name*
           </label>
@@ -327,7 +327,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           {errors.name && <div className="error-message">{errors.name}</div>}
         </div>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="owner">
             <FaUser /> Owner Name*
           </label>
@@ -343,7 +343,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           {errors.owner && <div className="error-message">{errors.owner}</div>}
         </div>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="ownerEmail">
             <FaEnvelope /> Email Address*
           </label>
@@ -375,7 +375,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           Please provide more detailed information about your business.
         </p>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="category">
             <FaList /> Business Category*
           </label>
@@ -396,7 +396,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           {errors.category && <div className="error-message">{errors.category}</div>}
         </div>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="description">
             <FaInfoCircle /> Business Description*
           </label>
@@ -416,7 +416,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           {errors.description && <div className="error-message">{errors.description}</div>}
         </div>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="address">
             <FaMapMarkerAlt /> Business Address*
           </label>
@@ -433,7 +433,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         </div>
         
         <div className="form-row">
-          <div className="form-group">
+          <div className="form-group-bsf">
             <label htmlFor="phone">
               <FaPhone /> Phone Number*
             </label>
@@ -449,7 +449,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             {errors.phone && <div className="error-message">{errors.phone}</div>}
           </div>
           
-          <div className="form-group">
+          <div className="form-group-bsf">
             <label htmlFor="website">
               <FaGlobe /> Website (optional)
             </label>
@@ -464,7 +464,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
         </div>
         
-        <div className="form-group">
+        <div className="form-group-bsf">
           <label htmlFor="openingHours">
             <FaClock /> Opening Hours (optional)
           </label>
@@ -490,7 +490,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           Please upload images to showcase your business and yourself as the owner.
         </p>
         
-        <div className="form-group upload-group">
+        <div className="form-group-bsf upload-group">
           <label htmlFor="businessImage">
             <FaImage /> Business Image*
           </label>
@@ -526,7 +526,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           {errors.businessImage && <div className="error-message">{errors.businessImage}</div>}
         </div>
         
-        <div className="form-group upload-group">
+        <div className="form-group-bsf upload-group">
           <label htmlFor="ownerAvatar">
             <FaUser /> Owner Profile Picture*
           </label>
@@ -584,15 +584,15 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           <div className="review-section">
             <h4>Basic Information</h4>
             <div className="review-item">
-              <span className="review-label">Business Name:</span>
+              <span className="review-label">Business Name: </span>
               <span className="review-value">{formData.name}</span>
             </div>
             <div className="review-item">
-              <span className="review-label">Owner Name:</span>
+              <span className="review-label">Owner Name: </span>
               <span className="review-value">{formData.owner}</span>
             </div>
             <div className="review-item">
-              <span className="review-label">Email Address:</span>
+              <span className="review-label">Email Address: </span>
               <span className="review-value">{formData.ownerEmail}</span>
             </div>
           </div>
@@ -600,26 +600,26 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           <div className="review-section">
             <h4>Business Details</h4>
             <div className="review-item">
-              <span className="review-label">Category:</span>
+              <span className="review-label">Category: </span>
               <span className="review-value">{formData.category}</span>
             </div>
             <div className="review-item">
-              <span className="review-label">Address:</span>
+              <span className="review-label">Address: </span>
               <span className="review-value">{formData.address}</span>
             </div>
             <div className="review-item">
-              <span className="review-label">Phone:</span>
+              <span className="review-label">Phone: </span>
               <span className="review-value">{formData.phone}</span>
             </div>
             {formData.website && (
               <div className="review-item">
-                <span className="review-label">Website:</span>
+                <span className="review-label">Website: </span>
                 <span className="review-value">{formData.website}</span>
               </div>
             )}
             {formData.openingHours && (
               <div className="review-item">
-                <span className="review-label">Opening Hours:</span>
+                <span className="review-label">Opening Hours: </span>
                 <span className="review-value">{formData.openingHours}</span>
               </div>
             )}
@@ -662,7 +662,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           <div className="review-section priority-section">
             <h4>Submission Priority</h4>
             <div className={`priority-indicator priority-${priority}`}>
-              <FaExclamationTriangle />
+              <FaExclamationTriangle /> 
               <span>
                 {priority === 'high' 
                   ? 'High Priority' 
@@ -677,7 +677,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
         </div>
         
-        <div className="form-group checkbox-group">
+        <div className="form-group-bsf checkbox-group">
           <input
             type="checkbox"
             id="agreement"

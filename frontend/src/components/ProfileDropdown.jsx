@@ -31,6 +31,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
   const displayName = user?.firstName || 'Guest';
 
   const isCBTAdmin = isLoggedIn && user?.role === 'cbt_admin';
+  const isSystemAdmin = isLoggedIn && user?.role === 'system_admin';
 
   const profileIcon = isLoggedIn ? (
     <img src={profileImage} alt="Profile" className="profile-icon3" />
@@ -107,6 +108,12 @@ const ProfileDropdown = ({ onLoginClick }) => {
                 </button>
                 {isCBTAdmin && (
                   <button className="menu-item51" onClick={() => { navigate('/dashboard'); setIsOpen(false); }}>
+                    <AiOutlineDashboard size={18} />
+                    Dashboard
+                  </button>
+                )}
+                {isSystemAdmin && (
+                  <button className="menu-item51" onClick={() => { navigate('/admin-dashboard'); setIsOpen(false); }}>
                     <AiOutlineDashboard size={18} />
                     Dashboard
                   </button>
