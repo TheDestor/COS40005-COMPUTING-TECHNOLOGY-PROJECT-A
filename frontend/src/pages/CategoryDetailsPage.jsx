@@ -145,6 +145,21 @@ const CategoryDetailsPage = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
 
+  useEffect(() => {
+    const turb = document.getElementById("turb");
+    let frame = 0;
+    let anim;
+    function animate() {
+      if (turb) {
+        turb.setAttribute("baseFrequency", `0.02 ${0.15 + Math.sin(frame/20)*0.03}`);
+      }
+      frame++;
+      anim = requestAnimationFrame(animate);
+    }
+    animate();
+    return () => cancelAnimationFrame(anim);
+  }, []);
+
   if (loading) {
     return (
       <div className="loading-spinner">
@@ -224,23 +239,41 @@ const CategoryDetailsPage = () => {
   };
 
   let visibleCards = [];
-  if (filteredItems.length === 1) {
-    // Only center
-    visibleCards = [null, null, filteredItems[0], null, null];
-  } else if (filteredItems.length === 2) {
-    // Center and right1
-    visibleCards = [null, null, filteredItems[0], filteredItems[1], null];
-  } else if (filteredItems.length === 3) {
-    // left1, center, right1
-    visibleCards = [null, filteredItems[0], filteredItems[1], filteredItems[2], null];
-  } else if (filteredItems.length === 4) {
-    // left2, left1, center, right1
-    visibleCards = [filteredItems[0], filteredItems[1], filteredItems[2], filteredItems[3], null];
-  } else {
-    // 5 or more: normal carousel
-    for (let i = 0; i < 5; i++) {
-      const item = filteredItems[(carouselStart + i) % filteredItems.length];
-      visibleCards.push(item);
+  const n = filteredItems.length;
+
+  if (n > 0) {
+    if (n >= 5) {
+      // For 5 or more items, normal sliding window
+      for (let i = 0; i < 5; i++) {
+        const item = filteredItems[(carouselStart + i) % n];
+        visibleCards.push(item);
+      }
+    } else {
+      // For less than 5 items, we create a rotated list and place it in the center.
+      const rotatedItems = [];
+      for (let i = 0; i < n; i++) {
+        rotatedItems.push(filteredItems[(carouselStart + i) % n]);
+      }
+
+      // Initialize with nulls for centering
+      visibleCards = [null, null, null, null, null];
+      
+      // Place items into the `visibleCards` array based on count
+      if (n === 1) { // Center
+        visibleCards[2] = rotatedItems[0];
+      } else if (n === 2) { // Center, right1
+        visibleCards[2] = rotatedItems[0];
+        visibleCards[3] = rotatedItems[1];
+      } else if (n === 3) { // left1, Center, right1
+        visibleCards[1] = rotatedItems[0];
+        visibleCards[2] = rotatedItems[1];
+        visibleCards[3] = rotatedItems[2];
+      } else if (n === 4) { // left2, left1, Center, right1
+        visibleCards[0] = rotatedItems[0];
+        visibleCards[1] = rotatedItems[1];
+        visibleCards[2] = rotatedItems[2];
+        visibleCards[3] = rotatedItems[3];
+      }
     }
   }
 
@@ -258,6 +291,16 @@ const CategoryDetailsPage = () => {
         </div>
       </div>
 
+      <div className="town-overview-section">
+        <div className="category-overlay-container">
+          <div className="text-content">
+            <h2>About {townData.name}</h2>
+            <p className="overview-text">{townData.description}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="video-section-container">
       <div className="video-section">
         <h2>Discover {townData.name} Through Videos</h2>
         
@@ -300,19 +343,11 @@ const CategoryDetailsPage = () => {
           </div>
         </div>
       </div>
-
-      <div className="town-overview">
-        <div className="overlay-container">
-          <div className="text-content">
-            <h2>About {townData.name}</h2>
-            <p className="overview-text">{townData.description}</p>
-          </div>
-        </div>
       </div>
 
       <div className="discover-section">
-        <div className="section-header">
-          <h2>Discover {townData.name}</h2>
+        <div className="section-header-container">
+          <h2>Major Attractions in {townData.name}</h2>
           <p>Explore the best of what {townData.name} has to offer</p>
         </div>
         
@@ -346,40 +381,50 @@ const CategoryDetailsPage = () => {
             <FaChevronLeft />
           </button>
           <div className="carousel">
-            {visibleCards.map((item, idx) =>
-              item ? (
-                <div
-                  key={item._id}
-                  className={`carousel-card ${getCardPositionClass(idx)}${idx === 2 ? ' active' : ''}`}
-                  onClick={() => {
-                    if (item && filteredItems.length > 1) {
-                      const positionsToMove = idx - 2;
-                      let newStart;
-                      if (positionsToMove > 0) {
-                        // Move left (current behavior for right side)
-                        newStart = (carouselStart + positionsToMove + filteredItems.length) % filteredItems.length;
-                      } else if (positionsToMove < 0) {
-                        // Move right (new behavior for left side)
-                        newStart = (carouselStart + positionsToMove + filteredItems.length * 2) % filteredItems.length;
-                      } else {
-                        // Already center, do nothing
-                        return;
+            {visibleCards.length > 0 ? (
+              visibleCards.map((item, idx) =>
+                item ? (
+                  <div
+                    key={item._id}
+                    className={`carousel-card ${getCardPositionClass(idx)}${idx === 2 ? ' active' : ''}`}
+                    onClick={() => {
+                      if (item && filteredItems.length > 1) {
+                        const positionsToMove = idx - 2;
+                        let newStart;
+                        if (positionsToMove > 0) {
+                          // Move left (current behavior for right side)
+                          newStart = (carouselStart + positionsToMove + filteredItems.length) % filteredItems.length;
+                        } else if (positionsToMove < 0) {
+                          // Move right (new behavior for left side)
+                          newStart = (carouselStart + positionsToMove + filteredItems.length * 2) % filteredItems.length;
+                        } else {
+                          // Already center, do nothing
+                          return;
+                        }
+                        setCarouselStart(newStart);
                       }
-                      setCarouselStart(newStart);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <img src={item.image || defaultImage} alt={item.name} />
-                  <div className="card-reflection">
-                    <img src={item.image || defaultImage} alt="" aria-hidden="true" />
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <img src={item.image || defaultImage} alt={item.name} />
+                    <div className="card-reflection">
+                      <img src={item.image || defaultImage} alt="" aria-hidden="true" />
+                    </div>
+                    <div className="carousel-card-hover-info">
+                      <div>{item.name}</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 400, marginTop: 4 }}>{item.type}</div>
+                    </div>
                   </div>
-                  <div className="carousel-card-hover-info">
-                    <div>{item.name}</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 400, marginTop: 4 }}>{item.type}</div>
-                  </div>
+                ) : null
+              )
+            ) : (
+              <div className="no-location-card">
+                <div className="no-location-content">
+                  <span className="no-location-emoji" role="img" aria-label="No data">📭</span>
+                  <h3>No location data found for this category.</h3>
+                  <p>We couldn't find any locations for <b>{townData.name}</b> at the moment.<br/>Try another category or check back later!</p>
                 </div>
-              ) : null
+              </div>
             )}
           </div>
           <button className="carousel-arrow" onClick={handleNext}>
@@ -387,38 +432,36 @@ const CategoryDetailsPage = () => {
           </button>
         </div>
 
-        <div className="carousel-description-section">
-          {visibleCards[2] && (
-            <>
-              <p className="carousel-description-text">
-                {visibleCards[2].description || "No description available."}
-              </p>
-              <div className="carousel-description-actions">
-                <Link
-                  to={`/discover/${visibleCards[2].slug}`}
-                  state={{
-                    name: visibleCards[2].name,
-                    image: visibleCards[2].image,
-                    desc: visibleCards[2].description,
-                    coordinates: [visibleCards[2].latitude, visibleCards[2].longitude]
-                  }}
-                  className="explore-btn"
-                >
-                  Explore more
-                </Link>
-                <a
-                  href={visibleCards[2].officialSite || "#"}
-                  className={`official-site-btn${visibleCards[2].officialSite ? "" : " disabled"}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  tabIndex={visibleCards[2].officialSite ? 0 : -1}
-                >
-                  Official Site
-                </a>
-              </div>
-            </>
-          )}
-        </div>
+        {visibleCards.length > 0 && visibleCards[2] && (
+          <div className="carousel-description-section">
+            <p className="carousel-description-text">
+              {visibleCards[2].description || "No description available."}
+            </p>
+            <div className="carousel-description-actions">
+              <Link
+                to={`/discover/${visibleCards[2].slug}`}
+                state={{
+                  name: visibleCards[2].name,
+                  image: visibleCards[2].image,
+                  desc: visibleCards[2].description,
+                  coordinates: [visibleCards[2].latitude, visibleCards[2].longitude]
+                }}
+                className="category-explore-btn"
+              >
+                Explore more
+              </Link>
+              <a
+                href={visibleCards[2].officialSite || "#"}
+                className={`official-site-btn${visibleCards[2].officialSite ? "" : " disabled"}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                tabIndex={visibleCards[2].officialSite ? 0 : -1}
+              >
+                Official Site
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       <Footer />

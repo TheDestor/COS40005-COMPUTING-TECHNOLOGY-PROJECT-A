@@ -183,10 +183,10 @@ const LoginPage = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // if (!isRobotChecked) {
-    //   handleError('Please verify the captcha.');
-    //   return;
-    // }
+    if (!isRobotChecked) {
+      handleError('Please verify the captcha.');
+      return;
+    }
 
     if (activeTab === 'otp') {
       handleVerifyOtp(e);
@@ -202,7 +202,7 @@ const LoginPage = ({ onClose }) => {
         }
         handleSuccess(result.message || 'Login successful!');
         setFormData({ identifier: '', password: '' });
-        // setIsRobotChecked(false);
+        setIsRobotChecked(false);
         if (typeof onClose === 'function') {
           onClose();
         }
@@ -292,7 +292,7 @@ const LoginPage = ({ onClose }) => {
             )}
 
             <div id="recaptcha-container" />
-            {/* <ReCAPTCHA sitekey="6LfCWiYrAAAAAO8XpIB9MNNt56rK7eNgShDxDcTR" onChange={(e) => setIsRobotChecked(e ? true : false)} /> */}
+            <ReCAPTCHA sitekey="6LfCWiYrAAAAAO8XpIB9MNNt56rK7eNgShDxDcTR" onChange={(e) => setIsRobotChecked(e ? true : false)} />
 
             {/* <button type="submit" className="login-button" disabled={!isRobotChecked}> */}
             <button type="submit" className="login-button">
