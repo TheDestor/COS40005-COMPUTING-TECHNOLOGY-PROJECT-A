@@ -1,0 +1,266 @@
+// ... existing imports ...
+import React, { useRef, useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+import carIcon from '../assets/car.gif';
+import homestayIcon from '../assets/homestay.gif';
+import townIcon from '../assets/majortown.gif';
+import shoppingIcon from '../assets/shopping.gif';
+import foodIcon from '../assets/food.gif';
+import museumIcon from '../assets/museum.gif';
+import tourIcon from '../assets/tour.gif';
+import eventIcon from '../assets/event.gif';
+import restaurantIcon from '../assets/restaurant.png';
+
+import MapViewMenu from './MapViewMenu';
+// import MapViewTesting from './MapViewTesting';
+import CustomInfoWindow from './CustomInfoWindow';
+import ReviewPage from '../pages/ReviewPage';
+import { UseBookmarkContext } from '../context/BookmarkProvider';
+import '../styles/MapComponent.css';
+import SearchBarTesting from './SearchbarTesting';
+import SearchHandlerTesting from './SearchHandlerTesting';
+import WeatherDateTimeTesting from './WeatherDateTimeTesting';
+import { townCoordinates } from '../townCoordinates';
+import LoginModal from '../pages/Loginpage';
+import TouristInfoSection from './TouristInfoSection';
+import ProfileDropdown from './ProfileDropdown';
+import SharePlace from './SharePlace';
+import MapZoomController from './MapZoomController';
+import ZoomHandlerTesting from './ZoomHandlerTesting';
+import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
+
+// Sarawak bounds: [SouthWest, NorthEast]
+const sarawakBounds = [
+  [0.8, 109.5],   // Southwest corner (lat, lng)
+  [5.5, 115.5],   // Northeast corner (lat, lng)
+];
+const sarawakCenter = [2.5, 112.5]; // Rough center of Sarawak
+
+// Helper to create a Leaflet icon from an image
+const createIcon = (iconUrl) =>
+  new L.Icon({
+    iconUrl,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30],
+    className: 'custom-leaflet-icon'
+  });
+
+const categoryIcons = {
+  'Major Town': createIcon(townIcon),
+  'Accommodation': createIcon(homestayIcon),
+  'Food & Beverages': createIcon(foodIcon),
+  'Attractions': createIcon(museumIcon),
+  'Attraction': createIcon(museumIcon),
+  'Shoppings & Leisures': createIcon(shoppingIcon),
+  'Transport': createIcon(carIcon),
+  'Transportation': createIcon(carIcon),
+  'Tour Guides': createIcon(tourIcon),
+  'Events': createIcon(eventIcon),
+  'Restaurant': createIcon(restaurantIcon),
+};
+
+// Separate component for map content to ensure proper context
+// In MapComponentTesting.jsx, update the MapContent component:
+
+// Separate component for map content to ensure proper context
+function MapContent({ locations, nearbyPlaces, selectedSearchPlace, selectedCategory }) {
+  // Helper function to get the correct icon for a location
+  const getIconForLocation = (location) => {
+    console.log('Location type:', location.type);
+    console.log('Available types:', Object.keys(categoryIcons));
+    
+    if (categoryIcons[location.type]) {
+      console.log('Found icon for type:', location.type);
+      return categoryIcons[location.type];
+    }
+    
+    console.log('No icon found for type:', location.type, '- using default');
+    return categoryIcons['Major Town'];
+  };
+
+  return (
+    <>
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+
+      {/* ZoomHandlerTesting is now inside MapContainer */}
+      <ZoomHandlerTesting 
+        selectedSearchPlace={selectedSearchPlace} 
+        selectedCategory={selectedCategory}
+      />
+
+      {/* Render markers only for the selected category */}
+      {locations.map((loc, idx) => {
+        const icon = getIconForLocation(loc);
+        
+        return (
+          <Marker
+            key={`${loc.name}-${idx}`}
+            position={[loc.latitude, loc.longitude]}
+            icon={icon}
+          >
+            <Popup>
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  src={icon.options.iconUrl}
+                  alt={loc.type}
+                  style={{ width: 30, height: 30, marginBottom: 8 }}
+                />
+                <div>
+                  <strong>{loc.name}</strong>
+                  <br />
+                  <small>Type: {loc.type}</small>
+                  <br />
+                  {loc.description || 'No description'}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+
+      {/* Render markers for nearby search results */}
+      {nearbyPlaces.map((loc, idx) => (
+        <Marker
+          key={`nearby-${loc.placeId}-${idx}`}
+          position={[loc.latitude, loc.longitude]}
+          icon={categoryIcons['Restaurant']} // Assuming they are all restaurants
+        >
+          <Popup>{loc.name}</Popup>
+        </Marker>
+      ))}
+    </>
+  );
+}
+
+function MapComponentTesting() {
+  const mapRef = useRef();
+  const [currentTown, setCurrentTown] = useState('Kuching');
+  const [shouldZoom, setShouldZoom] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [activeOption, setActiveOption] = useState('Major Town');
+  const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
+  const [searchNearbyPlaces, setSearchNearbyPlaces] = useState([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Handler for when MapViewMenu selects a category
+  const handleMenuSelect = (category, data) => {
+    setSelectedSearchPlace(null);
+    setSearchNearbyPlaces([]);
+
+    setActiveOption(category);
+    setLocations(data || []);
+  };
+
+  // Handler for when the search bar selects a place
+  const handlePlaceSelect = (place) => {
+    setLocations([]);
+    setActiveOption(null);
+    setSearchNearbyPlaces([]);
+    setSelectedSearchPlace(place);
+  };
+
+  // Handler for when MapViewMenu wants to zoom to a place
+  const handleZoomToPlace = (place) => {
+    setSelectedSearchPlace(place);
+  };
+
+  // Set default Major Town data on component mount
+  useEffect(() => {
+    const defaultMajorTowns = [
+      { name: 'Kuching', latitude: 1.5534, longitude: 110.3594, type: 'Major Town', description: 'Capital city of Sarawak' },
+      { name: 'Samarahan', latitude: 1.4599, longitude: 110.4883, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Serian', latitude: 1.1670, longitude: 110.5665, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Sri Aman', latitude: 1.2370, longitude: 111.4621, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Betong', latitude: 1.4115, longitude: 111.5290, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Sarikei', latitude: 2.1271, longitude: 111.5182, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Sibu', latitude: 2.2870, longitude: 111.8320, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Mukah', latitude: 2.8988, longitude: 112.0914, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Kapit', latitude: 2.0167, longitude: 112.9333, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Bintulu', latitude: 3.1739, longitude: 113.0428, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Miri', latitude: 4.4180, longitude: 114.0155, type: 'Major Town', description: 'Division in Sarawak' },
+      { name: 'Limbang', latitude: 4.7548, longitude: 115.0089, type: 'Major Town', description: 'Division in Sarawak' }
+    ];
+    setLocations(defaultMajorTowns);
+  }, []);
+
+  // Fit map to markers when locations change
+  useEffect(() => {
+    if (locations.length > 0 && mapRef.current) {
+      const bounds = L.latLngBounds(
+        locations.map(loc => [loc.latitude, loc.longitude])
+      );
+      mapRef.current.fitBounds(bounds);
+    }
+  }, [locations]);
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Top Header Container */}
+      <div className="top-header-container">
+        <div className="header-elements-wrapper">
+          <div className="search-mapview-group">
+            <SearchBarTesting onPlaceSelected={handlePlaceSelect} />
+            <MapViewMenu 
+              onSelect={handleMenuSelect}
+              activeOption={activeOption}
+              onZoomToPlace={handleZoomToPlace}
+            />
+          </div>
+          <div className="weather-profile-group">
+            <WeatherDateTimeTesting
+              currentTown={currentTown}
+              setCurrentTown={setCurrentTown}
+              shouldZoom={shouldZoom}
+              setShouldZoom={setShouldZoom}
+            />
+            <ProfileDropdown onLoginClick={() => setShowLoginModal(true)} />
+          </div>
+        </div>
+      </div>
+
+      {/* The Map */}
+      <MapContainer
+        center={sarawakCenter}
+        zoom={7.5}
+        minZoom={7}
+        maxZoom={18}
+        style={{ width: '100vw', height: '100vh', zIndex: 1 }}
+        maxBounds={sarawakBounds}
+        maxBoundsViscosity={1.0}
+        zoomControl={false}
+        scrollWheelZoom={true}
+        whenCreated={mapInstance => { mapRef.current = mapInstance; }}
+      >
+        <MapContent
+          locations={locations}
+          nearbyPlaces={searchNearbyPlaces}
+          selectedSearchPlace={selectedSearchPlace}
+          selectedCategory={activeOption}
+        />
+        {selectedSearchPlace && (
+          <SearchHandlerTesting
+            selectedSearchPlace={selectedSearchPlace}
+            setSearchNearbyPlaces={setSearchNearbyPlaces}
+          />
+        )}
+        <WeatherTownHandlerTesting
+          currentTown={currentTown}
+          shouldZoom={shouldZoom}
+          setShouldZoom={setShouldZoom}
+        />
+      </MapContainer>
+
+      {/* Login Modal */}
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+    </div>
+  );
+}
+
+export default MapComponentTesting;

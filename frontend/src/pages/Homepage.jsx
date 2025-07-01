@@ -9,6 +9,7 @@ import defaultImage from '../assets/Kuching.png';
 // import ProfileDropdown from '../components/ProfileDropdown.jsx';
 import { APIProvider } from '@vis.gl/react-google-maps';
 // import MapZoomHandler from '../components/MapZoomController.jsx';
+import MapComponentTesting from '../components/MapComponentTesting.jsx';
 
 const HomePage = () => {
   const location = useLocation();

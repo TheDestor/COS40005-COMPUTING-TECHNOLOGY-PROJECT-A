@@ -121,8 +121,8 @@
 .recent-dropdown5 {
   position: absolute;
   top: 100%;
-  left: 16px;
-  width: calc(100% - 32px);
+  left: 0;
+  width: 100%;
   background: #fff;
   border: 1px solid #ddd;
   border-top: none;
@@ -248,8 +248,9 @@
   }
 
   .pac-container, .recent-dropdown5 {
-    left: 14px;
-    width: calc(100% - 28px) !important;
+    left: 0;
+    width: 100% !important;
+    font-size: 13px;
   }
 }
 
@@ -284,8 +285,8 @@
   }
 
   .pac-container, .recent-dropdown5 {
-    left: 12px;
-    width: calc(100% - 24px) !important;
+    left: 0;
+    width: 100% !important;
   }
 }
 
@@ -320,7 +321,7 @@
   }
 
   .pac-container, .recent-dropdown5 {
-    left: 10px;
-    width: calc(100% - 20px) !important;
+    left: 0;
+    width: 100% !important;
   }
 }

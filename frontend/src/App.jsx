@@ -5,7 +5,11 @@ import { AuthProvider, useAuth } from './context/AuthProvider.jsx';
 import { BookmarkProvider } from './context/BookmarkProvider.jsx';
 
 import './App.css';
+import 'leaflet/dist/leaflet.css'; 
 import ProtectedRoute from './components/ProtectedRoutes.jsx';
+
+// Testing component
+import  MapComponentTesting from './components/MapComponentTesting.jsx';
 
 // Other Pages
 import ErrorPage from './pages/ErrorPage.jsx';
@@ -63,6 +67,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/testing" element={<MapComponentTesting />} />
 
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<UserRegistration />} />

@@ -11,6 +11,14 @@
   pointer-events: all;
 }
 
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+.leaflet-control-container .leaflet-control-logo {
+  display: none !important;
+}
+
 /* ============================
    2. Search Marker Styles
 ============================ */
