@@ -37,22 +37,38 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       fetch(
-        `https://photon.komoot.io/api/?q=${encodeURIComponent(inputValue)}&lang=en&limit=5&bbox=${sarawakBbox}`,
+        `https://corsproxy.io/?https://photon.komoot.io/api/?q=${encodeURIComponent(inputValue)}&lang=en&limit=5&bbox=${sarawakBbox}`,
         { signal: controller.signal }
       )
+      // fetch(
+      //   `https://photon.komoot.io/api/?q=${encodeURIComponent(inputValue)}&lang=en&limit=5&bbox=${sarawakBbox}`,
+      //   { signal: controller.signal }
+      // )
         .then(res => res.json())
         .then(data => {
+          // Sarawak bounding box
+          const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
           setPredictions(
-            (data.features || []).map(feature => ({
-              name: feature.properties.name || feature.properties.city || feature.properties.country,
-              description: feature.properties.country
-                ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
-                : feature.properties.osm_value,
-              latitude: feature.geometry.coordinates[1],
-              longitude: feature.geometry.coordinates[0],
-              placeId: feature.properties.osm_id,
-              full: feature
-            }))
+            (data.features || [])
+              .filter(feature => {
+                const lat = feature.geometry.coordinates[1];
+                const lon = feature.geometry.coordinates[0];
+                // Only keep results within Sarawak bounds
+                return (
+                  lat >= minLat && lat <= maxLat &&
+                  lon >= minLon && lon <= maxLon
+                );
+              })
+              .map(feature => ({
+                name: feature.properties.name || feature.properties.city || feature.properties.country,
+                description: feature.properties.country
+                  ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
+                  : feature.properties.osm_value,
+                latitude: feature.geometry.coordinates[1],
+                longitude: feature.geometry.coordinates[0],
+                placeId: feature.properties.osm_id,
+                full: feature
+              }))
           );
         })
         .catch((err) => {
@@ -74,6 +90,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
       console.error('No geometry found for selected place');
       return;
     }
+    console.log(place);
     onPlaceSelected && onPlaceSelected(place);
     updateRecentSearches(place);
   };
@@ -158,8 +175,9 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
             );
           } else if (e.key === 'Enter') {
             e.preventDefault();
-            if (highlightedIndex >= 0 && predictions.length > 0) {
-              handlePredictionClick(predictions[highlightedIndex]);
+            if (predictions.length > 0) {
+              const idx = highlightedIndex >= 0 ? highlightedIndex : 0;
+              handlePredictionClick(predictions[idx]);
             }
           }
         }}

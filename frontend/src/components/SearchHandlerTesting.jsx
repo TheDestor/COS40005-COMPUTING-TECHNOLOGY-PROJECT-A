@@ -1,17 +1,17 @@
 import { useMap } from 'react-leaflet';
 import { useEffect } from 'react';
 
-export default function SearchHandlerTesting({ selectedSearchPlace, setSearchNearbyPlaces }) {
+export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearchNearbyPlaces, searchBarZoomTrigger }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map || !selectedSearchPlace?.latitude || !selectedSearchPlace?.longitude) {
+    if (!map || !selectedSearchBarPlace?.latitude || !selectedSearchBarPlace?.longitude) {
       return;
     }
 
-    const lat = selectedSearchPlace.latitude;
-    const lon = selectedSearchPlace.longitude;
-    const radius = 5000; // 5km radius
+    const lat = selectedSearchBarPlace.latitude;
+    const lon = selectedSearchBarPlace.longitude;
+    const radius = 500; // 500m radius
 
     // This is an Overpass QL query to find restaurants, cafes, and bars.
     const query = `
@@ -52,7 +52,18 @@ export default function SearchHandlerTesting({ selectedSearchPlace, setSearchNea
         console.error('Error fetching from Overpass API:', error);
       });
       
-  }, [map, selectedSearchPlace, setSearchNearbyPlaces]);
+  }, [map, selectedSearchBarPlace, setSearchNearbyPlaces]);
+
+  useEffect(() => {
+    if (map && selectedSearchBarPlace?.latitude && selectedSearchBarPlace?.longitude) {
+      setTimeout(() => {
+        map.flyTo(
+          [selectedSearchBarPlace.latitude, selectedSearchBarPlace.longitude],
+          17
+        );
+      }, 100); // 100ms delay
+    }
+  }, [map, selectedSearchBarPlace, searchBarZoomTrigger]);
 
   return null;
 }

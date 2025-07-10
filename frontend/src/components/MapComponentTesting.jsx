@@ -1,6 +1,6 @@
-// ... existing imports ...
 import React, { useRef, useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -15,7 +15,6 @@ import eventIcon from '../assets/event.gif';
 import restaurantIcon from '../assets/restaurant.png';
 
 import MapViewMenu from './MapViewMenu';
-// import MapViewTesting from './MapViewTesting';
 import CustomInfoWindow from './CustomInfoWindow';
 import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
@@ -49,6 +48,14 @@ const createIcon = (iconUrl) =>
     className: 'custom-leaflet-icon'
   });
 
+const searchPlaceIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Or use your own pin image
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+  className: 'custom-leaflet-icon'
+});
+
 const categoryIcons = {
   'Major Town': createIcon(townIcon),
   'Accommodation': createIcon(homestayIcon),
@@ -67,7 +74,7 @@ const categoryIcons = {
 // In MapComponentTesting.jsx, update the MapContent component:
 
 // Separate component for map content to ensure proper context
-function MapContent({ locations, nearbyPlaces, selectedSearchPlace, selectedCategory }) {
+function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
     console.log('Location type:', location.type);
@@ -82,6 +89,9 @@ function MapContent({ locations, nearbyPlaces, selectedSearchPlace, selectedCate
     return categoryIcons['Major Town'];
   };
 
+  // Only cluster if not Major Town
+  const shouldCluster = activeCategory !== 'Major Town';
+
   return (
     <>
       <TileLayer
@@ -89,52 +99,96 @@ function MapContent({ locations, nearbyPlaces, selectedSearchPlace, selectedCate
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* ZoomHandlerTesting is now inside MapContainer */}
-      <ZoomHandlerTesting 
-        selectedSearchPlace={selectedSearchPlace} 
-        selectedCategory={selectedCategory}
-      />
-
-      {/* Render markers only for the selected category */}
-      {locations.map((loc, idx) => {
-        const icon = getIconForLocation(loc);
-        
-        return (
+      {/* Show search bar marker and its nearby places if a search bar place is selected */}
+      {selectedSearchBarPlace && selectedSearchBarPlace.latitude && selectedSearchBarPlace.longitude ? (
+        <>
           <Marker
-            key={`${loc.name}-${idx}`}
-            position={[loc.latitude, loc.longitude]}
-            icon={icon}
+            position={[selectedSearchBarPlace.latitude, selectedSearchBarPlace.longitude]}
+            icon={searchPlaceIcon}
           >
             <Popup>
-              <div style={{ textAlign: 'center' }}>
-                <img
-                  src={icon.options.iconUrl}
-                  alt={loc.type}
-                  style={{ width: 30, height: 30, marginBottom: 8 }}
-                />
-                <div>
-                  <strong>{loc.name}</strong>
-                  <br />
-                  <small>Type: {loc.type}</small>
-                  <br />
-                  {loc.description || 'No description'}
-                </div>
-              </div>
+              <strong>{selectedSearchBarPlace.name || 'Selected Place'}</strong>
+              {selectedSearchBarPlace.description && <div>{selectedSearchBarPlace.description}</div>}
             </Popup>
           </Marker>
-        );
-      })}
-
-      {/* Render markers for nearby search results */}
-      {nearbyPlaces.map((loc, idx) => (
-        <Marker
-          key={`nearby-${loc.placeId}-${idx}`}
-          position={[loc.latitude, loc.longitude]}
-          icon={categoryIcons['Restaurant']} // Assuming they are all restaurants
-        >
-          <Popup>{loc.name}</Popup>
-        </Marker>
-      ))}
+          <MarkerClusterGroup disableClusteringAtZoom={18}>
+            {nearbyPlaces.map((loc, idx) => (
+              <Marker
+                key={`nearby-${loc.placeId}-${idx}`}
+                position={[loc.latitude, loc.longitude]}
+                icon={categoryIcons['Restaurant']}
+              >
+                <Popup>{loc.name}</Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
+        </>
+      ) : (
+        <>
+          {/* Category/location markers */}
+          {!selectedSearchBarPlace && (
+            shouldCluster ? (
+              <MarkerClusterGroup disableClusteringAtZoom={18}>
+                {locations.map((loc, idx) => {
+                  const icon = getIconForLocation(loc);
+                  return (
+                    <Marker
+                      key={`${loc.name}-${idx}`}
+                      position={[loc.latitude, loc.longitude]}
+                      icon={icon}
+                    >
+                      <Popup>
+                        <div style={{ textAlign: 'center' }}>
+                          <img
+                            src={icon.options.iconUrl}
+                            alt={loc.type}
+                            style={{ width: 30, height: 30, marginBottom: 8 }}
+                          />
+                          <div>
+                            <strong>{loc.name}</strong>
+                            <br />
+                            <small>Type: {loc.type}</small>
+                            <br />
+                            {loc.description || 'No description'}
+                          </div>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+              </MarkerClusterGroup>
+            ) : (
+              locations.map((loc, idx) => {
+                const icon = getIconForLocation(loc);
+                return (
+                  <Marker
+                    key={`${loc.name}-${idx}`}
+                    position={[loc.latitude, loc.longitude]}
+                    icon={icon}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center' }}>
+                        <img
+                          src={icon.options.iconUrl}
+                          alt={loc.type}
+                          style={{ width: 30, height: 30, marginBottom: 8 }}
+                        />
+                        <div>
+                          <strong>{loc.name}</strong>
+                          <br />
+                          <small>Type: {loc.type}</small>
+                          <br />
+                          {loc.description || 'No description'}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })
+            )
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -146,24 +200,24 @@ function MapComponentTesting() {
   const [locations, setLocations] = useState([]);
   const [activeOption, setActiveOption] = useState('Major Town');
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
+  const [selectedSearchBarPlace, setSelectedSearchBarPlace] = useState(null);
   const [searchNearbyPlaces, setSearchNearbyPlaces] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [zoomTrigger, setZoomTrigger] = useState(0);
+  const [searchBarZoomTrigger, setSearchBarZoomTrigger] = useState(0);
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
-    setSelectedSearchPlace(null);
-    setSearchNearbyPlaces([]);
-
+    setSelectedSearchBarPlace(null);
     setActiveOption(category);
     setLocations(data || []);
+    setZoomTrigger(z => z + 1);
   };
 
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
     setLocations([]);
-    setActiveOption(null);
-    setSearchNearbyPlaces([]);
-    setSelectedSearchPlace(place);
+    setSelectedSearchBarPlace({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
@@ -187,18 +241,20 @@ function MapComponentTesting() {
       { name: 'Miri', latitude: 4.4180, longitude: 114.0155, type: 'Major Town', description: 'Division in Sarawak' },
       { name: 'Limbang', latitude: 4.7548, longitude: 115.0089, type: 'Major Town', description: 'Division in Sarawak' }
     ];
-    setLocations(defaultMajorTowns);
-  }, []);
+    if (!selectedSearchBarPlace) {
+      setLocations(defaultMajorTowns);
+    }
+  }, [selectedSearchBarPlace]);
 
   // Fit map to markers when locations change
   useEffect(() => {
-    if (locations.length > 0 && mapRef.current) {
+    if (!selectedSearchBarPlace && locations.length > 0 && mapRef.current) {
       const bounds = L.latLngBounds(
         locations.map(loc => [loc.latitude, loc.longitude])
       );
       mapRef.current.fitBounds(bounds);
     }
-  }, [locations]);
+  }, [locations, selectedSearchBarPlace]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -241,19 +297,25 @@ function MapComponentTesting() {
         <MapContent
           locations={locations}
           nearbyPlaces={searchNearbyPlaces}
-          selectedSearchPlace={selectedSearchPlace}
-          selectedCategory={activeOption}
+          selectedSearchBarPlace={selectedSearchBarPlace}
+          activeCategory={activeOption}
         />
-        {selectedSearchPlace && (
+        {selectedSearchBarPlace && (
           <SearchHandlerTesting
-            selectedSearchPlace={selectedSearchPlace}
+            selectedSearchBarPlace={selectedSearchBarPlace}
             setSearchNearbyPlaces={setSearchNearbyPlaces}
+            searchBarZoomTrigger={searchBarZoomTrigger}
           />
         )}
         <WeatherTownHandlerTesting
           currentTown={currentTown}
           shouldZoom={shouldZoom}
           setShouldZoom={setShouldZoom}
+        />
+        <ZoomHandlerTesting 
+          selectedSearchPlace={selectedSearchPlace} 
+          selectedCategory={activeOption}
+          zoomTrigger={zoomTrigger}
         />
       </MapContainer>
 

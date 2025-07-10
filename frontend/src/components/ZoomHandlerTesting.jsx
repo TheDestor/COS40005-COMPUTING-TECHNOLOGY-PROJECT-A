@@ -2,7 +2,7 @@
 import { useMap } from 'react-leaflet';
 import { useEffect } from 'react';
 
-export default function ZoomHandlerTesting({ selectedSearchPlace, selectedCategory }) {
+export default function ZoomHandlerTesting({ selectedSearchPlace, selectedCategory, zoomTrigger }) {
   const map = useMap();
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function ZoomHandlerTesting({ selectedSearchPlace, selectedCatego
         map.setView(position, 13); // Default zoom level 13 for other categories
       }
     }
-  }, [map, selectedSearchPlace, selectedCategory]);
+  }, [map, selectedSearchPlace, selectedCategory, zoomTrigger]);
 
   return null;
 }
