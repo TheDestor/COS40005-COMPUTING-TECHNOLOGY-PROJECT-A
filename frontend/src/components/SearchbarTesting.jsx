@@ -30,9 +30,9 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
   // Fetch suggestions from Photon, debounced and restricted to Sarawak
   useEffect(() => {
     if (!inputValue.trim()) {
-      setPredictions([]);
-      return;
-    }
+        setPredictions([]);
+        return;
+      }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -169,7 +169,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
             setHighlightedIndex((prev) =>
               prev < predictions.length - 1 ? prev + 1 : 0
             );
-          } else if (e.key === 'ArrowUp') {
+          } else if (e.key === 'ArrowUp') { 
             setHighlightedIndex((prev) =>
               prev > 0 ? prev - 1 : predictions.length - 1
             );

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -27,9 +27,10 @@ import LoginModal from '../pages/Loginpage';
 import TouristInfoSection from './TouristInfoSection';
 import ProfileDropdown from './ProfileDropdown';
 import SharePlace from './SharePlace';
-import MapZoomController from './MapZoomController';
+import MapZoomControllerTesting from './MapZoomControllerTesting';
 import ZoomHandlerTesting from './ZoomHandlerTesting';
 import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
+import LeftSideBarTesting from './LeftSideBarTesting';
 
 // Sarawak bounds: [SouthWest, NorthEast]
 const sarawakBounds = [
@@ -74,18 +75,18 @@ const categoryIcons = {
 // In MapComponentTesting.jsx, update the MapContent component:
 
 // Separate component for map content to ensure proper context
-function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory }) {
+function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
-    console.log('Location type:', location.type);
-    console.log('Available types:', Object.keys(categoryIcons));
+    // console.log('Location type:', location.type);
+    // console.log('Available types:', Object.keys(categoryIcons));
     
     if (categoryIcons[location.type]) {
-      console.log('Found icon for type:', location.type);
+      // console.log('Found icon for type:', location.type);
       return categoryIcons[location.type];
     }
     
-    console.log('No icon found for type:', location.type, '- using default');
+    // console.log('No icon found for type:', location.type, '- using default');
     return categoryIcons['Major Town'];
   };
 
@@ -126,7 +127,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
       ) : (
         <>
           {/* Category/location markers */}
-          {!selectedSearchBarPlace && (
+          {!selectedSearchBarPlace && !isRoutingActive && (
             shouldCluster ? (
               <MarkerClusterGroup disableClusteringAtZoom={18}>
                 {locations.map((loc, idx) => {
@@ -193,7 +194,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
   );
 }
 
-function MapComponentTesting() {
+function MapComponentTesting({  }) {
   const mapRef = useRef();
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [shouldZoom, setShouldZoom] = useState(false);
@@ -205,6 +206,9 @@ function MapComponentTesting() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [zoomTrigger, setZoomTrigger] = useState(0);
   const [searchBarZoomTrigger, setSearchBarZoomTrigger] = useState(0);
+  const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
+  const [osrmWaypoints, setOsrmWaypoints] = useState([]);
+  const [isRoutingActive, setIsRoutingActive] = useState(false);
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
@@ -256,8 +260,25 @@ function MapComponentTesting() {
     }
   }, [locations, selectedSearchBarPlace]);
 
+
+  useEffect(() => {
+    // Routing is active if both start and end are set (and valid), or if there are any waypoints
+    const routingActive =
+      !!osrmRouteCoords[0] && // Assuming osrmRouteCoords[0] is the start
+      !!osrmRouteCoords[osrmRouteCoords.length - 1] && // Assuming osrmRouteCoords[osrmRouteCoords.length - 1] is the end
+      (osrmWaypoints.length === 0 || osrmWaypoints.some(Boolean));
+    setIsRoutingActive(routingActive);
+  }, [osrmRouteCoords, osrmWaypoints]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Left Sidebar */}
+      <LeftSideBarTesting 
+        setOsrmRouteCoords={setOsrmRouteCoords}
+        setOsrmWaypoints={setOsrmWaypoints}
+        setIsRoutingActive={setIsRoutingActive}
+      />
+
       {/* Top Header Container */}
       <div className="top-header-container">
         <div className="header-elements-wrapper">
@@ -292,13 +313,13 @@ function MapComponentTesting() {
         maxBoundsViscosity={1.0}
         zoomControl={false}
         scrollWheelZoom={true}
-        whenCreated={mapInstance => { mapRef.current = mapInstance; }}
       >
         <MapContent
           locations={locations}
           nearbyPlaces={searchNearbyPlaces}
           selectedSearchBarPlace={selectedSearchBarPlace}
           activeCategory={activeOption}
+          isRoutingActive={isRoutingActive}
         />
         {selectedSearchBarPlace && (
           <SearchHandlerTesting
@@ -317,6 +338,28 @@ function MapComponentTesting() {
           selectedCategory={activeOption}
           zoomTrigger={zoomTrigger}
         />
+        {osrmRouteCoords.length > 0 && (
+          <>
+            {/* Start marker */}
+            <Marker position={osrmRouteCoords[0]}>
+              <Popup>Starting point</Popup>
+            </Marker>
+            {/* Waypoint markers */}
+            {osrmWaypoints && osrmWaypoints.length > 0 && osrmWaypoints.map((pos, idx) => (
+              <Marker key={`waypoint-${idx}`} position={[pos.lat, pos.lng]}>
+                <Popup>Waypoint {idx + 1}</Popup>
+              </Marker>
+            ))}
+            {/* End marker */}
+            <Marker position={osrmRouteCoords[osrmRouteCoords.length - 1]}>
+              <Popup>End point</Popup>
+            </Marker>
+            {/* Route polyline */}
+            <Polyline positions={osrmRouteCoords} color="blue" weight={5} />
+
+            <MapZoomControllerTesting routeCoords={osrmRouteCoords} />
+          </>
+        )}
       </MapContainer>
 
       {/* Login Modal */}
