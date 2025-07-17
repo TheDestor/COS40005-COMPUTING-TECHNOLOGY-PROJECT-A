@@ -5,8 +5,9 @@ import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, F
 import { FaDownload, FaTrash, FaCog, FaPlay } from "react-icons/fa";
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 
-const backups = [
+const initialBackups = [
   {
+    id: 1,
     name: "Backup version 1.0",
     date: "2024-11-24",
     size: "40.2 GB",
@@ -14,6 +15,7 @@ const backups = [
     status: "Completed",
   },
   {
+    id: 2,
     name: "Backup version 1.1",
     date: "2024-11-22",
     size: "37.1 GB",
@@ -21,6 +23,7 @@ const backups = [
     status: "Completed",
   },
   {
+    id: 3,
     name: "Backup version 2.0",
     date: "2023-12-22",
     size: "35.2 GB",
@@ -46,6 +49,7 @@ const DataManagementPage = () => {
   const [uploadsStorage, setUploadsStorage] = useState("24.9 GB");
   const [dataHealth, setDataHealth] = useState("Healthy");
   const [modalType, setModalType] = useState(null); // null, 'database', 'storage', or 'health'
+  const [backups, setBackups] = useState(initialBackups);
 
   // The useEffect for simulating user data can be removed or repurposed later
   // for real data metrics.
@@ -53,6 +57,26 @@ const DataManagementPage = () => {
   const handleSaveConfig = (config) => {
     console.log("Backup Config Saved:", config);
     // Save config to server or state
+  };
+
+  const handleDeleteBackup = (backupId) => {
+    // Show confirmation dialog
+    if (window.confirm("Are you sure you want to delete this backup? This action cannot be undone.")) {
+      // Remove backup from state
+      setBackups(prevBackups => prevBackups.filter(backup => backup.id !== backupId));
+      
+      // Here you would typically also make an API call to delete from server
+      // Example: await deleteBackupFromServer(backupId);
+      
+      console.log(`Backup with ID ${backupId} deleted`);
+    }
+  };
+
+  const handleDownloadBackup = (backup) => {
+    // Implement download functionality
+    console.log(`Downloading backup: ${backup.name}`);
+    // Here you would typically trigger a download or redirect to download URL
+    // Example: window.location.href = `/api/backups/${backup.id}/download`;
   };
 
   const renderModalContent = () => {
@@ -216,7 +240,7 @@ const DataManagementPage = () => {
           </thead>
           <tbody>
             {backups.map((backup, index) => (
-              <tr key={index}>
+              <tr key={backup.id}>
                 <td>{backup.name}</td>
                 <td>{backup.date}</td>
                 <td>{backup.size}</td>
@@ -227,8 +251,20 @@ const DataManagementPage = () => {
                   </span>
                 </td>
                 <td className="actions">
-                  <button className="download"><FaDownload /></button>
-                  <button className="delete"><FaTrash /></button>
+                  <button 
+                    className="download" 
+                    onClick={() => handleDownloadBackup(backup)}
+                    title="Download backup"
+                  >
+                    <FaDownload />
+                  </button>
+                  <button 
+                    className="delete" 
+                    onClick={() => handleDeleteBackup(backup.id)}
+                    title="Delete backup"
+                  >
+                    <FaTrash />
+                  </button>
                 </td>
               </tr>
             ))}
