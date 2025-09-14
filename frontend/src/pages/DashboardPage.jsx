@@ -709,6 +709,7 @@ const createUserEngagementBarChart = () => {
 };
 
 // Dummy Data for Users List
+{/*
 const usersList = [
   { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
   { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
@@ -716,8 +717,10 @@ const usersList = [
   { id: 4, name: "Gary", email: "gary@gmail.com", status: "Active", lastLogin: "1 day ago", image: profile4 },
   { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
 ];
+*/}
 
 // Sample data for reviews pending approval
+{/*
 const pendingReviews = [
   {
     id: 1,
@@ -756,14 +759,18 @@ const pendingReviews = [
     userImage: profile2
   }
 ];
+*/}
 
 // These are for Review Manage
+{/*
 const handleReviewAction = (reviewId, action) => {
   console.log(`Review ${reviewId} ${action}`);
   // This Part can use to handle the API call to approve/reject the review
   // For now, we'll just log the action
 };
+*/}
 
+{/*
 const renderStarRating = (rating) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
@@ -775,6 +782,7 @@ const renderStarRating = (rating) => {
   }
   return <div className="star-rating">{stars}</div>;
 };
+*/}
 
   
   return (
@@ -899,6 +907,7 @@ const renderStarRating = (rating) => {
           </div>
         </div>
         {/* Users List Section */}
+        {/*
         <div className="dashboard-section">
           <div className="section-header">
             <h3>Recent Users</h3>
@@ -938,7 +947,9 @@ const renderStarRating = (rating) => {
               </tbody>
             </table>
           </div>
+          */}
           {/* Pending Reviews Section */}
+          {/*
           <div className="dashboard-section">
             <div className="section-header">
               <h3>Pending Reviews</h3>
@@ -994,6 +1005,7 @@ const renderStarRating = (rating) => {
             </div>
           </div>
         </div>
+        */}
       </div>
     </div>
   );
