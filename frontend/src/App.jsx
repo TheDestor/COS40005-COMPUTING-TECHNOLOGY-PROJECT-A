@@ -50,7 +50,7 @@ import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
 import ManageLocation from './pages/ManageLocation.jsx';
-import ManageReviews from './pages/ManageReviews.jsx';
+//import ManageReviews from './pages/ManageReviews.jsx';
 
 // System Admin Pages
 import SystemAdminSidebar from './pages/SystemAdminSidebar.jsx';
@@ -104,7 +104,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/view-inquiry" element={<ViewInquiry />} />
               <Route path="/view-analytics" element={<ViewAnalytics />} />
-              <Route path="/manage-reviews" element={<ManageReviews />} />
+              {/*<Route path="/manage-reviews" element={<ManageReviews />} />*/}
               <Route path="/add-event" element={<AddEventPage />} />
               <Route path="/business-management" element={<BusinessManagementPage />} />
               <Route path="/manage-location" element={<ManageLocation />} />

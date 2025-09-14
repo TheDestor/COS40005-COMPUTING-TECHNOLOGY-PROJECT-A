@@ -109,12 +109,16 @@ const Sidebar = () => {
                 <span className="menu-text">View Analytics</span>
               </NavLink>
             </li>
+
+            {/*
             <li className="menu-item">
               <NavLink to="/manage-reviews">
                 <FaUsers className="icon123" />
                 <span className="menu-text">Manage Reviews</span>
               </NavLink>
             </li>
+            */}
+            
             <li className="menu-item">
               <NavLink to="/add-event">
                 <FaCalendarPlus className="icon123" />
