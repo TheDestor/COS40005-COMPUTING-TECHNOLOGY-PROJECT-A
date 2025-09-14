@@ -232,7 +232,7 @@ const ViewInquiry = () => {
       inquiry.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.message.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = filterStatus === 'all' || inquiry.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || inquiry.status.toLowerCase() === filterStatus;
     const matchesPriority = filterPriority === 'all' || inquiry.priority === filterPriority;
 
     return matchesSearch && matchesStatus && matchesPriority;
