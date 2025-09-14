@@ -1,10 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaCamera } from 'react-icons/fa';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
+import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import Sidebar from '../components/Sidebar';
 import ky from 'ky';
 import '../styles/AddEventPage.css';
 import { useAuth } from '../context/AuthProvider.jsx';
+
+// Map Preview Component for coordinates
+const MapPreview = ({ latitude, longitude }) => {
+  return (
+    <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+      <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </div>
+      <APIProvider apiKey="AIzaSyCez55Id2LmgCyvoyThwhb_ZTJOZfTkJmI">
+        <Map
+          center={{ lat: latitude, lng: longitude }}
+          zoom={14}
+          style={{ width: '100%', height: '100%' }}
+          gestureHandling="cooperative"
+        >
+          <Marker position={{ lat: latitude, lng: longitude }} />
+        </Map>
+      </APIProvider>
+    </div>
+  );
+};
 
 const AddEventPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +49,11 @@ const AddEventPage = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  // New state for coordinates
+  const [latitude, setLatitude] = useState(1.5533); // Default to Kuching coordinates
+  const [longitude, setLongitude] = useState(110.3592);
+  const [coordinatesInput, setCoordinatesInput] = useState('1.5533, 110.3592');
   
   const fileInputRef = useRef(null);
 
@@ -94,6 +121,27 @@ const AddEventPage = () => {
     fileInputRef.current.click();
   };
 
+  // Handle coordinates input change
+  const handleCoordinatesChange = (e) => {
+    const value = e.target.value;
+    setCoordinatesInput(value);
+    
+    // Parse coordinates
+    const coords = value.split(',').map(coord => coord.trim());
+    if (coords.length === 2) {
+      const lat = parseFloat(coords[0]);
+      const lng = parseFloat(coords[1]);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        // Validate coordinate ranges
+        if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+          setLatitude(lat);
+          setLongitude(lng);
+        }
+      }
+    }
+  };
+
   const clearForm = () => {
     setEventName('');
     setEventDescription('');
@@ -109,6 +157,10 @@ const AddEventPage = () => {
     setSelectedDate(null);
     setUploadedImage(null);
     setImageFile(null);
+    // Reset coordinates to default
+    setLatitude(1.5533);
+    setLongitude(110.3592);
+    setCoordinatesInput('1.5533, 110.3592');
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -203,6 +255,11 @@ const AddEventPage = () => {
     formData.append('description', eventDescription);
     formData.append('location', selectedLocation);
     formData.append('eventType', selectedEventType);
+    
+    // Add coordinates to form data
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    
     const selectedAudiences = [];
     if (targetAudience.tourist) {
       selectedAudiences.push('Tourist');
@@ -229,12 +286,15 @@ const AddEventPage = () => {
 
       console.log(response);
       clearForm();
+      alert('Event published successfully!');
     } catch (error) {
       try {
         const errorData = await error.response.json();
         console.error(errorData);
+        alert('Error publishing event. Please try again.');
       } catch (error) {
         console.error(error);
+        alert('Error publishing event. Please try again.');
       }
     }
   };
@@ -242,11 +302,13 @@ const AddEventPage = () => {
   const saveAsDraft = () => {
     // Saving the event as a draft
     console.log('Saving as draft');
+    alert('Event saved as draft!');
   };
 
   const previewEvent = () => {
     // Event preview functionality
     console.log('Previewing event');
+    alert('Event preview feature coming soon!');
   };
 
   return (
@@ -340,6 +402,24 @@ const AddEventPage = () => {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* New Coordinates Section */}
+            <div className="form-group">
+              <label>Event Coordinates (Latitude, Longitude)</label>
+              <input
+                type="text"
+                placeholder="e.g., 1.5533, 110.3592"
+                value={coordinatesInput}
+                onChange={handleCoordinatesChange}
+                className="form-input"
+              />
+              <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                Enter coordinates for precise event location on the map
+              </small>
+              
+              {/* Map Preview */}
+              <MapPreview latitude={latitude} longitude={longitude} />
             </div>
 
             <div className="form-group">
