@@ -1,10 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { FaTachometerAlt, FaRegSave, FaUserCog, FaExclamationTriangle, FaChartBar, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaTachometerAlt, FaRegSave, FaUserCog, FaExclamationTriangle, FaChartBar, FaArrowUp, FaArrowDown, FaUser, FaStar } from 'react-icons/fa';
 import { MdSpeed } from 'react-icons/md';
 import { AiOutlineFundView } from "react-icons/ai";
 import { IoIosTrendingUp } from "react-icons/io";
 import * as d3 from 'd3';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
+
+// Import profile images - you'll need to add these to your assets folder
+import profile1 from '../assets/profile1.png';
+import profile2 from '../assets/profile2.png';
+import profile3 from '../assets/profile3.png';
+import profile4 from '../assets/profile4.png';
+import profile5 from '../assets/profile5.png';
 
 const SystemAdminDashboard = () => {
   const chartRef = useRef(null);
@@ -73,6 +80,74 @@ const SystemAdminDashboard = () => {
     { month: 'Nov', users: 5900 },
     { month: 'Dec', users: 7200 }
   ];
+
+  // Dummy Data for Users List (moved from CBT Dashboard)
+  const usersList = [
+    { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
+    { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
+    { id: 3, name: "Alvin", email: "alvin@gmail.com", status: "Active", lastLogin: "5 minutes ago", image: profile3 },
+    { id: 4, name: "Gary", email: "gary@gmail.com", status: "Active", lastLogin: "1 day ago", image: profile4 },
+    { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
+  ];
+
+  // Sample data for reviews pending approval (moved from CBT Dashboard)
+  const pendingReviews = [
+    {
+      id: 1,
+      author: "Gokul",
+      business: "Damai Beach Resort",
+      rating: 4,
+      content: "Beautiful location and friendly staff. The rooms were clean but a little outdated. Would recommend for a peaceful getaway.",
+      date: "2025-04-30",
+      userImage: profile3
+    },
+    {
+      id: 2,
+      author: "Kenneth",
+      business: "Bangoh Dam",
+      rating: 5,
+      content: "Absolutely incredible experience! Our guide was knowledgeable and safety-conscious. The views were breathtaking and the equipment was top-notch.",
+      date: "2025-05-01",
+      userImage: profile1
+    },
+    {
+      id: 3, 
+      author: "Alvin",
+      business: "Korean Cafe",
+      rating: 2,
+      content: "Disappointing experience. Long wait times and food was served cold. The ambiance was nice but doesn't make up for poor service.",
+      date: "2025-05-01",
+      userImage: profile4
+    },
+    {
+      id: 4,
+      author: "Daniel",
+      business: "Meditation Center",
+      rating: 5,
+      content: "Transformative experience! The instructor was attentive and provided great modifications for all skill levels. Studio was clean and peaceful.",
+      date: "2025-05-02",
+      userImage: profile2
+    }
+  ];
+
+  // Review management functions (moved from CBT Dashboard)
+  const handleReviewAction = (reviewId, action) => {
+    console.log(`Review ${reviewId} ${action}`);
+    // This Part can use to handle the API call to approve/reject the review
+    // For now, we'll just log the action
+  };
+
+  const renderStarRating = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      if (i <= rating) {
+        stars.push(<span key={i} className="star filled">★</span>);
+      } else {
+        stars.push(<span key={i} className="star">☆</span>);
+      }
+    }
+    return <div className="star-rating">{stars}</div>;
+  };
 
   useEffect(() => {
     // Add a small delay to ensure the container is fully rendered with correct dimensions
@@ -318,8 +393,6 @@ const SystemAdminDashboard = () => {
           style={{ 
             height: '450px', 
             width: '100%', 
-            // position: 'relative',
-            // marginBottom: '20px',
             padding: '20px 0', 
             boxSizing: 'border-box',
             color: '#333',
@@ -327,6 +400,113 @@ const SystemAdminDashboard = () => {
         ></div>
       </div>
 
+      {/* Users List Section - Moved from CBT Dashboard */}
+      <div className="dashboard-section">
+        <div className="table-section">
+          <div className="table-header-admin">
+            <h3>
+              <span className="header-icon-admin"><FaUser /></span>
+              Recent Users
+            </h3>
+            <button className="view-all">View All</button>
+          </div>
+          <div className="users-list-container">
+            <table className="users-table data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map(user => (
+                  <tr key={user.id}>
+                    <td className="user-cell">
+                      <img src={user.image} alt={user.name} className="user-avatar" />
+                      <span>{user.name}</span>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>
+                      <span className={`status-badge ${user.status.toLowerCase()}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td>{user.lastLogin}</td>
+                    <td className="actions-cell">
+                      <button className="action-btn view-btn">View</button>
+                      <button className="action-btn edit-btn">Edit</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pending Reviews Section - Moved from CBT Dashboard */}
+        <div className="table-section">
+          <div className="table-header-admin">
+            <h3>
+              <span className="header-icon-admin"><FaStar /></span>
+              Pending Reviews
+            </h3>
+            <button className="view-all">View All Reviews</button>
+          </div>
+          <div className="reviews-list-container">
+            <table className="reviews-table data-table">
+              <thead>
+                <tr>
+                  <th>Reviewer</th>
+                  <th>Business</th>
+                  <th>Rating</th>
+                  <th>Review Content</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingReviews.map(review => (
+                  <tr key={review.id}>
+                    <td className="reviewer-cell">
+                      <img src={review.userImage} alt={review.author} className="user-avatar" />
+                      <span>{review.author}</span>
+                    </td>
+                    <td>{review.business}</td>
+                    <td>{renderStarRating(review.rating)}</td>
+                    <td>
+                      <div className="review-content">
+                        {review.content}
+                      </div>
+                    </td>
+                    <td>{new Date(review.date).toLocaleDateString()}</td>
+                    <td className="review-actions-cell">
+                      <div className="review-action">
+                        <button 
+                          className="action-btn approve-btn"
+                          onClick={() => handleReviewAction(review.id, 'approved')}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="action-btn reject-btn"
+                          onClick={() => handleReviewAction(review.id, 'rejected')}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Keep the existing admin activities and system alerts tables */}
       {renderTable('Recent Admin Activity', ['Admin', 'Action', 'Date', 'Status'], adminActivities, <FaUserCog />)}
       {renderTable('System Alerts', ['Alert', 'Message', 'Date', 'Status'], systemAlerts, <FaExclamationTriangle />)}
     </div>
