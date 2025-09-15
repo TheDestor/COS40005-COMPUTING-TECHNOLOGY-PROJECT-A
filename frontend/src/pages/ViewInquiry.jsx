@@ -313,19 +313,19 @@ const ViewInquiry = () => {
           <div className="inquiry-options">
             <div className="inquiry-statistics">
               <div className="stat">
-                <span className="stat-value">{inquiries.filter(i => i.status === 'Unread').length}</span>
+                <span className="stat-value">{filteredInquiries.filter(i => i.status === 'Unread').length}</span>
                 <span className="stat-label">Unread</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{inquiries.filter(i => i.status === 'in-progress').length}</span>
+                <span className="stat-value">{filteredInquiries.filter(i => i.status === 'in-progress').length}</span>
                 <span className="stat-label">In Progress</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{inquiries.filter(i => i.status === 'Resolved').length}</span>
+                <span className="stat-value">{filteredInquiries.filter(i => i.status === 'Resolved').length}</span>
                 <span className="stat-label">Resolved</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{inquiries.length}</span>
+                <span className="stat-value">{filteredInquiries.length}</span>
                 <span className="stat-label">Total</span>
               </div>
             </div>
