@@ -41,3 +41,15 @@ export const updateInquiry = async (req, res) => {
         return res.status(500).json({ message: "An error occured while updating inquiry", success: false });
     }
 }
+
+export const deleteInquiry = async (req, res) => {
+    try {
+        const { inquiryId } = req.body;
+        await contactUsModel.findByIdAndDelete(inquiryId);
+
+        return res.status(200).json({ message: "Inquiry deleted successfully", success: true });
+    } catch (error) {
+        console.error("An error occured while trying to delete this inquiry");
+        return res.status(500).json({ message: "An error occured while trying to delete this inquiry", success: true });
+    }
+}
