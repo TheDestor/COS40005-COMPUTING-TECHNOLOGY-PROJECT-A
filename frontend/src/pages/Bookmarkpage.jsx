@@ -5,7 +5,7 @@ import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft, FaTrashAlt } from 're
 import { useAuth } from '../context/AuthProvider.jsx';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 import businessImage from '../assets/business1.jpg'; // Placeholder image
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
   const auth = useAuth();

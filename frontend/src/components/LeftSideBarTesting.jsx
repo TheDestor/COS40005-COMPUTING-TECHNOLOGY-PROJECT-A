@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle  } from 'react-icons/fa';
-import { toast} from 'react-toastify';
+import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
 import BookmarkPage from '../pages/Bookmarkpage';
@@ -171,7 +171,7 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
 
     // Prevent multiple clicks
     if (isLocationFetching) {
-      toast.warn("Please wait... Fetching your location", { autoClose: 2000 });
+      toast.warning("Please wait... Fetching your location");
       return;
     }
 
@@ -206,7 +206,6 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
             `GPS signal weak (accuracy: ${Math.round(accuracy)}m).\n
             1. Ensure high-accuracy mode is enabled on your device.\n
             2. Move to an open area.`,
-            { autoClose: 8000 }
           );
           setIsLocationFetching(false);
           setIsLoading(false);
@@ -251,7 +250,7 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
         const errorMessage = error.code === error.PERMISSION_DENIED 
           ? "Please enable location permissions in your browser settings"
           : error.message;
-        toast.error(errorMessage, { autoClose: 8000 });
+        toast.error(errorMessage);
       },
       options
     );

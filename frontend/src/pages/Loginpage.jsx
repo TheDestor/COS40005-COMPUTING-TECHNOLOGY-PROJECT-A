@@ -4,7 +4,7 @@ import '../styles/Loginpage.css';
 import backgroundImg from '../assets/Kuching.png';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import UserRegistration from './UserRegistration.jsx';
 import BusinessRegistrationpage from './BusinessRegistrationpage.jsx';
 import ForgotPasswordpage from './ForgetPasswordpage.jsx';
@@ -60,11 +60,11 @@ const LoginPage = ({ onClose }) => {
   };
 
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: 'bottom-right' });
+    toast.success(msg);
   };
 
   const handleError = (msg) => {
-    toast.error(msg, { position: 'bottom-right' });
+    toast.error(msg);
   };
   // const handleSendOtp = async () => {
   //   if (!identifier) {

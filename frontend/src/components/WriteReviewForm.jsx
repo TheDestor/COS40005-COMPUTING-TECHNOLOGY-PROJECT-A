@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import '../styles/WriteReviewForm.css';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import { IoMdPhotos } from 'react-icons/io';
-import { ToastContainer } from 'react-toastify';
 
 const WriteReviewForm = ({ onClose, location, user }) => {
   const [rating, setRating] = useState(0);
@@ -42,10 +40,7 @@ const WriteReviewForm = ({ onClose, location, user }) => {
 
   const handlePost = () => {
     const failAndDisable = (message) => {
-      toast.error(message, {
-        position: 'bottom-right',
-        autoClose: 2000, 
-      });
+      toast.error(message);
       setPostDisabled(true);
       setTimeout(() => setPostDisabled(false), 2000);
     };
@@ -69,11 +64,7 @@ const WriteReviewForm = ({ onClose, location, user }) => {
     // Simulate submission
     console.log({ rating, reviewText, files });
   
-    toast.success('Review submitted successfully!', {
-      position: 'bottom-right',
-      autoClose: 2000,
-      zIndex: 9999, 
-    });
+    toast.success('Review submitted successfully!');
   
     setPostDisabled(true);
     setTimeout(() => {
@@ -156,7 +147,6 @@ const WriteReviewForm = ({ onClose, location, user }) => {
         <button className="post-btn" onClick={handlePost} disabled={postDisabled}>Post</button>
       </div>
 
-      <ToastContainer/>
     </div>
   );
 };
