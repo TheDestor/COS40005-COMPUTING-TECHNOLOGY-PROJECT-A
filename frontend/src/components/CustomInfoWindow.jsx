@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider.jsx';
 import SharePlace from './SharePlace'; // adjust path as needed
 import { useNavigate } from 'react-router-dom';
@@ -96,7 +96,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         console.log(bookmarkData);
       } else {
         onOpenLoginModal?.();
-        toast.warn("Please log in to save bookmarks.");
+        toast.warning("Please log in to save bookmarks.");
         setActiveFooter('');
       }
     } else {

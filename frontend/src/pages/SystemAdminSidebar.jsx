@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fa';
 import { LuPanelLeftClose } from 'react-icons/lu';
 import cbtImage from '../assets/cbt.png';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const SystemAdminSidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -51,7 +51,7 @@ const SystemAdminSidebar = () => {
   };
 
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: 'bottom-right' });
+    toast.success(msg);
   };
 
   const handleLogout = async () => {

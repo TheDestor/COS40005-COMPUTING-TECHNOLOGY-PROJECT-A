@@ -413,7 +413,7 @@ const BusinessManagement = () => {
     <div className="dashboard-container">
       <Sidebar />
       <div className="dashboard-content">
-        <div className="dashboard-header">
+        <div className="dashboard-header compact-header">
           <div className="greeting">
             <h3>Business Management</h3>
             <p>Review and manage business listings</p>
@@ -441,9 +441,9 @@ const BusinessManagement = () => {
           </div>
         </div>
         
-        <div className="business-content">
+        <div className="business-content no-scroll-layout">
           {/* Filters and options */}
-          <div className="business-options">
+          <div className="business-options compact-options">
             <div className="business-statistics">
               <div className="stat">
                 <span className="stat-value">{businesses.filter(b => b.status === 'pending').length}</span>
@@ -527,17 +527,17 @@ const BusinessManagement = () => {
             </div>
           </div>
           
-          <div className="business-container">
+          <div className="business-container no-scroll-container">
             {/* Left panel - Business list */}
-            <div className="business-list">
+            <div className="business-list compact-list">
               {filteredBusinesses.length > 0 ? (
                 filteredBusinesses.map(business => (
                   <div 
                     key={business._id}
-                    className={`business-item ${selectedBusiness && selectedBusiness._id === business._id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
+                    className={`business-item compact-item ${selectedBusiness && selectedBusiness._id === business._id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
                     onClick={() => handleSelectBusiness(business)}
                   >
-                    <div className="business-avatar">
+                    <div className="business-avatar compact-avatar">
                       <img 
                         src={business.businessImage.startsWith('/uploads') 
                           ? `${window.location.origin}${business.businessImage}` 
@@ -552,9 +552,9 @@ const BusinessManagement = () => {
                     <div className="business-brief">
                       <div className="business-header">
                         <h4 className="business-name">{business.name}</h4>
-                        <span className="business-date">{formatDate(business.submissionDate)}</span>
+                        <span className="business-date compact-date">{formatDate(business.submissionDate)}</span>
                       </div>
-                      <div className="business-owner">
+                      <div className="business-owner compact-owner">
                         <img 
                           src={business.ownerAvatar.startsWith('/uploads') 
                             ? `${window.location.origin}${business.ownerAvatar}` 
@@ -568,10 +568,10 @@ const BusinessManagement = () => {
                         />
                         <span>{business.owner}</span>
                       </div>
-                      <div className="business-category">{business.category}</div>
-                      <div className="business-description-preview">
-                        {business.description && business.description.length > 60 
-                          ? `${business.description.substring(0, 60)}...` 
+                      <div className="business-category compact-category">{business.category}</div>
+                      <div className="business-description-preview compact-preview">
+                        {business.description && business.description.length > 40 
+                          ? `${business.description.substring(0, 40)}...` 
                           : business.description}
                       </div>
                       <div className="business-status">
@@ -594,7 +594,7 @@ const BusinessManagement = () => {
 
               {/* Pagination controls */}
               {totalPages > 1 && (
-                <div className="pagination-controls">
+                <div className="pagination-controls compact-pagination">
                   <button 
                     className="page-button"
                     disabled={page === 1}
@@ -616,10 +616,10 @@ const BusinessManagement = () => {
             
             {/* Right panel - Selected business detail */}
             {selectedBusiness ? (
-              <div className="business-detail">
-                <div className="business-detail-header">
-                  <div className="business-info">
-                    <div className="business-main-image">
+              <div className="business-detail compact-detail">
+                <div className="business-detail-header compact-detail-header">
+                  <div className="business-info compact-info">
+                    <div className="business-main-image compact-main-image">
                       <img 
                         src={selectedBusiness.businessImage.startsWith('/uploads') 
                           ? `${window.location.origin}${selectedBusiness.businessImage}` 
@@ -640,7 +640,7 @@ const BusinessManagement = () => {
                     </div>
                   </div>
                   
-                  <div className="business-actions">
+                  <div className="business-actions compact-actions">
                     <button 
                       className={`business-action-btn approve-btn ${selectedBusiness.status === 'approved' ? 'disabled' : ''}`}
                       onClick={() => handleApproveBusiness(selectedBusiness._id)}
@@ -672,11 +672,11 @@ const BusinessManagement = () => {
                   </div>
                 </div>
                 
-                <div className="business-detail-content">
-                  <div className="business-owner-info">
+                <div className="business-detail-content compact-detail-content">
+                  <div className="business-owner-info compact-owner-info">
                     <div className="owner-info-header">
                       <h4>Owner Information</h4>
-                      <div className="owner-profile">
+                      <div className="owner-profile compact-owner-profile">
                         <img 
                           src={selectedBusiness.ownerAvatar.startsWith('/uploads') 
                             ? `${window.location.origin}${selectedBusiness.ownerAvatar}` 
@@ -696,16 +696,16 @@ const BusinessManagement = () => {
                     </div>
                   </div>
                   
-                  <div className="business-meta">
+                  <div className="business-meta compact-meta">
                     <div className="meta-section">
                       <h4>Business Details</h4>
-                      <div className="meta-grid">
+                      <div className="meta-grid compact-grid">
                         <div className="meta-item">
                           <span className="meta-label">Category:</span>
                           <span className="meta-value">{selectedBusiness.category}</span>
                         </div>
                         <div className="meta-item">
-                          <span className="meta-label">Submission Date:</span>
+                          <span className="meta-label">Date:</span>
                           <span className="meta-value">{formatDate(selectedBusiness.submissionDate)}</span>
                         </div>
                         <div className="meta-item">
@@ -730,23 +730,24 @@ const BusinessManagement = () => {
                       </div>
                     </div>
                     
-                    <div className="meta-item address-item">
+                    <div className="meta-item address-item compact-address">
                       <span className="meta-label">Address:</span>
                       <span className="meta-value">{selectedBusiness.address}</span>
                     </div>
                   </div>
                   
-                  <div className="business-description">
+                  <div className="business-description compact-description">
                     <h4>Description:</h4>
-                    <div className="description-body">
+                    <div className="description-body compact-description-body">
                       {selectedBusiness.description}
                     </div>
                   </div>
                   
-                  <div className="admin-notes">
+                  <div className="admin-notes compact-notes">
                     <h4>Admin Notes:</h4>
                     <form onSubmit={handleSubmitNotes}>
                       <textarea
+                        className="compact-textarea"
                         placeholder="Add notes or comments about this business listing..."
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
@@ -772,6 +773,409 @@ const BusinessManagement = () => {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        /* Compact Layout Styles for No-Scroll Business Management */
+        .dashboard-content {
+          height: 100vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .compact-header {
+          padding: 10px 20px;
+          min-height: 70px;
+          flex-shrink: 0;
+        }
+
+        .compact-header h3 {
+          font-size: 1.4rem;
+          margin-bottom: 2px;
+        }
+
+        .compact-header p {
+          font-size: 0.9rem;
+          margin: 0;
+        }
+
+        .no-scroll-layout {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .compact-options {
+          padding: 8px 20px;
+          flex-shrink: 0;
+        }
+
+        .business-statistics {
+          gap: 12px;
+        }
+
+        .stat {
+          padding: 6px 10px;
+        }
+
+        .stat-value {
+          font-size: 1.2rem;
+        }
+
+        .stat-label {
+          font-size: 0.8rem;
+        }
+
+        .no-scroll-container {
+          flex: 1;
+          display: flex;
+          overflow: hidden;
+          // margin: 0 20px 20px 20px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+        }
+
+        .compact-list {
+          width: 40%;
+          overflow-y: auto;
+          max-height: none;
+          border-right: 1px solid #e5e7eb;
+        }
+
+        .compact-item {
+          padding: 8px;
+          border-bottom: 1px solid #f3f4f6;
+        }
+
+        .compact-avatar img {
+          width: 35px;
+          height: 35px;
+        }
+
+        .business-brief {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .business-name {
+          font-size: 0.95rem;
+          margin-bottom: 2px;
+        }
+
+        .compact-date {
+          font-size: 0.75rem;
+        }
+
+        .compact-owner {
+          margin: 2px 0;
+        }
+
+        .compact-owner .owner-avatar {
+          width: 16px;
+          height: 16px;
+          margin-right: 4px;
+        }
+
+        .compact-owner span {
+          font-size: 0.8rem;
+        }
+
+        .compact-category {
+          font-size: 0.8rem;
+          margin: 2px 0;
+          color: #6b7280;
+        }
+
+        .compact-preview {
+          font-size: 0.8rem;
+          line-height: 1.3;
+          margin: 3px 0;
+        }
+
+        .business-status {
+          gap: 6px;
+          margin-top: 4px;
+        }
+
+        .status-badge, .priority-badge {
+          font-size: 0.7rem;
+          padding: 2px 6px;
+        }
+
+        .compact-pagination {
+          padding: 8px;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .compact-pagination .page-button {
+          padding: 4px 8px;
+          font-size: 0.8rem;
+        }
+
+        .compact-pagination .page-info {
+          font-size: 0.8rem;
+        }
+
+        .compact-detail {
+          width: 60%;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .compact-detail-header {
+          padding: 10px 15px;
+          flex-shrink: 0;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .compact-info {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .compact-main-image {
+          flex-shrink: 0;
+        }
+
+        .compact-main-image .detail-business-image {
+          width: 60px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: 8px;
+        }
+
+        .business-header-info h3 {
+          font-size: 1.1rem;
+          margin-bottom: 4px;
+        }
+
+        .compact-actions {
+          gap: 6px;
+          margin-top: 8px;
+        }
+
+        .business-action-btn {
+          padding: 5px 10px;
+          font-size: 0.8rem;
+        }
+
+        .compact-detail-content {
+          flex: 1;
+          padding: 12px 15px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .compact-owner-info {
+          background: #f9fafb;
+          border-radius: 6px;
+          padding: 8px;
+        }
+
+        .owner-info-header h4 {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+
+        .compact-owner-profile {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .compact-owner-profile .detail-avatar {
+          width: 30px;
+          height: 30px;
+        }
+
+        .detail-owner-name {
+          font-size: 0.9rem;
+          margin-bottom: 2px;
+          font-weight: 500;
+        }
+
+        .detail-email {
+          font-size: 0.8rem;
+          margin: 0;
+          color: #6b7280;
+        }
+
+        .compact-meta {
+          background: #f9fafb;
+          border-radius: 6px;
+          padding: 8px;
+        }
+
+        .meta-section h4 {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+
+        .compact-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .meta-item {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .meta-label {
+          font-size: 0.75rem;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        .meta-value {
+          font-size: 0.8rem;
+          font-weight: 400;
+        }
+
+        .compact-address {
+          grid-column: 1 / -1;
+          margin-top: 4px;
+        }
+
+        .compact-address .meta-value {
+          font-size: 0.8rem;
+          line-height: 1.3;
+        }
+
+        .compact-description h4 {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+
+        .compact-description-body {
+          background: #f9fafb;
+          border-radius: 6px;
+          padding: 8px;
+          font-size: 0.85rem;
+          line-height: 1.4;
+          max-height: 80px;
+          overflow-y: auto;
+        }
+
+        .compact-notes {
+          margin-top: auto;
+        }
+
+        .compact-notes h4 {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+
+        .compact-textarea {
+          width: 100%;
+          height: 60px;
+          padding: 6px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          resize: none;
+          font-size: 0.85rem;
+          font-family: inherit;
+        }
+
+        .save-notes-btn {
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          margin-top: 6px;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          .compact-list {
+            width: 100%;
+          }
+          
+          .compact-detail {
+            width: 100%;
+          }
+          
+          .compact-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Scrollbar styling for better appearance */
+        .compact-list::-webkit-scrollbar,
+        .compact-detail-content::-webkit-scrollbar,
+        .compact-description-body::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .compact-list::-webkit-scrollbar-track,
+        .compact-detail-content::-webkit-scrollbar-track,
+        .compact-description-body::-webkit-scrollbar-track {
+          background: #f1f1f1;
+        }
+
+        .compact-list::-webkit-scrollbar-thumb,
+        .compact-detail-content::-webkit-scrollbar-thumb,
+        .compact-description-body::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 2px;
+        }
+
+        .compact-list::-webkit-scrollbar-thumb:hover,
+        .compact-detail-content::-webkit-scrollbar-thumb:hover,
+        .compact-description-body::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
+        }
+
+        /* Loading and error states compact styling */
+        .loading-container, .error-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
+        }
+
+        .loading-container p, .error-container p {
+          font-size: 0.9rem;
+          margin-top: 8px;
+        }
+
+        .error-icon {
+          font-size: 2rem;
+          color: #ef4444;
+        }
+
+        .spinner {
+          animation: spin 1s linear infinite;
+          font-size: 1.5rem;
+          color: #3b82f6;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .retry-button {
+          margin-top: 8px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        .retry-button:hover {
+          background: #2563eb;
+        }
+      `}</style>
     </div>
   );
 };

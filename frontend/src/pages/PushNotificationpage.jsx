@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "sonner";
 import "../styles/PushNotificationpage.css";
 
 const PushNotificationPage = () => {
@@ -35,20 +34,6 @@ const PushNotificationPage = () => {
       [key]: newStatus,
     }));
 
-    // Show toast
-    toast[newStatus ? "success" : "error"](
-      `${notificationLabels[key]} ${newStatus ? "enabled" : "disabled"}`,
-      {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "colored",
-      }
-    );
-
     // Re-enable after 1s
     setTimeout(() => {
       setDisabledSwitches((prev) => ({ ...prev, [key]: false }));
@@ -76,8 +61,7 @@ const PushNotificationPage = () => {
           />
         </div>
       ))}
-
-      <ToastContainer />
+      
     </div>
   );
 };

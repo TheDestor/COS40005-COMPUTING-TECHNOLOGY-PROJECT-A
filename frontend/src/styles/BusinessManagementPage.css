@@ -403,7 +403,7 @@
     margin-left: 20px;
   }
   
-  .business-action-btn {
+  /* .business-action-btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -414,7 +414,7 @@
     cursor: pointer;
     border: none;
     transition: all 0.2s ease;
-  }
+  } */
   
   .approve-btn {
     background-color: #10b981;

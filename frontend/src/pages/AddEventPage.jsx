@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import ky from 'ky';
 import '../styles/AddEventPage.css';
 import { useAuth } from '../context/AuthProvider.jsx';
+import { toast, Toaster } from 'sonner';
 
 // Map Preview Component for coordinates
 const MapPreview = ({ latitude, longitude }) => {
@@ -291,7 +292,7 @@ const AddEventPage = () => {
       try {
         const errorData = await error.response.json();
         console.error(errorData);
-        alert('Error publishing event. Please try again.');
+        toast.error(errorData.message);
       } catch (error) {
         console.error(error);
         alert('Error publishing event. Please try again.');

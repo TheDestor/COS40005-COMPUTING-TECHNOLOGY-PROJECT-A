@@ -16,7 +16,7 @@ import {
 import { LuPanelLeftClose } from 'react-icons/lu';
 import '../styles/Sidebar.css';
 import cbtImage from '../assets/cbt.png';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -52,7 +52,7 @@ const Sidebar = () => {
   };
 
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: 'bottom-right' });
+    toast.success(msg);
   };
 
   const handleLogout = async () => {
