@@ -831,7 +831,7 @@ const BusinessManagement = () => {
           flex: 1;
           display: flex;
           overflow: hidden;
-          margin: 0 20px 20px 20px;
+          // margin: 0 20px 20px 20px;
           border-radius: 8px;
           border: 1px solid #e5e7eb;
         }
