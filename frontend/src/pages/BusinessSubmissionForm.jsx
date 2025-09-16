@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaBuilding, 
   FaUser, 
@@ -13,10 +13,45 @@ import {
   FaUpload,
   FaExclamationTriangle,
   FaArrowLeft,
-  FaArrowRight
+  FaArrowRight,
 } from 'react-icons/fa';
 import '../styles/BusinessSubmissionForm.css';
 import axios from 'axios'; // Make sure axios is installed
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+const defaultIcon = L.icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  tooltipAnchor: [16, -28],
+  shadowSize: [41, 41],
+});
+
+const Recenter = ({ lat, lng }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      map.setView([lat, lng], 15, { animate: true });
+    }
+  }, [lat, lng, map]);
+  return null;
+};
+
+const ClickToSet = ({ onPick }) => {
+  useMapEvents({
+    click(e) {
+      onPick(e.latlng);
+    }
+  });
+  return null;
+};
 
 const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Multi-step form state
@@ -36,7 +71,9 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     openingHours: '',
     businessImage: null,
     ownerAvatar: null,
-    agreement: false
+    agreement: false,
+    latitude: '',
+    longitude: ''
   });
 
   // Form validation state
@@ -48,25 +85,22 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Preview images
   const [businessImagePreview, setBusinessImagePreview] = useState(null);
   const [ownerAvatarPreview, setOwnerAvatarPreview] = useState(null);
+  const [coordinatesInput, setCoordinatesInput] = useState('');
 
   // Business categories
   const businessCategories = [
     'Food & Beverage',
-    'Technology',
-    'Health & Fitness',
-    'Retail',
-    'Hospitality',
-    'Home & Garden',
-    'Automotive',
-    'Pet Services',
-    'Education',
-    'Professional Services',
-    'Entertainment',
-    'Beauty & Wellness',
-    'Financial Services',
-    'Real Estate',
+    'Transportation',
+    'Accommodation',
+    'Attraction',
+    'Tour Guide',
+    'Leisure',
     'Other'
   ];
+
+  // Helpers
+  const countNonSpace = (s) => (s || '').replace(/\s/g, '').length;
+  const hasOverlongWord = (s, max = 30) => (s || '').split(/\s+/).some(w => w.length > max);
 
   // Calculate priority based on certain criteria (this will be used when submitting)
   const calculatePriority = () => {
@@ -140,6 +174,91 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     }
   };
 
+  const handleCoordinatesChange = (e) => {
+    // Allow only digits, minus, dot, comma, and spaces
+    const raw = e.target.value;
+    const sanitized = raw.replace(/[^\d\-\.,\s]/g, '');
+    setCoordinatesInput(sanitized);
+
+    const parts = sanitized.split(',').map(s => s.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setFormData(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }));
+      }
+    }
+  };
+
+  const handleCoordinatesKeyDown = (e) => {
+    const allowedKeys = [
+      'Backspace','Delete','Tab','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End',' '
+    ];
+    const allowedChars = ['-','.',','];
+    if (
+      allowedKeys.includes(e.key) ||
+      (e.ctrlKey || e.metaKey) || // allow copy/paste/select all
+      (e.key >= '0' && e.key <= '9') ||
+      allowedChars.includes(e.key)
+    ) {
+      return;
+    }
+    e.preventDefault();
+  };
+
+  const handleCoordinatesPaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    const sanitized = text.replace(/[^\d\-\.,\s]/g, '');
+    const next = (coordinatesInput + sanitized).trim();
+    setCoordinatesInput(next);
+
+    const parts = next.split(',').map(s => s.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setFormData(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }));
+      }
+    }
+  };
+
+  const getBestLocationFix = ({ desiredAccuracyMeters = 50, maxWaitMs = 15000 } = {}) =>
+    new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+
+      let best = null;
+      const start = Date.now();
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const acc = pos.coords.accuracy ?? Infinity; // meters
+          if (!best || acc < best.coords.accuracy) best = pos;
+          const elapsed = Date.now() - start;
+          if (acc <= desiredAccuracyMeters || elapsed >= maxWaitMs) {
+            navigator.geolocation.clearWatch(watchId);
+            resolve(best);
+          }
+        },
+        (err) => {
+          navigator.geolocation.clearWatch(watchId);
+          reject(err);
+        },
+        { enableHighAccuracy: true, timeout: maxWaitMs, maximumAge: 0 }
+      );
+    });
+
+  const handleTakeCurrentLocation = async () => {
+    try {
+      const pos = await getBestLocationFix({ desiredAccuracyMeters: 50, maxWaitMs: 15000 });
+      const { latitude, longitude } = pos.coords;
+      const value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      setCoordinatesInput(value);
+      setFormData(prev => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
+    } catch (e) {
+      console.warn('Location error:', e?.message);
+    }
+  };
+
   // Validate the current step
   const validateStep = (step) => {
     const newErrors = {};
@@ -159,14 +278,25 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         if (!formData.category) newErrors.category = 'Please select a category';
         if (!formData.description.trim()) {
           newErrors.description = 'Description is required';
-        } else if (formData.description.trim().length < 50) {
-          newErrors.description = 'Description should be at least 50 characters';
+        } else {
+          const nonSpaceLen = countNonSpace(formData.description);
+          if (nonSpaceLen < 50) {
+            newErrors.description = 'Description should be at least 50 characters';
+          } else if (hasOverlongWord(formData.description, 30)) {
+            newErrors.description = 'Please avoid single words longer than 30 characters. Add spaces or hyphens.';
+          }
         }
         if (!formData.address.trim()) newErrors.address = 'Address is required';
+
+        // NEW: require coordinate input
+        if (!coordinatesInput.trim()) {
+          newErrors.coordinates = 'Business coordinate is required';
+        }
+
         if (!formData.phone.trim()) {
           newErrors.phone = 'Phone number is required';
-        } else if (!/^\d{3}-\d{3}-\d{4}$/.test(formData.phone)) {
-          newErrors.phone = 'Phone format should be XXX-XXX-XXXX';
+        } else if (!/^\d{3}-(\d{3}|\d{4})-\d{4}$/.test(formData.phone)) {
+          newErrors.phone = 'Phone format should be XXX-XXX-XXXX or XXX-XXXX-XXXX';
         }
         break;
         
@@ -324,7 +454,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             placeholder="e.g., Sunrise Cafe"
             className={errors.name ? 'error' : ''}
           />
-          {errors.name && <div className="error-message">{errors.name}</div>}
+          {errors.name && <div className="error-message-business">{errors.name}</div>}
         </div>
         
         <div className="form-group-bsf">
@@ -340,7 +470,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             placeholder="e.g., John Smith"
             className={errors.owner ? 'error' : ''}
           />
-          {errors.owner && <div className="error-message">{errors.owner}</div>}
+          {errors.owner && <div className="error-message-business">{errors.owner}</div>}
         </div>
         
         <div className="form-group-bsf">
@@ -356,7 +486,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             placeholder="e.g., john@example.com"
             className={errors.ownerEmail ? 'error' : ''}
           />
-          {errors.ownerEmail && <div className="error-message">{errors.ownerEmail}</div>}
+          {errors.ownerEmail && <div className="error-message-business">{errors.ownerEmail}</div>}
         </div>
         
         <div className="form-note">
@@ -368,6 +498,11 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
   // Render step 2: Business Details
   const renderBusinessDetailsStep = () => {
+    // derive coordinates for preview (no hooks here)
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+
     return (
       <div className="form-step">
         <h3>Business Details</h3>
@@ -393,7 +528,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               </option>
             ))}
           </select>
-          {errors.category && <div className="error-message">{errors.category}</div>}
+          {errors.category && <div className="error-message-business">{errors.category}</div>}
         </div>
         
         <div className="form-group-bsf">
@@ -410,10 +545,10 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             className={errors.description ? 'error' : ''}
           />
           <div className="character-count">
-            {formData.description.length} / 500 characters
-            {formData.description.length < 50 && " (minimum 50)"}
+            {countNonSpace(formData.description)} / 500 characters
+            {countNonSpace(formData.description) < 50 && " (minimum 50)"}
           </div>
-          {errors.description && <div className="error-message">{errors.description}</div>}
+          {errors.description && <div className="error-message-business">{errors.description}</div>}
         </div>
         
         <div className="form-group-bsf">
@@ -429,7 +564,84 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             placeholder="e.g., 123 Main Street, Downtown"
             className={errors.address ? 'error' : ''}
           />
-          {errors.address && <div className="error-message">{errors.address}</div>}
+          {errors.address && <div className="error-message-business">{errors.address}</div>}
+        </div>
+
+        <div className="form-group-bsf">
+          <label htmlFor="businessCoordinates">
+            <FaMapMarkerAlt /> Business Coordinate (Latitude, Longitude)*
+          </label>
+          <div className="coord-input-wrapper">
+            <input
+              type="text"
+              id="businessCoordinates"
+              name="businessCoordinates"
+              value={coordinatesInput}
+              onChange={handleCoordinatesChange}
+              onKeyDown={handleCoordinatesKeyDown}
+              onPaste={handleCoordinatesPaste}
+              placeholder="e.g., 1.5533, 110.3592"
+              inputMode="decimal"
+              autoComplete="off"
+              className={errors.coordinates ? 'error' : ''}
+              aria-invalid={!!errors.coordinates}
+            />
+            <button
+              type="button"
+              className="coord-action-btn"
+              onClick={handleTakeCurrentLocation}
+              title="Use my current location"
+            >
+              Take current location
+            </button>
+          </div>
+          {errors.coordinates && <div className="error-message-business">{errors.coordinates}</div>}
+        </div>
+
+        <div className="form-group-bsf">
+          <label>
+            <FaMapMarkerAlt /> Location Preview
+          </label>
+          <div style={{ height: 220, width: '100%', borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+            <MapContainer
+              center={hasCoords ? [lat, lng] : [1.5533, 110.3592]}
+              zoom={hasCoords ? 15 : 12}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom={false}
+              key={`${hasCoords ? lat : 'def'}-${hasCoords ? lng : 'def'}`} // force remount if needed
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {hasCoords && (
+                <>
+                  <Marker
+                    position={[lat, lng]}
+                    icon={defaultIcon}
+                    draggable={true}
+                    eventHandlers={{
+                      dragend: (e) => {
+                        const ll = e.target.getLatLng();
+                        const value = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
+                        setCoordinatesInput(value);
+                        setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+                      }
+                    }}
+                  />
+                  <Recenter lat={lat} lng={lng} />
+                </>
+              )}
+              <ClickToSet
+                onPick={(ll) => {
+                  const value = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
+                  setCoordinatesInput(value);
+                  setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+                }}
+              />
+            </MapContainer>
+          </div>
+          <div className="form-text">Enter a valid "lat, lng" to update the map.</div>
         </div>
         
         <div className="form-row">
@@ -443,10 +655,12 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="e.g., 555-123-4567"
+              placeholder="e.g., 555-123-4567 or 555-1234-5678"
+              pattern="^\d{3}-(\d{3}|\d{4})-\d{4}$"
+              title="Use XXX-XXX-XXXX or XXX-XXXX-XXXX"
               className={errors.phone ? 'error' : ''}
             />
-            {errors.phone && <div className="error-message">{errors.phone}</div>}
+            {errors.phone && <div className="error-message-business">{errors.phone}</div>}
           </div>
           
           <div className="form-group-bsf">
@@ -523,7 +737,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               </p>
             </div>
           </div>
-          {errors.businessImage && <div className="error-message">{errors.businessImage}</div>}
+          {errors.businessImage && <div className="error-message-business">{errors.businessImage}</div>}
         </div>
         
         <div className="form-group-bsf upload-group">
@@ -559,7 +773,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               </p>
             </div>
           </div>
-          {errors.ownerAvatar && <div className="error-message">{errors.ownerAvatar}</div>}
+          {errors.ownerAvatar && <div className="error-message-business">{errors.ownerAvatar}</div>}
         </div>
         
         <div className="form-note">
@@ -572,132 +786,168 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Render step 4: Review and Submit with improved image section
   const renderReviewStep = () => {
     const priority = calculatePriority();
-    
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+
     return (
       <div className="form-step">
-        <h3>Review Your Information</h3>
-        <p className="step-description">
-          Please review all the information you've provided before submitting.
-        </p>
-        
-        <div className="review-container">
-          <div className="review-section">
-            <h4>Basic Information</h4>
-            <div className="review-item">
-              <span className="review-label">Business Name: </span>
-              <span className="review-value">{formData.name}</span>
-            </div>
-            <div className="review-item">
-              <span className="review-label">Owner Name: </span>
-              <span className="review-value">{formData.owner}</span>
-            </div>
-            <div className="review-item">
-              <span className="review-label">Email Address: </span>
-              <span className="review-value">{formData.ownerEmail}</span>
-            </div>
+        <h3>Review & Confirm</h3>
+        <p className="step-description">Check all details. You can edit the details before submission.</p>
+
+        {/* Basic Info */}
+        <div className="review-card-business">
+          <div className="review-header">
+            <div className="review-title">Basic Information</div>
           </div>
-          
-          <div className="review-section">
-            <h4>Business Details</h4>
-            <div className="review-item">
-              <span className="review-label">Category: </span>
-              <span className="review-value">{formData.category}</span>
-            </div>
-            <div className="review-item">
-              <span className="review-label">Address: </span>
-              <span className="review-value">{formData.address}</span>
-            </div>
-            <div className="review-item">
-              <span className="review-label">Phone: </span>
-              <span className="review-value">{formData.phone}</span>
-            </div>
-            {formData.website && (
-              <div className="review-item">
-                <span className="review-label">Website: </span>
-                <span className="review-value">{formData.website}</span>
-              </div>
-            )}
-            {formData.openingHours && (
-              <div className="review-item">
-                <span className="review-label">Opening Hours: </span>
-                <span className="review-value">{formData.openingHours}</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="review-section">
-            <h4>Description</h4>
-            <div className="review-item description-review">
-              <div className="review-value">{formData.description}</div>
-            </div>
-          </div>
-          
-          {/* Updated Media/Images Section */}
-          <div className="review-section">
-            <h4>Media</h4>
-            <div className="review-images">
-              <div className="review-image-container">
-                <span className="review-label">Business Image:</span>
-                <div className="review-image">
-                  {businessImagePreview ? (
-                    <img src={businessImagePreview} alt="Business" />
-                  ) : (
-                    <div className="no-image">No image uploaded</div>
-                  )}
+          <div className="review-body">
+              <div className="review-grid">
+                <div className="review-item">
+                  <span className="review-label">Business Name</span>
+                  <span className="review-value">{formData.name || '-'}</span>
                 </div>
-              </div>
-              <div className="review-image-container">
-                <span className="review-label">Profile Picture:</span>
-                <div className="review-image avatar-image">
-                  {ownerAvatarPreview ? (
-                    <img src={ownerAvatarPreview} alt="Owner" />
-                  ) : (
-                    <div className="no-image">No image uploaded</div>
-                  )}
+                <div className="review-item">
+                  <span className="review-label">Owner Name</span>
+                  <span className="review-value">{formData.owner || '-'}</span>
+                </div>
+                <div className="review-item full">
+                  <span className="review-label">Owner Email</span>
+                  <span className="review-value">{formData.ownerEmail || '-'}</span>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="review-section priority-section">
-            <h4>Submission Priority</h4>
-            <div className={`priority-indicator priority-${priority}`}>
-              <FaExclamationTriangle /> 
-              <span>
-                {priority === 'high' 
-                  ? 'High Priority' 
-                  : priority === 'medium' 
-                    ? 'Medium Priority' 
-                    : 'Low Priority'}
-              </span>
-            </div>
-            <div className="priority-note">
-              Priority is calculated based on business category, completeness of information, and other factors.
-            </div>
-          </div>
         </div>
-        
-        <div className="form-group-bsf checkbox-group">
-          <input
-            type="checkbox"
-            id="agreement"
-            name="agreement"
-            checked={formData.agreement}
-            onChange={handleChange}
-            className={errors.agreement ? 'error' : ''}
-          />
-          <label htmlFor="agreement">
-            I confirm that all the information provided is accurate and complete. I understand that my 
-            business submission will be reviewed before being published.
-          </label>
-          {errors.agreement && <div className="error-message">{errors.agreement}</div>}
-        </div>
-        
-        {errors.submit && (
-          <div className="form-error-message">
-            <FaExclamationTriangle /> {errors.submit}
+
+        {/* Business Details */}
+        <div className="review-card-business">
+          <div className="review-header">
+            <div className="review-title">Business Details</div>
           </div>
-        )}
+          <div className="review-body">
+              <div className="review-grid">
+                <div className="review-item">
+                  <span className="review-label">Category</span>
+                  <span className="chip">{formData.category || '-'}</span>
+                </div>
+
+                <div className="review-item">
+                  <span className="review-label">Priority</span>
+                  <span className={`priority-indicator priority-${priority}`}>
+                    <FaExclamationTriangle />
+                    <span>{priority === 'high' ? 'High' : priority === 'medium' ? 'Medium' : 'Low'}</span>
+                  </span>
+                </div>
+
+                <div className="review-item full">
+                  <span className="review-label">Address</span>
+                  <span className="review-value">{formData.address || '-'}</span>
+                  {/* <button type="button" className="copy-btn" onClick={() => copyToClipboard(formData.address || '')}>
+                    <FaCopy /> Copy
+                  </button> */}
+                </div>
+
+                <div className="review-item">
+                  <span className="review-label">Coordinate</span>
+                  <span className="review-value">
+                    {formData.latitude && formData.longitude ? `${formData.latitude}, ${formData.longitude}` : '-'}
+                  </span>
+                  {/* <button
+                    type="button"
+                    className="copy-btn"
+                    onClick={() => copyToClipboard(
+                      formData.latitude && formData.longitude ? `${formData.latitude}, ${formData.longitude}` : ''
+                    )}
+                  >
+                    <FaCopy /> Copy
+                  </button> */}
+                </div>
+
+                <div className="review-item">
+                  <span className="review-label">Phone</span>
+                  <span className="review-value">{formData.phone || '-'}</span>
+                </div>
+
+                {formData.website && (
+                  <div className="review-item">
+                    <span className="review-label">Website</span>
+                    <a className="linkish" href={/^https?:\/\//.test(formData.website) ? formData.website : `https://${formData.website}`} target="_blank" rel="noreferrer">
+                      {formData.website}
+                    </a>
+                  </div>
+                )}
+
+                {formData.openingHours && (
+                  <div className="review-item full">
+                    <span className="review-label">Opening Hours</span>
+                    <span className="review-value">{formData.openingHours}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Map Preview Card */}
+              <div className="map-card">
+                <div className="map-card-header">
+                  <FaMapMarkerAlt /> Location Preview
+                </div>
+                <div className="map-card-body">
+                  <div style={{ height: 220, width: '100%', borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                    <MapContainer
+                      center={hasCoords ? [lat, lng] : [1.5533, 110.3592]}
+                      zoom={hasCoords ? 15 : 12}
+                      style={{ height: '100%', width: '100%' }}
+                      scrollWheelZoom={false}
+                    >
+                      <TileLayer
+                        attribution="&copy; OpenStreetMap contributors"
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      {hasCoords && <Marker position={[lat, lng]} icon={defaultIcon} />}
+                    </MapContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        {/* Media */}
+        <div className="review-card-business">
+          <div className="review-header">
+            <div className="review-title">Media</div>
+          </div>
+          <div className="review-body">
+              <div className="review-grid">
+                <div className="review-item">
+                  <span className="review-label">Business Image</span>
+                  <div className="review-image">{businessImagePreview ? <img src={businessImagePreview} alt="Business" /> : '-'}</div>
+                </div>
+                <div className="review-item">
+                  <span className="review-label">Owner Avatar</span>
+                  <div className="review-image avatar-image">{ownerAvatarPreview ? <img src={ownerAvatarPreview} alt="Owner" /> : '-'}</div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        {/* Agreement */}
+        <div className="review-card-business">
+          <div className="review-header">
+            <div className="review-title">Agreement</div>
+          </div>
+          <div className="review-body">
+              <label className="agreement-inline">
+                <input
+                  type="checkbox"
+                  id="agreement"
+                  name="agreement"
+                  checked={formData.agreement}
+                  onChange={handleChange}
+                  className={errors.agreement ? 'error' : ''}
+                />
+                I confirm that all the information provided is accurate and complete. I understand that my business submission will be reviewed before being published.
+              </label>
+              {errors.agreement && <div className="error-message-business">{errors.agreement}</div>}
+            </div>
+        </div>
       </div>
     );
   };

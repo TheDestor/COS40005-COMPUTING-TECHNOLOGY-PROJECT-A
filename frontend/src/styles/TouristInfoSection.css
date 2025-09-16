@@ -275,7 +275,7 @@
   color: #666;
 }
 
-/* Loading and error states */
+/* Loading and error states
 .loading, .error, .no-reels {
   padding: 25px;
   text-align: center;
@@ -289,7 +289,7 @@
 .error {
   color: #e74c3c;
   background: rgba(231, 76, 60, 0.1);
-}
+} */
 
 .no-reels::before {
   content: '🎥';

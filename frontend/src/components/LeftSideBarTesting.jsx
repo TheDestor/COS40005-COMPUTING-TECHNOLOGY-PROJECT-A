@@ -760,6 +760,17 @@ useEffect(() => {
           ) : null}
         </div>
 
+      {showBusiness && (
+        <BusinessSubmissionForm
+          isOpen={showBusiness}
+          onClose={() => setShowBusiness(false)}
+          onSubmitSuccess={() => {
+            toast.success('Business submitted successfully!');
+            setShowBusiness(false);
+          }}
+        />
+      )}
+
       {/* <MapZoomController selectedPlace={selectedPlace} /> */}
     </>
   );
