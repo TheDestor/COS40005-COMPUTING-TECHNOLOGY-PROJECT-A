@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import BookmarkPage from '../pages/Bookmarkpage.jsx';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const ProfileDropdown = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +16,7 @@ const ProfileDropdown = ({ onLoginClick }) => {
   const navigate = useNavigate();
 
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: 'bottom-right' });
+    toast.success(msg);
   };
 
   const handleLogout = async () => {

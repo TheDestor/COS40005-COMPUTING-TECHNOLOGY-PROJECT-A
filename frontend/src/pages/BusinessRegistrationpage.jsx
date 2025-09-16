@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../styles/UserRegistration.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import ky from 'ky';
 import zxcvbn from 'zxcvbn';
 
@@ -85,11 +85,11 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
   };
 
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: "bottom-right" });
+    toast.success(msg);
   };
 
   const handleError = (msg) => {
-    toast.error(msg, { position: "bottom-right" });
+    toast.error(msg);
   };
 
   const handleRegisterSubmit = async (e) => {

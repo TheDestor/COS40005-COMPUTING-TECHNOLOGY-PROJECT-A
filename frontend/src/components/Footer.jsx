@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaFacebookF, FaInstagram, FaTwitter, FaArrowRight } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import '../styles/Footer.css';
 import HornbillImage from '../assets/Hornbill.gif'; // Adjust path accordingly
 import { FaEnvelope } from 'react-icons/fa';

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "../styles/ContactUs.css";
 import ky from "ky";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import MenuNavBar from "../components/MenuNavbar";
 import LoginPage from './Loginpage.jsx';
 
@@ -42,12 +42,12 @@ export default function ContactUs() {
 
   // Toast success
   const handleSuccess = (msg) => {
-    toast.success(msg, { position: "bottom-right" });
+    toast.success(msg);
   };
   
   // Toast error
   const handleError = (msg) => {
-    toast.error(msg, { position: "bottom-right" });
+    toast.error(msg);
   };
 
   // Submit the form using backend api
