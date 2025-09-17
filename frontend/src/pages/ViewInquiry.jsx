@@ -17,6 +17,7 @@ import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
 import '../styles/ViewInquiry.css';
 import ky from 'ky';
+import { toast } from 'sonner';
 
 // Import profile images
 import profile1 from '../assets/profile1.png';
@@ -179,12 +180,12 @@ const ViewInquiry = () => {
       ).json();
 
       if (response.success) {
-        console.log("Inquiry marked as resolved on backend.");
+        toast.success("Inquiry marked as resolved");
       } else {
-        console.log("Failed to mark inquiry as resolved on backend.");
+        toast.error("An error occured while trying to mark inquiry as resolved");
       }
     } catch (error) {
-      console.error("Error updating inquiry status:", error);
+      toast.error("Error updating inquiry status:", error);
     }
     const updatedInquiries = inquiries.map(item => {
       if (item.id === id) {
@@ -200,7 +201,7 @@ const ViewInquiry = () => {
     }
   };
 
-  const handleDeleteInquiry = (id) => {
+  const handleDeleteInquiry = async (id) => {
     const updatedInquiries = inquiries.filter(item => item.id !== id);
     setInquiries(updatedInquiries);
 
@@ -209,6 +210,24 @@ const ViewInquiry = () => {
       if (isMobile && updatedInquiries.length === 0) {
         setShowInquiryDetail(false);
       }
+    }
+
+    try {
+      const payload = {
+        inquiryId: id
+      }
+      const response = await ky.post("/api/inquiry/deleteInquiry", {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        json: payload
+      }).json();
+
+      if (response.success) {
+        toast.success("Inquiry deleted");
+      } else {
+        toast.error("An error occured while trying to delete inquiry");
+      }
+    } catch (error) {
+      toast.error(error);
     }
   };
 

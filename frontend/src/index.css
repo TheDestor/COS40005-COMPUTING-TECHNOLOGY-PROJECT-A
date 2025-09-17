@@ -93,6 +93,9 @@ a:focus {
   display: none;
 }
 
-.gm-style img[src*="https://maps.gstatic.com/mapfiles/api-3/images/"] {
+.gm-style img[src*="https://maps.gstatic.com/mapfiles/api-3/images/"]
+{
   display: none !important;
 }
+
+@import "leaflet/dist/leaflet.css";
