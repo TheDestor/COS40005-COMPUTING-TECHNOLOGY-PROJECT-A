@@ -32,54 +32,130 @@ const saveFile = (file) => {
     return `/uploads/${filename}`;
 };
 
+// // Add a new business
+// export const addBusiness = async (req, res) => {
+//     try {
+//         const businessData = req.body;
+        
+//         // Validate required fields
+//         if (!businessData.name || !businessData.owner || !businessData.description) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Missing required fields"
+//             });
+//         }
+        
+//         // Check if business already exists with the same name and owner
+//         const existingBusiness = await businessModel.findOne({
+//             name: businessData.name,
+//             owner: businessData.owner
+//         });
+        
+//         if (existingBusiness) {
+//             return res.status(409).json({
+//                 success: false,
+//                 message: "A business with this name and owner already exists"
+//             });
+//         }
+        
+//         // Handle file uploads
+//         if (!req.files || !req.files.businessImage || !req.files.ownerAvatar) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Business image and owner avatar are required"
+//             });
+//         }
+        
+//         // Save files and get paths
+//         const businessImagePath = saveFile(req.files.businessImage[0]);
+//         const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
+        
+//         // Create new business with file paths
+//         const newBusiness = new businessModel({
+//             ...businessData,
+//             businessImage: businessImagePath,
+//             ownerAvatar: ownerAvatarPath,
+//             agreement: businessData.agreement === 'true' || businessData.agreement === true
+//         });
+        
+//         await newBusiness.save();
+        
+//         res.status(201).json({
+//             success: true,
+//             message: "Business added successfully and pending approval",
+//             data: newBusiness
+//         });
+//     } catch (error) {
+//         console.error("Error adding business:", error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Failed to add business",
+//             error: error.message
+//         });
+//     }
+// };
 // Add a new business
 export const addBusiness = async (req, res) => {
     try {
         const businessData = req.body;
-        
-        // Validate required fields
-        if (!businessData.name || !businessData.owner || !businessData.description) {
-            return res.status(400).json({
-                success: false,
-                message: "Missing required fields"
-            });
+
+        // Validate required fields per schema
+        const requiredStringFields = ['name', 'owner', 'ownerEmail', 'description', 'category', 'address', 'phone'];
+        for (const f of requiredStringFields) {
+            if (!businessData[f] || String(businessData[f]).trim() === '') {
+                return res.status(400).json({ success: false, message: `Missing required field: ${f}` });
+            }
         }
-        
+
+        // Validate coordinates (required, numbers)
+        if (businessData.latitude == null || businessData.longitude == null) {
+            return res.status(400).json({ success: false, message: 'Missing required fields: latitude, longitude' });
+        }
+        const latitude = Number(businessData.latitude);
+        const longitude = Number(businessData.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return res.status(400).json({ success: false, message: 'latitude and longitude must be valid numbers' });
+        }
+
         // Check if business already exists with the same name and owner
         const existingBusiness = await businessModel.findOne({
             name: businessData.name,
             owner: businessData.owner
         });
-        
         if (existingBusiness) {
-            return res.status(409).json({
-                success: false,
-                message: "A business with this name and owner already exists"
-            });
+            return res.status(409).json({ success: false, message: 'A business with this name and owner already exists' });
         }
-        
+
         // Handle file uploads
         if (!req.files || !req.files.businessImage || !req.files.ownerAvatar) {
-            return res.status(400).json({
-                success: false,
-                message: "Business image and owner avatar are required"
-            });
+            return res.status(400).json({ success: false, message: 'Business image and owner avatar are required' });
         }
-        
+
         // Save files and get paths
         const businessImagePath = saveFile(req.files.businessImage[0]);
         const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
-        
-        // Create new business with file paths
+
+        // Create new business with file paths (match model field names)
         const newBusiness = new businessModel({
-            ...businessData,
+            name: String(businessData.name).trim(),
+            owner: String(businessData.owner).trim(),
+            ownerEmail: String(businessData.ownerEmail).trim(),
+            description: String(businessData.description).trim(),
+            category: String(businessData.category).trim(),
+            address: String(businessData.address).trim(),
+            phone: String(businessData.phone).trim(),
+            website: businessData.website ?? null,
+            openingHours: businessData.openingHours ?? null,
+            latitude,
+            longitude,
             businessImage: businessImagePath,
             ownerAvatar: ownerAvatarPath,
+            priority: ['high', 'medium', 'low'].includes(businessData.priority) ? businessData.priority : 'low',
             agreement: businessData.agreement === 'true' || businessData.agreement === true
         });
-        
+
         await newBusiness.save();
-        
+
         res.status(201).json({
             success: true,
             message: "Business added successfully and pending approval",
@@ -312,11 +388,87 @@ export const updateBusinessStatus = async (req, res) => {
     }
 };
 
+// // Update business details (admin only)
+// export const updateBusinessDetails = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const updateData = req.body;
+        
+//         // Validate ID format
+//         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Invalid business ID format"
+//             });
+//         }
+        
+//         // Find business first to check if it exists
+//         const business = await businessModel.findById(id);
+        
+//         if (!business) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Business not found"
+//             });
+//         }
+        
+//         // Handle file uploads if provided
+//         if (req.files) {
+//             // Handle business image update
+//             if (req.files.businessImage) {
+//                 // Delete old image if it exists
+//                 if (business.businessImage) {
+//                     const oldImagePath = path.join(__dirname, '..', business.businessImage);
+//                     if (fs.existsSync(oldImagePath)) {
+//                         fs.unlinkSync(oldImagePath);
+//                     }
+//                 }
+                
+//                 // Save new image
+//                 updateData.businessImage = saveFile(req.files.businessImage[0]);
+//             }
+            
+//             // Handle owner avatar update
+//             if (req.files.ownerAvatar) {
+//                 // Delete old avatar if it exists
+//                 if (business.ownerAvatar) {
+//                     const oldAvatarPath = path.join(__dirname, '..', business.ownerAvatar);
+//                     if (fs.existsSync(oldAvatarPath)) {
+//                         fs.unlinkSync(oldAvatarPath);
+//                     }
+//                 }
+                
+//                 // Save new avatar
+//                 updateData.ownerAvatar = saveFile(req.files.ownerAvatar[0]);
+//             }
+//         }
+        
+//         // Update business with new data
+//         const updatedBusiness = await businessModel.findByIdAndUpdate(
+//             id,
+//             updateData,
+//             { new: true, runValidators: true }
+//         );
+        
+//         res.status(200).json({
+//             success: true,
+//             message: "Business details updated successfully",
+//             data: updatedBusiness
+//         });
+//     } catch (error) {
+//         console.error("Error updating business details:", error);
+//         res.status(500).json({
+//             success: false,
+//             message: "Failed to update business details",
+//             error: error.message
+//         });
+//     }
+// };
 // Update business details (admin only)
 export const updateBusinessDetails = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const updateData = { ...req.body };
         
         // Validate ID format
         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -328,41 +480,48 @@ export const updateBusinessDetails = async (req, res) => {
         
         // Find business first to check if it exists
         const business = await businessModel.findById(id);
-        
         if (!business) {
             return res.status(404).json({
                 success: false,
                 message: "Business not found"
             });
         }
+
+        // Normalize types to match model
+        if (updateData.latitude != null) {
+            const lat = Number(updateData.latitude);
+            if (!Number.isFinite(lat)) return res.status(400).json({ success: false, message: 'latitude must be a number' });
+            updateData.latitude = lat;
+        }
+        if (updateData.longitude != null) {
+            const lng = Number(updateData.longitude);
+            if (!Number.isFinite(lng)) return res.status(400).json({ success: false, message: 'longitude must be a number' });
+            updateData.longitude = lng;
+        }
+        if (updateData.priority && !['high', 'medium', 'low'].includes(updateData.priority)) {
+            return res.status(400).json({ success: false, message: 'Invalid priority. Must be one of: high, medium, low' });
+        }
+        if (updateData.status && !['pending', 'approved', 'rejected'].includes(updateData.status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status. Must be one of: pending, approved, rejected' });
+        }
+        if (updateData.agreement != null) {
+            updateData.agreement = updateData.agreement === 'true' || updateData.agreement === true;
+        }
         
-        // Handle file uploads if provided
+        // Handle file uploads if provided (match model field names)
         if (req.files) {
-            // Handle business image update
             if (req.files.businessImage) {
-                // Delete old image if it exists
                 if (business.businessImage) {
                     const oldImagePath = path.join(__dirname, '..', business.businessImage);
-                    if (fs.existsSync(oldImagePath)) {
-                        fs.unlinkSync(oldImagePath);
-                    }
+                    if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
                 }
-                
-                // Save new image
                 updateData.businessImage = saveFile(req.files.businessImage[0]);
             }
-            
-            // Handle owner avatar update
             if (req.files.ownerAvatar) {
-                // Delete old avatar if it exists
                 if (business.ownerAvatar) {
                     const oldAvatarPath = path.join(__dirname, '..', business.ownerAvatar);
-                    if (fs.existsSync(oldAvatarPath)) {
-                        fs.unlinkSync(oldAvatarPath);
-                    }
+                    if (fs.existsSync(oldAvatarPath)) fs.unlinkSync(oldAvatarPath);
                 }
-                
-                // Save new avatar
                 updateData.ownerAvatar = saveFile(req.files.ownerAvatar[0]);
             }
         }
@@ -439,6 +598,33 @@ export const deleteBusiness = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Failed to delete business",
+            error: error.message
+        });
+    }
+};
+
+// Get all approved businesses (public)
+export const getAllApprovedBusinesses = async (req, res) => {
+    try {
+        const { category } = req.query;
+        const query = { status: 'approved' };
+        if (category) query.category = category;
+
+        // Return all fields; frontend uses name, category, latitude, longitude to plot
+        const businesses = await businessModel
+            .find(query)
+            .sort({ submissionDate: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: businesses.length,
+            data: businesses
+        });
+    } catch (error) {
+        console.error("Error getting approved businesses:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to get approved businesses",
             error: error.message
         });
     }

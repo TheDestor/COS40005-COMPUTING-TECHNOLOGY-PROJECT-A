@@ -99,6 +99,51 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
     }
   };
 
+  // Map menu category → business category stored in DB
+  const menuToBusinessCategory = (menuCategory) => {
+    switch ((menuCategory || '').toLowerCase()) {
+      case 'attractions': return 'Attraction';
+      case 'accommodation': return 'Accommodation';
+      case 'food & beverages': return 'Food & Beverage';
+      case 'transportation': return 'Transportation';
+      case 'shoppings & leisures': return 'Leisure';
+      case 'tour guides': return 'Tour Guide';
+      case 'events': return 'Events';
+      default: return null; // 'Major Town' or unknowns
+    }
+  };
+
+  const fetchApprovedBusinesses = async (menuCategoryName) => {
+    try {
+      const apiCategory = menuToBusinessCategory(menuCategoryName);
+      if (!apiCategory) return []; // Skip categories not tied to businesses (e.g., Major Town)
+
+      const res = await fetch(`/api/businesses/approved?category=${encodeURIComponent(apiCategory)}&limit=200`);
+      if (!res.ok) throw new Error('Failed to fetch approved businesses');
+      const json = await res.json();
+      const list = (json.data || []).filter(Boolean);
+
+      return list
+        .filter(b => b && b.latitude != null && b.longitude != null)
+        .map(b => ({
+          name: b.name,
+          latitude: Number(b.latitude),
+          longitude: Number(b.longitude),
+          image: b.businessImage
+            ? (String(b.businessImage).startsWith('/uploads')
+              ? `${window.location.origin}${b.businessImage}`
+              : b.businessImage)
+            : defaultImage,
+          description: b.description || 'Business',
+          type: menuCategoryName,
+          source: 'businesses'
+        }));
+    } catch (e) {
+      console.error('Approved businesses fetch error:', e);
+      return [];
+    }
+  };
+
   const fetchPlacesByCategory = async (categoryName, location, radius = 50000) => {
     const entries = placeCategories[categoryName];
     if (!entries || !window.google) return;
@@ -146,14 +191,14 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
       });
     });
 
+    // inside fetchPlacesByCategory
     try {
-      const [googleResults, backendResults] = await Promise.all([
-        fetchGooglePlaces(),
-        fetchBackendData(categoryName)
-      ]);
+      const businessResults = await fetchApprovedBusinesses(categoryName);
 
-      const combinedResults = [...googleResults, ...backendResults].reduce((acc, current) => {
-        if (!acc.find(item => item.name === current.name)) {
+      const combinedResults = businessResults.reduce((acc, current) => {
+        if (!current) return acc;
+        const key = `${current.name}|${Math.round(current.latitude * 1e5)}|${Math.round(current.longitude * 1e5)}`;
+        if (!acc.find(i => `${i.name}|${Math.round(i.latitude * 1e5)}|${Math.round(i.longitude * 1e5)}` === key)) {
           acc.push(current);
         }
         return acc;
@@ -163,14 +208,12 @@ const MapViewTesting = ({ onSelect, activeOption, onSelectCategory }) => {
       if (onSelect) onSelect(categoryName, combinedResults);
       if (onSelectCategory) onSelectCategory(categoryName, combinedResults);
 
-      if (combinedResults.length > 0 && categoryName !== 'Major Town') {
-        if (window.mapRef) {
-          window.mapRef.panTo({
-            lat: combinedResults[0].latitude,
-            lng: combinedResults[0].longitude
-          });
-          window.mapRef.setZoom(14);
-        }
+      if (combinedResults.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+        window.mapRef.panTo({
+          lat: combinedResults[0].latitude,
+          lng: combinedResults[0].longitude
+        });
+        window.mapRef.setZoom(14);
       }
     } catch (error) {
       console.error('Combined fetch error:', error);

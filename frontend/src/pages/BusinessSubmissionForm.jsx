@@ -89,12 +89,12 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
   // Business categories
   const businessCategories = [
-    'Food & Beverage',
+    'Food & Beverages',
     'Transportation',
     'Accommodation',
-    'Attraction',
-    'Tour Guide',
-    'Leisure',
+    'Attractions',
+    'Tour Guides',
+    'Shopping & Leisures',
     'Other'
   ];
 
@@ -221,6 +221,32 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         setFormData(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }));
       }
     }
+  };
+
+  const handlePhoneChange = (e) => {
+    // keep only 0-9 and hyphen
+    const cleaned = (e.target.value || '').replace(/[^\d-]/g, '');
+    setFormData(prev => ({ ...prev, phone: cleaned }));
+    if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
+  };
+
+  const handlePhoneKeyDown = (e) => {
+    const allowedKeys = [
+      'Backspace','Delete','Tab','Enter','Escape',
+      'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','-'
+    ];
+    if (allowedKeys.includes(e.key) || (e.ctrlKey || e.metaKey)) return;
+    if (e.key >= '0' && e.key <= '9') return;
+    e.preventDefault();
+  };
+
+  const handlePhonePaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    const cleaned = text.replace(/[^\d-]/g, '');
+    const next = (formData.phone + cleaned).replace(/[^\d-]/g, '');
+    setFormData(prev => ({ ...prev, phone: next }));
+    if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
   };
 
   const getBestLocationFix = ({ desiredAccuracyMeters = 50, maxWaitMs = 15000 } = {}) =>
@@ -650,11 +676,14 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               <FaPhone /> Phone Number*
             </label>
             <input
-              type="text"
+              type="tel"
               id="phone"
               name="phone"
               value={formData.phone}
-              onChange={handleChange}
+              onChange={handlePhoneChange}
+              onKeyDown={handlePhoneKeyDown}
+              onPaste={handlePhonePaste}
+              inputMode="numeric"
               placeholder="e.g., 555-123-4567 or 555-1234-5678"
               pattern="^\d{3}-(\d{3}|\d{4})-\d{4}$"
               title="Use XXX-XXX-XXXX or XXX-XXXX-XXXX"

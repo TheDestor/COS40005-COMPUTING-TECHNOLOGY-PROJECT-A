@@ -734,6 +734,11 @@ const BusinessManagement = () => {
                       <span className="meta-label">Address:</span>
                       <span className="meta-value">{selectedBusiness.address}</span>
                     </div>
+
+                    <div className="meta-item address-item compact-address">
+                      <span className="meta-label">Coordinate:</span>
+                      <span className="meta-value">{selectedBusiness.latitude}, {selectedBusiness.longitude}</span>
+                    </div>
                   </div>
                   
                   <div className="business-description compact-description">

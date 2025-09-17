@@ -47,6 +47,51 @@ const placeCategories = {
   'Major Town': ['city']
 };
 
+// Map menu category → business category stored in DB
+const menuToBusinessCategory = (menuCategory) => {
+  switch ((menuCategory || '').toLowerCase()) {
+    case 'attractions': return 'Attractions';
+    case 'accommodation': return 'Accommodation';
+    case 'food & beverages': return 'Food & Beverages';
+    case 'transportation': return 'Transportation';
+    case 'shoppings & leisures': return 'Shoppings & Leisures';
+    case 'tour guides': return 'Tour Guides';
+    case 'events': return 'Events';
+    default: return null; // 'Major Town' or unknowns
+  }
+};
+
+const fetchApprovedBusinesses = async (menuCategoryName) => {
+  try {
+    const apiCategory = menuToBusinessCategory(menuCategoryName);
+    if (!apiCategory) return []; // Skip categories not tied to businesses (e.g., Major Town)
+
+    const res = await fetch(`/api/businesses/approved?category=${encodeURIComponent(apiCategory)}&limit=200`);
+    if (!res.ok) throw new Error('Failed to fetch approved businesses');
+    const json = await res.json();
+    const list = (json.data || []).filter(Boolean);
+
+    return list
+      .filter(b => b && b.latitude != null && b.longitude != null)
+      .map(b => ({
+        name: b.name,
+        latitude: Number(b.latitude),
+        longitude: Number(b.longitude),
+        image: b.businessImage
+          ? (String(b.businessImage).startsWith('/uploads')
+              ? `${window.location.origin}${b.businessImage}`
+              : b.businessImage)
+          : defaultImage,
+        description: b.description || 'Business',
+        type: menuCategoryName,
+        source: 'businesses'
+      }));
+  } catch (e) {
+    console.error('Approved businesses fetch error:', e);
+    return [];
+  }
+};
+
 const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }) => {
   const [selectedMenu, setSelectedMenu] = useState(activeOption || 'Major Town');
   const [locationsData, setLocationsData] = useState([]);
@@ -100,7 +145,22 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
 
   const fetchPlacesByCategory = async (categoryName, location, radius = 50000) => {
     const entries = placeCategories[categoryName];
-    if (!entries || !window.google) return;
+    if (!entries || !window.google) {
+      // Still allow business plotting even if Google is unavailable
+      try {
+        const businessResults = await fetchApprovedBusinesses(categoryName);
+        setLocationsData(businessResults);
+        if (onSelect) onSelect(categoryName, businessResults);
+        if (onSelectCategory) onSelectCategory(categoryName, businessResults);
+        if (businessResults.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+          window.mapRef.panTo({ lat: businessResults[0].latitude, lng: businessResults[0].longitude });
+          window.mapRef.setZoom(14);
+        }
+      } catch (error) {
+        console.error('Business-only fetch error:', error);
+      }
+      return;
+    }
 
     const service = new window.google.maps.places.PlacesService(document.createElement('div'));
     const collectedResults = [];
@@ -109,7 +169,6 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
       const processResults = (results, status, pagination) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
           collectedResults.push(...results);
-
           if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
             setTimeout(() => pagination.nextPage(), 1000);
           } else {
@@ -119,12 +178,6 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
               longitude: place.geometry?.location?.lng() || 0,
               image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
               description: place.vicinity || 'No description available.',
-              // url: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
-              // rating: place.rating || null,
-              // openNowText: place.opening_hours?.open_now ? 'Open now' : 'Closed now',
-              // open24Hours: place.opening_hours?.periods?.some(p =>
-              //   (p.open?.time === '0000' && (!p.close || p.close.time === '2359'))
-              // ) || false,
               type: categoryName
             }));
             resolve(formatted);
@@ -146,13 +199,16 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
     });
 
     try {
-      const [googleResults, backendResults] = await Promise.all([
+      const [googleResults, backendResults, businessResults] = await Promise.all([
         fetchGooglePlaces(),
-        fetchBackendData(categoryName)
+        fetchBackendData(categoryName),
+        fetchApprovedBusinesses(categoryName)
       ]);
 
-      const combinedResults = [...googleResults, ...backendResults].reduce((acc, current) => {
-        if (!acc.find(item => item.name === current.name)) {
+      const combinedResults = [...googleResults, ...backendResults, ...businessResults].reduce((acc, current) => {
+        if (!current) return acc;
+        const key = `${current.name}|${Math.round(current.latitude * 1e5)}|${Math.round(current.longitude * 1e5)}`;
+        if (!acc.find(i => `${i.name}|${Math.round(i.latitude * 1e5)}|${Math.round(i.longitude * 1e5)}` === key)) {
           acc.push(current);
         }
         return acc;
@@ -162,14 +218,12 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
       if (onSelect) onSelect(categoryName, combinedResults);
       if (onSelectCategory) onSelectCategory(categoryName, combinedResults);
 
-      if (combinedResults.length > 0 && categoryName !== 'Major Town') {
-        if (window.mapRef) {
-          window.mapRef.panTo({
-            lat: combinedResults[0].latitude,
-            lng: combinedResults[0].longitude
-          });
-          window.mapRef.setZoom(14);
-        }
+      if (combinedResults.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+        window.mapRef.panTo({
+          lat: combinedResults[0].latitude,
+          lng: combinedResults[0].longitude
+        });
+        window.mapRef.setZoom(14);
       }
     } catch (error) {
       console.error('Combined fetch error:', error);

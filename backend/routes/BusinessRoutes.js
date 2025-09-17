@@ -10,7 +10,8 @@ import {
     updateBusinessStatus,
     updateBusinessDetails,
     deleteBusiness,
-    getBusinessesByStatus
+    getBusinessesByStatus,
+    getAllApprovedBusinesses
 } from "../controllers/BusinessController.js";
 
 const businessRouter = Router();
@@ -37,7 +38,8 @@ const businessUpload = upload.fields([
 
 // Public routes
 businessRouter.post("/addBusiness", businessUpload, addBusiness);
-businessRouter.get("/getAllApprovedBusinesses", getAllBusinesses); // For public display
+// businessRouter.get("/getAllApprovedBusinesses", getAllBusinesses); // For public display
+businessRouter.get("/approved", getAllApprovedBusinesses); // For public display
 
 // CBT Admin-only routes
 businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['cbt_admin']), getAllBusinesses);

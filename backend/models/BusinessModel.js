@@ -13,6 +13,8 @@ const businessSchema = new mongoose.Schema({
     phone: { type: String, required: true, trim: true },
     website: { type: String, trim: true, default: null },
     openingHours: { type: String, trim: true, default: null },
+    latitude: { type: Number, required: true, trim: true },
+    longitude: { type: Number, required: true, trim: true },
 
     // Media
     businessImage: { type: String, required: true },  // URL to stored image
