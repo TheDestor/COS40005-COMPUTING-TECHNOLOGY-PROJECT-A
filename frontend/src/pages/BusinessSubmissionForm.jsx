@@ -160,9 +160,12 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         [name]: file
       });
     } else {
+      const nextVal = type === 'checkbox'
+        ? checked
+        : (name === 'ownerEmail' ? value.toLowerCase() : value);
       setFormData({
         ...formData,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: nextVal
       });
     }
     
@@ -250,6 +253,17 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
   };
 
+  // Disallow uppercase letters in email input (extra UX guard; onChange already lowercases)
+  const handleEmailKeyDown = (e) => {
+    const allowedKeys = [
+      'Backspace','Delete','Tab','Enter','Escape','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'
+    ];
+    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (/[A-Z]/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const getBestLocationFix = ({ desiredAccuracyMeters = 50, maxWaitMs = 15000 } = {}) =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
@@ -292,14 +306,17 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     
     switch (step) {
       case 1: // Basic Information
-        if (!formData.name.trim()) newErrors.name = 'Business name is required';
-        if (!formData.owner.trim()) newErrors.owner = 'Owner name is required';
-        if (!formData.ownerEmail.trim()) {
-          newErrors.ownerEmail = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.ownerEmail)) {
-          newErrors.ownerEmail = 'Email is invalid';
+      if (!formData.name.trim()) newErrors.name = 'Business name is required';
+      if (!formData.owner.trim()) newErrors.owner = 'Owner name is required';
+      if (!formData.ownerEmail.trim()) {
+        newErrors.ownerEmail = 'Email is required';
+      } else {
+        const email = formData.ownerEmail.trim();
+        if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) {
+          newErrors.ownerEmail = 'Email must be lowercase and valid';
         }
-        break;
+      }
+      break;
         
       case 2: // Business Details
         if (!formData.category) newErrors.category = 'Please select a category';
@@ -510,8 +527,16 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             name="ownerEmail"
             value={formData.ownerEmail}
             onChange={handleChange}
+            onKeyDown={handleEmailKeyDown}
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+            title="Use lowercase letters only (e.g., user@example.com)"
             placeholder="e.g., john@example.com"
             className={errors.ownerEmail ? 'error' : ''}
+            style={{ textTransform: 'lowercase' }}
           />
           {errors.ownerEmail && <div className="error-message-business">{errors.ownerEmail}</div>}
         </div>
@@ -529,6 +554,8 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     const lat = parseFloat(formData.latitude);
     const lng = parseFloat(formData.longitude);
     const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+    const defaultCenter = [1.5533, 110.3592];
+    const center = hasCoords ? [lat, lng] : defaultCenter;
 
     return (
       <div className="form-step">
@@ -631,34 +658,30 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </label>
           <div style={{ height: 220, width: '100%', borderRadius: 8, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
             <MapContainer
-              center={hasCoords ? [lat, lng] : [1.5533, 110.3592]}
+              center={center}
               zoom={hasCoords ? 15 : 12}
               style={{ height: '100%', width: '100%' }}
               scrollWheelZoom={false}
-              key={`${hasCoords ? lat : 'def'}-${hasCoords ? lng : 'def'}`} // force remount if needed
+              key={`${center[0]}-${center[1]}`} // force remount if needed
             >
               <TileLayer
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {hasCoords && (
-                <>
-                  <Marker
-                    position={[lat, lng]}
-                    icon={defaultIcon}
-                    draggable={true}
-                    eventHandlers={{
-                      dragend: (e) => {
-                        const ll = e.target.getLatLng();
-                        const value = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
-                        setCoordinatesInput(value);
-                        setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
-                      }
-                    }}
-                  />
-                  <Recenter lat={lat} lng={lng} />
-                </>
-              )}
+              <Marker
+                position={center}
+                icon={defaultIcon}
+                draggable={true}
+                eventHandlers={{
+                  dragend: (e) => {
+                    const ll = e.target.getLatLng();
+                    const value = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
+                    setCoordinatesInput(value);
+                    setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+                  }
+                }}
+              />
+              <Recenter lat={center[0]} lng={center[1]} />
               <ClickToSet
                 onPick={(ll) => {
                   const value = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
