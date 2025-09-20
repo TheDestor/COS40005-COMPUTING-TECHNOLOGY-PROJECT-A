@@ -31,6 +31,7 @@ import MapZoomControllerTesting from './MapZoomControllerTesting';
 import ZoomHandlerTesting from './ZoomHandlerTesting';
 import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
 import LeftSideBarTesting from './LeftSideBarTesting';
+import MapLayers from './MapLayers';
 
 // Sarawak bounds: [SouthWest, NorthEast]
 const sarawakBounds = [
@@ -209,6 +210,11 @@ function MapComponentTesting({  }) {
   const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
   const [osrmWaypoints, setOsrmWaypoints] = useState([]);
   const [isRoutingActive, setIsRoutingActive] = useState(false);
+  const [baseLayer, setBaseLayer] = useState({
+    id: 'osm',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors'
+  });
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
@@ -277,6 +283,7 @@ function MapComponentTesting({  }) {
         setOsrmRouteCoords={setOsrmRouteCoords}
         setOsrmWaypoints={setOsrmWaypoints}
         setIsRoutingActive={setIsRoutingActive}
+        onBasemapChange={setBaseLayer}
       />
 
       {/* Top Header Container */}
@@ -314,6 +321,7 @@ function MapComponentTesting({  }) {
         zoomControl={false}
         scrollWheelZoom={true}
       >
+        <TileLayer key={baseLayer.id} url={baseLayer.url} attribution={baseLayer.attribution} />
         <MapContent
           locations={locations}
           nearbyPlaces={searchNearbyPlaces}
@@ -361,6 +369,12 @@ function MapComponentTesting({  }) {
           </>
         )}
       </MapContainer>
+
+      {/* <MapLayers
+        isOpen={false} // This component is not a modal, so it's always open
+        onClose={() => {}}
+        onMapTypeChange={setBaseLayer}
+      /> */}
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

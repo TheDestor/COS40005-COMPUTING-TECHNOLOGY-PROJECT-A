@@ -30,6 +30,7 @@ import BookmarkPage from './pages/Bookmarkpage.jsx';
 import ReviewPage from './pages/ReviewPage.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
+import ManageBusiness from './pages/ManageBusiness.jsx';
 
 // Place Information Pages
 import MajorTownPage from './pages/MajorTownPage.jsx';
@@ -81,6 +82,7 @@ function App() {
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
+            <Route path="/manage-business" element={<ManageBusiness />} />
             <Route path="/error" element={<ErrorPage />} />
             <Route path="/share" element={<SharePlace />} />
 

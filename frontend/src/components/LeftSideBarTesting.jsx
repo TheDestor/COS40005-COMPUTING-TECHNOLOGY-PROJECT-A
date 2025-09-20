@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle  } from 'react-icons/fa';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools } from 'react-icons/fa';
+import { MdManageAccounts } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
@@ -115,7 +116,7 @@ const travelModes = {
   Motorbike: 'driving', // OSRM does not support motorbike, fallback to driving
 };
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, nearbyPlaces, setSelectedPlace, selectedPlace, setNearbyPlaces, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive }) => {
+const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, nearbyPlaces, setSelectedPlace, selectedPlace, setNearbyPlaces, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -521,6 +522,17 @@ useEffect(() => {
           <FaBuilding className="icon100" />
           <span className="label100">Business</span>
         </div>
+
+        <div
+          className={`menu-item100${activeMenu === 'managebusiness' ? ' active' : ''}`}
+          onClick={() => {
+            setActiveMenu('managebusiness');
+            window.location.href = '/manage-business';
+          }}
+        >
+          <MdManageAccounts className="icon100" />
+          <span className="label100">Manage Business</span>
+        </div>
         <div
           className={`menu-item101${activeMenu === 'layers' ? ' active' : ''}`}
           onClick={() => {
@@ -758,21 +770,27 @@ useEffect(() => {
               </div>
             </>
           ) : null}
-        </div>
+                </div>
 
-      {showBusiness && (
-        <BusinessSubmissionForm
-          isOpen={showBusiness}
-          onClose={() => setShowBusiness(false)}
-          onSubmitSuccess={() => {
-            toast.success('Business submitted successfully!');
-            setShowBusiness(false);
-          }}
-        />
-      )}
+            {showBusiness && (
+              <BusinessSubmissionForm
+                isOpen={showBusiness}
+                onClose={() => setShowBusiness(false)}
+                onSubmitSuccess={() => {
+                  toast.success('Business submitted successfully!');
+                  setShowBusiness(false);
+                }}
+              />
+            )}
 
-      {/* <MapZoomController selectedPlace={selectedPlace} /> */}
-    </>
+            <MapLayer
+              isOpen={showLayersPanel}
+              onClose={() => setShowLayersPanel(false)}
+              onMapTypeChange={onBasemapChange}
+            />
+
+          {/* <MapZoomController selectedPlace={selectedPlace} /> */}
+          </>
   );
 };
 
