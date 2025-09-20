@@ -1,7 +1,7 @@
 import { businessUserModel, userModel } from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 
-// @desc User registration
+// @desc User registration test
 // @route POST /register
 // @access Public
 export const register = async (req, res) => {
