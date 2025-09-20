@@ -37,3 +37,15 @@ export const checkRole = (allowedRoles) => {
         }
     }
 }
+
+export const attachUserIfPresent = (req, _res, next) => {
+  const h = req.headers?.authorization || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null;
+  if (!token) return next();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded?.user || decoded;
+    req.role = decoded?.role || decoded?.user?.role;
+  } catch {}
+  next();
+};

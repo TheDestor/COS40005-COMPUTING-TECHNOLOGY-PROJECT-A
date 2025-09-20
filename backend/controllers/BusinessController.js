@@ -151,7 +151,10 @@ export const addBusiness = async (req, res) => {
             businessImage: businessImagePath,
             ownerAvatar: ownerAvatarPath,
             priority: ['high', 'medium', 'low'].includes(businessData.priority) ? businessData.priority : 'low',
-            agreement: businessData.agreement === 'true' || businessData.agreement === true
+            agreement: businessData.agreement === 'true' || businessData.agreement === true,
+            // Create new business with file paths
+            submitterUserId: req.user?._id || req.user?.id || null,
+            submitterEmail: req.user?.email || businessData.submitterEmail || null
         });
 
         await newBusiness.save();
@@ -388,82 +391,30 @@ export const updateBusinessStatus = async (req, res) => {
     }
 };
 
-// // Update business details (admin only)
-// export const updateBusinessDetails = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const updateData = req.body;
-        
-//         // Validate ID format
-//         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Invalid business ID format"
-//             });
-//         }
-        
-//         // Find business first to check if it exists
-//         const business = await businessModel.findById(id);
-        
-//         if (!business) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Business not found"
-//             });
-//         }
-        
-//         // Handle file uploads if provided
-//         if (req.files) {
-//             // Handle business image update
-//             if (req.files.businessImage) {
-//                 // Delete old image if it exists
-//                 if (business.businessImage) {
-//                     const oldImagePath = path.join(__dirname, '..', business.businessImage);
-//                     if (fs.existsSync(oldImagePath)) {
-//                         fs.unlinkSync(oldImagePath);
-//                     }
-//                 }
-                
-//                 // Save new image
-//                 updateData.businessImage = saveFile(req.files.businessImage[0]);
-//             }
-            
-//             // Handle owner avatar update
-//             if (req.files.ownerAvatar) {
-//                 // Delete old avatar if it exists
-//                 if (business.ownerAvatar) {
-//                     const oldAvatarPath = path.join(__dirname, '..', business.ownerAvatar);
-//                     if (fs.existsSync(oldAvatarPath)) {
-//                         fs.unlinkSync(oldAvatarPath);
-//                     }
-//                 }
-                
-//                 // Save new avatar
-//                 updateData.ownerAvatar = saveFile(req.files.ownerAvatar[0]);
-//             }
-//         }
-        
-//         // Update business with new data
-//         const updatedBusiness = await businessModel.findByIdAndUpdate(
-//             id,
-//             updateData,
-//             { new: true, runValidators: true }
-//         );
-        
-//         res.status(200).json({
-//             success: true,
-//             message: "Business details updated successfully",
-//             data: updatedBusiness
-//         });
-//     } catch (error) {
-//         console.error("Error updating business details:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Failed to update business details",
-//             error: error.message
-//         });
-//     }
-// };
+// Get all businesses by owner (authenticated user), any status
+export const getBusinessesByOwner = async (req, res) => {
+  try {
+    const emailQ = (req.query.email || '').trim();
+    const ors = [];
+
+    if (req.user?.id || req.user?._id) ors.push({ submitterUserId: req.user.id || req.user._id });
+    if (req.user?.email) ors.push({ submitterEmail: req.user.email }, { ownerEmail: req.user.email });
+    if (emailQ) ors.push({ ownerEmail: emailQ }, { submitterEmail: emailQ });
+
+    if (ors.length === 0) {
+      return res.status(400).json({ success: false, message: 'Owner email is required' });
+    }
+
+    const businesses = await businessModel
+      .find({ $or: ors })
+      .sort({ submissionDate: -1 });
+
+    res.status(200).json({ success: true, count: businesses.length, data: businesses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to get businesses by owner', error: error.message });
+  }
+};
+  
 // Update business details (admin only)
 export const updateBusinessDetails = async (req, res) => {
     try {
@@ -629,3 +580,28 @@ export const getAllApprovedBusinesses = async (req, res) => {
         });
     }
 };
+
+// Get all submissions created by the authenticated user (any status)
+export const getMySubmissions = async (req, res) => {
+    try {
+      const submitterUserId = req.user?.id || req.user?._id;
+      if (!submitterUserId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+      const businesses = await businessModel
+        .find({ submitterUserId })
+        .sort({ submissionDate: -1 });
+  
+      res.status(200).json({
+        success: true,
+        count: businesses.length,
+        data: businesses
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get my submissions',
+        error: error.message
+      });
+    }
+  };

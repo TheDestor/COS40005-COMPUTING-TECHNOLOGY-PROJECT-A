@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { verifyJWT, checkRole } from "../middleware/AuthMiddleware.js";
+import { verifyJWT, checkRole, attachUserIfPresent } from "../middleware/AuthMiddleware.js";
 import multer from "multer";
 
 // Import business controllers (we'll create these next)
-import { 
+import {
     addBusiness,
     getAllBusinesses,
     getBusinessById,
@@ -11,7 +11,9 @@ import {
     updateBusinessDetails,
     deleteBusiness,
     getBusinessesByStatus,
-    getAllApprovedBusinesses
+    getAllApprovedBusinesses,
+    getBusinessesByOwner,
+    getMySubmissions
 } from "../controllers/BusinessController.js";
 
 const businessRouter = Router();
@@ -36,10 +38,13 @@ const businessUpload = upload.fields([
     { name: 'ownerAvatar', maxCount: 1 }
 ]);
 
-// Public routes
-businessRouter.post("/addBusiness", businessUpload, addBusiness);
-// businessRouter.get("/getAllApprovedBusinesses", getAllBusinesses); // For public display
-businessRouter.get("/approved", getAllApprovedBusinesses); // For public display
+// Public
+businessRouter.post("/addBusiness", attachUserIfPresent, businessUpload, addBusiness);
+businessRouter.get("/approved", getAllApprovedBusinesses);
+
+// Owner-scoped
+businessRouter.get("/mine", verifyJWT, getBusinessesByOwner);
+businessRouter.get("/my-submissions", verifyJWT, getMySubmissions);
 
 // CBT Admin-only routes
 businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['cbt_admin']), getAllBusinesses);

@@ -5,30 +5,55 @@ import satellite from '../assets/satellite.png';
 import terrain from '../assets/terrain.png';
 import hybrid from '../assets/hybrid.png';
 
-const mapTypes = [
-  { name: 'roadmap', image: roadmap },
-  { name: 'satellite', image: satellite },
-  { name: 'terrain', image: terrain },
-  { name: 'hybrid', image: hybrid },
+const basemaps = [
+  {
+    id: 'osm',
+    name: 'Roadmap',
+    image: roadmap,
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors'
+  },
+  {
+    id: 'carto-positron',
+    name: 'Streets',
+    image: roadmap,
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; OpenStreetMap, &copy; CARTO'
+  },
+  {
+    id: 'esri-imagery',
+    name: 'Satellite',
+    image: satellite,
+    url: 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg',
+    attribution: 'Tiles &copy; Esri'
+  },
+  {
+    id: 'stamen-terrain',
+    name: 'Terrain',
+    image: terrain,
+    url: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; Stadia Maps, &copy; OpenMapTiles, &copy; OpenStreetMap'
+  },
 ];
 
 const MapLayer = ({ isOpen, onClose, onMapTypeChange }) => {
-  const [selectedType, setSelectedType] = useState('roadmap');
+  const [selectedId, setSelectedId] = useState('osm');
 
-  const handleSelect = (type) => {
-    setSelectedType(type);           
-    onMapTypeChange(type);           
-    onClose();                       
+  const handleSelect = (id) => {
+    setSelectedId(id);
+    const bm = basemaps.find(b => b.id === id);
+    if (bm) onMapTypeChange(bm);
+    onClose();
   };
 
   return (
     <div className={`map-layer-panel ${isOpen ? 'open' : ''}`}>
       <div className="map-layer-options">
-        {mapTypes.map(({ name, image }) => (
+        {basemaps.map(({ id, name, image }) => (
           <div
-            key={name}
-            className={`layer-box ${selectedType === name ? 'selected' : ''}`}
-            onClick={() => handleSelect(name)}
+            key={id}
+            className={`layer-box ${selectedId === id ? 'selected' : ''}`}
+            onClick={() => handleSelect(id)}
           >
             <img src={image} alt={name} className="layer-image" />
             <div className="layer-label">{name}</div>

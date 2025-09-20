@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FaBed, FaUniversity, FaMountain, FaPlaneDeparture,
   FaUmbrellaBeach, FaHospital, FaCalendarAlt, FaShoppingCart 
@@ -9,6 +9,23 @@ import { IoFastFood } from "react-icons/io5";
 import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/Kuching.png';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi'; // Import chevron icons
+
+const RADIUS_KM = 10;
+const DEFAULT_CENTER = { lat: 1.5533, lng: 110.3592 };
+
+const useCurrentPosition = () => {
+  const [pos, setPos] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const opts = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+    navigator.geolocation.getCurrentPosition(
+      (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => {},
+      opts
+    );
+  }, []);
+  return pos;
+};
 
 const menuItems = [
   { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
@@ -57,15 +74,14 @@ const menuToBusinessCategory = (menuCategory) => {
     case 'shoppings & leisures': return 'Shoppings & Leisures';
     case 'tour guides': return 'Tour Guides';
     case 'events': return 'Events';
-    default: return null; // 'Major Town' or unknowns
+    default: return null;
   }
 };
 
 const fetchApprovedBusinesses = async (menuCategoryName) => {
   try {
     const apiCategory = menuToBusinessCategory(menuCategoryName);
-    if (!apiCategory) return []; // Skip categories not tied to businesses (e.g., Major Town)
-
+    if (!apiCategory) return [];
     const res = await fetch(`/api/businesses/approved?category=${encodeURIComponent(apiCategory)}&limit=200`);
     if (!res.ok) throw new Error('Failed to fetch approved businesses');
     const json = await res.json();
@@ -81,13 +97,142 @@ const fetchApprovedBusinesses = async (menuCategoryName) => {
           ? (String(b.businessImage).startsWith('/uploads')
               ? `${window.location.origin}${b.businessImage}`
               : b.businessImage)
-          : defaultImage,
+          : undefined,
         description: b.description || 'Business',
         type: menuCategoryName,
         source: 'businesses'
       }));
   } catch (e) {
     console.error('Approved businesses fetch error:', e);
+    return [];
+  }
+};
+
+// Overpass endpoints: try in order
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter'
+];
+
+// In-memory cache and per-category debounce
+const overpassCacheRef = { current: new Map() }; // key → { ts, data }
+const lastFetchRef = { current: {} };            // category → timestamp
+
+// Build a stable cache key
+const cacheKey = (category, lat, lng, radius) =>
+  `${category}|${lat.toFixed(4)}|${lng.toFixed(4)}|${radius}`;
+
+// Map your menu categories to OSM tags (amenity/shop/tourism/highway)
+const menuToOverpass = (menuCategory) => {
+  switch ((menuCategory || '').toLowerCase()) {
+    case 'food & beverages':
+      return [{ key: 'amenity', values: ['restaurant','cafe','fast_food','food_court','bar','pub','bakery','ice_cream'] }];
+    case 'accommodation':
+      return [{ key: 'tourism', values: ['hotel','guest_house','motel','hostel','apartment','camp_site','chalet'] }];
+    case 'transportation':
+      return [
+        { key: 'amenity', values: ['bus_station','ferry_terminal','taxi'] },
+        { key: 'public_transport', values: ['stop_position','station','platform'] },
+        { key: 'aeroway', values: ['aerodrome','terminal'] },
+        { key: 'railway', values: ['station','halt'] }
+      ];
+    case 'attractions':
+      return [
+        { key: 'tourism', values: ['attraction','museum','zoo','theme_park','gallery','aquarium','artwork'] },
+        { key: 'leisure', values: ['park','nature_reserve','garden'] }
+      ];
+    case 'shoppings & leisures':
+      return [
+        { key: 'shop', values: ['mall','supermarket','department_store','convenience','clothes','gift','sports','toys'] },
+        { key: 'leisure', values: ['fitness_centre','sports_centre','bowling_alley','amusement_arcade','escape_room','nightclub'] }
+      ];
+    case 'tour guides':
+      return [{ key: 'office', values: ['tourism'] }, { key: 'tourism', values: ['information','guidepost'] }];
+    case 'events':
+      return [{ key: 'amenity', values: ['community_centre','theatre','conference_centre'] }];
+    default:
+      return null; // 'Major Town' or unsupported
+  }
+};
+
+const buildOverpassQL = (rules, center, radiusMeters) => {
+  const { lat, lng } = center;
+  const blocks = rules.flatMap(({ key, values }) =>
+    values.map(v => `
+      node["${key}"="${v}"](around:${radiusMeters},${lat},${lng});
+      way["${key}"="${v}"](around:${radiusMeters},${lat},${lng});
+      relation["${key}"="${v}"](around:${radiusMeters},${lat},${lng});
+    `)
+  ).join('\n');
+
+  return `
+    [out:json][timeout:25];
+    (
+      ${blocks}
+    );
+    out center 50;
+  `;
+};
+
+const fetchOverpassWithFallback = async (ql) => {
+  for (const url of OVERPASS_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Language': 'en' },
+        body: new URLSearchParams({ data: ql }).toString()
+      });
+      if (res.ok) return await res.json();
+    } catch (_) { /* try next */ }
+  }
+  throw new Error('All Overpass endpoints failed');
+};
+
+const fetchOverpassPlaces = async (categoryName, center, radiusMeters = 10000) => {
+  const rules = menuToOverpass(categoryName);
+  if (!rules) return [];
+
+  // Debounce: 2s per category
+  const now = Date.now();
+  const last = lastFetchRef.current[categoryName] || 0;
+  if (now - last < 2000) {
+    const k = cacheKey(categoryName, center.lat, center.lng, radiusMeters);
+    const cached = overpassCacheRef.current.get(k);
+    if (cached) return cached.data;
+  }
+  lastFetchRef.current[categoryName] = now;
+
+  // Cache check
+  const key = cacheKey(categoryName, center.lat, center.lng, radiusMeters);
+  const cached = overpassCacheRef.current.get(key);
+  if (cached && now - cached.ts < 5 * 60 * 1000) { // 5 min TTL
+    return cached.data;
+  }
+
+  const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 15000))); // clamp to 5–15 km
+
+  try {
+    const data = await fetchOverpassWithFallback(ql);
+    const elements = (data.elements || []).map(el => {
+      const isWayOrRel = el.type !== 'node';
+      const lat2 = isWayOrRel ? el.center?.lat : el.lat;
+      const lon2 = isWayOrRel ? el.center?.lon : el.lon;
+      if (lat2 == null || lon2 == null) return null;
+      return {
+        name: el.tags?.name || el.tags?.['name:en'] || 'Place',
+        latitude: Number(lat2),
+        longitude: Number(lon2),
+        image: undefined,
+        description: el.tags?.description || '',
+        type: categoryName,
+        source: 'overpass'
+      };
+    }).filter(Boolean);
+
+    overpassCacheRef.current.set(key, { ts: now, data: elements });
+    return elements;
+  } catch (e) {
+    console.error('Overpass error:', e);
     return [];
   }
 };
@@ -102,6 +247,8 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
   const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState(
     menuItems.find(item => item.name === (activeOption || 'Major Town')) || menuItems[0]
   );
+
+  const currentPos = useCurrentPosition();
 
   useEffect(() => {
     const handleResize = () => {
@@ -143,90 +290,40 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
     }
   };
 
-  const fetchPlacesByCategory = async (categoryName, location, radius = 50000) => {
-    const entries = placeCategories[categoryName];
-    if (!entries || !window.google) {
-      // Still allow business plotting even if Google is unavailable
-      try {
-        const businessResults = await fetchApprovedBusinesses(categoryName);
-        setLocationsData(businessResults);
-        if (onSelect) onSelect(categoryName, businessResults);
-        if (onSelectCategory) onSelectCategory(categoryName, businessResults);
-        if (businessResults.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
-          window.mapRef.panTo({ lat: businessResults[0].latitude, lng: businessResults[0].longitude });
-          window.mapRef.setZoom(14);
-        }
-      } catch (error) {
-        console.error('Business-only fetch error:', error);
-      }
-      return;
-    }
-
-    const service = new window.google.maps.places.PlacesService(document.createElement('div'));
-    const collectedResults = [];
-
-    const fetchGooglePlaces = () => new Promise((resolve) => {
-      const processResults = (results, status, pagination) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          collectedResults.push(...results);
-          if (pagination && pagination.hasNextPage && collectedResults.length < 50) {
-            setTimeout(() => pagination.nextPage(), 1000);
-          } else {
-            const formatted = collectedResults.slice(0, 50).map(place => ({
-              name: place.name,
-              latitude: place.geometry?.location?.lat() || 0,
-              longitude: place.geometry?.location?.lng() || 0,
-              image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-              description: place.vicinity || 'No description available.',
-              type: categoryName
-            }));
-            resolve(formatted);
-          }
-        } else {
-          resolve([]);
-        }
-      };
-
-      entries.forEach(entry => {
-        const isKeywordBased = ['Events', 'Tour Guides', 'Major Town'].includes(categoryName);
-        const request = {
-          location,
-          radius,
-          ...(isKeywordBased ? { keyword: entry } : { type: entry })
-        };
-        service.nearbySearch(request, processResults);
-      });
-    });
-
+  const fetchPlacesByCategory = async (categoryName, _location, radiusMeters = RADIUS_KM * 1000) => {
     try {
-      const [googleResults, backendResults, businessResults] = await Promise.all([
-        fetchGooglePlaces(),
-        fetchBackendData(categoryName),
-        fetchApprovedBusinesses(categoryName)
-      ]);
+      // 1) Your backend category locations (whole category)
+      const backendResults = await fetchBackendData(categoryName);
 
-      const combinedResults = [...googleResults, ...backendResults, ...businessResults].reduce((acc, current) => {
-        if (!current) return acc;
-        const key = `${current.name}|${Math.round(current.latitude * 1e5)}|${Math.round(current.longitude * 1e5)}`;
-        if (!acc.find(i => `${i.name}|${Math.round(i.latitude * 1e5)}|${Math.round(i.longitude * 1e5)}` === key)) {
-          acc.push(current);
+      // 2) Your approved businesses (whole category)
+      const businessResults = await (fetchApprovedBusinesses?.(categoryName) || Promise.resolve([]));
+
+      // 3) Overpass nearby ONLY if we have the user’s current position
+      let overpassResults = [];
+      if (currentPos && typeof fetchOverpassPlaces === 'function') {
+        overpassResults = await fetchOverpassPlaces(categoryName, currentPos, radiusMeters);
+      }
+
+      // Merge + dedupe by name + rounded coords
+      const combined = [...backendResults, ...businessResults, ...overpassResults].reduce((acc, cur) => {
+        if (!cur) return acc;
+        const key = `${cur.name}|${Math.round(Number(cur.latitude) * 1e5)}|${Math.round(Number(cur.longitude) * 1e5)}`;
+        if (!acc.find(i => `${i.name}|${Math.round(Number(i.latitude) * 1e5)}|${Math.round(Number(i.longitude) * 1e5)}` === key)) {
+          acc.push(cur);
         }
         return acc;
       }, []);
 
-      setLocationsData(combinedResults);
-      if (onSelect) onSelect(categoryName, combinedResults);
-      if (onSelectCategory) onSelectCategory(categoryName, combinedResults);
+      setLocationsData(combined);
+      if (onSelect) onSelect(categoryName, combined);
+      if (onSelectCategory) onSelectCategory(categoryName, combined);
 
-      if (combinedResults.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
-        window.mapRef.panTo({
-          lat: combinedResults[0].latitude,
-          lng: combinedResults[0].longitude
-        });
+      if (combined.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+        window.mapRef.panTo({ lat: combined[0].latitude, lng: combined[0].longitude });
         window.mapRef.setZoom(14);
       }
     } catch (error) {
-      console.error('Combined fetch error:', error);
+      console.error('Fetch category error:', error);
     }
   };
 
