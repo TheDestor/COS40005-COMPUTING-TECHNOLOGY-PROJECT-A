@@ -74,8 +74,8 @@ const SettingsPage = () => {
             </div>
 
             <ul className="settings-list">
-              <li onClick={() => navigate('/error')}>Clear cache</li>
-              <li onClick={() => navigate('/error')}>System updates</li>
+              {/* <li onClick={() => navigate('/error')}>Clear cache</li> */}
+              {/* <li onClick={() => navigate('/error')}>System updates</li> */}
               <li onClick={() => navigate('/error')}>About the map</li>
             </ul>
           </div>
@@ -105,15 +105,15 @@ const SettingsPage = () => {
           <div className="content-section">
             <h2><FaRegQuestionCircle className="icon-setting" /> Help Centre</h2>
 
-            <ul className="help-list">
+            {/* <ul className="help-list">
               <li><FaRegQuestionCircle className="help-icon" /> FAQ</li>
               <li><FaUserCog className="help-icon" /> Account Issue</li>
               <li><FaBug className="help-icon" /> Report Error</li>
               <li><FaMicrophoneSlash className="help-icon" /> Voice Error</li>
-            </ul>
+            </ul> */}
 
             <div className="faq-section">
-              <h3><MdOutlineQuestionAnswer className="icon-setting" /> Frequently Asked Questions</h3>
+              {/* <h3><MdOutlineQuestionAnswer className="icon-setting" /> Frequently Asked Questions</h3> */}
               <ol className="faq-list">
                 <li>Explore about this map</li>
                 <li>If I want to change the phone number</li>

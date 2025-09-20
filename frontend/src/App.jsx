@@ -48,6 +48,8 @@ import DashboardPage from './pages/DashboardPage';
 import ViewAnalytics from './pages/ViewAnalytics.jsx';
 import ViewInquiry from './pages/ViewInquiry.jsx';
 import AddEventPage from './pages/AddEventPage.jsx';
+import PastEventsPage from './pages/PastEventsPage.jsx';
+import ScheduleEventsPage from './pages/ScheduleEventsPage.jsx';
 import BusinessManagementPage from './pages/BusinessManagementPage.jsx';
 import ManageLocation from './pages/ManageLocation.jsx';
 //import ManageReviews from './pages/ManageReviews.jsx';
@@ -106,6 +108,8 @@ function App() {
               <Route path="/view-analytics" element={<ViewAnalytics />} />
               {/*<Route path="/manage-reviews" element={<ManageReviews />} />*/}
               <Route path="/add-event" element={<AddEventPage />} />
+              <Route path="/past-events" element={<PastEventsPage />} />
+              <Route path="/schedule-events" element={<ScheduleEventsPage />} />
               <Route path="/business-management" element={<BusinessManagementPage />} />
               <Route path="/manage-location" element={<ManageLocation />} />
             </Route>
