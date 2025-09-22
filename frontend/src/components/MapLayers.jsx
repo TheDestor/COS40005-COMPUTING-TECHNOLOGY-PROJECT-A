@@ -16,15 +16,15 @@ const basemaps = [
   {
     id: 'carto-positron',
     name: 'Streets',
-    image: roadmap,
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    image: hybrid,
+    url: 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png',
     attribution: '&copy; OpenStreetMap, &copy; CARTO'
   },
   {
     id: 'esri-imagery',
     name: 'Satellite',
     image: satellite,
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png',
     attribution: 'Tiles &copy; Esri'
   },
   {

@@ -9,6 +9,7 @@ import { FiCheck } from "react-icons/fi";
 import MenuNavbar from '../components/MenuNavbar.jsx'; 
 import SeniorModeConfirm from '../components/SeniorModeConfirm.jsx';
 import LoginPage from './Loginpage.jsx';
+import AIChatbot from '../components/AiChatbot.jsx';
 
 const SettingsPage = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -173,6 +174,9 @@ const SettingsPage = () => {
         )}
       </>
       {showLogin && <LoginPage onClose={closeLogin} />}
+
+      {/* Ai Chatbot */}
+      <AIChatbot />
     </div>
   );
 };

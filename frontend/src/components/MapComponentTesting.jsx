@@ -31,7 +31,6 @@ import MapZoomControllerTesting from './MapZoomControllerTesting';
 import ZoomHandlerTesting from './ZoomHandlerTesting';
 import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
 import LeftSideBarTesting from './LeftSideBarTesting';
-import MapLayers from './MapLayers';
 import AiChatbot from './AiChatbot';
 
 // Sarawak bounds: [SouthWest, NorthEast]
@@ -74,14 +73,10 @@ const categoryIcons = {
 };
 
 // Separate component for map content to ensure proper context
-// In MapComponentTesting.jsx, update the MapContent component:
-
-// Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
-    // console.log('Location type:', location.type);
-    // console.log('Available types:', Object.keys(categoryIcons));
+
     
     if (categoryIcons[location.type]) {
       // console.log('Found icon for type:', location.type);
@@ -111,15 +106,15 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
             eventHandlers={{
               click: () => onMarkerClick(selectedSearchBarPlace)
             }}
-            riseOnHover={false}
-            autoPan={false}
+            // riseOnHover={false}
+            // autoPan={false}
           >
             {/* <Popup>
               <strong>{selectedSearchBarPlace.name || 'Selected Place'}</strong>
               {selectedSearchBarPlace.description && <div>{selectedSearchBarPlace.description}</div>}
             </Popup> */}
           </Marker>
-          <MarkerClusterGroup disableClusteringAtZoom={18}>
+          <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
             {nearbyPlaces.map((loc, idx) => (
               <Marker
                 key={`nearby-${loc.placeId}-${idx}`}
@@ -128,10 +123,10 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                 eventHandlers={{
                   click: () => onMarkerClick(loc)
                 }}
-                riseOnHover={false} 
-                autoPan={false}
+                // riseOnHover={false} 
+                // autoPan={false}
               >
-                <Popup>{loc.name}</Popup>
+                {/* <Popup>{loc.name}</Popup> */}
               </Marker>
             ))}
           </MarkerClusterGroup>
@@ -141,7 +136,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
           {/* Category/location markers */}
           {!selectedSearchBarPlace && !isRoutingActive && (
             shouldCluster ? (
-              <MarkerClusterGroup disableClusteringAtZoom={18} showCoverageOnHover={false} spiderfyOnMaxZoom={false} zoomToBoundsOnClick={false}>
+              <MarkerClusterGroup disableClusteringAtZoom={18} spiderfyOnMaxZoom={true} zoomToBoundsOnClick={true}>
                 {locations.map((loc, idx) => {
                   const icon = getIconForLocation(loc);
                   return (
@@ -152,33 +147,32 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                       eventHandlers={{
                         click: () => onMarkerClick(loc)
                       }}
-                      riseOnHover={false}
-                      autoPan={false}
-                    >
-                      <Popup>
-                        <div style={{ textAlign: 'center' }}>
-                          <img
-                            src={icon.options.iconUrl}
-                            alt={loc.type}
-                            style={{ width: 30, height: 30, marginBottom: 8 }}
-                          />
-                          <div>
-                            <strong>{loc.name}</strong>
-                            <br />
-                            <small>Type: {loc.type}</small>
-                            <br />
-                            {loc.description || 'No description'}
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
+                      // riseOnHover={false}
+                      // autoPan={false}
+                    />
+                    //   <Popup>
+                    //     <div style={{ textAlign: 'center' }}>
+                    //       <img
+                    //         src={icon.options.iconUrl}
+                    //         alt={loc.type}
+                    //         style={{ width: 30, height: 30, marginBottom: 8 }}
+                    //       />
+                    //       <div>
+                    //         <strong>{loc.name}</strong>
+                    //         <br />
+                    //         <small>Type: {loc.type}</small>
+                    //         <br />
+                    //         {loc.description || 'No description'}
+                    //       </div>
+                    //     </div>
+                    //   </Popup>
+                    // </Marker>
                   );
                 })}
               </MarkerClusterGroup>
             ) : (
               locations.map((loc, idx) => {
                 const icon = getIconForLocation(loc);
-                const isSelected = selectedLocation && selectedLocation.name === loc.name;
                 return (
                   <Marker
                     key={`${loc.name}-${idx}`}
@@ -187,24 +181,24 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                     eventHandlers={{
                       click: () => onMarkerClick(loc)
                     }}
-                  >
-                    <Popup>
-                      <div style={{ textAlign: 'center' }}>
-                        <img
-                          src={icon.options.iconUrl}
-                          alt={loc.type}
-                          style={{ width: 30, height: 30, marginBottom: 8 }}
-                        />
-                        <div>
-                          <strong>{loc.name}</strong>
-                          <br />
-                          <small>Type: {loc.type}</small>
-                          <br />
-                          {loc.description || 'No description'}
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
+                  />
+                  //   <Popup>
+                  //     <div style={{ textAlign: 'center' }}>
+                  //       <img
+                  //         src={icon.options.iconUrl}
+                  //         alt={loc.type}
+                  //         style={{ width: 30, height: 30, marginBottom: 8 }}
+                  //       />
+                  //       <div>
+                  //         <strong>{loc.name}</strong>
+                  //         <br />
+                  //         <small>Type: {loc.type}</small>
+                  //         <br />
+                  //         {loc.description || 'No description'}
+                  //       </div>
+                  //     </div>
+                  //   </Popup>
+                  // </Marker>
                 );
               })
             )
@@ -241,10 +235,16 @@ function MapComponentTesting({  }) {
   const [showReviewPage, setShowReviewPage] = useState(false);
   const { addBookmark } = UseBookmarkContext();
 
+  // Function to close info window
+  const closeInfoWindow = () => {
+    setSelectedLocation(null);
+    setShowReviewPage(false);
+  };
+
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
+    closeInfoWindow(); // Close info window when menu category changes
     setSelectedSearchBarPlace(null);
-    setSelectedLocation(null);
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
@@ -252,25 +252,39 @@ function MapComponentTesting({  }) {
 
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
+    closeInfoWindow(); // Close info window when new place is searched
     setLocations([]);
-    setSelectedLocation(null);
     setSelectedSearchBarPlace({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
   const handleZoomToPlace = (place) => {
+    closeInfoWindow(); // Close info window when zooming to place
     setSelectedSearchPlace(place);
   };
 
   // Handler for marker clicks
   const handleMarkerClick = (location) => {
-    setSelectedLocation(location);
+    // If clicking the same marker, toggle the info window
+    if (selectedLocation && selectedLocation.name === location.name) {
+      closeInfoWindow();
+    } else {
+      setSelectedLocation(location);
+      
+      // Pan map to the marker position
+      if (mapRef.current) {
+        const map = mapRef.current;
+        map.setView([location.latitude, location.longitude], map.getZoom(), {
+          animate: true,
+          duration: 0.5
+        });
+      }
+    }
   };
 
   // Handler for closing the info window
   const handleCloseInfoWindow = () => {
-    setSelectedLocation(null);
-    setShowReviewPage(false);
+    closeInfoWindow();
   };
 
   // Handler for showing review page
@@ -306,14 +320,59 @@ function MapComponentTesting({  }) {
 
   // Fit map to markers when locations change
   useEffect(() => {
-    if (!selectedSearchBarPlace && locations.length > 0 && mapRef.current) {
+    if (!selectedSearchBarPlace && !selectedSearchPlace && locations.length > 0 && mapRef.current) {
       const bounds = L.latLngBounds(
         locations.map(loc => [loc.latitude, loc.longitude])
       );
       mapRef.current.fitBounds(bounds);
     }
-  }, [locations, selectedSearchBarPlace]);
+  }, [locations, selectedSearchBarPlace, selectedSearchPlace]);
 
+  // Close info window when map is clicked
+  useEffect(() => {
+    const handleMapClick = (e) => {
+      // Check if the click target is actually the map (not a marker or control)
+      const target = e.target;
+      const isMarker = target.closest('.leaflet-marker-icon') || 
+                      target.closest('.leaflet-popup') ||
+                      target.closest('.custom-info-window-container') ||
+                      target.closest('.leaflet-control-container');
+      
+      if (!isMarker) {
+        closeInfoWindow();
+      }
+    };
+
+    const mapElement = document.querySelector('.leaflet-container');
+    if (mapElement) {
+      mapElement.addEventListener('click', handleMapClick);
+    }
+
+    return () => {
+      if (mapElement) {
+        mapElement.removeEventListener('click', handleMapClick);
+      }
+    };
+  }, []);
+
+  // Close info window when routing becomes active
+  useEffect(() => {
+    if (isRoutingActive) {
+      closeInfoWindow();
+    }
+  }, [isRoutingActive]);
+
+  // Close info window when weather/town changes
+  useEffect(() => {
+    if (shouldZoom) {
+      closeInfoWindow();
+    }
+  }, [shouldZoom, currentTown]);
+
+  // Close info window when base layer changes
+  useEffect(() => {
+    closeInfoWindow();
+  }, [baseLayer]);
 
   useEffect(() => {
     // Routing is active if both start and end are set (and valid), or if there are any waypoints
@@ -423,7 +482,16 @@ function MapComponentTesting({  }) {
 
       {/* Custom Info Window */}
       {selectedLocation && !showReviewPage && (
-        <div className="custom-info-window-container">
+        <div className="custom-info-window-container"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000
+        }}
+      >
           <CustomInfoWindow
             location={{
               name: selectedLocation.name,
@@ -455,12 +523,6 @@ function MapComponentTesting({  }) {
           />
         </div>
       )}
-
-      {/* <MapLayers
-        isOpen={false} // This component is not a modal, so it's always open
-        onClose={() => {}}
-        onMapTypeChange={setBaseLayer}
-      /> */}
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

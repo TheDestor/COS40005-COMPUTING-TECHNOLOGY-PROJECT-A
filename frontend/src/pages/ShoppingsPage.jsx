@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
+import AIChatbot from '../components/AiChatbot.jsx';
 
 const ShoppingLeisurePage = () => {
   const [data, setData] = useState([]);
@@ -235,6 +236,9 @@ const ShoppingLeisurePage = () => {
       )}
 
       {showLogin && <LoginPage onClose={closeLogin} />}
+
+      {/* Ai Chatbot */}
+      <AIChatbot />
       <Footer />
     </div>
   );

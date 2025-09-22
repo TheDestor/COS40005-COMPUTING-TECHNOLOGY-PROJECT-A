@@ -5,6 +5,7 @@ import ky from "ky";
 import { toast } from "sonner";
 import MenuNavBar from "../components/MenuNavbar";
 import LoginPage from './Loginpage.jsx';
+import AIChatbot from '../components/AiChatbot.jsx';
 
 export default function ContactUs() {
   // States
@@ -355,6 +356,9 @@ export default function ContactUs() {
         </div>
       </footer>
       {showLogin && <LoginPage onClose={closeLogin} />}
+
+      {/* Ai Chatbot */}
+      <AIChatbot />
     </div>
     </>
   );

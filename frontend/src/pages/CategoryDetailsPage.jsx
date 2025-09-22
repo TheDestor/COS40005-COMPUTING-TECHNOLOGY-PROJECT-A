@@ -6,6 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryDetailsPage.css';
 import defaultImage from '../assets/Kuching.png';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import AIChatbot from '../components/AiChatbot.jsx';
 
 const CategoryDetailsPage = () => {
   const [townData, setTownData] = useState(null);
@@ -464,6 +465,8 @@ const CategoryDetailsPage = () => {
         )}
       </div>
 
+      {/* Ai Chatbot */}
+      <AIChatbot />
       <Footer />
     </div>
   );

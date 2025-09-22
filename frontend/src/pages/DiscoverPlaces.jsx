@@ -6,6 +6,7 @@ import defaultImage from '../assets/Kuching.png';
 import '../styles/DiscoverPlaces.css';
 import { useApiIsLoaded, APIProvider } from '@vis.gl/react-google-maps';
 import { FaMapMarkerAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import AIChatbot from '../components/AiChatbot.jsx';
 
 const DiscoverPlaces = () => {
   const { slug } = useParams();
@@ -338,6 +339,8 @@ const DiscoverPlaces = () => {
           </>
         )}
 
+        {/* Ai Chatbot */}
+        <AIChatbot />
         <Footer />
       </div>
     </APIProvider>

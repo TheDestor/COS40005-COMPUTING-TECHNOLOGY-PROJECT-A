@@ -6,18 +6,17 @@ export default function ZoomHandlerTesting({ selectedSearchPlace, selectedCatego
   const map = useMap();
 
   useEffect(() => {
-    if (map && selectedSearchPlace?.latitude && selectedSearchPlace?.longitude) {
-      const position = [
-        selectedSearchPlace.latitude,
-        selectedSearchPlace.longitude
-      ];
-      
-      // Set zoom level based on category
-      if (selectedCategory === 'Major Town') {
-        map.setView(position, 7); // Zoom level 7 for Major Town
-      } else {
-        map.setView(position, 13); // Default zoom level 13 for other categories
-      }
+    if (!map || !selectedSearchPlace?.latitude || !selectedSearchPlace?.longitude) return;
+
+    const position = [
+      selectedSearchPlace.latitude,
+      selectedSearchPlace.longitude
+    ];
+
+    if (selectedCategory === 'Major Town') {
+      map.setView(position, 7);
+    } else {
+      map.setView(position, 13);
     }
   }, [map, selectedSearchPlace, selectedCategory, zoomTrigger]);
 

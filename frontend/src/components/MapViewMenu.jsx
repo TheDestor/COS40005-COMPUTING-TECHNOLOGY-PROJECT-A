@@ -107,6 +107,29 @@ const fetchApprovedBusinesses = async (menuCategoryName) => {
     return [];
   }
 };
+ 
+const fetchBackendEvents = async () => {
+  try {
+    const res = await fetch('/api/event/getAllEvents');
+    if (!res.ok) throw new Error('Failed to fetch events');
+    const json = await res.json();
+    const list = (json.events || []).filter(Boolean);
+    return list
+      .filter(e => e?.coordinates?.latitude != null && e?.coordinates?.longitude != null)
+      .map(e => ({
+        name: e.name,
+        latitude: Number(e.coordinates.latitude),
+        longitude: Number(e.coordinates.longitude),
+        image: e.imageUrl || defaultImage,
+        description: e.description || 'Event',
+        type: 'Events',
+        source: 'events'
+      }));
+  } catch (e) {
+    console.error('Events fetch error:', e);
+    return [];
+  }
+};
 
 // Overpass endpoints: try in order
 const OVERPASS_URLS = [
@@ -292,19 +315,29 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
 
   const fetchPlacesByCategory = async (categoryName, _location, radiusMeters = RADIUS_KM * 1000) => {
     try {
+      // Special case: backend Events → fetch and plot
+      if ((categoryName || '').toLowerCase() === 'events') {
+        const events = await fetchBackendEvents();
+        setLocationsData(events);
+        if (onSelect) onSelect(categoryName, events);
+        if (onSelectCategory) onSelectCategory(categoryName, events);
+        if (events.length > 0 && window.mapRef) {
+          window.mapRef.panTo({ lat: events[0].latitude, lng: events[0].longitude });
+          window.mapRef.setZoom(14);
+        }
+        return;
+      }
+  
       // 1) Your backend category locations (whole category)
       const backendResults = await fetchBackendData(categoryName);
-
       // 2) Your approved businesses (whole category)
       const businessResults = await (fetchApprovedBusinesses?.(categoryName) || Promise.resolve([]));
-
       // 3) Overpass nearby ONLY if we have the user’s current position
       let overpassResults = [];
       if (currentPos && typeof fetchOverpassPlaces === 'function') {
         overpassResults = await fetchOverpassPlaces(categoryName, currentPos, radiusMeters);
       }
-
-      // Merge + dedupe by name + rounded coords
+      // Merge + dedupe...
       const combined = [...backendResults, ...businessResults, ...overpassResults].reduce((acc, cur) => {
         if (!cur) return acc;
         const key = `${cur.name}|${Math.round(Number(cur.latitude) * 1e5)}|${Math.round(Number(cur.longitude) * 1e5)}`;
@@ -313,11 +346,9 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
         }
         return acc;
       }, []);
-
       setLocationsData(combined);
       if (onSelect) onSelect(categoryName, combined);
       if (onSelectCategory) onSelectCategory(categoryName, combined);
-
       if (combined.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
         window.mapRef.panTo({ lat: combined[0].latitude, lng: combined[0].longitude });
         window.mapRef.setZoom(14);
@@ -334,9 +365,8 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
       setIsDropdownOpen(false);
     }
 
-    const centerOfKuching = new window.google.maps.LatLng(1.5533, 110.3592);
     setLocationsData([]);
-    
+
     if (item.isFetchOnly) {
       if (item.name === 'Major Town') {
         setSelectedSearchPlace(null);
@@ -351,25 +381,20 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
         setLocationsData(formatted);
         if (onSelect) onSelect(item.name, formatted);
         if (onSelectCategory) onSelectCategory(item.name, formatted);
-        // Call the zoom handler with Major Town category
-        if (onZoomToPlace) onZoomToPlace({ 
-          latitude: 1.5533, 
-          longitude: 110.3592,
-          category: 'Major Town'
-        });
       } else {
-        setSelectedSearchPlace({ latitude: 1.5533, longitude: 110.3592 });
-        fetchPlacesByCategory(item.name, centerOfKuching);
-        // Call the zoom handler with the selected category
-        if (onZoomToPlace) onZoomToPlace({ 
-          latitude: 1.5533, 
-          longitude: 110.3592,
-          category: item.name
-        });
+        setSelectedSearchPlace(null);
+        fetchPlacesByCategory(item.name, { latitude: 1.5533, longitude: 110.3592 });
+      }
+      // zoom to user's current location (if available)
+      if (currentPos && typeof onZoomToPlace === 'function') {
+        onZoomToPlace({ latitude: currentPos.lat, longitude: currentPos.lng, category: item.name });
       }
     } else {
       if (onSelect) onSelect(item.name);
       if (onSelectCategory) onSelectCategory(item.name);
+      if (currentPos && typeof onZoomToPlace === 'function') {
+        onZoomToPlace({ latitude: currentPos.lat, longitude: currentPos.lng, category: item.name });
+      }
     }
   };
 

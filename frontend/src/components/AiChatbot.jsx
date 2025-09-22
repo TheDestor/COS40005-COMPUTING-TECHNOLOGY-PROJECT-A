@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles/AiChatbot.css';
+import { IoIosSend } from "react-icons/io";
+import { RxCross1 } from "react-icons/rx";
+import { RiRobot2Fill } from "react-icons/ri";
+import AiLogo from '../assets/AiLogo.gif';
 
 const API_ENDPOINT = '/api/ai/chat';
 const MODEL = 'deepseek/deepseek-chat-v3.1:free';
@@ -13,8 +17,10 @@ export default function AiChatbot({ visibleByDefault = false }) {
 	const [input, setInput] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
-	const listRef = useRef(null);
+    const listRef = useRef(null);
 	const typeTimerRef = useRef(null);
+	const [burst, setBurst] = useState(false);
+	const [sendFly, setSendFly] = useState(false);
 
 	useEffect(() => {
 		if (open) {
@@ -36,6 +42,16 @@ export default function AiChatbot({ visibleByDefault = false }) {
 			if (typeTimerRef.current) clearInterval(typeTimerRef.current);
 		};
 	}, []);
+
+	const openChat = () => {
+		setOpen(true);
+		setBurst(true);
+	};
+
+	const closeChat = () => {
+		setOpen(false);
+		setBurst(false);
+	};
 
 	const escapeHtml = (str) =>
 		str
@@ -122,114 +138,137 @@ export default function AiChatbot({ visibleByDefault = false }) {
     };
 
 	const typewriterAppend = (fullText) => {
-		if (typeTimerRef.current) clearInterval(typeTimerRef.current);
-
-		const words = fullText.split(/\s+/);
-		let i = 0;
-
-		setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-
-		typeTimerRef.current = setInterval(() => {
-			i++;
-			setMessages(prev => {
-				const next = [...prev];
-				const idx = next.length - 1;
-				if (!next[idx] || next[idx].role !== 'assistant') return next;
-				next[idx] = {
-					...next[idx],
-					content: words.slice(0, i).join(' ') + (i < words.length ? ' ' : '')
-				};
-				return next;
-			});
-			if (i >= words.length) {
-				clearInterval(typeTimerRef.current);
-				typeTimerRef.current = null;
-			}
-		}, 35);
-	};
+        if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    
+        // tokens = words OR newline runs, e.g. ["Hello", "\n", "1.", "Item", "\n\n", "-","Bullet"]
+        const tokens = fullText.match(/(\n+|[^\s]+)/g) || [];
+        let i = 0;
+    
+        // Start a new assistant message
+        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+    
+        typeTimerRef.current = setInterval(() => {
+            i++;
+            setMessages(prev => {
+                const next = [...prev];
+                const idx = next.length - 1;
+                if (!next[idx] || next[idx].role !== 'assistant') return next;
+    
+                // Rebuild string keeping newlines
+                let out = '';
+                for (let k = 0; k < i && k < tokens.length; k++) {
+                    const t = tokens[k];
+                    if (/^\n+$/.test(t)) {
+                        out += t; // keep newline(s)
+                    } else {
+                        // add space if previous char isn't newline and not start
+                        out += (out && !out.endsWith('\n')) ? ' ' + t : t;
+                    }
+                }
+                next[idx] = { ...next[idx], content: out };
+                return next;
+            });
+    
+            if (i >= tokens.length) {
+                clearInterval(typeTimerRef.current);
+                typeTimerRef.current = null;
+            }
+        }, 35);
+    };
 
 	const sendMessage = async (e) => {
-		e.preventDefault();
-		setError('');
-		const text = input.trim();
-		if (!text || loading) return;
-
-		const newMessages = [...messages, { role: 'user', content: text }];
-		setMessages(newMessages);
-		setInput('');
-		setLoading(true);
-
-		try {
-			const res = await fetch(API_ENDPOINT, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ model: MODEL, messages: newMessages })
-			});
-
-			if (!res.ok) {
-				const t = await res.text().catch(() => '');
-				throw new Error(`Request failed (${res.status}): ${t || res.statusText}`);
-			}
-
-			const data = await res.json();
-			const reply = data?.choices?.[0]?.message?.content?.trim() || 'Sorry, I could not generate a response.';
-			typewriterAppend(reply);
-		} catch (err) {
-			setError(err.message || 'Unexpected error');
-		} finally {
-			setLoading(false);
-		}
-	};
+        e.preventDefault();
+        setError('');
+        const text = input.trim();
+        if (!text || loading) return;
+    
+        const newMessages = [...messages, { role: 'user', content: text }];
+        setMessages(newMessages);
+        setInput('');
+        setLoading(true);
+        setSendFly(true);
+    
+        try {
+            const res = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: MODEL, messages: newMessages })
+            });
+    
+            if (!res.ok) {
+                const t = await res.text().catch(() => '');
+                throw new Error(`Request failed (${res.status}): ${t || res.statusText}`);
+            }
+    
+            const data = await res.json();
+            const reply = data?.choices?.[0]?.message?.content?.trim() || 'Sorry, I could not generate a response.';
+            typewriterAppend(reply);
+        } catch (err) {
+            setError(err.message || 'Unexpected error');
+        } finally {
+            setLoading(false);
+            setSendFly(false);
+        }
+    };
 
 	return (
 		<>
-			{!open && (
+            {!open && (
 				<button
-					className="ai-toggle-btn"
-					onClick={() => setOpen(true)}
+					className={`ai-toggle-btn${burst ? ' burst' : ''}`}
+					onClick={openChat}
 					aria-label="Open AI Chat"
 					title="Chat"
 				>
-					💬
+					<img src={AiLogo} alt="Ai Logo" className="ai-logo" />
 				</button>
 			)}
 
-			{open && (
-				<div className={`ai-panel ${entered ? 'entered' : ''}`}>
-					<div className="ai-header">
-						<div className="ai-header-title">AI Assistant</div>
-						<div className="ai-header-actions">
-							<button
-								className="ai-close-btn"
-								onClick={() => setOpen(false)}
-								aria-label="Close"
-								title="Close"
-							>
-								✕
-							</button>
-						</div>
-					</div>
+            {open && (
+                <div className={`ai-panel ${entered ? 'entered' : 'closing'}`}>
+                <div className="ai-header">
+                    <div className="ai-header-title">
+                        {/* <RiRobot2Fill className="ai-header-icon" /> */}
+                        <div className="ai-header-text">
+                            <span className="ai-header-title-main">Welcome to Sarawak</span>
+                            <span className="ai-header-sub">Tourism AI Assistant</span>
+                        </div>
+                    </div>
+                    <div className="ai-header-actions">
+                        <button
+                            className="ai-close-btn"
+                            onClick={closeChat}
+                            aria-label="Close"
+                            title="Close"
+                        >
+                            <RxCross1 />
+                        </button>
+                    </div>
+                </div>
 
 					<div ref={listRef} className="ai-messages">
-						{messages.map((m, i) => {
-							const isUser = m.role === 'user';
-							return (
-								<div key={i} className={`ai-row ${isUser ? 'user' : 'assistant'}`}>
-									<div
-										className={`ai-bubble ${isUser ? 'ai-bubble--user' : 'ai-bubble--assistant'}`}
-									>
-										{isUser ? (
-											<span>{m.content}</span>
-										) : (
-											<div
-												className="ai-bubble-content"
-												dangerouslySetInnerHTML={{ __html: mdToHtmlLite(m.content) }}
-											/>
-										)}
-									</div>
-								</div>
-							);
-						})}
+                        {messages.map((m, i) => {
+                            const isUser = m.role === 'user';
+                            return (
+                                <div key={i} className={`ai-row ${isUser ? 'user' : 'assistant'}`}>
+                                    {!isUser && (
+                                        <div className="ai-avatar" aria-hidden="true">
+                                            <RiRobot2Fill />
+                                        </div>
+                                    )}
+                                    <div className={`ai-bubble ${isUser ? 'ai-bubble--user' : 'ai-bubble--assistant'}`}>
+                                        {isUser ? (
+                                            <span>{m.content}</span>
+                                        ) : (
+                                            <div
+                                                className="ai-bubble-content"
+                                                dangerouslySetInnerHTML={{ __html: mdToHtmlLite(m.content) }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
 
 						{loading && (
 							<div className="ai-row assistant">
@@ -253,11 +292,12 @@ export default function AiChatbot({ visibleByDefault = false }) {
 							type="text"
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
-							placeholder="Ask me anything about Sarawak tourism…"
+							placeholder="Ask about Sarawak tourism…"
 							className="ai-input"
 						/>
-						<button type="submit" disabled={loading} className="ai-send-btn">
-							{loading ? 'Sending…' : 'Send'}
+                        <button type="submit" disabled={loading} className={`ai-send-btn${(sendFly || loading) ? ' flying' : ''}`}>
+							<IoIosSend className="ai-send-icon" />
+							<span className="ai-send-text">Send</span>
 						</button>
 					</form>
 				</div>

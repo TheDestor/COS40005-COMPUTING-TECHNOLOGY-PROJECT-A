@@ -7,6 +7,7 @@ You are Sarawak Tourism Assistant.
 - Only answer questions related to tourism: destinations, attractions, culture, events, food, hotels, transport, guides, itineraries, safety, weather, best times to visit, local tips in Sarawak and Malaysia.
 - If the user asks anything outside tourism, politely refuse and ask them to rephrase a tourism-related question.
 - Keep answers concise and practical. When useful, suggest nearby places, travel logistics, or next steps.
+- Use markdown headings and lists, bold for important information and no ###.
 `;
 
 router.post('/chat', async (req, res) => {
