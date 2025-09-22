@@ -9,6 +9,7 @@ import eventRouter from "../routes/EventRoutes.js";
 import businessRouter from "../routes/BusinessRoutes.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
+import aiRouter from "../routes/AiRoutes.js";
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,7 @@ app.use("/api/user", userRouter);
 app.use("/api/inquiry", inquiryRouter);
 app.use("/api/event", eventRouter);
 app.use("/api/businesses", businessRouter);
+app.use("/api/ai", aiRouter);
 
 // Start the express server on this port
 app.listen(PORT, () => {

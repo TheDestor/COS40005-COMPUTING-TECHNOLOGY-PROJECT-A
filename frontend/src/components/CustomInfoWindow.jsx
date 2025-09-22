@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark } from 'react-icons/fa';
+import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark, FaTimes } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider.jsx';
@@ -111,6 +111,10 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
   return (
     <>
+    <button className="info-window-close" onClick={onCloseClick}>
+        <FaTimes />
+    </button>
+
     <div className="info-window-card">
       <img
         src={location.image || defaultImage}
@@ -188,6 +192,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         ))}
       </div>
     </div>
+
     <SharePlace
       visible={isShareModalOpen}
       onClose={() => setIsShareModalOpen(false)}

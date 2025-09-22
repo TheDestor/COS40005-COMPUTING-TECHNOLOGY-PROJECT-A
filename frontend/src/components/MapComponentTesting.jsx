@@ -32,6 +32,7 @@ import ZoomHandlerTesting from './ZoomHandlerTesting';
 import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
 import LeftSideBarTesting from './LeftSideBarTesting';
 import MapLayers from './MapLayers';
+import AiChatbot from './AiChatbot';
 
 // Sarawak bounds: [SouthWest, NorthEast]
 const sarawakBounds = [
@@ -76,7 +77,7 @@ const categoryIcons = {
 // In MapComponentTesting.jsx, update the MapContent component:
 
 // Separate component for map content to ensure proper context
-function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive }) {
+function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
     // console.log('Location type:', location.type);
@@ -107,11 +108,16 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
           <Marker
             position={[selectedSearchBarPlace.latitude, selectedSearchBarPlace.longitude]}
             icon={searchPlaceIcon}
+            eventHandlers={{
+              click: () => onMarkerClick(selectedSearchBarPlace)
+            }}
+            riseOnHover={false}
+            autoPan={false}
           >
-            <Popup>
+            {/* <Popup>
               <strong>{selectedSearchBarPlace.name || 'Selected Place'}</strong>
               {selectedSearchBarPlace.description && <div>{selectedSearchBarPlace.description}</div>}
-            </Popup>
+            </Popup> */}
           </Marker>
           <MarkerClusterGroup disableClusteringAtZoom={18}>
             {nearbyPlaces.map((loc, idx) => (
@@ -119,6 +125,11 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                 key={`nearby-${loc.placeId}-${idx}`}
                 position={[loc.latitude, loc.longitude]}
                 icon={categoryIcons['Restaurant']}
+                eventHandlers={{
+                  click: () => onMarkerClick(loc)
+                }}
+                riseOnHover={false} 
+                autoPan={false}
               >
                 <Popup>{loc.name}</Popup>
               </Marker>
@@ -130,7 +141,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
           {/* Category/location markers */}
           {!selectedSearchBarPlace && !isRoutingActive && (
             shouldCluster ? (
-              <MarkerClusterGroup disableClusteringAtZoom={18}>
+              <MarkerClusterGroup disableClusteringAtZoom={18} showCoverageOnHover={false} spiderfyOnMaxZoom={false} zoomToBoundsOnClick={false}>
                 {locations.map((loc, idx) => {
                   const icon = getIconForLocation(loc);
                   return (
@@ -138,6 +149,11 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                       key={`${loc.name}-${idx}`}
                       position={[loc.latitude, loc.longitude]}
                       icon={icon}
+                      eventHandlers={{
+                        click: () => onMarkerClick(loc)
+                      }}
+                      riseOnHover={false}
+                      autoPan={false}
                     >
                       <Popup>
                         <div style={{ textAlign: 'center' }}>
@@ -162,11 +178,15 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
             ) : (
               locations.map((loc, idx) => {
                 const icon = getIconForLocation(loc);
+                const isSelected = selectedLocation && selectedLocation.name === loc.name;
                 return (
                   <Marker
                     key={`${loc.name}-${idx}`}
                     position={[loc.latitude, loc.longitude]}
                     icon={icon}
+                    eventHandlers={{
+                      click: () => onMarkerClick(loc)
+                    }}
                   >
                     <Popup>
                       <div style={{ textAlign: 'center' }}>
@@ -216,9 +236,15 @@ function MapComponentTesting({  }) {
     attribution: '&copy; OpenStreetMap contributors'
   });
 
+  // New state for CustomInfoWindow
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showReviewPage, setShowReviewPage] = useState(false);
+  const { addBookmark } = UseBookmarkContext();
+
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
     setSelectedSearchBarPlace(null);
+    setSelectedLocation(null);
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
@@ -227,12 +253,34 @@ function MapComponentTesting({  }) {
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
     setLocations([]);
+    setSelectedLocation(null);
     setSelectedSearchBarPlace({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
   const handleZoomToPlace = (place) => {
     setSelectedSearchPlace(place);
+  };
+
+  // Handler for marker clicks
+  const handleMarkerClick = (location) => {
+    setSelectedLocation(location);
+  };
+
+  // Handler for closing the info window
+  const handleCloseInfoWindow = () => {
+    setSelectedLocation(null);
+    setShowReviewPage(false);
+  };
+
+  // Handler for showing review page
+  const handleShowReview = () => {
+    setShowReviewPage(true);
+  };
+
+  // Handler for opening login modal
+  const handleOpenLoginModal = () => {
+    setShowLoginModal(true);
   };
 
   // Set default Major Town data on component mount
@@ -320,6 +368,7 @@ function MapComponentTesting({  }) {
         maxBoundsViscosity={1.0}
         zoomControl={false}
         scrollWheelZoom={true}
+        ref={mapRef}
       >
         <TileLayer key={baseLayer.id} url={baseLayer.url} attribution={baseLayer.attribution} />
         <MapContent
@@ -328,6 +377,8 @@ function MapComponentTesting({  }) {
           selectedSearchBarPlace={selectedSearchBarPlace}
           activeCategory={activeOption}
           isRoutingActive={isRoutingActive}
+          onMarkerClick={handleMarkerClick}
+          selectedLocation={selectedLocation}
         />
         {selectedSearchBarPlace && (
           <SearchHandlerTesting
@@ -370,6 +421,41 @@ function MapComponentTesting({  }) {
         )}
       </MapContainer>
 
+      {/* Custom Info Window */}
+      {selectedLocation && !showReviewPage && (
+        <div className="custom-info-window-container">
+          <CustomInfoWindow
+            location={{
+              name: selectedLocation.name,
+              image: selectedLocation.image || 'default-image.jpg',
+              description: selectedLocation.description || "No description available.",
+              latitude: selectedLocation.latitude || "N/A",
+              longitude: selectedLocation.longitude || "N/A",
+              url: selectedLocation.url || 'No URL provided',
+              rating: selectedLocation.rating,
+              openNowText: selectedLocation.openNowText,
+              open24Hours: selectedLocation.open24Hours,
+              type: selectedLocation.type
+            }}
+            addBookmark={addBookmark}
+            onCloseClick={handleCloseInfoWindow}
+            onShowReview={handleShowReview}
+            onOpenLoginModal={handleOpenLoginModal}
+          />
+        </div>
+      )}
+
+      {/* Review Page Overlay */}
+      {showReviewPage && selectedLocation && (
+        <div className="review-overlay-wrapper">
+          <ReviewPage
+            onClose={() => setShowReviewPage(false)}
+            rating={selectedLocation.rating || 0}
+            placeName={selectedLocation.name}
+          />
+        </div>
+      )}
+
       {/* <MapLayers
         isOpen={false} // This component is not a modal, so it's always open
         onClose={() => {}}
@@ -378,6 +464,9 @@ function MapComponentTesting({  }) {
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
+      {/* Ai Chatbot */}
+      <AiChatbot />
     </div>
   );
 }
