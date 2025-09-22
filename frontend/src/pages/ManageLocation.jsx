@@ -1,53 +1,56 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FaSearch, FaBell, FaEnvelope, FaDownload } from "react-icons/fa";
+import {
+  FaSearch,
+  FaBell,
+  FaEnvelope,
+  FaDownload,
+  FaUpload,
+  FaTimes,
+} from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import "../styles/ManageLocation.css";
 import ky from "ky";
 import { useAuth } from "../context/AuthProvider";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 
-const MapPreview = ({ latitude, longitude }) => {
-  return (
-    <div
-      style={{
-        height: "200px",
-        borderRadius: "8px",
-        overflow: "hidden",
-        marginTop: "10px",
-      }}
-    >
-      <div style={{ marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-      </div>
-
-      <MapContainer
-        key={`${latitude}-${longitude}`} // 🔑 force remount when coords change
-        center={[latitude, longitude]}
-        zoom={14}
-        style={{ width: "100%", height: "100%" }}
-        scrollWheelZoom={false}
-        dragging={false}
-        doubleClickZoom={false}
-        zoomControl={false}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="© OpenStreetMap contributors"
-        />
-        <Marker position={[latitude, longitude]}>
-          <Popup>
-            Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
-          </Popup>
-        </Marker>
-      </MapContainer>
+const MapPreview = ({ latitude, longitude }) => (
+  <div
+    style={{
+      height: "200px",
+      borderRadius: "8px",
+      overflow: "hidden",
+      marginTop: "10px",
+    }}
+  >
+    <div style={{ marginBottom: "5px", fontSize: "14px", color: "#666" }}>
+      Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
     </div>
-  );
-};
+
+    <MapContainer
+      key={`${latitude}-${longitude}`}
+      center={[latitude, longitude]}
+      zoom={14}
+      style={{ width: "100%", height: "100%" }}
+      scrollWheelZoom={false}
+      dragging={false}
+      doubleClickZoom={false}
+      zoomControl={false}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="© OpenStreetMap contributors"
+      />
+      <Marker position={[latitude, longitude]}>
+        <Popup>
+          Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
+        </Popup>
+      </Marker>
+    </MapContainer>
+  </div>
+);
 
 const getTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -55,34 +58,28 @@ const getTimeAgo = (dateString) => {
   const seconds = Math.floor((now - date) / 1000);
 
   let interval = Math.floor(seconds / 31536000);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 year ago" : `${interval} years ago`;
-  }
 
   interval = Math.floor(seconds / 2592000);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 month ago" : `${interval} months ago`;
-  }
 
   interval = Math.floor(seconds / 604800);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 week ago" : `${interval} weeks ago`;
-  }
 
   interval = Math.floor(seconds / 86400);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 day ago" : `${interval} days ago`;
-  }
 
   interval = Math.floor(seconds / 3600);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 hour ago" : `${interval} hours ago`;
-  }
 
   interval = Math.floor(seconds / 60);
-  if (interval >= 1) {
+  if (interval >= 1)
     return interval === 1 ? "1 minute ago" : `${interval} minutes ago`;
-  }
 
   return "Just now";
 };
@@ -97,19 +94,20 @@ const ManageLocation = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const { accessToken } = useAuth();
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const response = await ky.get("/api/locations").json();
         setLocations(response);
       } catch (error) {
-        console.error(
-          "An error occured while trying to get all locations:",
-          error
-        );
+        console.error("Error fetching locations:", error);
       }
     };
-
     fetchLocations();
   }, []);
 
@@ -153,10 +151,10 @@ const ManageLocation = () => {
     "Tour Guide": ["Test"],
   };
 
-  const getCurrentTypeOptions = () => {
-    if (!editingLocation?.category) return [];
-    return typeOptions[editingLocation.category] || [];
-  };
+  const getCurrentTypeOptions = () =>
+    editingLocation?.category
+      ? typeOptions[editingLocation.category] || []
+      : [];
 
   const getStatusClass = (status) =>
     status === "Active" ? "status-active" : "status-inactive";
@@ -204,111 +202,107 @@ const ManageLocation = () => {
       updatedAt: "",
     });
     setValidationErrors({});
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const handleDelete = async (locationId) => {
     try {
-      console.log(locationId);
-      const response = await ky
-        .post("/api/locations/removeLocation", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          json: { id: locationId },
-        })
-        .json();
-
-      console.log(response);
+      await ky.post("/api/locations/removeLocation", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        json: { id: locationId },
+      });
       setLocations((prev) => prev.filter((loc) => loc._id !== locationId));
     } catch (error) {
-      console.error(
-        "An error occured while trying to delete this location",
-        error
-      );
+      console.error("Error deleting location:", error);
     }
   };
 
   const handleEdit = (location) => {
     setEditingLocation({ ...location });
+    setImagePreview(location.image || null);
   };
 
   const handleSaveEdit = async () => {
-    const errors = {};
-    if (!editingLocation.category) errors.category = "Category is required";
-    if (!editingLocation.type) errors.type = "Type is required";
-    if (!editingLocation.division) errors.division = "Division is required";
-    if (!editingLocation.name) errors.name = "Location name is required";
-    if (!editingLocation.description)
-      errors.description = "Description is required";
-    if (!editingLocation.status) errors.status = "Status is required";
-
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-
-    const isNewLocation = editingLocation?._id?.startsWith("temp-");
-
-    const locationData = {
-      id: editingLocation._id,
-      category: editingLocation.category,
-      type: editingLocation.type,
-      division: editingLocation.division,
-      name: editingLocation.name,
-      status: editingLocation.status,
-      latitude: editingLocation.latitude,
-      longitude: editingLocation.longitude,
-      description: editingLocation.description,
-      url: editingLocation.url,
-      image: editingLocation.image,
-    };
-    console.log(locationData);
     try {
-      if (isNewLocation) {
-        const response = await ky
-          .post("/api/locations/addLocation", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            json: locationData,
-          })
-          .json();
+      const isNewLocation = editingLocation?._id?.startsWith("temp-");
 
-        const newLocation = response.newLocation;
-
-        if (newLocation) {
-          setLocations((prevLocations) => [...prevLocations, newLocation]);
-          closeModal();
-        } else {
-          console.error(
-            "Failed to add location: Invalid response from server",
-            response
-          );
-        }
-      } else {
-        const response = await ky
-          .post("/api/locations/updateLocation", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            json: locationData,
-          })
-          .json();
-
-        const updatedLocation = response.updatedLocation;
-
-        if (updatedLocation) {
-          setLocations((prevLocations) =>
-            prevLocations.map((loc) =>
-              loc._id === updatedLocation._id ? updatedLocation : loc
-            )
-          );
-          closeModal();
-        } else {
-          console.error(
-            "Failed to update location: Invalid response from server",
-            response
-          );
-        }
+      const formData = new FormData();
+      formData.append("id", editingLocation._id);
+      formData.append("category", editingLocation.category);
+      formData.append("type", editingLocation.type);
+      formData.append("division", editingLocation.division);
+      formData.append("name", editingLocation.name);
+      formData.append("status", editingLocation.status);
+      formData.append("latitude", editingLocation.latitude);
+      formData.append("longitude", editingLocation.longitude);
+      formData.append("description", editingLocation.description);
+      formData.append("url", editingLocation.url);
+      if (imageFile) {
+        formData.append("image", imageFile);
       }
-      setValidationErrors({});
-    } catch (error) {
-      console.error("An error occured while adding new location:", error);
+
+      const response = await ky
+        .post(
+          isNewLocation
+            ? "/api/locations/addLocation"
+            : "/api/locations/updateLocation",
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: formData,
+          }
+        )
+        .json();
+
+      console.log("Save success:", response);
+      closeModal();
+
+      // Refresh list after save
+      const refreshed = await ky.get("/api/locations").json();
+      setLocations(refreshed);
+    } catch (err) {
+      console.error("Save failed:", err);
     }
+  };
+
+  const handleImageUpload = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      if (!file.type.match("image.*")) {
+        alert("Please select an image file (jpg, png, gif, etc.)");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Please select an image smaller than 5MB");
+        return;
+      }
+
+      setIsUploading(true);
+      setImageFile(file);
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreview(ev.target.result);
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const closeModal = () => {
+    setEditingLocation(null);
+    setValidationErrors({});
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const downloadCSV = () => {
@@ -344,21 +338,15 @@ const ManageLocation = () => {
       headers.join(","),
       ...rows.map((row) => row.join(",")),
     ].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
+    link.href = url;
     link.setAttribute("download", "locations.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
-
-  const closeModal = () => {
-    setEditingLocation(null);
-    setValidationErrors({});
   };
 
   return (
@@ -396,16 +384,6 @@ const ManageLocation = () => {
 
         {/* Filters */}
         <div className="filters-actions-row">
-          <div className="ml-search-bar">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search by ID, name, or status..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
           <button
             className="add-location-button"
             onClick={handleOpenModalForNew}
@@ -426,25 +404,56 @@ const ManageLocation = () => {
           </div>
 
           <div className="date-picker">
-            <DatePicker
-              selected={startDate}
-              onChange={(date) => setStartDate(date)}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              dateFormat="yyyy-MM-dd"
-              placeholderText="Start Date"
-            />
-            <DatePicker
-              selected={endDate}
-              onChange={(date) => setEndDate(date)}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate}
-              dateFormat="yyyy-MM-dd"
-              placeholderText="End Date"
-            />
+            <div className="date-picker-wrapper">
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Select start date"
+                className="date-input"
+                maxDate={endDate}
+                popperPlacement="bottom"
+                popperModifiers={{
+                  offset: {
+                    enabled: true,
+                    offset: "0px, 10px",
+                  },
+                  preventOverflow: {
+                    enabled: true,
+                    escapeWithReference: false,
+                    boundariesElement: "viewport",
+                  },
+                }}
+              />
+            </div>
+            <div className="date-picker-wrapper">
+              <DatePicker
+                selected={endDate}
+                onChange={(date) => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Select end date"
+                className="date-input"
+                popperPlacement="bottom"
+                popperModifiers={{
+                  offset: {
+                    enabled: true,
+                    offset: "0px, 10px",
+                  },
+                  preventOverflow: {
+                    enabled: true,
+                    escapeWithReference: false,
+                    boundariesElement: "viewport",
+                  },
+                }}
+              />
+            </div>
           </div>
 
           <button className="download-button" onClick={downloadCSV}>
@@ -667,17 +676,50 @@ const ManageLocation = () => {
                 }
               />
 
-              <label>Image URL</label>
-              <input
-                name="image"
-                value={editingLocation.image || ""}
-                onChange={(e) =>
-                  setEditingLocation({
-                    ...editingLocation,
-                    image: e.target.value,
-                  })
-                }
-              />
+              <label>Image</label>
+              <div className="image-upload-container">
+                <div className="image-upload-area">
+                  <input
+                    type="file"
+                    id="image-upload"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="image-file-input"
+                  />
+                  {imagePreview ? (
+                    <div className="image-preview-wrapper">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="image-preview"
+                      />
+                      <button
+                        type="button"
+                        className="remove-image-btn"
+                        onClick={removeImage}
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="image-upload"
+                      className="image-upload-label"
+                    >
+                      <div className="image-upload-placeholder">
+                        <FaUpload className="upload-icon" />
+                        <span>
+                          {isUploading
+                            ? "Uploading..."
+                            : "Click to upload or drag and drop"}
+                        </span>
+                        <p className="image-upload-hint">PNG, JPG up to 5MB</p>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              </div>
 
               <label>Status *</label>
               <select
