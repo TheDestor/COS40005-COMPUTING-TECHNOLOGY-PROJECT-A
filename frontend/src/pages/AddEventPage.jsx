@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FaSearch, FaBell, FaEnvelope, FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
@@ -7,7 +7,7 @@ import Sidebar from '../components/Sidebar';
 import ky from 'ky';
 import '../styles/AddEventPage.css';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { FaLocationArrow } from 'react-icons/fa6';
 
 const defaultIcon = new L.Icon({
@@ -1835,7 +1835,6 @@ const AddEventPage = () => {
             setImageFile={setImageFile}
           />
         )}
-        <Toaster position="top-right" />
       </div>
     </div>
   );
