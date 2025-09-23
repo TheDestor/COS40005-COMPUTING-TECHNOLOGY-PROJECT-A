@@ -4,14 +4,16 @@ import {
   FaBell,
   FaEnvelope,
   FaFilter,
-  FaEllipsisV,
+  FaPrint,
   FaTrash,
   FaCheck,
   FaReply,
   FaExclamationTriangle,
   FaStar,
   FaClock,
-  FaArrowLeft
+  FaArrowLeft,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -41,8 +43,13 @@ const ViewInquiry = () => {
   const { accessToken } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const [showInquiryDetail, setShowInquiryDetail] = useState(false);
-  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
-  const moreActionsRef = useRef(null);
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
+  const printOptionsRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -58,12 +65,12 @@ const ViewInquiry = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (moreActionsRef.current && !moreActionsRef.current.contains(event.target)) {
-        setShowMoreDropdown(false);
+      if (printOptionsRef.current && !printOptionsRef.current.contains(event.target)) {
+        setShowPrintOptions(false);
       }
     };
 
-    if (showMoreDropdown) {
+    if (showPrintOptions) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -72,7 +79,7 @@ const ViewInquiry = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showMoreDropdown]);
+  }, [showPrintOptions]);
 
   useEffect(() => {
     const fetchInquiries = async () => {
@@ -244,6 +251,110 @@ const ViewInquiry = () => {
     alert("Reply sent successfully!");
   };
 
+  // Print functionality
+  const handlePrintInquiry = () => {
+    if (!selectedInquiry) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Inquiry Details</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .inquiry-info { margin-bottom: 20px; }
+            .label { font-weight: bold; color: #555; }
+            .value { margin-left: 10px; }
+            .message-section { margin-top: 30px; }
+            .message-content { 
+              background: #f9f9f9; 
+              padding: 15px; 
+              border-radius: 5px; 
+              margin-top: 10px;
+              line-height: 1.6;
+            }
+            .status-badge {
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-unread { background: #fef3c7; color: #92400e; }
+            .status-progress { background: #dbeafe; color: #1e40af; }
+            .status-resolved { background: #d1fae5; color: #065f46; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Customer Inquiry Details</h1>
+            <p>Generated on ${new Date().toLocaleDateString()}</p>
+          </div>
+          
+          <div class="inquiry-info">
+            <p><span class="label">Inquiry ID:</span><span class="value">${selectedInquiry.id}</span></p>
+            <p><span class="label">Customer Name:</span><span class="value">${selectedInquiry.name}</span></p>
+            <p><span class="label">Email:</span><span class="value">${selectedInquiry.email}</span></p>
+            <p><span class="label">Subject:</span><span class="value">${selectedInquiry.subject}</span></p>
+            <p><span class="label">Date Submitted:</span><span class="value">${formatDate(selectedInquiry.date)}</span></p>
+            <p><span class="label">Status:</span><span class="value">
+              <span class="status-badge status-${selectedInquiry.status.toLowerCase().replace('-', '')}">
+                ${selectedInquiry.status === 'in-progress' ? 'In Progress' : selectedInquiry.status}
+              </span>
+            </span></p>
+            <p><span class="label">Priority:</span><span class="value">${selectedInquiry.priority.charAt(0).toUpperCase() + selectedInquiry.priority.slice(1)}</span></p>
+          </div>
+          
+          <div class="message-section">
+            <h3>Customer Message:</h3>
+            <div class="message-content">
+              ${selectedInquiry.message}
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    
+    setShowPrintOptions(false);
+  };
+
+  const handleSaveInquiry = () => {
+    if (!selectedInquiry) return;
+
+    const inquiryData = {
+      id: selectedInquiry.id,
+      name: selectedInquiry.name,
+      email: selectedInquiry.email,
+      subject: selectedInquiry.subject,
+      message: selectedInquiry.message,
+      date: selectedInquiry.date,
+      status: selectedInquiry.status,
+      priority: selectedInquiry.priority
+    };
+
+    const dataStr = JSON.stringify(inquiryData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inquiry_${selectedInquiry.id}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    setShowPrintOptions(false);
+  };
+
   const filteredInquiries = inquiries.filter(inquiry => {
     const matchesSearch =
       inquiry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -256,6 +367,33 @@ const ViewInquiry = () => {
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentInquiries = filteredInquiries.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, filterPriority]);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -403,37 +541,90 @@ const ViewInquiry = () => {
 
           <div className={`inquiry-container no-scroll-container ${isMobile && showInquiryDetail ? 'mobile-detail-active' : ''}`}>
             <div className="inquiry-list compact-list">
-              {filteredInquiries.length > 0 ? (
-                filteredInquiries.map(inquiry => (
-                  <div
-                    key={inquiry.id}
-                    className={`inquiry-item compact-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'Unread' ? 'unread' : ''}`}
-                    onClick={() => handleSelectInquiry(inquiry)}
-                  >
-                    <div className="inquiry-avatar compact-avatar">
-                      <img src={inquiry.avatar} alt={`${inquiry.name}'s avatar`} />
+              {currentInquiries.length > 0 ? (
+                <>
+                  {currentInquiries.map(inquiry => (
+                    <div
+                      key={inquiry.id}
+                      className={`inquiry-item compact-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'Unread' ? 'unread' : ''}`}
+                      onClick={() => handleSelectInquiry(inquiry)}
+                    >
+                      <div className="inquiry-avatar compact-avatar">
+                        <img src={inquiry.avatar} alt={`${inquiry.name}'s avatar`} />
+                      </div>
+                      <div className="inquiry-brief">
+                        <div className="inquiry-header">
+                          <h4 className="inquiry-name">{inquiry.name}</h4>
+                          <span className="inquiry-date compact-date">{formatDate(inquiry.date)}</span>
+                        </div>
+                        <div className="inquiry-subject compact-subject">{inquiry.subject}</div>
+                        <div className="inquiry-message-preview compact-preview">
+                          {inquiry.message.substring(0, 40)}...
+                        </div>
+                        <div className="inquiry-status">
+                          <span className={`status-badge ${getStatusBadgeClass(inquiry.status)}`}>
+                            {inquiry.status === 'in-progress' ? 'In Progress' : inquiry.status}
+                          </span>
+                          <span className={`priority-badge ${getPriorityBadgeClass(inquiry.priority)}`}>
+                            {renderPriorityIcon(inquiry.priority)}
+                            {inquiry.priority.charAt(0).toUpperCase() + inquiry.priority.slice(1)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="inquiry-brief">
-                      <div className="inquiry-header">
-                        <h4 className="inquiry-name">{inquiry.name}</h4>
-                        <span className="inquiry-date compact-date">{formatDate(inquiry.date)}</span>
+                  ))}
+                  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="pagination-container">
+                      <div className="pagination-info">
+                        Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredInquiries.length)} of {filteredInquiries.length} inquiries
                       </div>
-                      <div className="inquiry-subject compact-subject">{inquiry.subject}</div>
-                      <div className="inquiry-message-preview compact-preview">
-                        {inquiry.message.substring(0, 40)}...
-                      </div>
-                      <div className="inquiry-status">
-                        <span className={`status-badge ${getStatusBadgeClass(inquiry.status)}`}>
-                          {inquiry.status === 'in-progress' ? 'In Progress' : inquiry.status}
-                        </span>
-                        <span className={`priority-badge ${getPriorityBadgeClass(inquiry.priority)}`}>
-                          {renderPriorityIcon(inquiry.priority)}
-                          {inquiry.priority.charAt(0).toUpperCase() + inquiry.priority.slice(1)}
-                        </span>
+                      <div className="pagination-controls">
+                        <button
+                          className="pagination-btn"
+                          onClick={handlePrevious}
+                          disabled={currentPage === 1}
+                        >
+                          <FaChevronLeft /> Previous
+                        </button>
+                        
+                        <div className="page-numbers">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+                            let pageNumber;
+                            if (totalPages <= 5) {
+                              pageNumber = index + 1;
+                            } else if (currentPage <= 3) {
+                              pageNumber = index + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNumber = totalPages - 4 + index;
+                            } else {
+                              pageNumber = currentPage - 2 + index;
+                            }
+                            
+                            return (
+                              <button
+                                key={pageNumber}
+                                className={`page-number ${currentPage === pageNumber ? 'active' : ''}`}
+                                onClick={() => handlePageChange(pageNumber)}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <button
+                          className="pagination-btn"
+                          onClick={handleNext}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next <FaChevronRight />
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))
+                  )}
+                </>
               ) : (
                 <div className="no-inquiries">
                   <p>No inquiries match your criteria</p>
@@ -465,15 +656,18 @@ const ViewInquiry = () => {
                         <FaTrash /> Delete
                       </button>
                       <div
-                        className="more-actions"
-                        ref={moreActionsRef}
-                        onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                        className="print-actions"
+                        ref={printOptionsRef}
                       >
-                        <FaEllipsisV />
-                        <div className={`more-dropdown ${showMoreDropdown ? 'active' : ''}`}>
-                          <button>Forward</button>
-                          <button>Print</button>
-                          <button>Block Sender</button>
+                        <button
+                          className="inquiry-action-btn print-btn"
+                          onClick={() => setShowPrintOptions(!showPrintOptions)}
+                        >
+                          <FaPrint />
+                        </button>
+                        <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
+                          <button onClick={handlePrintInquiry}>Print Inquiry</button>
+                          <button onClick={handleSaveInquiry}>Save as File</button>
                         </div>
                       </div>
                     </div>
@@ -625,6 +819,8 @@ const ViewInquiry = () => {
           overflow-y: auto;
           max-height: none;
           border-right: 1px solid #e5e7eb;
+          display: flex;
+          flex-direction: column;
         }
 
         .compact-item {
@@ -796,6 +992,154 @@ const ViewInquiry = () => {
           margin-top: 8px;
         }
 
+        /* Pagination Styles */
+        .pagination-container {
+          border-top: 1px solid #e5e7eb;
+          padding: 15px;
+          background: #f9fafb;
+          margin-top: auto;
+        }
+
+        .pagination-info {
+          font-size: 0.8rem;
+          color: #6b7280;
+          margin-bottom: 10px;
+          text-align: center;
+        }
+
+        .pagination-controls {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .pagination-btn {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .page-numbers {
+          display: flex;
+          gap: 4px;
+        }
+
+        .page-number {
+          padding: 6px 10px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 35px;
+          text-align: center;
+        }
+
+        .page-number:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+
+        .page-number.active {
+          background: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
+        }
+
+        /* Print Actions Styles */
+        .print-actions {
+          position: relative;
+        }
+
+        .print-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #059669;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 40px;
+        }
+
+        .print-btn:hover {
+          background: #047857;
+          transform: translateY(-1px);
+        }
+
+        .print-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          min-width: 140px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.2s ease;
+        }
+
+        .print-dropdown.active {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        .print-dropdown button {
+          display: block;
+          width: 100%;
+          padding: 8px 12px;
+          border: none;
+          background: none;
+          text-align: left;
+          cursor: pointer;
+          font-size: 0.85rem;
+          color: #374151;
+          transition: background-color 0.2s ease;
+        }
+
+        .print-dropdown button:first-child {
+          border-radius: 8px 8px 0 0;
+        }
+
+        .print-dropdown button:last-child {
+          border-radius: 0 0 8px 8px;
+          border-bottom: none;
+        }
+
+        .print-dropdown button:hover {
+          background: #f3f4f6;
+        }
+
+        .print-dropdown button:not(:last-child) {
+          border-bottom: 1px solid #e5e7eb;
+        }
+
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
           .compact-list {
@@ -808,6 +1152,19 @@ const ViewInquiry = () => {
           
           .no-scroll-container.mobile-detail-active .compact-list {
             display: none;
+          }
+
+          .pagination-controls {
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .page-numbers {
+            order: -1;
+          }
+
+          .pagination-info {
+            font-size: 0.75rem;
           }
         }
 
