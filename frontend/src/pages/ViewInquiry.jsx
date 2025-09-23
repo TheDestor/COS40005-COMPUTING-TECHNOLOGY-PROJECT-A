@@ -98,6 +98,20 @@ const ViewInquiry = () => {
     return avatars[avatarIndex];
   };
 
+  // Function to assign priority based on category
+  const getPriorityByCategory = (category) => {
+    const priorityMap = {
+      'billing': 'high',      
+      'login': 'high',        
+      'booking': 'medium',    
+      'signup': 'low',        
+      'general': 'medium',    
+      'support': 'medium',    
+    };
+    
+    return priorityMap[category?.toLowerCase()] || 'medium';
+  };
+
   useEffect(() => {
     const fetchInquiries = async () => {
       try {
@@ -119,7 +133,7 @@ const ViewInquiry = () => {
             message: inquiry.message,
             date: inquiry.createdAt,
             status: inquiry.status || "Unread",
-            priority: 'medium',
+            priority: getPriorityByCategory(inquiry.category),
             avatar: getAvatarForEmail(inquiry.email),
             category: inquiry.category
           }));
