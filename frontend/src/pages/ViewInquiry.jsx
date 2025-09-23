@@ -127,7 +127,7 @@ const ViewInquiry = () => {
 
           const mappedInquiries = fetchedInquiries.map((inquiry) => ({
             id: inquiry._id,
-            name: inquiry.email.split('@')[0],
+            name: inquiry.name || inquiry.email.split('@')[0], // Use real name if available, fallback to email-derived
             email: inquiry.email,
             subject: inquiry.topic,
             message: inquiry.message,

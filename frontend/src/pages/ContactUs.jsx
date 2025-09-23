@@ -11,12 +11,13 @@ export default function ContactUs() {
   // States
   const [activeButton, setActiveButton] = useState(null);
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     topic: '',
     message: ''
   });
   
-  const { email, topic, message } = formData;
+  const { name, email, topic, message } = formData;
   const [showLogin, setShowLogin] = useState(false);
     
   const handleLoginClick = () => {
@@ -56,6 +57,10 @@ export default function ContactUs() {
     e.preventDefault();
     
     // Validation
+    if (!name.trim()) {
+      handleError("Please enter your name");
+      return;
+    }
     if (!email.trim()) {
       handleError("Please enter your email address");
       return;
@@ -75,6 +80,7 @@ export default function ContactUs() {
 
     // Prepare data for submission
     const submissionData = {
+      name: name,
       email: email,
       category: activeButton,
       topic: topic,
@@ -95,6 +101,7 @@ export default function ContactUs() {
       if (success) {
         handleSuccess(message);
         setFormData({
+          name: name,
           email: '',
           topic: '',
           message: ''
@@ -196,6 +203,27 @@ export default function ContactUs() {
         </div>
         <div className="form-section">
           <form className="form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="name">
+                <svg className="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Full Name
+              </label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  placeholder="Enter your full name"
+                  className="email-input"
+                  required
+                  value={name}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
             <div className="form-group">
               <label htmlFor="email">
                 <svg className="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

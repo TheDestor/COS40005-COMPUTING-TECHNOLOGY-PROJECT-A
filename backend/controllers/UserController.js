@@ -153,9 +153,10 @@ export const removeAvatar = async (req, res) => {
 // @access public
 export const contactUs = async (req, res) => {
     try {
-        const { email, category, topic, message } = req.body;
+        const { name, email, category, topic, message } = req.body;
 
         const contactUs = await contactUsModel.create({
+            name: name,
             email: email,
             category: category,
             topic: topic,
