@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools } from 'react-icons/fa';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane } from 'react-icons/fa';
 import { MdManageAccounts } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
@@ -8,7 +8,7 @@ import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
 // import MapComponentTesting from './MapComponentTesting';
 import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
-import { APIProvider } from '@vis.gl/react-google-maps';
+// import { APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
@@ -83,6 +83,36 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
   );
 }
 
+// Nominatim reverse geocoding helper (free alternative to Google Geocoding)
+async function reverseGeocodeNominatim(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+  
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'SarawakTourismApp/1.0' // Required by Nominatim
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Reverse geocoding request failed');
+    }
+    
+    const data = await response.json();
+    
+    if (data && data.display_name) {
+      // Format the address nicely
+      const address = data.display_name;
+      return address;
+    }
+    
+    throw new Error('No address found');
+  } catch (error) {
+    console.error('Nominatim reverse geocoding error:', error);
+    throw error;
+  }
+}
+
 // Nominatim geocoding helper
 async function geocodeAddressNominatim(address) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
@@ -94,7 +124,7 @@ async function geocodeAddressNominatim(address) {
   throw new Error('Address not found');
 }
 
-// OSRM routing helper
+// OSRM routing helper (existing)
 async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
   const coords = [
     `${start.lng},${start.lat}`,
@@ -108,15 +138,140 @@ async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
   return data;
 }
 
+// GraphHopper routing helper (for bus and motorbike)
+async function fetchGraphHopperRoute(start, end, waypoints = [], profile = 'car') {
+  const coords = [
+    `${start.lat},${start.lng}`,
+    ...waypoints.map(wp => `${wp.lat},${wp.lng}`),
+    `${end.lat},${end.lng}`
+  ].join(';');
+  
+  // Using free GraphHopper API (limited requests)
+  const url = `https://graphhopper.com/api/1/route?point=${coords}&vehicle=${profile}&instructions=false&calc_points=true&key=demo&type=json`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`GraphHopper request failed: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Check if GraphHopper returned valid data
+    if (!data.paths || !data.paths[0]) {
+      throw new Error('No route found in GraphHopper response');
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('GraphHopper failed, falling back to OSRM driving:', error);
+    // Fallback to OSRM driving
+    return await fetchOSRMRoute(start, end, waypoints, 'driving');
+  }
+}
+
+// Alternative: OpenRouteService (free tier available)
+async function fetchOpenRouteServiceRoute(start, end, waypoints = [], profile = 'driving-car') {
+  const coords = [
+    [start.lng, start.lat],
+    ...waypoints.map(wp => [wp.lng, wp.lat]),
+    [end.lng, end.lat]
+  ];
+  
+  const body = {
+    coordinates: coords,
+    profile: profile,
+    format: 'geojson'
+  };
+  
+  // You'll need to get a free API key from openrouteservice.org
+  const apiKey = process.env.REACT_APP_ORS_API_KEY || 'demo';
+  
+  try {
+    const response = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiKey
+      },
+      body: JSON.stringify(body)
+    });
+    
+    if (!response.ok) throw new Error('ORS request failed');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('ORS failed, falling back to OSRM:', error);
+    return await fetchOSRMRoute(start, end, waypoints, 'driving');
+  }
+}
+
 const travelModes = {
-  Car: 'driving',
-  Bus: 'driving',      // OSRM does not support bus, fallback to driving
-  Walking: 'walking',
-  Bicycle: 'cycling',
-  Motorbike: 'driving', // OSRM does not support motorbike, fallback to driving
+  Car: { service: 'osrm', profile: 'driving' },
+  Bus: { service: 'osrm', profile: 'driving' }, // Use OSRM with bus multiplier
+  Walking: { service: 'osrm', profile: 'walking' },
+  Bicycle: { service: 'osrm', profile: 'cycling' },
+  Motorbike: { service: 'osrm', profile: 'driving' }, // Use OSRM with motorbike multiplier
 };
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, nearbyPlaces, setSelectedPlace, selectedPlace, setNearbyPlaces, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange }) => {
+// Transport mode multipliers (relative to car)
+const transportMultipliers = {
+  Car: { time: 1.0, distance: 1.0 },
+  Bus: { time: 1.8, distance: 1.2 }, // Slower, longer routes (bus stops, traffic)
+  Walking: { time: 4.0, distance: 0.9 }, // Much slower, shorter direct routes
+  Bicycle: { time: 2.5, distance: 1.0 }, // Slower than car
+  Motorbike: { time: 0.7, distance: 0.95 }, // Faster, shorter routes (lane splitting)
+};
+
+// Enhanced OSRM routing with transport adjustments
+async function fetchAdjustedRoute(start, end, waypoints = [], vehicle = 'Car') {
+  // Always use OSRM driving profile as base
+  const osrmData = await fetchOSRMRoute(start, end, waypoints, 'driving');
+  
+  if (osrmData.routes && osrmData.routes[0]) {
+    const baseRoute = osrmData.routes[0];
+    const multiplier = transportMultipliers[vehicle];
+    
+    // Adjust duration and distance based on transport mode
+    const adjustedDuration = baseRoute.duration * multiplier.time;
+    const adjustedDistance = baseRoute.distance * multiplier.distance;
+    
+    // For walking/cycling, use appropriate OSRM profile
+    let coords = baseRoute.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    
+    if (vehicle === 'Walking') {
+      try {
+        const walkingData = await fetchOSRMRoute(start, end, waypoints, 'walking');
+        if (walkingData.routes && walkingData.routes[0]) {
+          coords = walkingData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        }
+      } catch (error) {
+        console.warn('Walking route failed, using driving route:', error);
+      }
+    } else if (vehicle === 'Bicycle') {
+      try {
+        const cyclingData = await fetchOSRMRoute(start, end, waypoints, 'cycling');
+        if (cyclingData.routes && cyclingData.routes[0]) {
+          coords = cyclingData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        }
+      } catch (error) {
+        console.warn('Cycling route failed, using driving route:', error);
+      }
+    }
+    
+    return {
+      routes: [{
+        ...baseRoute,
+        geometry: { coordinates: coords.map(([lat, lng]) => [lng, lat]) },
+        duration: adjustedDuration,
+        distance: adjustedDistance
+      }]
+    };
+  }
+  
+  throw new Error('No route found');
+}
+
+const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -133,7 +288,7 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
   const [waypointCoords, setWaypointCoords] = useState([]); // Array of {lat, lng} or null
-  // const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]); // Local state for nearby places
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { openRecent } = useAuth();
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -144,41 +299,43 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   const [routeSummary, setRouteSummary] = useState(null);
 //   const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
   
-  const handleClearStartingPoint = () => {
-    setStartingPoint('');
-    setStartingPointCoords(null);
-    setOsrmRouteCoords([]);
-    setOsrmWaypoints([]);
-    setAddDestinations([]);
-    setWaypointCoords([]);
-    setRoutes([]);
-  };
+const handleClearStartingPoint = () => {
+  setStartingPoint('');
+  setStartingPointCoords(null);
+  setOsrmRouteCoords([]);
+  setOsrmWaypoints([]);
+  setAddDestinations([]);
+  setWaypointCoords([]);
+  setRoutes([]);
+  setNearbyPlaces([]); // Clear nearby places
+};
 
-  const handleClearDestination = () => {
-    setDestination('');
-    setDestinationCoords(null);
-    setOsrmRouteCoords([]);
-    setOsrmWaypoints([]);
-    setAddDestinations([]);
-    setWaypointCoords([]);
-    setRoutes([]);
-  };
+const handleClearDestination = () => {
+  setDestination('');
+  setDestinationCoords(null);
+  setOsrmRouteCoords([]);
+  setOsrmWaypoints([]);
+  setAddDestinations([]);
+  setWaypointCoords([]);
+  setRoutes([]);
+  setNearbyPlaces([]); // Clear nearby places
+};
 
   const handleAddCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
       return;
     }
-
+  
     // Prevent multiple clicks
     if (isLocationFetching) {
       toast.warning("Please wait... Fetching your location");
       return;
     }
-
+  
     setIsLocationFetching(true);
     setIsLoading(true);
-
+  
     // Check permission status
     const permissionStatus = await navigator.permissions?.query({ name: 'geolocation' });
     if (permissionStatus?.state === 'denied') {
@@ -187,16 +344,16 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
       setIsLoading(false);
       return;
     }
-
+  
     // Add a 2.5-second delay to prevent spamming
     await new Promise(resolve => setTimeout(resolve, 2500));
-
+  
     const options = {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0
     };
-
+  
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude, accuracy } = position.coords;
@@ -212,34 +369,40 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
           setIsLoading(false);
           return;
         }
-
+  
         try {
-          const geocoder = new window.google.maps.Geocoder();
-          const results = await new Promise((resolve, reject) => {
-            geocoder.geocode({ location: { lat: latitude, lng: longitude } }, 
-              (results, status) => status === "OK" ? resolve(results) : reject(status));
-          });
-
-          if (results[0]) {
-            const address = results[0].formatted_address;
-            
-            if (!startingPoint.trim()) {
-              setStartingPoint(address);
-              setStartingPointCoords({ lat: latitude, lng: longitude });
-              toast.success("Current location set as starting point");
-            } else if (!destination.trim()) {
-              setDestination(address);
-              setDestinationCoords({ lat: latitude, lng: longitude });
-              toast.success("Current location set as destination");
-            } else {
-              setAddDestinations(prev => [...prev, address]);
-              toast.success("Current location added as waypoint");
-            }
+          // Use Nominatim for reverse geocoding (free alternative to Google)
+          const address = await reverseGeocodeNominatim(latitude, longitude);
+          
+          if (!startingPoint.trim()) {
+            setStartingPoint(address);
+            setStartingPointCoords({ lat: latitude, lng: longitude });
+            toast.success("Current location set as starting point");
+          } else if (!destination.trim()) {
+            setDestination(address);
+            setDestinationCoords({ lat: latitude, lng: longitude });
+            toast.success("Current location set as destination");
           } else {
-            toast.error("Could not determine your address");
+            setAddDestinations(prev => [...prev, address]);
+            toast.success("Current location added as waypoint");
           }
         } catch (error) {
-          toast.error("Geocoding service error");
+          console.error('Reverse geocoding error:', error);
+          // Fallback: use coordinates as address
+          const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+          
+          if (!startingPoint.trim()) {
+            setStartingPoint(fallbackAddress);
+            setStartingPointCoords({ lat: latitude, lng: longitude });
+            toast.success("Current location set as starting point (coordinates only)");
+          } else if (!destination.trim()) {
+            setDestination(fallbackAddress);
+            setDestinationCoords({ lat: latitude, lng: longitude });
+            toast.success("Current location set as destination (coordinates only)");
+          } else {
+            setAddDestinations(prev => [...prev, fallbackAddress]);
+            toast.success("Current location added as waypoint (coordinates only)");
+          }
         } finally {
           setIsLocationFetching(false);
           setIsLoading(false);
@@ -335,21 +498,25 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
     setAddDestinations(newDestinations);
   };
 
-  const geocodeAddress = (address, callback) => {
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        callback(results[0].geometry.location);
-      }
-    });
-  };
+  // const geocodeAddress = (address, callback) => {
+  //   const geocoder = new window.google.maps.Geocoder();
+  //   geocoder.geocode({ address }, (results, status) => {
+  //     if (status === 'OK' && results[0]) {
+  //       callback(results[0].geometry.location);
+  //     }
+  //   });
+  // };
 
-   const handleNearbyPlaceClick = (place) => {
+  const handleNearbyPlaceClick = (place) => {
     if (!place.geometry?.location) return;
     
     const location = {
-      lat: place.geometry.location.lat(),
-      lng: place.geometry.location.lng()
+      lat: typeof place.geometry.location.lat === 'function' 
+        ? place.geometry.location.lat() 
+        : place.geometry.location.lat,
+      lng: typeof place.geometry.location.lng === 'function' 
+        ? place.geometry.location.lng() 
+        : place.geometry.location.lng
     };
     
     setSelectedPlace({ 
@@ -359,23 +526,68 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
     });
   };
 
-  const fetchNearbyPlaces = (locationCoords) => {
-    const placeType = selectedCategory === 'All' ? 'restaurant' : selectedCategory.toLowerCase();
-    const service = new window.google.maps.places.PlacesService(document.createElement('div'));
-    const request = {
-      location: locationCoords,
-      radius: 500,
-      type: placeType,
-    };
-
-    service.nearbySearch(request, (results, status) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        setNearbyPlaces(results);
-      }
+  // Fetch nearby places using Overpass API (free alternative to Google Places)
+const fetchNearbyPlaces = async (locationCoords, radius = 500) => {
+  const { lat, lng } = locationCoords;
+  
+  // Convert radius from meters to degrees (approximate)
+  const radiusDegrees = radius / 111000; // 1 degree ≈ 111km
+  
+  // Overpass API query for nearby amenities
+  const overpassQuery = `
+    [out:json][timeout:25];
+    (
+      node["amenity"~"^(restaurant|cafe|fast_food|bar|pub|food_court)$"]["name"](around:${radius},${lat},${lng});
+      node["tourism"~"^(hotel|guest_house|hostel|attraction|museum|gallery)$"]["name"](around:${radius},${lat},${lng});
+      node["shop"~"^(supermarket|convenience|clothes|electronics|bookstore)$"]["name"](around:${radius},${lat},${lng});
+      node["leisure"~"^(park|playground|sports_centre|swimming_pool)$"]["name"](around:${radius},${lat},${lng});
+    );
+    out center meta;
+  `;
+  
+  try {
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `data=${encodeURIComponent(overpassQuery)}`
     });
-  };
+    
+    if (!response.ok) {
+      throw new Error('Overpass API request failed');
+    }
+    
+    const data = await response.json();
+    
+    // Process the results
+    const places = data.elements
+      .filter(element => element.tags && element.tags.name)
+      .map(element => ({
+        place_id: `overpass_${element.id}`,
+        name: element.tags.name,
+        vicinity: element.tags['addr:street'] || element.tags['addr:city'] || 'Nearby area',
+        rating: null, // Overpass doesn't provide ratings
+        user_ratings_total: 0,
+        geometry: {
+          location: {
+            lat: () => element.lat || element.center?.lat,
+            lng: () => element.lon || element.center?.lon
+          }
+        },
+        type: element.tags.amenity || element.tags.tourism || element.tags.shop || element.tags.leisure || 'place',
+        tags: element.tags
+      }))
+      .slice(0, 10); // Limit to 10 results
+    
+    return places;
+  } catch (error) {
+    console.error('Error fetching nearby places:', error);
+    return [];
+  }
+};
 
-  const handleVehicleClick = async (vehicle) => {
+const handleVehicleClick = async (vehicle) => {
   setSelectedVehicle(vehicle);
   setIsLoading(true);
 
@@ -402,38 +614,107 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
       })
     ).then(arr => arr.filter(Boolean));
 
-    // Fetch route from OSRM
-    const osrmData = await fetchOSRMRoute(
-      startCoords,
-      endCoords,
-      waypointsCoords,
-      travelModes[vehicle]
-    );
+    // Get routing service configuration
+    const routeConfig = travelModes[vehicle];
+    let routeData;
 
-    if (osrmData.routes && osrmData.routes[0]) {
-      // OSRM returns [lng, lat], Leaflet wants [lat, lng]
-      const coords = osrmData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      setOsrmRouteCoords(coords);
-
-      if (typeof onRouteRequest === 'function') {
-        onRouteRequest(
+    // Route based on service type
+    switch (routeConfig.service) {
+      case 'osrm':
+        if (vehicle === 'Walking' || vehicle === 'Bicycle') {
+          // Use direct OSRM for walking/cycling
+          routeData = await fetchOSRMRoute(
+            startCoords,
+            endCoords,
+            waypointsCoords,
+            routeConfig.profile
+          );
+        } else {
+          // Use adjusted routing for other modes
+          routeData = await fetchAdjustedRoute(
+            startCoords,
+            endCoords,
+            waypointsCoords,
+            vehicle
+          );
+        }
+        break;
+      case 'graphhopper':
+        routeData = await fetchGraphHopperRoute(
           startCoords,
           endCoords,
           waypointsCoords,
-          travelModes[vehicle]
+          routeConfig.profile
         );
+        break;
+      case 'ors':
+        routeData = await fetchOpenRouteServiceRoute(
+          startCoords,
+          endCoords,
+          waypointsCoords,
+          routeConfig.profile
+        );
+        break;
+      default:
+        throw new Error(`Unknown routing service: ${routeConfig.service}`);
+    }
+
+    // Process route data (handle different response formats)
+    if (routeData.routes && routeData.routes[0]) {
+      let coords, distance, duration;
+      
+      if (routeConfig.service === 'graphhopper') {
+        // GraphHopper response format
+        const route = routeData.paths && routeData.paths[0] ? routeData.paths[0] : null;
+        if (!route) {
+          throw new Error('Invalid GraphHopper response format');
+        }
+        coords = route.points.coordinates.map(([lng, lat]) => [lat, lng]);
+        distance = route.distance;
+        duration = route.time / 1000; // Convert ms to seconds
+      } else if (routeConfig.service === 'ors') {
+        // OpenRouteService response format
+        const route = routeData.features && routeData.features[0] ? routeData.features[0] : null;
+        if (!route) {
+          throw new Error('Invalid ORS response format');
+        }
+        coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        distance = route.properties.summary.distance;
+        duration = route.properties.summary.duration;
+      } else {
+        // OSRM response format (including adjusted routes)
+        const route = routeData.routes[0];
+        coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        distance = route.distance;
+        duration = route.duration;
       }
-      setRouteSummary({
-        distance: osrmData.routes[0].distance,
-        duration: osrmData.routes[0].duration
-      });
+
+      setOsrmRouteCoords(coords);
+      setRouteSummary({ distance, duration });
+      
+      // Fetch nearby places around the destination
+      try {
+        const nearbyPlaces = await fetchNearbyPlaces(endCoords, 500);
+        setNearbyPlaces(nearbyPlaces);
+      } catch (error) {
+        console.warn('Failed to fetch nearby places:', error);
+        setNearbyPlaces([]);
+      }
+      
+      // Show success message with transport mode
+      toast.success(`${vehicle} route calculated successfully!`);
     } else {
       setRouteSummary(null);
       setOsrmRouteCoords([]);
+      setNearbyPlaces([]);
+      toast.error(`No route found for ${vehicle} transport mode`);
     }
   } catch (error) {
     setRouteSummary(null);
-    alert('Error fetching route: ' + error.message);
+    setOsrmRouteCoords([]);
+    setNearbyPlaces([]);
+    console.error('Routing error:', error);
+    toast.error(`Failed to calculate route for ${vehicle}: ${error.message}`);
   } finally {
     setIsLoading(false);
   }
@@ -551,24 +832,27 @@ useEffect(() => {
       </div>
     
       <div className={`side-panel100 ${isExpanded ? 'expanded' : ''}`}>
-          <div className="transport-section">
+        <div className="transport-section">
             <div className="transport-row">
               {['Car', 'Bus', 'Walking'].map((v) => (
                 <div key={v} className={`transport-option ${selectedVehicle === v ? 'active' : ''}`} 
-                     onClick={() => handleVehicleClick(v)}>
-                  {v === 'Car' ? '🚗' : v === 'Bus' ? '🚌' : '🚶'}<span>{v}</span>
+                    onClick={() => handleVehicleClick(v)}>
+                  {v === 'Car' ? <FaCar /> : v === 'Bus' ? <FaBus /> : <FaWalking />}
+                  <span>{v}</span>
                 </div>
               ))}
             </div>
             <div className="transport-row">
               {['Bicycle', 'Motorbike'].map((v) => (
                 <div key={v} className={`transport-option ${selectedVehicle === v ? 'active' : ''}`} 
-                     onClick={() => handleVehicleClick(v)}>
-                  {v === 'Bicycle' ? '🚴' : '🏍️'}<span>{v}</span>
+                    onClick={() => handleVehicleClick(v)}>
+                  {v === 'Bicycle' ? <FaBicycle /> : <FaMotorcycle />}
+                  <span>{v}</span>
                 </div>
               ))}
               <div className="transport-option disabled" title="Not available">
-                ✈️<span>Flight</span>
+                <FaPlane />
+                <span>Flight</span>
               </div>
             </div>
           </div>
@@ -701,44 +985,27 @@ useEffect(() => {
             </button>
           </div>
 
-          {isLoading && <div>Calculating route...</div>}
-          {routeSummary && (
-            <div>
-              <div><strong>Distance:</strong> {(routeSummary.distance / 1000).toFixed(2)} km</div>
-              <div><strong>Duration:</strong> {(routeSummary.duration / 60).toFixed(0)} min</div>
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="loading-message">Calculating routes...</div>
-          ) : routes.length > 0 ? (
-            <>
-              <div className="route-list">
-                {routes && routes.map((route, index) => {
-                  const totalDuration = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
-                  const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
-                  
-                  return (
-                    <div 
-                      key={index} 
-                      className={`route-item ${index === selectedRouteIndex ? 'active-route' : ''}`}
-                      onClick={() => setSelectedRouteIndex(index)}
-                    >
-                      <div><strong>{route.summary}</strong></div>
-                      <div className="route-details">
-                        <span className="time">
-                          <FaClock /> {formatDuration(totalDuration)}
-                        </span>
-                        <span className="distance">
-                          <FaMapMarkerAlt /> {formatDistance(totalDistance)}
-                        </span>
-                      </div>
-                      <hr />
-                    </div>
-                  );
-                })}
+          {isLoading && <div className="loading-message">Calculating route...</div>}
+            {routeSummary && (
+              <div className="route-summary-container">
+                <div className="route-summary-item">
+                  <FaMapMarkerAlt className="summary-icon" />
+                  <span className="summary-label">Distance:</span>
+                  <span className="summary-value">{(routeSummary.distance / 1000).toFixed(2)} km</span>
+                </div>
+                <div className="route-summary-item">
+                  <FaClock className="summary-icon" />
+                  <span className="summary-label">Duration:</span>
+                  <span className="summary-value">{(routeSummary.duration / 60).toFixed(0)} min</span>
+                </div>
               </div>
+            )}
 
+{isLoading ? (
+            <div className="loading-message">Calculating routes...</div>
+          ) : routeSummary ? (
+            <>
+              {/* Show route summary and nearby places when we have a route */}
               <div className="route-footer">
                 <div className="send-copy-row">
                   <div className="send-directions-text">📩 Send Directions</div>
@@ -748,7 +1015,7 @@ useEffect(() => {
                 <hr />
 
                 <div className="explore-nearby-text">🔍 Explore Nearby</div>
-                {nearbyPlaces.length > 0 && (
+                {nearbyPlaces.length > 0 ? (
                   <div className="nearby-places-container100">
                     {nearbyPlaces.map((place, index) => (
                       <div 
@@ -758,6 +1025,7 @@ useEffect(() => {
                       >
                         <div className="place-name100">{place.name}</div>
                         <div className="place-address100">{place.vicinity}</div>
+                        <div className="place-type100">📍 {place.type}</div>
                         {place.rating && (
                           <div className="place-rating100">
                             ⭐ {place.rating} ({place.user_ratings_total || 0} reviews)
@@ -766,12 +1034,16 @@ useEffect(() => {
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div className="no-nearby-places">
+                    No nearby places found around the destination.
+                  </div>
                 )}
               </div>
             </>
           ) : null}
-                </div>
 
+          </div>
             {showBusiness && (
               <BusinessSubmissionForm
                 isOpen={showBusiness}
