@@ -298,46 +298,20 @@ function MapComponentTesting({  }) {
     } else {
       setSelectedLocation(location);
       
-      // Pan and zoom map to ensure marker is properly centered
+      // Fly to the marker with smooth animation
       if (mapRef.current) {
         const map = mapRef.current;
         const markerPosition = [location.latitude, location.longitude];
         
-        // Get current view information
+        // Calculate optimal zoom level for a good view
         const currentZoom = map.getZoom();
-        const mapCenter = map.getCenter();
-        const mapSize = map.getSize();
+        const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
         
-        // Calculate distance from marker to center
-        const markerPoint = map.latLngToContainerPoint(markerPosition);
-        const centerPoint = map.latLngToContainerPoint(mapCenter);
-        const distanceFromCenter = Math.sqrt(
-          Math.pow(markerPoint.x - centerPoint.x, 2) + 
-          Math.pow(markerPoint.y - centerPoint.y, 2)
-        );
-        
-        // Calculate required space for info window (320px + 50px gap)
-        const requiredSpace = 370;
-        const availableSpace = Math.min(
-          centerPoint.x, // Space to the left of center
-          mapSize.x - centerPoint.x // Space to the right of center
-        );
-        
-        // If marker is far from center or not enough space for info window, zoom in
-        if (distanceFromCenter > 100 || availableSpace < requiredSpace) {
-          // Calculate optimal zoom level to center the marker with enough space
-          const optimalZoom = Math.min(currentZoom + 2, 18);
-          map.setView(markerPosition, optimalZoom, {
-            animate: true,
-            duration: 0.8
-          });
-        } else {
-          // Just center the marker at current zoom
-          map.setView(markerPosition, currentZoom, {
-            animate: true,
-            duration: 0.5
-          });
-        }
+        // Fly to the marker position with smooth animation
+        map.flyTo(markerPosition, optimalZoom, {
+          duration: 1.8, // Smooth animation duration
+          easeLinearity: 0.25
+        });
       }
     }
   };
@@ -577,8 +551,8 @@ function MapComponentTesting({  }) {
           style={{
             position: 'absolute',
             top: '50%',
-            left: '50%',
-            transform: 'translate(calc(-100% - 50px), -50%)', // Position to left of center with gap
+            left: '350px', // Fixed distance from left edge
+            transform: 'translateY(-50%)',
             zIndex: 1000
           }}
         >
