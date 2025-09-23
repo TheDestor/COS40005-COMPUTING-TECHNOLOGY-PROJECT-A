@@ -81,6 +81,23 @@ const ViewInquiry = () => {
     };
   }, [showPrintOptions]);
 
+  // This will consistently assign avatar based on email
+  const getAvatarForEmail = (email) => {
+    const avatars = [profile1, profile2, profile3, profile4, profile5, profile6, profile7, profile8];
+    
+    // simple hash from email
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      const char = email.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Use absolute value and modulo to get index
+    const avatarIndex = Math.abs(hash) % avatars.length;
+    return avatars[avatarIndex];
+  };
+
   useEffect(() => {
     const fetchInquiries = async () => {
       try {
@@ -103,7 +120,8 @@ const ViewInquiry = () => {
             date: inquiry.createdAt,
             status: inquiry.status || "Unread",
             priority: 'medium',
-            avatar: profile1
+            avatar: getAvatarForEmail(inquiry.email),
+            category: inquiry.category
           }));
 
           mappedInquiries.sort((a, b) => new Date(b.date) - new Date(a.date));
