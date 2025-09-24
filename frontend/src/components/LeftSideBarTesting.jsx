@@ -474,7 +474,14 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   const [showBookmarkpage, setShowBookmarkpage] = useState(false);
   const [showLayersPanel, setShowLayersPanel] = useState(false);
   const [showRecentSection, setShowRecentSection] = useState(false);
-  const [recentLocations, setRecentLocations] = useState([]);
+  const [recentLocations, setRecentLocations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sarawakTourismRecentLocations');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [mapType, setMapType] = useState('roadmap');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -749,19 +756,30 @@ const handleClearAllRouting = () => {
   };
 
   // Toggle functions
-  const toggleRecentHistory = () => {
+  function toggleRecentHistory() {
     if (isExpanded) setIsExpanded(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
-    setShowRecent((prev) => !prev);
-  };
+  
+    if (typeof setShowRecent === 'function') {
+      setShowRecent(prev => !prev);
+    } else {
+      // Fallback: use existing recent section state
+      setShowRecentSection(prev => !prev);
+      setActiveMenu(prev => (prev === 'recent' ? '' : 'recent'));
+    }
+  }
 
   const toggleRecentSection = () => {
     if (isExpanded) setIsExpanded(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showLayersPanel) setShowLayersPanel(false);
-    setShowRecentSection((prev) => !prev);
+    setShowRecentSection((prev) => {
+      const next = !prev;
+      setActiveMenu(next ? 'recent' : '');
+      return next;
+    });
   };
 
   const toggleSidebar = () => {
@@ -769,6 +787,7 @@ const handleClearAllRouting = () => {
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showRecentSection) setShowRecentSection(false);
+    setActiveMenu('');
     setIsExpanded((prev) => !prev);
   };
 
@@ -851,14 +870,31 @@ const handleClearAllRouting = () => {
     setActiveMenu('');
   };
 
-  // Function to delete recent locations
+  // Function to delete selected recent locations
   const handleDeleteRecentItems = (itemsToDelete) => {
-    setRecentLocations(prev => prev.filter(item => !itemsToDelete.includes(item)));
+    try {
+      // Compute next list now so we can persist before broadcasting
+      const next = recentLocations.filter(item => !itemsToDelete.includes(item));
+      setRecentLocations(next);
+      localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(next));
+      // Notify any listeners (e.g., search dropdown) to refresh their recent caches
+      window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'delete_selected', items: itemsToDelete } }));
+    } catch (_) {
+      // no-op
+    }
   };
 
   // Function to clear all recent locations
   const handleClearAllRecent = () => {
-    setRecentLocations([]);
+    try {
+      setRecentLocations([]);
+      // Clear persisted storage immediately for other components relying on it
+      localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify([]));
+      // Broadcast a global event so any dropdowns/consumers can clear their UI
+      window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'clear_all' } }));
+    } catch (_) {
+      // no-op
+    }
   };
 
   const handleRoutesCalculated = (routesData) => {
@@ -1210,31 +1246,17 @@ useEffect(() => {
           onClick={() => {
             if (activeMenu === 'recent') {
               setActiveMenu('');
-              toggleRecentHistory();
+              toggleRecentSection();
             } else {
               setActiveMenu('recent');
-              toggleRecentHistory();
+              toggleRecentSection();
             }
           }}
         >
           <FaClock className="icon100" />
           <span className="label100">Recent</span>
         </div>
-        <div
-          className={`menu-item100${activeMenu === 'recentLocations' ? ' active' : ''}`}
-          onClick={() => {
-            if (activeMenu === 'recentLocations') {
-              setActiveMenu('');
-              toggleRecentSection();
-            } else {
-              setActiveMenu('recentLocations');
-              toggleRecentSection();
-            }
-          }}
-        >
-          <FaClock className="icon100" />
-          <span className="label100">Recent Locations</span>
-        </div>
+      
         <div
           className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
           onClick={() => {

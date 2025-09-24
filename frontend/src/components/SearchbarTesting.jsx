@@ -7,7 +7,21 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   const inputRef = useRef(null);
   const containerRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState([]);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sarawakTourismRecentLocations');
+      return saved ? JSON.parse(saved).slice(0, 5).map(item => ({
+        name: item.name,
+        description: item.description,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        placeId: item.placeId || `${item.name}-${item.latitude}-${item.longitude}`,
+        source: 'recent'
+      })) : [];
+    } catch {
+      return [];
+    }
+  });
   const [predictions, setPredictions] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -169,10 +183,41 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
 
   const updateRecentSearches = (place) => {
     setRecentSearches((prev) => {
-      const exists = prev.some((p) => p.placeId === place.placeId);
-      if (exists) return prev;
-      return [place, ...prev].slice(0, 5);
+      const normalized = {
+        name: place.name,
+        description: place.description,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        placeId: place.placeId || `${place.name}-${place.latitude}-${place.longitude}`,
+        source: place.source || 'recent'
+      };
+      const exists = prev.some((p) => p.placeId === normalized.placeId);
+      const next = exists ? prev : [normalized, ...prev].slice(0, 5);
+      return next;
     });
+
+    // persist to localStorage shared list used by sidebar
+    try {
+      const saved = localStorage.getItem('sarawakTourismRecentLocations');
+      const list = saved ? JSON.parse(saved) : [];
+      const exists = list.some((p) => (
+        p.name === place.name && Math.abs(p.latitude - place.latitude) < 0.0001 && Math.abs(p.longitude - place.longitude) < 0.0001
+      ));
+      if (!exists) {
+        const merged = [{
+          name: place.name,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          description: place.description || '',
+          type: place.type || 'Location',
+          timestamp: new Date().toISOString(),
+          source: place.source || 'search'
+        }, ...list].slice(0, 20);
+        localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(merged));
+        // notify listeners to refresh
+        window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'add', item: place } }));
+      }
+    } catch {}
   };
 
   const handleRecentClick = (place) => {
@@ -198,6 +243,24 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       onOpenRecentSection();
     }
   };
+
+  // keep dropdown in sync when recent list is changed elsewhere (clear/delete)
+  useEffect(() => {
+    const handler = (e) => {
+      const saved = localStorage.getItem('sarawakTourismRecentLocations');
+      const arr = saved ? JSON.parse(saved) : [];
+      setRecentSearches(arr.slice(0, 5).map(item => ({
+        name: item.name,
+        description: item.description,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        placeId: item.placeId || `${item.name}-${item.latitude}-${item.longitude}`,
+        source: 'recent'
+      })));
+    };
+    window.addEventListener('recentLocationsUpdated', handler);
+    return () => window.removeEventListener('recentLocationsUpdated', handler);
+  }, []);
 
   // Speech-to-text handler
   const handleMicClick = () => {

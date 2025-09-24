@@ -329,3 +329,60 @@
     justify-content: center;
     font-weight: 500;
 }
+
+/* Responsive adjustments for the toggle button position/size */
+@media (max-width: 768px) {
+	.ai-toggle-btn {
+		right: 12px;
+		bottom: 84px; /* lift above mobile nav bars */
+		width: 56px;
+		height: 56px;
+	}
+	.ai-logo {
+		width: 44px;
+		height: 44px;
+	}
+}
+
+@media (max-width: 400px) {
+	.ai-toggle-btn {
+		right: 10px;
+		bottom: 92px;
+		width: 52px;
+		height: 52px;
+	}
+	.ai-logo {
+		width: 40px;
+		height: 40px;
+	}
+}
+
+/* Responsive layout for the whole chat panel */
+@media (max-width: 768px) {
+	.ai-panel {
+		right: 12px;
+		bottom: 80px;
+		width: 340px;
+		height: 480px;
+		border-radius: 14px;
+	}
+
+	.ai-bubble-content p {
+		text-align: left;
+	}
+}
+
+@media (max-width: 400px) {
+	.ai-panel {
+		left: 10px;
+		right: 10px;
+		bottom: 80px;
+		top: auto;
+		width: auto;
+		height: min(78vh, 520px);
+		border-radius: 12px;
+	}
+	.ai-header { padding: 10px 12px; }
+	.ai-messages { padding: 10px; }
+	.ai-form { padding: 10px; }
+}

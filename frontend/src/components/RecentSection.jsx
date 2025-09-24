@@ -1,10 +1,12 @@
 import React, {useState} from "react";
 import "../styles/RecentSection.css";
 import { FaArrowLeft, FaMap, FaClock } from "react-icons/fa";
-import images from "../assets/Kuching.png";
+import fallbackImage from "../assets/Kuching.png";
+import { toast } from "sonner";
 
 const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) => {
   const [selectedItems, setSelectedItems] = useState([]);
+  const [confirmState, setConfirmState] = useState({ open: false, kind: null });
 
   const toggleSelectItem = (item) => {
     setSelectedItems(prev =>
@@ -15,17 +17,29 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
   };
   
   const handleDelete = () => {
-    if (onDeleteItems && selectedItems.length > 0) {
-      onDeleteItems(selectedItems);
-      setSelectedItems([]);
-    }
+    if (!onDeleteItems || selectedItems.length === 0) return;
+    setConfirmState({ open: true, kind: 'delete' });
   };
 
   const handleClearAll = () => {
-    if (onClearAll) {
+    if (!onClearAll) return;
+    setConfirmState({ open: true, kind: 'clear' });
+  };
+
+  const closeConfirm = () => setConfirmState({ open: false, kind: null });
+
+  const confirmAction = () => {
+    if (confirmState.kind === 'delete' && onDeleteItems) {
+      onDeleteItems(selectedItems);
+      setSelectedItems([]);
+      toast.success("Selected recent locations removed.");
+    }
+    if (confirmState.kind === 'clear' && onClearAll) {
       onClearAll();
       setSelectedItems([]);
+      toast.success("All recent locations cleared.");
     }
+    closeConfirm();
   };
   
 
@@ -60,14 +74,15 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
               className="recent-item"
               onClick={() => onItemClick(item)} // Click on item to trigger search
             >
-              <img src={images} alt={item.name} />
+              <img src={(item && item.image) ? item.image : fallbackImage} alt={item.name} />
               <div className="item-info">
                 <span className="title">{item.name}</span>
-                <span className="category">Search</span>
+                <span className="category">{item.type || 'Search'}</span>
               </div>
               <input
                 type="checkbox"
                 checked={selectedItems.includes(item)}
+                onClick={(e) => e.stopPropagation()}
                 onChange={() => toggleSelectItem(item)}
               />
             </div>
@@ -75,6 +90,25 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
         </div>
       ) : (
         <p className="no-recent">No recent searches yet.</p>
+      )}
+
+      {confirmState.open && (
+        <div className="recent-modal-overlay" onClick={closeConfirm}>
+          <div className="recent-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="recent-modal-title">
+              {confirmState.kind === 'delete' ? 'Delete selected?' : 'Clear all recents?'}
+            </div>
+            <div className="recent-modal-body">
+              {confirmState.kind === 'delete'
+                ? `This will remove ${selectedItems.length} selected item(s) from your recent history.`
+                : 'This will remove all items from your recent history.'}
+            </div>
+            <div className="recent-modal-actions">
+              <button className="btn-secondary" onClick={closeConfirm}>Cancel</button>
+              <button className="btn-danger" onClick={confirmAction}>Confirm</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

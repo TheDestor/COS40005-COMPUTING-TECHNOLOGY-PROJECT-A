@@ -249,4 +249,65 @@
   }
 }
   
+/* Modal styles for confirmations */
+.recent-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.recent-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 92%;
+  max-width: 380px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  border: 1px solid #e5e7eb;
+}
+
+.recent-modal-title {
+  padding: 14px 16px 8px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.recent-modal-body {
+  padding: 0 16px 16px 16px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.recent-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px 16px 16px;
+}
+
+.recent-modal-actions .btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.recent-modal-actions .btn-danger {
+  background: #e11d48;
+  color: #ffffff;
+  border: 1px solid #e11d48;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.recent-modal-actions .btn-secondary:hover { background: #f3f4f6; }
+.recent-modal-actions .btn-danger:hover { background: #be123c; border-color: #be123c; }
+
   
