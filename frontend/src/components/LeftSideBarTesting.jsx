@@ -463,7 +463,7 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
 
 
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange }) => {
+const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -473,6 +473,8 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   const [showBusiness, setShowBusiness] = useState(false);
   const [showBookmarkpage, setShowBookmarkpage] = useState(false);
   const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [showRecentSection, setShowRecentSection] = useState(false);
+  const [recentLocations, setRecentLocations] = useState([]);
   const [mapType, setMapType] = useState('roadmap');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -489,7 +491,43 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   // const [selectedLocation, setSelectedLocation] = useState(null);
   const [activeMenu, setActiveMenu] = useState('');
   const [routeSummary, setRouteSummary] = useState(null);
+  const autoCalculatedRef = useRef(false);
 //   const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
+
+  // Load recent locations from localStorage on component mount
+  useEffect(() => {
+    const savedRecentLocations = localStorage.getItem('sarawakTourismRecentLocations');
+    if (savedRecentLocations) {
+      try {
+        setRecentLocations(JSON.parse(savedRecentLocations));
+      } catch (error) {
+        console.error('Error parsing recent locations from localStorage:', error);
+        setRecentLocations([]);
+      }
+    }
+  }, []);
+
+  // Save recent locations to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(recentLocations));
+  }, [recentLocations]);
+
+  // Set up the addToRecent function reference for the parent component
+  useEffect(() => {
+    if (onSetAddToRecentRef) {
+      onSetAddToRecentRef(addToRecentLocations);
+    }
+  }, [onSetAddToRecentRef]);
+
+  // Set up the openRecentSection function reference for the parent component
+  useEffect(() => {
+    if (onSetOpenRecentSectionRef) {
+      onSetOpenRecentSectionRef(() => {
+        setShowRecentSection(true);
+        setActiveMenu('recentLocations');
+      });
+    }
+  }, [onSetOpenRecentSectionRef]);
   
 const handleClearStartingPoint = () => {
   setStartingPoint('');
@@ -501,6 +539,7 @@ const handleClearStartingPoint = () => {
   setRouteAlternatives([]);
   setSelectedRouteIndex(0);
   setNearbyPlaces([]); // Clear nearby places
+  autoCalculatedRef.current = false; // Reset auto-calculation flag
 };
 
 const handleClearDestination = () => {
@@ -513,6 +552,27 @@ const handleClearDestination = () => {
   setRouteAlternatives([]);
   setSelectedRouteIndex(0);
   setNearbyPlaces([]); // Clear nearby places
+  autoCalculatedRef.current = false; // Reset auto-calculation flag
+};
+
+const handleClearAllRouting = () => {
+  setStartingPoint('');
+  setDestination('');
+  setStartingPointCoords(null);
+  setDestinationCoords(null);
+  setOsrmRouteCoords([]);
+  setOsrmWaypoints([]);
+  setAddDestinations([]);
+  setWaypointCoords([]);
+  setRouteAlternatives([]);
+  setSelectedRouteIndex(0);
+  setNearbyPlaces([]);
+  autoCalculatedRef.current = false; // Reset auto-calculation flag
+  
+  // Also call the parent's clearing function if provided
+  if (onClearAllRouting) {
+    onClearAllRouting();
+  }
 };
 
   const handleAddCurrentLocation = async () => {
@@ -696,10 +756,19 @@ const handleClearDestination = () => {
     setShowRecent((prev) => !prev);
   };
 
+  const toggleRecentSection = () => {
+    if (isExpanded) setIsExpanded(false);
+    if (showBusiness) setShowBusiness(false);
+    if (showBookmarkpage) setShowBookmarkpage(false);
+    if (showLayersPanel) setShowLayersPanel(false);
+    setShowRecentSection((prev) => !prev);
+  };
+
   const toggleSidebar = () => {
     if (showRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
+    if (showRecentSection) setShowRecentSection(false);
     setIsExpanded((prev) => !prev);
   };
 
@@ -708,6 +777,7 @@ const handleClearDestination = () => {
     if (showRecent) setShowRecent(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showLayersPanel) setShowLayersPanel(false);
+    if (showRecentSection) setShowRecentSection(false);
     setShowBusiness((prev) => !prev);
   };
 
@@ -715,6 +785,7 @@ const handleClearDestination = () => {
     if (isExpanded) setIsExpanded(false);
     if (showRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
+    if (showRecentSection) setShowRecentSection(false);
     setShowBookmarkpage((prev) => !prev);
   };
 
@@ -723,6 +794,7 @@ const handleClearDestination = () => {
     if (showRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
+    if (showRecentSection) setShowRecentSection(false);
     setShowLayersPanel((prev) => !prev);
   };
 
@@ -732,6 +804,61 @@ const handleClearDestination = () => {
 
   const handleDeleteItems = (itemsToDelete) => {
     setHistory(prev => prev.filter(item => !itemsToDelete.includes(item)));
+  };
+
+  // Function to add a location to recent locations
+  const addToRecentLocations = (location) => {
+    if (!location || !location.name || !location.latitude || !location.longitude) {
+      return;
+    }
+
+    const locationData = {
+      name: location.name,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      description: location.description || '',
+      type: location.type || 'Location',
+      timestamp: new Date().toISOString(),
+      source: location.source || 'search'
+    };
+
+    setRecentLocations(prev => {
+      // Remove if already exists (to avoid duplicates)
+      const filtered = prev.filter(item => 
+        !(item.name === locationData.name && 
+          Math.abs(item.latitude - locationData.latitude) < 0.0001 &&
+          Math.abs(item.longitude - locationData.longitude) < 0.0001)
+      );
+      
+      // Add to beginning and limit to 20 items
+      return [locationData, ...filtered].slice(0, 20);
+    });
+  };
+
+  // Function to handle recent location click
+  const handleRecentLocationClick = (location) => {
+    // Plot the location on the map by setting it as selected search bar place
+    setSelectedSearchBarPlace({
+      name: location.name,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      description: location.description,
+      type: location.type
+    });
+
+    // Close the recent section
+    setShowRecentSection(false);
+    setActiveMenu('');
+  };
+
+  // Function to delete recent locations
+  const handleDeleteRecentItems = (itemsToDelete) => {
+    setRecentLocations(prev => prev.filter(item => !itemsToDelete.includes(item)));
+  };
+
+  // Function to clear all recent locations
+  const handleClearAllRecent = () => {
+    setRecentLocations([]);
   };
 
   const handleRoutesCalculated = (routesData) => {
@@ -867,6 +994,11 @@ const fetchNearbyPlaces = async (locationCoords, radius = 500) => {
 const handleVehicleClick = async (vehicle) => {
   setSelectedVehicle(vehicle);
   setIsLoading(true);
+  
+  // If this is a manual selection (not auto-calculation), reset the flag
+  if (autoCalculatedRef.current) {
+    autoCalculatedRef.current = false;
+  }
 
   try {
     let startCoords = startingPointCoords;
@@ -1009,7 +1141,23 @@ const handleVehicleClick = async (vehicle) => {
   }
 };
 
-// Removed automatic route calculation - routes should only be calculated when user clicks vehicle buttons
+// Auto-calculate Car route when both start and destination coordinates are available
+useEffect(() => {
+  const shouldAutoCalculate = 
+    startingPointCoords && 
+    destinationCoords && 
+    !isLoading &&
+    routeAlternatives.length === 0 && // Only if no route is already calculated
+    selectedVehicle === 'Car' && // Only auto-calculate for Car
+    !autoCalculatedRef.current; // Prevent multiple auto-calculations
+
+  if (shouldAutoCalculate) {
+    autoCalculatedRef.current = true;
+    // Auto-select Car and calculate route
+    handleVehicleClick('Car');
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
 
 useEffect(() => {
   setOsrmWaypoints(waypointCoords.filter(Boolean));
@@ -1071,6 +1219,21 @@ useEffect(() => {
         >
           <FaClock className="icon100" />
           <span className="label100">Recent</span>
+        </div>
+        <div
+          className={`menu-item100${activeMenu === 'recentLocations' ? ' active' : ''}`}
+          onClick={() => {
+            if (activeMenu === 'recentLocations') {
+              setActiveMenu('');
+              toggleRecentSection();
+            } else {
+              setActiveMenu('recentLocations');
+              toggleRecentSection();
+            }
+          }}
+        >
+          <FaClock className="icon100" />
+          <span className="label100">Recent Locations</span>
         </div>
         <div
           className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
@@ -1461,6 +1624,21 @@ useEffect(() => {
               onClose={() => setShowLayersPanel(false)}
               onMapTypeChange={onBasemapChange}
             />
+
+          {/* Recent Section */}
+          {showRecentSection && (
+            <RecentSection
+              isOpen={showRecentSection}
+              onClose={() => {
+                setShowRecentSection(false);
+                setActiveMenu('');
+              }}
+              history={recentLocations}
+              onItemClick={handleRecentLocationClick}
+              onDeleteItems={handleDeleteRecentItems}
+              onClearAll={handleClearAllRecent}
+            />
+          )}
 
           {/* <MapZoomController selectedPlace={selectedPlace} /> */}
           </>

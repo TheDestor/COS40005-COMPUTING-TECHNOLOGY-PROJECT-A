@@ -260,7 +260,7 @@ const fetchOverpassPlaces = async (categoryName, center, radiusMeters = 10000) =
   }
 };
 
-const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }) => {
+const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting }) => {
   const [selectedMenu, setSelectedMenu] = useState(activeOption || 'Major Town');
   const [locationsData, setLocationsData] = useState([]);
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
@@ -268,8 +268,10 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState(
+    activeOption === null ? { name: 'Select Category', icon: <FaLocationDot /> } : 
     menuItems.find(item => item.name === (activeOption || 'Major Town')) || menuItems[0]
   );
+  const [temporarySelection, setTemporarySelection] = useState(null);
 
   const currentPos = useCurrentPosition();
 
@@ -359,10 +361,26 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
   };
 
   const handleMenuItemClick = (item) => {
-    setSelectedMenu(item.name);
-    if (isMobileMenu) {
-      setSelectedMobileMenuItem(item);
-      setIsDropdownOpen(false);
+    // Clear routing if we're in routing mode and user selects a category
+    if (isRoutingActive && activeOption === null && onClearRouting) {
+      onClearRouting();
+    }
+
+    // Always update the local state for visual feedback
+    if (isRoutingActive && activeOption === null) {
+      // In routing mode, use temporary selection for visual feedback
+      setTemporarySelection(item.name);
+      if (isMobileMenu) {
+        setSelectedMobileMenuItem(item);
+        setIsDropdownOpen(false);
+      }
+    } else {
+      // Normal mode
+      setSelectedMenu(item.name);
+      if (isMobileMenu) {
+        setSelectedMobileMenuItem(item);
+        setIsDropdownOpen(false);
+      }
     }
 
     setLocationsData([]);
@@ -403,14 +421,26 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
   };
 
   useEffect(() => {
-    if (!activeOption) {
+    if (activeOption === null && isRoutingActive) {
+      // Routing mode - clear visual selection but allow interaction
+      setSelectedMenu('');
+      setSelectedMobileMenuItem({ name: 'Select Category', icon: <FaLocationDot /> });
+    } else if (!activeOption) {
+      // No active option but not routing mode - default to Major Town
       const defaultItem = menuItems.find(item => item.name === 'Major Town');
       if (defaultItem) handleMenuItemClick(defaultItem);
     } else {
       setSelectedMenu(activeOption);
       setSelectedMobileMenuItem(menuItems.find(item => item.name === activeOption) || menuItems[0]);
     }
-  }, [activeOption]);
+  }, [activeOption, isRoutingActive]);
+
+  // Clear temporary selection when routing ends
+  useEffect(() => {
+    if (!isRoutingActive) {
+      setTemporarySelection(null);
+    }
+  }, [isRoutingActive]);
 
   return (
     <div className="mapview-container">
@@ -441,7 +471,9 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace }
       ) : (
         <div className="menu-container">
           {menuItems.map((item) => {
-            const isActive = selectedMenu === item.name;
+            const isActive = isRoutingActive && activeOption === null 
+              ? temporarySelection === item.name 
+              : selectedMenu === item.name;
             return (
               <button
                 key={item.name}

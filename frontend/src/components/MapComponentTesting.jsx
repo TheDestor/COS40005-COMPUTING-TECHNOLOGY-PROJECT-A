@@ -268,6 +268,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
 
 function MapComponentTesting({  }) {
   const mapRef = useRef();
+  const leftSidebarRef = useRef();
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [shouldZoom, setShouldZoom] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -296,6 +297,10 @@ function MapComponentTesting({  }) {
     attribution: '&copy; OpenStreetMap contributors'
   });
 
+  // Ref to store the addToRecent function from LeftSideBarTesting
+  const addToRecentRef = useRef(null);
+  const openRecentSectionRef = useRef(null);
+
   // New state for CustomInfoWindow
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showReviewPage, setShowReviewPage] = useState(false);
@@ -307,6 +312,16 @@ function MapComponentTesting({  }) {
     setShowReviewPage(false);
   };
 
+  // Function to clear all routing data
+  const clearAllRoutingData = () => {
+    setOsrmRouteCoords([]);
+    setOsrmWaypoints([]);
+    setIsRoutingActive(false);
+    setRouteAlternatives([]);
+    setSelectedRouteIndex(0);
+    setNearbyPlaces([]);
+  };
+
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
     closeInfoWindow(); // Close info window when menu category changes
@@ -314,6 +329,9 @@ function MapComponentTesting({  }) {
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
+    
+    // Clear routing data when category is selected
+    clearAllRoutingData();
   };
 
   // Handler for when the search bar selects a place
@@ -516,17 +534,38 @@ function MapComponentTesting({  }) {
         onRouteAlternativesChange={handleRouteAlternativesChange}
         onNearbyPlacesChange={handleNearbyPlacesChange}
         onRouteInfoChange={handleRouteInfoChange}
+        onClearAllRouting={clearAllRoutingData}
+        onSetAddToRecentRef={(func) => {
+          addToRecentRef.current = func;
+        }}
+        onSetOpenRecentSectionRef={(func) => {
+          openRecentSectionRef.current = func;
+        }}
       />
 
       {/* Top Header Container */}
       <div className="top-header-container">
         <div className="header-elements-wrapper">
           <div className="search-mapview-group">
-            <SearchBarTesting onPlaceSelected={handlePlaceSelect} />
+            <SearchBarTesting 
+              onPlaceSelected={handlePlaceSelect} 
+              onAddToRecent={(location) => {
+                if (addToRecentRef.current) {
+                  addToRecentRef.current(location);
+                }
+              }}
+              onOpenRecentSection={() => {
+                if (openRecentSectionRef.current) {
+                  openRecentSectionRef.current();
+                }
+              }}
+            />
             <MapViewMenu 
               onSelect={handleMenuSelect}
-              activeOption={activeOption}
+              activeOption={isRoutingActive ? null : activeOption}
               onZoomToPlace={handleZoomToPlace}
+              isRoutingActive={isRoutingActive}
+              onClearRouting={clearAllRoutingData}
             />
           </div>
           <div className="weather-profile-group">
@@ -688,7 +727,7 @@ function MapComponentTesting({  }) {
             }}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}
-            onShowReview={handleShowReview}
+            // onShowReview={handleShowReview}
             onOpenLoginModal={handleOpenLoginModal}
           />
         </div>
@@ -697,17 +736,6 @@ function MapComponentTesting({  }) {
       {/* Tourist Info Section (YouTube Reels) */}
       {selectedLocation && (
         <TouristInfoSection selectedLocation={selectedLocation} />
-      )}
-
-      {/* Review Page Overlay */}
-      {showReviewPage && selectedLocation && (
-        <div className="review-overlay-wrapper">
-          <ReviewPage
-            onClose={() => setShowReviewPage(false)}
-            rating={selectedLocation.rating || 0}
-            placeName={selectedLocation.name}
-          />
-        </div>
       )}
 
       {/* Login Modal */}

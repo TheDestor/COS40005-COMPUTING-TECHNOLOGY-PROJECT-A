@@ -137,7 +137,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
       <div className="info-tabs">
         <span className="active-tab">Overview</span>
-        <span className="inactive-tab" onClick={onShowReview}>Reviews</span>
+        {/* <span className="inactive-tab" onClick={onShowReview}>Reviews</span> */}
       </div>
 
       <p className="info-desc">

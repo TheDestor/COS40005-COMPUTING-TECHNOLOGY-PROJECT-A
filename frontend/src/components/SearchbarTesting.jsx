@@ -3,7 +3,7 @@ import logo from '../assets/logo.png';
 import { useRef, useEffect, useState } from 'react';
 import '../styles/Searchbar.css';
 
-function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
+function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpenRecentSection }) {
   const inputRef = useRef(null);
   const containerRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -27,7 +27,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
     };
   }, []);
 
-  // Fetch suggestions from Photon, debounced and restricted to Sarawak
+  // Fetch suggestions from Photon with Nominatim fallback, debounced and restricted to Sarawak
   useEffect(() => {
     if (!inputValue.trim()) {
         setPredictions([]);
@@ -36,45 +36,22 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      fetch(
-        `https://corsproxy.io/?https://photon.komoot.io/api/?q=${encodeURIComponent(inputValue)}&lang=en&limit=5&bbox=${sarawakBbox}`,
-        { signal: controller.signal }
-      )
-      // fetch(
-      //   `https://photon.komoot.io/api/?q=${encodeURIComponent(inputValue)}&lang=en&limit=5&bbox=${sarawakBbox}`,
-      //   { signal: controller.signal }
-      // )
-        .then(res => res.json())
+      fetchPhotonSuggestions(inputValue, controller.signal)
+        .catch((error) => {
+          console.warn('Photon service failed, trying Nominatim fallback:', error);
+          return fetchNominatimSuggestions(inputValue, controller.signal);
+        })
         .then(data => {
-          // Sarawak bounding box
-          const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
-          setPredictions(
-            (data.features || [])
-              .filter(feature => {
-                const lat = feature.geometry.coordinates[1];
-                const lon = feature.geometry.coordinates[0];
-                // Only keep results within Sarawak bounds
-                return (
-                  lat >= minLat && lat <= maxLat &&
-                  lon >= minLon && lon <= maxLon
-                );
-              })
-              .map(feature => ({
-                name: feature.properties.name || feature.properties.city || feature.properties.country,
-                description: feature.properties.country
-                  ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
-                  : feature.properties.osm_value,
-                latitude: feature.geometry.coordinates[1],
-                longitude: feature.geometry.coordinates[0],
-                placeId: feature.properties.osm_id,
-                full: feature
-              }))
-          );
+          if (data && data.length > 0) {
+            setPredictions(data);
+          } else {
+            setPredictions([]);
+          }
         })
         .catch((err) => {
           if (err.name !== 'AbortError') {
-            console.error('Photon fetch error:', err);
-            // Optionally show an error to the user
+            console.error('Both Photon and Nominatim failed:', err);
+            setPredictions([]);
           }
         });
     }, 300); // Wait 300ms after user stops typing
@@ -85,6 +62,96 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
     };
   }, [inputValue]);
 
+  // Fetch suggestions from Photon API with timeout
+  const fetchPhotonSuggestions = async (query, signal) => {
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Photon API timeout')), 5000);
+    });
+    
+    const fetchPromise = fetch(
+      `https://corsproxy.io/?https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lang=en&limit=5&bbox=${sarawakBbox}`,
+      { signal }
+    );
+    
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if (!response.ok) {
+      throw new Error(`Photon API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Sarawak bounding box
+    const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
+    return (data.features || [])
+      .filter(feature => {
+        const lat = feature.geometry.coordinates[1];
+        const lon = feature.geometry.coordinates[0];
+        // Only keep results within Sarawak bounds
+        return (
+          lat >= minLat && lat <= maxLat &&
+          lon >= minLon && lon <= maxLon
+        );
+      })
+      .map(feature => ({
+        name: feature.properties.name || feature.properties.city || feature.properties.country,
+        description: feature.properties.country
+          ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
+          : feature.properties.osm_value,
+        latitude: feature.geometry.coordinates[1],
+        longitude: feature.geometry.coordinates[0],
+        placeId: feature.properties.osm_id,
+        full: feature,
+        source: 'photon'
+      }));
+  };
+
+  // Fetch suggestions from Nominatim API (fallback) with timeout
+  const fetchNominatimSuggestions = async (query, signal) => {
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Nominatim API timeout')), 8000);
+    });
+    
+    const fetchPromise = fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=my&bounded=1&viewbox=109.5,0.8,115.5,5.5`,
+      { 
+        signal,
+        headers: {
+          'User-Agent': 'SarawakTourismApp/1.0' // Required by Nominatim
+        }
+      }
+    );
+    
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if (!response.ok) {
+      throw new Error(`Nominatim API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Filter and format Nominatim results for Sarawak
+    const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
+    return data
+      .filter(item => {
+        const lat = parseFloat(item.lat);
+        const lon = parseFloat(item.lon);
+        return (
+          lat >= minLat && lat <= maxLat &&
+          lon >= minLon && lon <= maxLon
+        );
+      })
+      .map(item => ({
+        name: item.display_name.split(',')[0].trim(), // First part of display name
+        description: item.display_name.split(',').slice(1).join(',').trim(), // Rest of the address
+        latitude: parseFloat(item.lat),
+        longitude: parseFloat(item.lon),
+        placeId: item.place_id,
+        full: item,
+        source: 'nominatim'
+      }));
+  };
+
   const handlePlace = (place) => {
     if (!place.latitude || !place.longitude) {
       console.error('No geometry found for selected place');
@@ -93,6 +160,11 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
     console.log(place);
     onPlaceSelected && onPlaceSelected(place);
     updateRecentSearches(place);
+    
+    // Add to recent locations in the sidebar
+    if (onAddToRecent) {
+      onAddToRecent(place);
+    }
   };
 
   const updateRecentSearches = (place) => {
@@ -120,6 +192,10 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent }) {
     setPredictions([]);
     if (typeof setShowRecent === 'function') {
       setShowRecent(true);
+    }
+    // Also open the recent section in the sidebar
+    if (typeof onOpenRecentSection === 'function') {
+      onOpenRecentSection();
     }
   };
 

@@ -3,7 +3,7 @@ import "../styles/RecentSection.css";
 import { FaArrowLeft, FaMap, FaClock } from "react-icons/fa";
 import images from "../assets/Kuching.png";
 
-const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteItems }) => {
+const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) => {
   const [selectedItems, setSelectedItems] = useState([]);
 
   const toggleSelectItem = (item) => {
@@ -17,6 +17,13 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
   const handleDelete = () => {
     if (onDeleteItems && selectedItems.length > 0) {
       onDeleteItems(selectedItems);
+      setSelectedItems([]);
+    }
+  };
+
+  const handleClearAll = () => {
+    if (onClearAll) {
+      onClearAll();
       setSelectedItems([]);
     }
   };
@@ -34,7 +41,12 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
         <button className="filter-button2 active"><FaMap /> All</button>
         {selectedItems.length > 0 && (
           <button className="delete-button33" onClick={handleDelete}>
-            Delete
+            Delete Selected
+          </button>
+        )}
+        {history.length > 0 && (
+          <button className="clear-all-button" onClick={handleClearAll}>
+            Clear All
           </button>
         )}
       </div>

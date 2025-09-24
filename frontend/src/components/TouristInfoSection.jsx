@@ -3,11 +3,70 @@ import '../styles/TouristInfoSection.css';
 import { FiChevronRight, FiChevronLeft, FiRefreshCw } from 'react-icons/fi';
 import ReactPlayer from 'react-player';
 
-// Cache configuration
+// Advanced Cache configuration
 const CACHE_CONFIG = {
   EXPIRY_HOURS: 24, // Cache for 24 hours
-  MAX_CACHE_SIZE: 5, // Maximum number of locations to cache
-  CACHE_KEY: 'youtube_reels_cache'
+  MAX_CACHE_SIZE: 30, // Increased limit for tourist locations
+  CACHE_KEY: 'youtube_reels_cache_v2', // New version key
+  PRIORITY_CATEGORIES: ['national_park', 'cave', 'museum', 'cultural_site', 'beach', 'mountain'],
+  LOW_PRIORITY_CATEGORIES: ['restaurant', 'shopping', 'hotel', 'cafe']
+};
+
+// Cache Debug Panel Component
+const CacheDebugPanel = () => {
+  const [cacheStatus, setCacheStatus] = useState({});
+  
+  useEffect(() => {
+    const checkCache = () => {
+      try {
+        const cache = JSON.parse(localStorage.getItem(CACHE_CONFIG.CACHE_KEY) || '{}');
+        const cacheSize = new Blob([JSON.stringify(cache)]).size;
+        
+        setCacheStatus({
+          totalLocations: Object.keys(cache).length,
+          locations: Object.keys(cache),
+          totalSize: cacheSize,
+          sizeKB: (cacheSize / 1024).toFixed(1),
+          usagePercent: ((cacheSize / (5 * 1024 * 1024)) * 100).toFixed(1) // 5MB limit
+        });
+      } catch (error) {
+        console.error('Cache debug error:', error);
+      }
+    };
+    
+    checkCache();
+    const interval = setInterval(checkCache, 2000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)', // This centers it perfectly
+      background: 'rgba(0,0,0,0.95)',
+      color: 'white',
+      padding: '20px',
+      borderRadius: '10px',
+      fontSize: '14px',
+      zIndex: 10000,
+      maxWidth: '400px',
+      width: '90%',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      fontFamily: 'monospace',
+      border: '2px solid #00ff00',
+      boxShadow: '0 0 20px rgba(0,255,0,0.3)'
+    }}>
+      <strong>🔄 Advanced Cache Monitor</strong>
+      <div>📍 Locations: {cacheStatus.totalLocations || 0}/{CACHE_CONFIG.MAX_CACHE_SIZE}</div>
+      <div>💾 Size: {cacheStatus.sizeKB || 0}KB ({cacheStatus.usagePercent || 0}%)</div>
+      <div style={{maxHeight: '100px', overflowY: 'auto', marginTop: '5px', borderTop: '1px solid #555', paddingTop: '5px'}}>
+        {cacheStatus.locations?.map(loc => <div key={loc} style={{padding: '2px 0'}}>📍 {loc}</div>)}
+      </div>
+    </div>
+  );
 };
 
 const TouristInfoSection = ({ selectedLocation }) => {
@@ -19,8 +78,9 @@ const TouristInfoSection = ({ selectedLocation }) => {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDebug, setShowDebug] = useState(false); // Toggle debug panel
 
-  // Cache management functions
+  // Enhanced Cache management functions
   const getCache = () => {
     try {
       const cached = localStorage.getItem(CACHE_CONFIG.CACHE_KEY);
@@ -33,32 +93,73 @@ const TouristInfoSection = ({ selectedLocation }) => {
 
   const setCache = (cacheData) => {
     try {
+      // Check size before saving
+      const cacheSize = new Blob([JSON.stringify(cacheData)]).size;
+      if (cacheSize > 4.5 * 1024 * 1024) { // 4.5MB warning
+        console.warn('Cache approaching limit, cleaning up...');
+        cacheData = cleanupCache(cacheData);
+      }
+      
       localStorage.setItem(CACHE_CONFIG.CACHE_KEY, JSON.stringify(cacheData));
+      console.log('💾 Cache saved successfully');
     } catch (error) {
-      console.warn('Failed to write cache to localStorage:', error);
-      // Clear old cache if storage is full
+      console.warn('Failed to write cache:', error);
       if (error.name === 'QuotaExceededError') {
-        clearOldCacheEntries(cacheData);
+        const cleanedCache = cleanupCache(cacheData);
+        localStorage.setItem(CACHE_CONFIG.CACHE_KEY, JSON.stringify(cleanedCache));
       }
     }
   };
 
-  const clearOldCacheEntries = (currentCache) => {
-    // Sort entries by timestamp and keep only the newest ones
-    const entries = Object.entries(currentCache);
-    if (entries.length > CACHE_CONFIG.MAX_CACHE_SIZE) {
-      entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
-      const trimmedCache = Object.fromEntries(
-        entries.slice(0, CACHE_CONFIG.MAX_CACHE_SIZE)
-      );
-      setCache(trimmedCache);
+  // Smart cache cleanup based on priority and usage
+  const cleanupCache = (cache) => {
+    const entries = Object.entries(cache);
+    
+    if (entries.length <= CACHE_CONFIG.MAX_CACHE_SIZE) {
+      return cache; // No cleanup needed
     }
+
+    console.log('🧹 Cleaning up cache...');
+
+    // Sort by priority: low priority → least viewed → oldest
+    entries.sort((a, b) => {
+      const aPriority = getLocationPriority(a[1].category);
+      const bPriority = getLocationPriority(b[1].category);
+      
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      
+      const aViews = a[1].viewCount || 0;
+      const bViews = b[1].viewCount || 0;
+      if (aViews !== bViews) return aViews - bViews;
+      
+      return a[1].timestamp - b[1].timestamp;
+    });
+
+    // Keep only the top MAX_CACHE_SIZE entries
+    const keptEntries = entries.slice(-CACHE_CONFIG.MAX_CACHE_SIZE);
+    const removedEntries = entries.slice(0, entries.length - CACHE_CONFIG.MAX_CACHE_SIZE);
+    
+    console.log('🗑️ Removed:', removedEntries.map(([key]) => key));
+    console.log('💾 Kept:', keptEntries.map(([key]) => key));
+    
+    return Object.fromEntries(keptEntries);
+  };
+
+  const getLocationPriority = (category) => {
+    if (CACHE_CONFIG.PRIORITY_CATEGORIES.includes(category)) return 3;
+    if (CACHE_CONFIG.LOW_PRIORITY_CATEGORIES.includes(category)) return 1;
+    return 2; // Default priority
+  };
+
+  const shouldCacheLocation = (category) => {
+    // Cache all locations for now, but prioritize cleanup
+    return true;
   };
 
   const isCacheValid = (cachedData) => {
     if (!cachedData || !cachedData.timestamp) return false;
     
-    const expiryTime = CACHE_CONFIG.EXPIRY_HOURS * 60 * 60 * 1000; // Convert to milliseconds
+    const expiryTime = CACHE_CONFIG.EXPIRY_HOURS * 60 * 60 * 1000;
     return Date.now() - cachedData.timestamp < expiryTime;
   };
 
@@ -67,6 +168,11 @@ const TouristInfoSection = ({ selectedLocation }) => {
     const cached = cache[locationName];
     
     if (cached && isCacheValid(cached)) {
+      // Update view count when accessed
+      cached.viewCount = (cached.viewCount || 0) + 1;
+      cache[locationName] = cached;
+      setCache(cache);
+      
       return {
         reels: cached.data,
         timestamp: cached.timestamp,
@@ -76,12 +182,22 @@ const TouristInfoSection = ({ selectedLocation }) => {
     return null;
   };
 
-  const setCachedReels = (locationName, reelsData) => {
+  const setCachedReels = (locationName, reelsData, category = 'unknown') => {
+    if (!shouldCacheLocation(category)) {
+      console.log('🚫 Skipping cache for category:', category);
+      return;
+    }
+
     const cache = getCache();
+    
     cache[locationName] = {
       data: reelsData,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      category: category,
+      viewCount: 1
     };
+    
+    console.log('✅ Caching:', locationName, 'with', reelsData.length, 'videos');
     setCache(cache);
   };
 
@@ -89,7 +205,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
     if (!selectedLocation) return;
     
     setIsRefreshing(true);
-    await fetchReelsData(true); // Force refresh
+    await fetchReelsData(true);
     setIsRefreshing(false);
   };
 
@@ -97,11 +213,15 @@ const TouristInfoSection = ({ selectedLocation }) => {
     if (!selectedLocation) return;
 
     const locationName = selectedLocation.name;
+    const category = selectedLocation.category || 'unknown';
+    
+    console.log('🔍 Fetching for:', locationName, 'Category:', category);
     
     // Check cache first (unless force refresh)
     if (!forceRefresh) {
       const cached = getCachedReels(locationName);
       if (cached) {
+        console.log('⚡ Loading from cache:', locationName);
         setReels(cached.reels);
         setLastUpdated(cached.timestamp);
         setShowScrollIndicator(true);
@@ -114,18 +234,18 @@ const TouristInfoSection = ({ selectedLocation }) => {
       setLoading(true);
       setError(null);
       
-      // IMPORTANT: Replace with your actual API key
       const apiKey = 'AIzaSyAl79EwWjJZ9w1IFFZlT7RvzORHoA7szYY';
       const searchQuery = `${selectedLocation.name} sarawak tourism shorts`;
       const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 
+      console.log('🌐 API Call:', locationName);
       const response = await fetch(apiUrl);
       const data = await response.json();
 
       if (!response.ok) {
         const errorMessage = data.error?.message || 'Unknown YouTube API error';
         
-        // If API fails, try to use cached data if available
+        // Fallback to cache if available
         const cached = getCachedReels(locationName);
         if (cached) {
           setReels(cached.reels);
@@ -153,14 +273,15 @@ const TouristInfoSection = ({ selectedLocation }) => {
       setLastUpdated(Date.now());
       
       // Cache the new data
-      setCachedReels(locationName, videos);
+      setCachedReels(locationName, videos, category);
       
       setShowScrollIndicator(true);
       setTimeout(() => setShowScrollIndicator(false), 3000);
+      
     } catch (error) {
       console.error('Fetch error:', error);
       
-      // Final fallback to cache if available
+      // Final fallback to cache
       const cached = getCachedReels(locationName);
       if (cached) {
         setReels(cached.reels);
@@ -191,6 +312,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
   }, []);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleDebug = () => setShowDebug(!showDebug);
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], { 
@@ -199,8 +321,29 @@ const TouristInfoSection = ({ selectedLocation }) => {
     });
   };
 
+  // One-click cache test function
+  const runCacheTest = () => {
+    const cache = getCache();
+    const testResults = {
+      'Cache System': 'Advanced Cache v2',
+      'Cache Key': CACHE_CONFIG.CACHE_KEY,
+      'Locations Cached': Object.keys(cache).length,
+      'Max Capacity': CACHE_CONFIG.MAX_CACHE_SIZE,
+      'Current Location Cached': cache[selectedLocation?.name] ? '✅' : '❌',
+      'Cache Size': `${(new Blob([JSON.stringify(cache)]).size/1024).toFixed(1)}KB`,
+      'Storage Used': `${((new Blob([JSON.stringify(cache)]).size/(5*1024*1024))*100).toFixed(1)}%`
+    };
+    
+    console.log('🧪 CACHE TEST RESULTS:');
+    console.table(testResults);
+    
+    alert(`Cache Test:\nLocations: ${Object.keys(cache).length}/${CACHE_CONFIG.MAX_CACHE_SIZE}\nSize: ${(new Blob([JSON.stringify(cache)]).size/1024).toFixed(1)}KB\nCurrent: ${cache[selectedLocation?.name] ? 'CACHED ✅' : 'NOT CACHED ❌'}`);
+  };
+
   return (
     <div className={`tourist-info-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
+      {showDebug && <CacheDebugPanel />}
+      
       <div className="collapse-toggle" onClick={toggleCollapse}>
         {isCollapsed ? <FiChevronLeft /> : <FiChevronRight />}
       </div>
@@ -224,6 +367,20 @@ const TouristInfoSection = ({ selectedLocation }) => {
                 Updated: {formatTime(lastUpdated)}
               </span>
             )}
+            <button 
+              onClick={toggleDebug}
+              style={{marginLeft: '10px', background: '#666', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '10px'}}
+              title="Toggle debug panel"
+            >
+              {showDebug ? '❌' : '🐛'}
+            </button>
+            <button 
+              onClick={runCacheTest}
+              style={{marginLeft: '5px', background: '#28a745', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '10px'}}
+              title="Test cache system"
+            >
+              🧪
+            </button>
           </div>
         )}
 
