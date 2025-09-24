@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane } from 'react-icons/fa';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
 import { MdManageAccounts } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
@@ -131,46 +131,116 @@ async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
     ...waypoints.map(wp => `${wp.lng},${wp.lat}`),
     `${end.lng},${end.lat}`
   ].join(';');
-  const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson`;
+  
+  // URL encode the coordinates to handle special characters
+  const encodedCoords = encodeURIComponent(coords);
+  const url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson`;
+  
+  console.log(`Fetching route for ${profile}:`, url);
+  
   const response = await fetch(url);
-  if (!response.ok) throw new Error('OSRM request failed');
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`OSRM request failed for ${profile}:`, response.status, errorText);
+    throw new Error(`OSRM request failed: ${response.status} - ${errorText}`);
+  }
   const data = await response.json();
+  
+  // Check if the response has routes
+  if (!data.routes || data.routes.length === 0) {
+    throw new Error(`No routes found in OSRM response for ${profile}`);
+  }
+  
   return data;
 }
 
-// GraphHopper routing helper (for bus and motorbike)
-async function fetchGraphHopperRoute(start, end, waypoints = [], profile = 'car') {
+// OSRM routing helper with multiple alternatives
+async function fetchOSRMRouteAlternatives(start, end, waypoints = [], profile = 'driving', alternatives = 3) {
   const coords = [
-    `${start.lat},${start.lng}`,
-    ...waypoints.map(wp => `${wp.lat},${wp.lng}`),
-    `${end.lat},${end.lng}`
+    `${start.lng},${start.lat}`,
+    ...waypoints.map(wp => `${wp.lng},${wp.lat}`),
+    `${end.lng},${end.lat}`
   ].join(';');
   
-  // Using free GraphHopper API (limited requests)
-  const url = `https://graphhopper.com/api/1/route?point=${coords}&vehicle=${profile}&instructions=false&calc_points=true&key=demo&type=json`;
+  // URL encode the coordinates to handle special characters
+  const encodedCoords = encodeURIComponent(coords);
+  
+  // For walking and cycling, don't use alternatives parameter as it may not be supported
+  let url;
+  if (profile === 'walking' || profile === 'cycling') {
+    url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson`;
+  } else {
+    url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson&alternatives=true&steps=false&number=${alternatives}`;
+  }
+  
+  console.log(`Fetching alternatives for ${profile}:`, url);
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`OSRM request failed for ${profile}:`, response.status, errorText);
+    throw new Error(`OSRM request failed: ${response.status} - ${errorText}`);
+  }
+  const data = await response.json();
+  
+  // Check if the response has routes
+  if (!data.routes || data.routes.length === 0) {
+    throw new Error(`No routes found in OSRM response for ${profile}`);
+  }
+  
+  return data;
+}
+
+// GraphHopper routing helper (using your API key)
+async function fetchGraphHopperRoute(start, end, waypoints = [], profile = 'car') {
+  // GraphHopper expects multiple 'point' parameters, one for each coordinate
+  const allPoints = [start, ...waypoints, end];
+  
+  // Get API key from environment variables (Vite uses import.meta.env)
+  const apiKey = import.meta.env?.VITE_GRAPHHOPPER;
+  
+  if (!apiKey) {
+    console.warn('GraphHopper API key not found, using demo key');
+  }
+  
+  const key = apiKey || 'demo';
+  
+  // Build URL with multiple point parameters
+  const pointParams = allPoints.map(point => `point=${point.lat},${point.lng}`).join('&');
+  const url = `https://graphhopper.com/api/1/route?${pointParams}&vehicle=${profile}&instructions=false&calc_points=true&points_encoded=false&key=${key}&type=json`;
   
   try {
+    console.log(`Fetching GraphHopper route with ${apiKey ? 'your API key' : 'demo key'}:`, url);
+    console.log(`Points:`, allPoints);
+    console.log(`Points count: ${allPoints.length}`);
+    
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`GraphHopper request failed: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`GraphHopper request failed: ${response.status}`, errorText);
+      throw new Error(`GraphHopper request failed: ${response.status} - ${errorText}`);
     }
     const data = await response.json();
     
+    // Debug: Log the full response structure
+    console.log('GraphHopper response:', data);
+    
     // Check if GraphHopper returned valid data
     if (!data.paths || !data.paths[0]) {
+      console.error('GraphHopper response structure:', data);
       throw new Error('No route found in GraphHopper response');
     }
     
     return data;
   } catch (error) {
-    console.warn('GraphHopper failed, falling back to OSRM driving:', error);
-    // Fallback to OSRM driving
-    return await fetchOSRMRoute(start, end, waypoints, 'driving');
+    console.warn('GraphHopper failed:', error);
+    throw error;
   }
 }
 
-// Alternative: OpenRouteService (free tier available)
-async function fetchOpenRouteServiceRoute(start, end, waypoints = [], profile = 'driving-car') {
+
+// Valhalla routing helper (free and open source)
+async function fetchValhallaRoute(start, end, waypoints = [], profile = 'auto') {
   const coords = [
     [start.lng, start.lat],
     ...waypoints.map(wp => [wp.lng, wp.lat]),
@@ -178,100 +248,222 @@ async function fetchOpenRouteServiceRoute(start, end, waypoints = [], profile = 
   ];
   
   const body = {
-    coordinates: coords,
-    profile: profile,
-    format: 'geojson'
+    locations: coords.map(coord => ({ lat: coord[1], lon: coord[0] })),
+    costing: profile,
+    directions_options: {
+      units: 'kilometers'
+    }
   };
   
-  // You'll need to get a free API key from openrouteservice.org
-  const apiKey = process.env.REACT_APP_ORS_API_KEY || 'demo';
-  
   try {
-    const response = await fetch(`https://api.openrouteservice.org/v2/directions/${profile}/geojson`, {
+    const response = await fetch('https://valhalla1.openstreetmap.de/route', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': apiKey
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(body)
     });
     
-    if (!response.ok) throw new Error('ORS request failed');
+    if (!response.ok) {
+      throw new Error(`Valhalla request failed: ${response.status}`);
+    }
+    
     const data = await response.json();
+    
+    if (!data.trip || !data.trip.legs) {
+      throw new Error('No route found in Valhalla response');
+    }
+    
     return data;
   } catch (error) {
-    console.warn('ORS failed, falling back to OSRM:', error);
-    return await fetchOSRMRoute(start, end, waypoints, 'driving');
+    console.warn('Valhalla failed:', error);
+    throw error;
   }
 }
 
 const travelModes = {
-  Car: { service: 'osrm', profile: 'driving' },
-  Bus: { service: 'osrm', profile: 'driving' }, // Use OSRM with bus multiplier
-  Walking: { service: 'osrm', profile: 'walking' },
-  Bicycle: { service: 'osrm', profile: 'cycling' },
-  Motorbike: { service: 'osrm', profile: 'driving' }, // Use OSRM with motorbike multiplier
+  Car: { service: 'graphhopper', profile: 'car', fallbackService: 'osrm', fallbackProfile: 'driving' },
+  Bus: { service: 'graphhopper', profile: 'car', fallbackService: 'osrm', fallbackProfile: 'driving', multiplier: { time: 1.5, distance: 1.1 } }, // Bus takes longer due to stops
+  Walking: { service: 'graphhopper', profile: 'foot', fallbackService: 'osrm', fallbackProfile: 'walking' },
+  Bicycle: { service: 'graphhopper', profile: 'bike', fallbackService: 'osrm', fallbackProfile: 'cycling' },
+  Motorbike: { service: 'graphhopper', profile: 'motorcycle', fallbackService: 'osrm', fallbackProfile: 'driving', multiplier: { time: 0.8, distance: 0.95 } }, // Motorbike can be faster
 };
 
-// Transport mode multipliers (relative to car)
-const transportMultipliers = {
-  Car: { time: 1.0, distance: 1.0 },
-  Bus: { time: 1.8, distance: 1.2 }, // Slower, longer routes (bus stops, traffic)
-  Walking: { time: 4.0, distance: 0.9 }, // Much slower, shorter direct routes
-  Bicycle: { time: 2.5, distance: 1.0 }, // Slower than car
-  Motorbike: { time: 0.7, distance: 0.95 }, // Faster, shorter routes (lane splitting)
-};
-
-// Enhanced OSRM routing with transport adjustments
-async function fetchAdjustedRoute(start, end, waypoints = [], vehicle = 'Car') {
-  // Always use OSRM driving profile as base
-  const osrmData = await fetchOSRMRoute(start, end, waypoints, 'driving');
+// Function to fetch route with alternatives for a specific vehicle
+async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 'Car') {
+  const routeConfig = travelModes[vehicle];
   
-  if (osrmData.routes && osrmData.routes[0]) {
-    const baseRoute = osrmData.routes[0];
-    const multiplier = transportMultipliers[vehicle];
+  try {
+    let routeData;
     
-    // Adjust duration and distance based on transport mode
-    const adjustedDuration = baseRoute.duration * multiplier.time;
-    const adjustedDistance = baseRoute.distance * multiplier.distance;
+            // Try primary service first
+            try {
+              if (routeConfig.service === 'graphhopper') {
+                routeData = await fetchGraphHopperRoute(start, end, waypoints, routeConfig.profile);
+                
+                // Check if GraphHopper returned valid coordinates
+                if (routeData.paths && routeData.paths.length > 0) {
+                  const hasValidCoordinates = routeData.paths.some(path => {
+                    return (path.points && path.points.coordinates) || 
+                           (path.points && Array.isArray(path.points)) ||
+                           (path.geometry && path.geometry.coordinates) ||
+                           path.coordinates;
+                  });
+                  
+                  if (!hasValidCoordinates) {
+                    console.warn('GraphHopper returned route without coordinates, trying OSRM fallback');
+                    throw new Error('GraphHopper missing coordinates');
+                  }
+                }
+              } else if (routeConfig.service === 'valhalla') {
+                routeData = await fetchValhallaRoute(start, end, waypoints, routeConfig.profile);
+              } else if (routeConfig.service === 'osrm') {
+                if (vehicle === 'Walking' || vehicle === 'Bicycle') {
+                  routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.profile);
+                } else {
+                  try {
+                    routeData = await fetchOSRMRouteAlternatives(start, end, waypoints, routeConfig.profile, 3);
+                  } catch (alternativesError) {
+                    routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.profile);
+                  }
+                }
+              }
+            } catch (primaryError) {
+              console.warn(`Primary service failed for ${vehicle}, trying fallback:`, primaryError);
+              
+              // Fallback to OSRM
+              if (routeConfig.fallbackService === 'osrm') {
+                if (vehicle === 'Walking' || vehicle === 'Bicycle') {
+                  routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.fallbackProfile);
+                } else {
+                  try {
+                    routeData = await fetchOSRMRouteAlternatives(start, end, waypoints, routeConfig.fallbackProfile, 3);
+                  } catch (alternativesError) {
+                    routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.fallbackProfile);
+                  }
+                }
+              } else if (routeConfig.fallbackService === 'valhalla') {
+                routeData = await fetchValhallaRoute(start, end, waypoints, routeConfig.fallbackProfile);
+              }
+            }
+
+    // Handle different response formats
+    let routes = [];
     
-    // For walking/cycling, use appropriate OSRM profile
-    let coords = baseRoute.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    
-    if (vehicle === 'Walking') {
-      try {
-        const walkingData = await fetchOSRMRoute(start, end, waypoints, 'walking');
-        if (walkingData.routes && walkingData.routes[0]) {
-          coords = walkingData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    if (routeData.paths && routeData.paths.length > 0) {
+      // GraphHopper response format
+      routes = routeData.paths.map(path => {
+        
+        // Check different possible coordinate structures in GraphHopper response
+        let coordinates = [];
+        
+        if (path.points && path.points.coordinates) {
+          // Standard GraphHopper format
+          coordinates = path.points.coordinates;
+        } else if (path.points && Array.isArray(path.points)) {
+          // Alternative format where points is directly an array
+          coordinates = path.points;
+        } else if (path.geometry && path.geometry.coordinates) {
+          // Geometry format
+          coordinates = path.geometry.coordinates;
+        } else if (path.coordinates) {
+          // Direct coordinates format
+          coordinates = path.coordinates;
+        } else {
+          console.warn('GraphHopper path missing coordinates in all expected formats:', path);
+          
+          // Return empty coordinates - this will be handled by the fallback logic above
+          return {
+            geometry: { coordinates: [] },
+            distance: path.distance || 0,
+            duration: (path.time || 0) / 1000,
+            legs: []
+          };
         }
-      } catch (error) {
-        console.warn('Walking route failed, using driving route:', error);
-      }
-    } else if (vehicle === 'Bicycle') {
-      try {
-        const cyclingData = await fetchOSRMRoute(start, end, waypoints, 'cycling');
-        if (cyclingData.routes && cyclingData.routes[0]) {
-          coords = cyclingData.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        }
-      } catch (error) {
-        console.warn('Cycling route failed, using driving route:', error);
-      }
+        
+        return {
+          geometry: {
+            coordinates: coordinates.map(([lng, lat]) => [lng, lat])
+          },
+          distance: path.distance,
+          duration: path.time / 1000, // Convert ms to seconds
+          legs: [],
+          roadInfo: path.instructions ? path.instructions.map(instruction => ({
+            road: instruction.street_name || 'Unknown Road',
+            distance: instruction.distance,
+            duration: instruction.time / 1000,
+            direction: instruction.text
+          })) : []
+        };
+      });
+    } else if (routeData.trip && routeData.trip.legs) {
+      // Valhalla response format
+      const totalDistance = routeData.trip.summary.length * 1000; // Convert km to meters
+      const totalDuration = routeData.trip.summary.time; // Already in seconds
+      
+      routes = [{
+        geometry: {
+          coordinates: routeData.trip.legs.flatMap(leg => 
+            leg.shape.map(coord => [coord[1], coord[0]]) // Valhalla uses [lat, lng], we need [lng, lat]
+          )
+        },
+        distance: totalDistance,
+        duration: totalDuration,
+        legs: routeData.trip.legs,
+        roadInfo: routeData.trip.legs.map(leg => ({
+          road: leg.summary?.road_class || 'Unknown Road',
+          distance: leg.summary?.length * 1000 || 0,
+          duration: leg.summary?.time || 0,
+          direction: leg.summary?.road_class || 'Continue'
+        }))
+      }];
+    } else if (routeData.routes && routeData.routes.length > 0) {
+      // OSRM response format
+      routes = routeData.routes.map(route => ({
+        ...route,
+        roadInfo: route.legs ? route.legs.flatMap(leg => 
+          leg.steps ? leg.steps.map(step => ({
+            road: step.name || 'Unknown Road',
+            distance: step.distance,
+            duration: step.duration,
+            direction: step.maneuver?.instruction || 'Continue'
+          })) : []
+        ) : []
+      }));
     }
     
-    return {
-      routes: [{
-        ...baseRoute,
-        geometry: { coordinates: coords.map(([lat, lng]) => [lng, lat]) },
-        duration: adjustedDuration,
-        distance: adjustedDistance
-      }]
-    };
+    if (routes.length === 0) {
+      throw new Error('No routes found in response');
+    }
+    
+    // Check if all routes have empty coordinates
+    const allRoutesEmpty = routes.every(route => !route.geometry.coordinates || route.geometry.coordinates.length === 0);
+    if (allRoutesEmpty) {
+      console.warn('All routes have empty coordinates, this should trigger fallback');
+      throw new Error('All routes have empty coordinates');
+    }
+    
+    
+    // Apply multipliers if they exist (for Bus and Motorbike only)
+    if (routeConfig.multiplier && routes && routes.length > 0) {
+      routes.forEach(route => {
+        if (route.duration && route.distance) {
+          route.duration = route.duration * routeConfig.multiplier.time;
+          route.distance = route.distance * routeConfig.multiplier.distance;
+        }
+      });
+    }
+    
+    return { routes };
+  } catch (error) {
+    console.error(`Error fetching ${vehicle} routes:`, error);
+    throw error;
   }
-  
-  throw new Error('No route found');
 }
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange }) => {
+
+
+const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -283,11 +475,11 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
   const [showLayersPanel, setShowLayersPanel] = useState(false);
   const [mapType, setMapType] = useState('roadmap');
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [routes, setRoutes] = useState([]);
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
   const [waypointCoords, setWaypointCoords] = useState([]); // Array of {lat, lng} or null
+  const [routeAlternatives, setRouteAlternatives] = useState([]); // Local state for route alternatives
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0); // Local state for selected route
   const [nearbyPlaces, setNearbyPlaces] = useState([]); // Local state for nearby places
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { openRecent } = useAuth();
@@ -306,7 +498,8 @@ const handleClearStartingPoint = () => {
   setOsrmWaypoints([]);
   setAddDestinations([]);
   setWaypointCoords([]);
-  setRoutes([]);
+  setRouteAlternatives([]);
+  setSelectedRouteIndex(0);
   setNearbyPlaces([]); // Clear nearby places
 };
 
@@ -317,7 +510,8 @@ const handleClearDestination = () => {
   setOsrmWaypoints([]);
   setAddDestinations([]);
   setWaypointCoords([]);
-  setRoutes([]);
+  setRouteAlternatives([]);
+  setSelectedRouteIndex(0);
   setNearbyPlaces([]); // Clear nearby places
 };
 
@@ -432,6 +626,68 @@ const handleClearDestination = () => {
     return km >= 1 ? `${km.toFixed(1)} km` : `${meters} m`;
   };
 
+  // Function to generate directions link
+  const generateDirectionsLink = () => {
+    if (!startingPointCoords || !destinationCoords) {
+      toast.error('Please set both starting point and destination');
+      return null;
+    }
+
+    const start = `${startingPointCoords.lat},${startingPointCoords.lng}`;
+    const end = `${destinationCoords.lat},${destinationCoords.lng}`;
+    
+    // Create a Google Maps directions link
+    const googleMapsLink = `https://www.google.com/maps/dir/${start}/${end}`;
+    
+    // Create a custom app link with route data
+    const appLink = `${window.location.origin}?route=true&start=${start}&end=${end}&vehicle=${selectedVehicle}`;
+    
+    return { googleMapsLink, appLink };
+  };
+
+  // Function to copy directions link
+  const copyDirectionsLink = async () => {
+    const links = generateDirectionsLink();
+    if (!links) return;
+
+    try {
+      // Copy the Google Maps link to clipboard
+      await navigator.clipboard.writeText(links.googleMapsLink);
+      toast.success('Directions link copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      toast.error('Failed to copy link. Please try again.');
+    }
+  };
+
+  // Function to share directions
+  const shareDirections = async () => {
+    const links = generateDirectionsLink();
+    if (!links) return;
+
+    const shareData = {
+      title: 'Directions',
+      text: `Directions from ${startingPoint} to ${destination}`,
+      url: links.googleMapsLink
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success('Directions shared successfully!');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(links.googleMapsLink);
+        toast.success('Directions link copied to clipboard!');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Failed to share:', error);
+        toast.error('Failed to share directions. Please try again.');
+      }
+    }
+  };
+
   // Toggle functions
   const toggleRecentHistory = () => {
     if (isExpanded) setIsExpanded(false);
@@ -519,11 +775,32 @@ const handleClearDestination = () => {
         : place.geometry.location.lng
     };
     
-    setSelectedPlace({ 
+    const placeData = { 
       ...place, 
       location,
-      // Set higher zoom level for place selection
+      latitude: location.lat,
+      longitude: location.lng,
+      name: place.name,
+      type: place.type || 'Nearby Place',
+      description: place.vicinity || place.type || 'Nearby place'
+    };
+    
+    setSelectedPlace(placeData);
+    
+    // Also set this as a selected search bar place to show on map
+    setSelectedSearchBarPlace({
+      name: place.name,
+      latitude: location.lat,
+      longitude: location.lng,
+      description: place.vicinity || place.type || 'Nearby place',
+      type: place.type || 'Nearby Place'
     });
+
+    // Trigger a custom event to notify the map component to zoom and show info window
+    const customEvent = new CustomEvent('nearbyPlaceSelected', {
+      detail: placeData
+    });
+    window.dispatchEvent(customEvent);
   };
 
   // Fetch nearby places using Overpass API (free alternative to Google Places)
@@ -614,83 +891,44 @@ const handleVehicleClick = async (vehicle) => {
       })
     ).then(arr => arr.filter(Boolean));
 
-    // Get routing service configuration
-    const routeConfig = travelModes[vehicle];
-    let routeData;
+    // Fetch multiple route alternatives for the selected vehicle
+    const routeData = await fetchRouteWithAlternatives(startCoords, endCoords, waypointsCoords, vehicle);
 
-    // Route based on service type
-    switch (routeConfig.service) {
-      case 'osrm':
-        if (vehicle === 'Walking' || vehicle === 'Bicycle') {
-          // Use direct OSRM for walking/cycling
-          routeData = await fetchOSRMRoute(
-            startCoords,
-            endCoords,
-            waypointsCoords,
-            routeConfig.profile
-          );
-        } else {
-          // Use adjusted routing for other modes
-          routeData = await fetchAdjustedRoute(
-            startCoords,
-            endCoords,
-            waypointsCoords,
-            vehicle
-          );
-        }
-        break;
-      case 'graphhopper':
-        routeData = await fetchGraphHopperRoute(
-          startCoords,
-          endCoords,
-          waypointsCoords,
-          routeConfig.profile
-        );
-        break;
-      case 'ors':
-        routeData = await fetchOpenRouteServiceRoute(
-          startCoords,
-          endCoords,
-          waypointsCoords,
-          routeConfig.profile
-        );
-        break;
-      default:
-        throw new Error(`Unknown routing service: ${routeConfig.service}`);
-    }
+    if (routeData.routes && routeData.routes.length > 0) {
+      // Process all route alternatives
+      const alternatives = routeData.routes.map((route, index) => {
+        
+        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]); // Convert from [lng, lat] to [lat, lng] for Leaflet
+        
+        return {
+          index,
+          distance: route.distance,
+          duration: route.duration,
+          coords,
+          vehicle,
+          roadInfo: route.roadInfo || []
+        };
+      });
 
-    // Process route data (handle different response formats)
-    if (routeData.routes && routeData.routes[0]) {
-      let coords, distance, duration;
+      setRouteAlternatives(alternatives);
+      setSelectedRouteIndex(0); // Select the first (fastest) route by default
       
-      if (routeConfig.service === 'graphhopper') {
-        // GraphHopper response format
-        const route = routeData.paths && routeData.paths[0] ? routeData.paths[0] : null;
-        if (!route) {
-          throw new Error('Invalid GraphHopper response format');
-        }
-        coords = route.points.coordinates.map(([lng, lat]) => [lat, lng]);
-        distance = route.distance;
-        duration = route.time / 1000; // Convert ms to seconds
-      } else if (routeConfig.service === 'ors') {
-        // OpenRouteService response format
-        const route = routeData.features && routeData.features[0] ? routeData.features[0] : null;
-        if (!route) {
-          throw new Error('Invalid ORS response format');
-        }
-        coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        distance = route.properties.summary.distance;
-        duration = route.properties.summary.duration;
+      // Set the first route as active
+      const firstRoute = alternatives[0];
+      
+      // Ensure we have valid coordinates
+      if (firstRoute.coords && firstRoute.coords.length > 0) {
+        setOsrmRouteCoords(firstRoute.coords);
+        setRouteSummary({ 
+          distance: firstRoute.distance, 
+          duration: firstRoute.duration,
+          vehicle: firstRoute.vehicle,
+          roadInfo: firstRoute.roadInfo
+        });
       } else {
-        // OSRM response format (including adjusted routes)
-        const route = routeData.routes[0];
-        coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        distance = route.distance;
-        duration = route.duration;
+        console.error('First route has no coordinates!');
+        toast.error('Route calculation failed: No coordinates found');
       }
-
-      setOsrmRouteCoords(coords);
-      setRouteSummary({ distance, duration });
       
       // Fetch nearby places around the destination
       try {
@@ -702,45 +940,80 @@ const handleVehicleClick = async (vehicle) => {
       }
       
       // Show success message with transport mode
-      toast.success(`${vehicle} route calculated successfully!`);
+      const message = alternatives.length > 1 
+        ? `${vehicle} routes calculated successfully! ${alternatives.length} options available.`
+        : `${vehicle} route calculated successfully!`;
+      toast.success(message);
+    } else {
+      console.error('No routes found in routeData:', routeData);
+      setRouteSummary(null);
+      setOsrmRouteCoords([]);
+      setRouteAlternatives([]);
+      setSelectedRouteIndex(0);
+      setNearbyPlaces([]);
+      toast.error(`No routes found for ${vehicle} transport mode`);
+    }
+  } catch (error) {
+    console.error('Routing error:', error);
+    
+    // Create a fallback straight-line route if we have start and end coordinates
+    if (startCoords && endCoords) {
+      console.log('Creating fallback straight-line route');
+      const fallbackCoords = [
+        [startCoords.lat, startCoords.lng],
+        [endCoords.lat, endCoords.lng]
+      ];
+      
+      // Calculate straight-line distance
+      const distance = Math.sqrt(
+        Math.pow(endCoords.lat - startCoords.lat, 2) + 
+        Math.pow(endCoords.lng - startCoords.lng, 2)
+      ) * 111000; // Convert to meters (rough approximation)
+      
+      const fallbackRoute = {
+        index: 0,
+        distance: distance,
+        duration: distance / (vehicle === 'Walking' ? 1.4 : vehicle === 'Bicycle' ? 4.2 : 13.9), // Rough speed in m/s
+        coords: fallbackCoords,
+        vehicle
+      };
+      
+      setRouteAlternatives([fallbackRoute]);
+      setSelectedRouteIndex(0);
+      setOsrmRouteCoords(fallbackCoords);
+      setRouteSummary({ 
+        distance: fallbackRoute.distance, 
+        duration: fallbackRoute.duration,
+        vehicle: fallbackRoute.vehicle
+      });
+      
+      toast.warning(`Using fallback route for ${vehicle}. API routing failed: ${error.message}`);
     } else {
       setRouteSummary(null);
       setOsrmRouteCoords([]);
+      setRouteAlternatives([]);
+      setSelectedRouteIndex(0);
       setNearbyPlaces([]);
-      toast.error(`No route found for ${vehicle} transport mode`);
+      
+      // Show more helpful error messages
+      if (vehicle === 'Walking' && error.message.includes('walking route')) {
+        toast.error('Walking route not available. The route may not be accessible on foot. Try using a different transport mode.');
+      } else if (vehicle === 'Bicycle' && error.message.includes('cycling route')) {
+        toast.error('Cycling route not available. The route may not be accessible by bicycle. Try using a different transport mode.');
+      } else {
+        toast.error(`Failed to calculate routes for ${vehicle}: ${error.message}`);
+      }
     }
-  } catch (error) {
-    setRouteSummary(null);
-    setOsrmRouteCoords([]);
-    setNearbyPlaces([]);
-    console.error('Routing error:', error);
-    toast.error(`Failed to calculate route for ${vehicle}: ${error.message}`);
   } finally {
     setIsLoading(false);
   }
 };
 
-useEffect(() => {
-  // Check that all required coordinates are set
-  if (
-    !startingPointCoords ||
-    !destinationCoords ||
-    addDestinations.length !== waypointCoords.length ||
-    waypointCoords.some((wp, idx) => addDestinations[idx]?.trim() && !wp)
-  ) {
-    return;
-  }
-
-  const debounce = setTimeout(() => {
-    handleVehicleClick(selectedVehicle);
-  }, 600);
-
-  return () => clearTimeout(debounce);
-}, [startingPointCoords, destinationCoords, waypointCoords, addDestinations, selectedVehicle]);
+// Removed automatic route calculation - routes should only be calculated when user clicks vehicle buttons
 
 useEffect(() => {
   setOsrmWaypoints(waypointCoords.filter(Boolean));
-}, [waypointCoords, setOsrmWaypoints]);
+}, [waypointCoords]);
 
 useEffect(() => {
     // Routing is active if both start and end are set (and valid), or if there are any waypoints
@@ -749,7 +1022,33 @@ useEffect(() => {
       !!destinationCoords &&
       (addDestinations.length === 0 || waypointCoords.some(Boolean));
     setIsRoutingActive(routingActive);
-  }, [startingPointCoords, destinationCoords, addDestinations, waypointCoords, setIsRoutingActive]);
+  }, [startingPointCoords, destinationCoords, addDestinations, waypointCoords]);
+
+  // Notify parent component when route alternatives change
+  useEffect(() => {
+    if (onRouteAlternativesChange) {
+      onRouteAlternativesChange(routeAlternatives, selectedRouteIndex);
+    }
+  }, [routeAlternatives, selectedRouteIndex, onRouteAlternativesChange]);
+
+  // Notify parent component when nearby places change
+  useEffect(() => {
+    if (onNearbyPlacesChange) {
+      onNearbyPlacesChange(nearbyPlaces);
+    }
+  }, [nearbyPlaces, onNearbyPlacesChange]);
+
+  // Notify parent component when route info changes
+  useEffect(() => {
+    if (onRouteInfoChange) {
+      onRouteInfoChange({
+        startingPoint,
+        destination,
+        startingPointCoords,
+        destinationCoords
+      });
+    }
+  }, [startingPoint, destination, startingPointCoords, destinationCoords, onRouteInfoChange]);
   
 
   return (
@@ -833,6 +1132,10 @@ useEffect(() => {
     
       <div className={`side-panel100 ${isExpanded ? 'expanded' : ''}`}>
         <div className="transport-section">
+            <div className="section-label">
+              <FaMapMarkerAlt className="section-icon" />
+              <span>Map Route Direction</span>
+            </div>
             <div className="transport-row">
               {['Car', 'Bus', 'Walking'].map((v) => (
                 <div key={v} className={`transport-option ${selectedVehicle === v ? 'active' : ''}`} 
@@ -856,7 +1159,7 @@ useEffect(() => {
               </div>
             </div>
           </div>
-
+              
           <div className="input-container">
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon red" />
@@ -870,7 +1173,7 @@ useEffect(() => {
                     lng: feature.geometry.coordinates[0]
                   });
                 }}
-                placeholder="Choosing Starting point"
+                placeholder="Enter starting location..."
               />
               {startingPoint && (
                 <button 
@@ -898,7 +1201,7 @@ useEffect(() => {
                     lng: feature.geometry.coordinates[0]
                   });
                 }}
-                placeholder="Choosing Destination"
+                placeholder="Enter destination..."
               />
               {destination && (
                 <button 
@@ -961,33 +1264,40 @@ useEffect(() => {
             </div>
           ))}
 
-          <div className="destination-buttons">
-            <button className="add-destination" onClick={handleAddDestination}>
-              <MdAddLocationAlt style={{ marginRight: '5px', color:'purple', height:'18px', width:'18px' }}/> Add Destination
-            </button>
-            <button 
-              className="current-location-button" 
-              onClick={handleAddCurrentLocation}
-              title="Use my current location"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="location-error"></span>
-                  Locating...
-                </>
-              ) : (
-                <>
-                  <FaLocationArrow style={{ marginRight: '5px' }} />
-                  My Location
-                </>
-              )}
-            </button>
+          <div className="destination-actions-container">
+            <div className="destination-actions-buttons">
+              <button className="add-destination-button" onClick={handleAddDestination}>
+                <MdAddLocationAlt className="action-icon" />
+                Add Destination
+              </button>
+              <button 
+                className="current-location-button" 
+                onClick={handleAddCurrentLocation}
+                title="Use my current location"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="location-error"></span>
+                    Locating...
+                  </>
+                ) : (
+                  <>
+                    <FaLocationArrow className="action-icon" />
+                    My Location
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {isLoading && <div className="loading-message">Calculating route...</div>}
             {routeSummary && (
               <div className="route-summary-container">
+                <div className="route-summary-header">
+                  <FaMapMarkerAlt className="section-icon" />
+                  <h4>Route Summary</h4>
+                </div>
                 <div className="route-summary-item">
                   <FaMapMarkerAlt className="summary-icon" />
                   <span className="summary-label">Distance:</span>
@@ -998,23 +1308,37 @@ useEffect(() => {
                   <span className="summary-label">Duration:</span>
                   <span className="summary-value">{(routeSummary.duration / 60).toFixed(0)} min</span>
                 </div>
+                <div className="route-summary-item">
+                  <FaCar className="summary-icon" />
+                  <span className="summary-label">Transport:</span>
+                  <span className="summary-value">{routeSummary.vehicle}</span>
+                </div>
+                {routeSummary.roadInfo && routeSummary.roadInfo.length > 0 && (
+                  <div className="route-summary-item">
+                    <FaMapMarkerAlt className="summary-icon" />
+                    <span className="summary-label">Main Roads:</span>
+                    <span className="summary-value">
+                      {routeSummary.roadInfo
+                        .filter(road => road.road && road.road !== 'Unknown Road')
+                        .slice(0, 3)
+                        .map(road => road.road)
+                        .join(', ') || 'Various roads'}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
 {isLoading ? (
-            <div className="loading-message">Calculating routes...</div>
+            <div className="loading-message">Loading nearby places...</div>
           ) : routeSummary ? (
             <>
               {/* Show route summary and nearby places when we have a route */}
               <div className="route-footer">
-                <div className="send-copy-row">
-                  <div className="send-directions-text">📩 Send Directions</div>
-                  <div className="copy-link">COPY LINK</div>
+                <div className="explore-nearby-text">
+                  <FaCompass className="explore-icon" />
+                  Explore Nearby
                 </div>
-                
-                <hr />
-
-                <div className="explore-nearby-text">🔍 Explore Nearby</div>
                 {nearbyPlaces.length > 0 ? (
                   <div className="nearby-places-container100">
                     {nearbyPlaces.map((place, index) => (
@@ -1025,7 +1349,10 @@ useEffect(() => {
                       >
                         <div className="place-name100">{place.name}</div>
                         <div className="place-address100">{place.vicinity}</div>
-                        <div className="place-type100">📍 {place.type}</div>
+                        <div className="place-type100">
+                          <FaMapPin className="place-type-icon" />
+                          {place.type}
+                        </div>
                         {place.rating && (
                           <div className="place-rating100">
                             ⭐ {place.rating} ({place.user_ratings_total || 0} reviews)
@@ -1042,6 +1369,80 @@ useEffect(() => {
               </div>
             </>
           ) : null}
+
+          {routeSummary && (
+  <div className="directions-actions-container">
+    <div className="directions-actions-header">
+      <FaShare className="section-icon" />
+      <h4>Share Directions</h4>
+    </div>
+              <div className="directions-actions-buttons">
+                <button 
+                  className="copy-directions-button"
+                  onClick={copyDirectionsLink}
+                  title="Copy Google Maps directions link"
+                >
+                  <FaCopy className="action-icon" />
+                  Copy Link
+                </button>
+                <button 
+                  className="share-directions-button"
+                  onClick={shareDirections}
+                  title="Share directions"
+                >
+                  <FaShare className="action-icon" />
+                  Share
+                </button>
+              </div>
+              <div className="directions-info">
+                <small>Links will open in Google Maps for navigation</small>
+              </div>
+            </div>
+          )}
+
+          {routeSummary && routeAlternatives.length > 1 && (
+            <div className="route-alternatives-container">
+              <div className="route-alternatives-header">
+                <h4>Route Options</h4>
+                <span className="route-count">{routeAlternatives.length} routes available</span>
+              </div>
+              <div className="route-alternatives-list">
+                {routeAlternatives.map((route, index) => (
+                  <div 
+                    key={index}
+                    className={`route-alternative-item ${index === selectedRouteIndex ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedRouteIndex(index);
+                      setOsrmRouteCoords(route.coords);
+                      setRouteSummary({ 
+                        distance: route.distance, 
+                        duration: route.duration,
+                        vehicle: route.vehicle,
+                        roadInfo: route.roadInfo
+                      });
+                    }}
+                  >
+                    <div className="route-alternative-header">
+                      <div className="route-info">
+                        <span className="route-number">Route {index + 1}</span>
+                        {index === 0 && <span className="fastest-badge">Fastest</span>}
+                      </div>
+                    </div>
+                    <div className="route-alternative-details">
+                      <div className="route-detail-item">
+                        <FaClock className="detail-icon" />
+                        <span>{formatDuration(route.duration)}</span>
+                      </div>
+                      <div className="route-detail-item">
+                        <FaMapMarkerAlt className="detail-icon" />
+                        <span>{formatDistance(route.distance)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           </div>
             {showBusiness && (

@@ -393,3 +393,82 @@
     background-color: rgba(200, 200, 200, 0.4);
   }
 }
+
+/* ================================
+   10. CACHE CONTROLS
+================================== */
+.cache-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 12px;
+}
+
+.refresh-btn {
+  background: #007aff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #0051cc;
+  transform: scale(1.1);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-btn.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.last-updated {
+  color: #666;
+  font-size: 11px;
+}
+
+/* ================================
+   11. ENHANCED ERROR STATES
+================================== */
+.error.warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px;
+}
+
+.loading, .error, .no-reels {
+  padding: 25px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  border-radius: 12px;
+  margin: 10px;
+  background: rgba(255,255,255,0.9);
+}
+
+.error {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}

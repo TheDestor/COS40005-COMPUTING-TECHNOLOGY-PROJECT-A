@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
@@ -39,6 +39,36 @@ const sarawakBounds = [
   [5.5, 115.5],   // Northeast corner (lat, lng)
 ];
 const sarawakCenter = [2.5, 112.5]; // Rough center of Sarawak
+
+// Custom waypoint marker with number
+const createWaypointMarkerIcon = (number) => {
+  const iconHtml = `
+    <div style="
+      background: #fd7e14;
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    ">
+      ${number}
+    </div>
+  `;
+  
+  return L.divIcon({
+    html: iconHtml,
+    className: 'custom-waypoint-marker',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
+  });
+};
 
 // Helper to create a Leaflet icon from an image
 const createIcon = (iconUrl) =>
@@ -251,6 +281,15 @@ function MapComponentTesting({  }) {
   const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
   const [osrmWaypoints, setOsrmWaypoints] = useState([]);
   const [isRoutingActive, setIsRoutingActive] = useState(false);
+  const [routeAlternatives, setRouteAlternatives] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [routeInfo, setRouteInfo] = useState({
+    startingPoint: '',
+    destination: '',
+    startingPointCoords: null,
+    destinationCoords: null
+  });
   const [baseLayer, setBaseLayer] = useState({
     id: 'osm',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -408,6 +447,52 @@ function MapComponentTesting({  }) {
     closeInfoWindow();
   }, [baseLayer]);
 
+  // Memoize callback functions to prevent infinite re-renders
+  const handleRouteAlternativesChange = useCallback((alternatives, selectedIndex) => {
+    setRouteAlternatives(alternatives);
+    setSelectedRouteIndex(selectedIndex);
+  }, []);
+
+  const handleNearbyPlacesChange = useCallback((places) => {
+    setNearbyPlaces(places);
+  }, []);
+
+  const handleRouteInfoChange = useCallback((info) => {
+    setRouteInfo(info);
+  }, []);
+
+  // Listen for nearby place selection events
+  useEffect(() => {
+    const handleNearbyPlaceSelected = (event) => {
+      const placeData = event.detail;
+      
+      // Set the selected location to show the info window
+      setSelectedLocation(placeData);
+      
+      // Fly to the marker with smooth animation
+      if (mapRef.current) {
+        const map = mapRef.current;
+        const markerPosition = [placeData.latitude, placeData.longitude];
+        
+        // Calculate optimal zoom level for a good view
+        const currentZoom = map.getZoom();
+        const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
+        
+        // Fly to the marker position with smooth animation
+        map.flyTo(markerPosition, optimalZoom, {
+          duration: 1.8, // Smooth animation duration
+          easeLinearity: 0.25
+        });
+      }
+    };
+
+    window.addEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
+
+    return () => {
+      window.removeEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
+    };
+  }, []);
+
   useEffect(() => {
     // Routing is active if both start and end are set (and valid), or if there are any waypoints
     const routingActive =
@@ -425,6 +510,12 @@ function MapComponentTesting({  }) {
         setOsrmWaypoints={setOsrmWaypoints}
         setIsRoutingActive={setIsRoutingActive}
         onBasemapChange={setBaseLayer}
+        setSelectedSearchBarPlace={setSelectedSearchBarPlace}
+        setSelectedPlace={setSelectedLocation}
+        selectedPlace={selectedLocation}
+        onRouteAlternativesChange={handleRouteAlternativesChange}
+        onNearbyPlacesChange={handleNearbyPlacesChange}
+        onRouteInfoChange={handleRouteInfoChange}
       />
 
       {/* Top Header Container */}
@@ -493,55 +584,81 @@ function MapComponentTesting({  }) {
                 {osrmRouteCoords.length > 0 && (
           <>
             {/* Start marker - Green */}
-            <Marker position={osrmRouteCoords[0]} icon={startMarkerIcon}>
-              <Popup>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#28a745', fontWeight: 'bold', marginBottom: '5px' }}>
-                    🚀 Starting Point
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    Your journey begins here
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
+            <Marker 
+              position={osrmRouteCoords[0]} 
+              icon={startMarkerIcon}
+              eventHandlers={{
+                click: () => {
+                  const startLocation = {
+                    name: routeInfo.startingPoint || 'Starting Point',
+                    latitude: osrmRouteCoords[0][0],
+                    longitude: osrmRouteCoords[0][1],
+                    description: routeInfo.startingPoint ? `Starting location: ${routeInfo.startingPoint}` : 'Your journey begins here',
+                    type: 'Starting Point'
+                  };
+                  handleMarkerClick(startLocation);
+                }
+              }}
+            />
             
-            {/* Waypoint markers - Orange */}
+            {/* Waypoint markers - Custom numbered */}
             {osrmWaypoints && osrmWaypoints.length > 0 && osrmWaypoints.map((pos, idx) => (
-              <Marker key={`waypoint-${idx}`} position={[pos.lat, pos.lng]} icon={waypointMarkerIcon}>
-                <Popup>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#fd7e14', fontWeight: 'bold', marginBottom: '5px' }}>
-                      🛑 Waypoint {idx + 1}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      Stop {idx + 1} on your route
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
+              <Marker 
+                key={`waypoint-${idx}`} 
+                position={[pos.lat, pos.lng]} 
+                icon={createWaypointMarkerIcon(idx + 1)}
+                eventHandlers={{
+                  click: () => {
+                    const waypointLocation = {
+                      name: `Waypoint ${idx + 1}`,
+                      latitude: pos.lat,
+                      longitude: pos.lng,
+                      description: `Stop ${idx + 1} on your route`,
+                      type: 'Waypoint'
+                    };
+                    handleMarkerClick(waypointLocation);
+                  }
+                }}
+              />
             ))}
             
             {/* End marker - Red */}
-            <Marker position={osrmRouteCoords[osrmRouteCoords.length - 1]} icon={endMarkerIcon}>
-              <Popup>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#dc3545', fontWeight: 'bold', marginBottom: '5px' }}>
-                    🏁 Destination
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    You have arrived!
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
+            <Marker 
+              position={osrmRouteCoords[osrmRouteCoords.length - 1]} 
+              icon={endMarkerIcon}
+              eventHandlers={{
+                click: () => {
+                  const endLocation = {
+                    name: routeInfo.destination || 'Destination',
+                    latitude: osrmRouteCoords[osrmRouteCoords.length - 1][0],
+                    longitude: osrmRouteCoords[osrmRouteCoords.length - 1][1],
+                    description: routeInfo.destination ? `Destination: ${routeInfo.destination}` : 'You have arrived!',
+                    type: 'Destination'
+                  };
+                  handleMarkerClick(endLocation);
+                }
+              }}
+            />
             
-            {/* Route polyline */}
-            <Polyline positions={osrmRouteCoords} color="blue" weight={5} />
+            {/* Route polylines - show all alternatives */}
+            {routeAlternatives.map((route, index) => {
+              return (
+                <Polyline 
+                  key={index}
+                  positions={route.coords} 
+                  color={index === selectedRouteIndex ? "blue" : "lightblue"} 
+                  weight={index === selectedRouteIndex ? 5 : 3}
+                  opacity={index === selectedRouteIndex ? 1 : 0.6}
+                />
+              );
+            })}
+            
 
             <MapZoomControllerTesting routeCoords={osrmRouteCoords} />
           </>
         )}
+        
+        {/* Nearby Places - No markers, only zoom functionality handled by sidebar */}
       </MapContainer>
 
       {/* Custom Info Window */}

@@ -282,18 +282,13 @@ const CategoryDetailsPage = () => {
     <div className="details-page">
       <MenuNavbar />
 
+      {/* Hero Banner with Centered About Section */}
       <div 
-        className="hero-banner"
+        className="hero-banner with-centered-about"
         style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${townData.image || defaultImage})` }}
       >
-        <div className="hero-overlay">
-          <h1>{townData.name.toUpperCase()}</h1>
-          <p>Exploring {townData.name}</p>
-        </div>
-      </div>
-
-      <div className="town-overview-section">
-        <div className="category-overlay-container">
+        {/* Centered About Section */}
+        <div className="centered-about-section">
           <div className="text-content">
             <h2>About {townData.name}</h2>
             <p className="overview-text">{townData.description}</p>

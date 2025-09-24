@@ -7,10 +7,10 @@
   flex-direction: column;
 }
 
-.hero-banner {
-  background-size: cover;
-  background-position: center;
-  height: 400px;
+/* Hero Banner with Centered About Section */
+.hero-banner.with-centered-about {
+  position: relative;
+  height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,23 +18,45 @@
   color: white;
   position: relative;
   margin-top: 80px;
+  background-size: cover;
+  background-position: center;
 }
 
-.hero-overlay {
-  padding: 20px;
+/* Centered About Section */
+.centered-about-section {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
   max-width: 800px;
-  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.65);
+  padding: 2.5rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  text-align: center;
 }
 
-.hero-overlay h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+.centered-about-section .text-content h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
 }
 
-.hero-overlay p {
-  font-size: 1.6rem;
-  color: #f0f0f0;
+.centered-about-section .overview-text {
+  line-height: 1.8;
+  color: #34495e;
+  font-size: 1.1rem;
+  text-align: justify;
+  margin: 0;
+}
+
+/* Remove the separate town overview section */
+.town-overview-section {
+  display: none;
 }
 
 /* Video Section */
@@ -47,6 +69,7 @@
 
 .video-section-container {
   border-top: 1px solid #e1e5e9;
+  margin-top: 0;
 }
 
 .video-section h2 {
@@ -144,38 +167,6 @@
   font-size: 0.9rem;
   font-weight: 500;
   color: #2c3e50;
-}
-
-/* Town Overview */
-.town-overview-section {
-  background: linear-gradient(to right, #ece9e6, #ffffff);
-  padding: 2rem;
-  margin: 3rem auto;
-  max-width: 1200px;
-  border-radius: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.category-overlay-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.text-content {
-  flex: 1 1 100%;
-  text-align: justify;
-}
-
-.text-content h2 {
-  margin-top: 0;
-  color: #2c3e50;
-}
-
-.overview-text {
-  line-height: 1.8;
-  color: #34495e;
-  font-size: 1.1rem;
 }
 
 /* Discover Section */
@@ -559,123 +550,7 @@
   background-color: #2980b9;
 }
 
-/* Responsive Design */
-@media (max-width: 1400px) {
-  .locations-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .card-incline-left,
-  .card-incline-left-sm,
-  .card-incline-right-sm,
-  .card-incline-right {
-    transform: none !important;
-  }
-}
-
-@media (max-width: 1200px) {
-  .locations-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 992px) {
-  .locations-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-banner {
-    height: 300px;
-  }
-
-  .hero-overlay h1 {
-    font-size: 2rem;
-  }
-
-  .featured-video iframe {
-    height: 300px;
-  }
-
-  .video-thumbnail {
-    flex: 0 0 200px;
-  }
-
-  .category-overlay-container {
-    flex-direction: column;
-  }
-
-  .category-filter-bar {
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    margin: 0 -1rem 1.5rem;
-    padding: 0 1rem 0.5rem;
-  }
-  
-  .category-btn {
-    flex: 0 0 auto;
-  }
-  
-  .discover-section {
-    padding: 2rem 1.5rem;
-  }
-  
-  .locations-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .locations-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .pagination-info {
-    align-self: stretch;
-    justify-content: space-between;
-  }
-}
-
-@media (max-width: 576px) {
-  .hero-banner {
-    height: 250px;
-  }
-
-  .featured-video iframe {
-    height: 250px;
-  }
-
-  .video-thumbnail {
-    flex: 0 0 160px;
-  }
-
-  .video-section, .town-overview, .discover-section {
-    padding: 1.5rem;
-  }
-
-  .locations-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .section-header-container h2 {
-    font-size: 1.8rem;
-  }
-  
-  .search-input {
-    padding-left: 2.5rem;
-  }
-  
-  .search-icon-category {
-    left: 1rem;
-  }
-
-  .pagination-info {
-    width: 100%;
-  }
-}
-
+/* Carousel Container */
 .carousel-container {
   width: 100vw;
   max-width: 100vw;
@@ -1040,4 +915,139 @@
   color: #7f8c8d;
   font-size: 1.08rem;
   margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .locations-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .card-incline-left,
+  .card-incline-left-sm,
+  .card-incline-right-sm,
+  .card-incline-right {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .locations-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .locations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-banner.with-centered-about {
+    height: 450px;
+  }
+  
+  .centered-about-section {
+    width: 95%;
+    padding: 2rem;
+  }
+  
+  .centered-about-section .text-content h2 {
+    font-size: 1.8rem;
+  }
+  
+  .centered-about-section .overview-text {
+    font-size: 1rem;
+  }
+
+  .featured-video iframe {
+    height: 300px;
+  }
+
+  .video-thumbnail {
+    flex: 0 0 200px;
+  }
+
+  .category-filter-bar {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin: 0 -1rem 1.5rem;
+    padding: 0 1rem 0.5rem;
+  }
+  
+  .category-btn {
+    flex: 0 0 auto;
+  }
+  
+  .discover-section {
+    padding: 2rem 1.5rem;
+  }
+  
+  .locations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .locations-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .pagination-info {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-banner.with-centered-about {
+    height: 400px;
+  }
+  
+  .centered-about-section {
+    padding: 1.5rem;
+    width: 95%;
+  }
+  
+  .centered-about-section .text-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .centered-about-section .overview-text {
+    font-size: 0.95rem;
+  }
+
+  .featured-video iframe {
+    height: 250px;
+  }
+
+  .video-thumbnail {
+    flex: 0 0 160px;
+  }
+
+  .video-section, .discover-section {
+    padding: 1.5rem;
+  }
+
+  .locations-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header-container h2 {
+    font-size: 1.8rem;
+  }
+  
+  .search-input {
+    padding-left: 2.5rem;
+  }
+  
+  .search-icon-category {
+    left: 1rem;
+  }
+
+  .pagination-info {
+    width: 100%;
+  }
 }
