@@ -3,6 +3,7 @@ import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark, FaTimes } f
 import '../styles/CustomInfoWindow.css';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthProvider.jsx';
+import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 import SharePlace from './SharePlace'; // adjust path as needed
 import { useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/default.png';
@@ -30,8 +31,19 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
   const [exploreData, setExploreData] = useState(null);
   const navigate = useNavigate();
   const auth = useAuth();
+  const { bookmarks, removeBookmark } = UseBookmarkContext();
 
   if (!location) return null;
+
+  // Check if current location is already bookmarked
+  const isBookmarked = bookmarks.some(bookmark => 
+    bookmark.name === location.name && 
+    bookmark.latitude === (location.latitude || location.lat) &&
+    bookmark.longitude === (location.longitude || location.lng)
+  );
+
+  // Note: We don't automatically set activeFooter for bookmarks
+  // The bookmark-highlighted class will handle the visual indication
 
   const generateSlug = (name) => {
     return name
@@ -64,7 +76,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
   const footerItems = [
     { icon: <FaMapMarkerAlt />, label: 'Directions' },
-    { icon: <FaBookmark />, label: 'Save' },
+    { icon: <FaBookmark />, label: isBookmarked ? 'Saved' : 'Save' },
     { icon: <FaPhoneAlt />, label: 'Phone' },
     { icon: <FaShareAlt />, label: 'Share' }
   ];
@@ -83,17 +95,35 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       return;
     }
 
-    if (label === "Save") {
+    if (label === "Save" || label === "Saved") {
       if (auth && auth.user) {
-        const bookmarkData = {
-          name: location.name,
-          image: location.image,
-          description: location.description,
-          url: location.url
-        };
-        addBookmark(bookmarkData);
-        toast.success("Bookmark saved successfully!");
-        console.log(bookmarkData);
+        if (isBookmarked) {
+          // Remove bookmark if already bookmarked
+          const bookmarkToRemove = bookmarks.find(bookmark => 
+            bookmark.name === location.name && 
+            bookmark.latitude === (location.latitude || location.lat) &&
+            bookmark.longitude === (location.longitude || location.lng)
+          );
+          if (bookmarkToRemove) {
+            removeBookmark(bookmarkToRemove);
+            toast.success("Bookmark removed successfully!");
+            setActiveFooter(''); // Clear active state after removal
+          }
+        } else {
+          // Add new bookmark
+          const bookmarkData = {
+            name: location.name,
+            image: location.image,
+            description: location.description,
+            url: location.url,
+            latitude: location.latitude || location.lat,
+            longitude: location.longitude || location.lng,
+            type: location.type || 'tourist_attraction'
+          };
+          addBookmark(bookmarkData);
+          toast.success("Bookmark saved successfully!");
+          console.log(bookmarkData);
+        }
       } else {
         onOpenLoginModal?.();
         toast.warning("Please log in to save bookmarks.");
@@ -179,17 +209,22 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       </div>
 
       <div className="info-footer">
-        {footerItems.map((item) => (
-          <span
-            key={item.label}
-            className={`footer-item ${activeFooter === item.label ? 'active' : ''} ${isFooterDisabled ? 'disabled' : ''}`}
-            onClick={() => handleFooterClick(item.label)}
-            style={{ pointerEvents: isFooterDisabled ? 'none' : 'auto', opacity: isFooterDisabled ? 0.5 : 1 }}
-          >
-            <span className="footer-icon">{item.icon}</span>
-            {item.label}
-          </span>
-        ))}
+        {footerItems.map((item) => {
+          const isBookmarkItem = item.label === 'Save' || item.label === 'Saved';
+          const isBookmarkHighlighted = isBookmarkItem && isBookmarked;
+          
+          return (
+            <span
+              key={item.label}
+              className={`footer-item ${activeFooter === item.label ? 'active' : ''} ${isFooterDisabled ? 'disabled' : ''} ${isBookmarkHighlighted ? 'bookmark-highlighted' : ''}`}
+              onClick={() => handleFooterClick(item.label)}
+              style={{ pointerEvents: isFooterDisabled ? 'none' : 'auto', opacity: isFooterDisabled ? 0.5 : 1 }}
+            >
+              <span className="footer-icon">{item.icon}</span>
+              {item.label}
+            </span>
+          );
+        })}
       </div>
     </div>
 

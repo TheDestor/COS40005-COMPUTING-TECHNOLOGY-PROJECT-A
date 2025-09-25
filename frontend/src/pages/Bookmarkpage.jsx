@@ -5,14 +5,16 @@ import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft, FaTrashAlt } from 're
 import { useAuth } from '../context/AuthProvider.jsx';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 import businessImage from '../assets/business1.jpg'; // Placeholder image
+import defaultImage from '../assets/default.png'; // Default image for unrecognized locations
 import { toast } from 'sonner';
 
-const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
+const BookmarkPage = ({ isOpen, onClose, showLoginOverlay, onBookmarkClick }) => {
   const auth = useAuth();
   const { bookmarks, removeBookmark } = UseBookmarkContext();
 
   // State to track selected bookmarks
   const [selected, setSelected] = useState([]);
+  const [confirmState, setConfirmState] = useState({ open: false, kind: null });
 
   useEffect(() => {
     if (isOpen && (!auth || !auth.user)) {
@@ -34,16 +36,22 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
 
   // Handle delete selected
   const handleDeleteSelected = () => {
-    if (
-      selected.length > 0 &&
-      window.confirm(`Delete ${selected.length} selected bookmark(s)?`)
-    ) {
+    if (selected.length > 0) {
+      setConfirmState({ open: true, kind: 'delete' });
+    }
+  };
+
+  const closeConfirm = () => setConfirmState({ open: false, kind: null });
+
+  const confirmAction = () => {
+    if (confirmState.kind === 'delete') {
       bookmarks
         .filter((b) => selected.includes(b.name))
         .forEach((b) => removeBookmark(b));
       setSelected([]);
       toast.success(`${selected.length} bookmark(s) deleted!`);
     }
+    closeConfirm();
   };
 
   // Select all handler (optional)
@@ -53,6 +61,21 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
     } else {
       setSelected([]);
     }
+  };
+
+  // Handle bookmark click to plot on map
+  const handleBookmarkClick = (bookmark) => {
+    if (onBookmarkClick) {
+      onBookmarkClick({
+        name: bookmark.name,
+        latitude: bookmark.latitude,
+        longitude: bookmark.longitude,
+        description: bookmark.description || '',
+        type: bookmark.type || 'Bookmark',
+        image: bookmark.image
+      });
+    }
+    toast.success(`${bookmark.name} plotted on map`);
   };
 
   const HeaderWithLogo = ({ title, count, Icon }) => (
@@ -66,13 +89,11 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
   );
 
   return (
-    <div className={`bookmark-panel ${isOpen ? "hidden" : ""}`}>
+    <div className={`bookmark-slide-container ${isOpen ? "show" : ""}`}>
       <div className="bookmark-header">
-        <div className="bookmark-title">
-          <FaRegBookmark className="bookmark-icon" />
-          My Bookmarks
-        </div>
-        <span className="bookmark-close" onClick={onClose}><FaArrowLeft /></span>
+        <FaRegBookmark className="bookmark-icon"/>
+        <span>My Bookmarks</span>
+        <FaArrowLeft className="back-icon3" onClick={onClose} />
       </div>
 
       {/* Delete button and select all */}
@@ -99,17 +120,25 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
       <div className="bookmark-list">
         {bookmarks && bookmarks.length > 0 ? (
           bookmarks.map((bookmark) => (
-            <div className="bookmark-item" key={bookmark.name}>
+            <div 
+              className="bookmark-item" 
+              key={bookmark.name}
+              onClick={() => handleBookmarkClick(bookmark)}
+            >
               <input
                 type="checkbox"
                 checked={selected.includes(bookmark.name)}
                 onChange={() => handleSelect(bookmark)}
                 className="bookmark-checkbox"
+                onClick={(e) => e.stopPropagation()}
               />
               <img
-                src={bookmark.image || businessImage}
+                src={bookmark.image || defaultImage}
                 alt={bookmark.name}
                 className="bookmark-item-image"
+                onError={(e) => {
+                  e.target.src = defaultImage;
+                }}
               />
               <span className="bookmark-item-name">{bookmark.name}</span>
             </div>
@@ -118,6 +147,23 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay }) => {
           <div className="bookmark-empty-message">You have no bookmarks yet.</div>
         )}
       </div>
+
+      {confirmState.open && (
+        <div className="bookmark-modal-overlay" onClick={closeConfirm}>
+          <div className="bookmark-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bookmark-modal-title">
+              Delete selected bookmarks?
+            </div>
+            <div className="bookmark-modal-body">
+              This will remove {selected.length} selected bookmark(s) from your bookmarks.
+            </div>
+            <div className="bookmark-modal-actions">
+              <button className="btn-secondary" onClick={closeConfirm}>Cancel</button>
+              <button className="btn-danger" onClick={confirmAction}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

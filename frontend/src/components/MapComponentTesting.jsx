@@ -300,6 +300,7 @@ function MapComponentTesting({  }) {
   // Ref to store the addToRecent function from LeftSideBarTesting
   const addToRecentRef = useRef(null);
   const openRecentSectionRef = useRef(null);
+  const toggleBookmarkRef = useRef(null);
 
   // New state for CustomInfoWindow
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -541,6 +542,9 @@ function MapComponentTesting({  }) {
         onSetOpenRecentSectionRef={(func) => {
           openRecentSectionRef.current = func;
         }}
+        onSetToggleBookmarkRef={(func) => {
+          toggleBookmarkRef.current = func;
+        }}
       />
 
       {/* Top Header Container */}
@@ -575,7 +579,14 @@ function MapComponentTesting({  }) {
               shouldZoom={shouldZoom}
               setShouldZoom={setShouldZoom}
             />
-            <ProfileDropdown onLoginClick={() => setShowLoginModal(true)} />
+            <ProfileDropdown 
+              onLoginClick={() => setShowLoginModal(true)} 
+              onBookmarkToggle={() => {
+                if (toggleBookmarkRef.current) {
+                  toggleBookmarkRef.current();
+                }
+              }}
+            />
           </div>
         </div>
       </div>

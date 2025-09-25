@@ -463,7 +463,7 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
 
 
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef }) => {
+const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef, onSetToggleBookmarkRef }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -535,6 +535,16 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
       });
     }
   }, [onSetOpenRecentSectionRef]);
+
+  // Set up the toggleBookmark function reference for the parent component
+  useEffect(() => {
+    if (onSetToggleBookmarkRef) {
+      onSetToggleBookmarkRef(() => {
+        setShowBookmarkpage(true);
+        setActiveMenu('bookmark');
+      });
+    }
+  }, [onSetToggleBookmarkRef]);
   
 const handleClearStartingPoint = () => {
   setStartingPoint('');
@@ -1659,6 +1669,35 @@ useEffect(() => {
               onItemClick={handleRecentLocationClick}
               onDeleteItems={handleDeleteRecentItems}
               onClearAll={handleClearAllRecent}
+            />
+          )}
+
+          {/* Bookmark Section */}
+          {showBookmarkpage && (
+            <BookmarkPage
+              isOpen={showBookmarkpage}
+              onClose={() => {
+                setShowBookmarkpage(false);
+                setActiveMenu('');
+              }}
+              showLoginOverlay={openLoginOverlay}
+              onBookmarkClick={(bookmark) => {
+                const bookmarkData = {
+                  name: bookmark.name,
+                  latitude: bookmark.latitude,
+                  longitude: bookmark.longitude,
+                  description: bookmark.description,
+                  type: bookmark.type
+                };
+                
+                // Set both selected place and search bar place to ensure marker appears
+                setSelectedPlace(bookmarkData);
+                setSelectedSearchBarPlace(bookmarkData);
+                
+                // Close the bookmark panel after clicking
+                setShowBookmarkpage(false);
+                setActiveMenu('');
+              }}
             />
           )}
 

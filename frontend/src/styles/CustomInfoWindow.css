@@ -206,6 +206,21 @@
   cursor: not-allowed;
 }
 
+/* Bookmark highlighted state - separate from active state */
+.footer-item.bookmark-highlighted {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.footer-item.bookmark-highlighted .footer-icon {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+}
+
+.footer-item.bookmark-highlighted:hover .footer-icon {
+  background: linear-gradient(135deg, #1e7e34, #155724);
+}
+
 .info-open-status {
   font-size: 14px;
   color: #28a745;

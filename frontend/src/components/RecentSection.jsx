@@ -74,17 +74,17 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
               className="recent-item"
               onClick={() => onItemClick(item)} // Click on item to trigger search
             >
-              <img src={(item && item.image) ? item.image : fallbackImage} alt={item.name} />
-              <div className="item-info">
-                <span className="title">{item.name}</span>
-                <span className="category">{item.type || 'Search'}</span>
-              </div>
               <input
                 type="checkbox"
                 checked={selectedItems.includes(item)}
                 onClick={(e) => e.stopPropagation()}
                 onChange={() => toggleSelectItem(item)}
               />
+              <img src={(item && item.image) ? item.image : fallbackImage} alt={item.name} />
+              <div className="item-info">
+                <span className="title">{item.name}</span>
+                <span className="category">{item.type || 'Search'}</span>
+              </div>
             </div>
           ))}
         </div>

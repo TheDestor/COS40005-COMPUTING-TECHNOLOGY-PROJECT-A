@@ -6,12 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
-import BookmarkPage from '../pages/Bookmarkpage.jsx';
 import { toast } from 'sonner';
 
-const ProfileDropdown = ({ onLoginClick }) => {
+const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showBookmark, setShowBookmark] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -94,7 +92,12 @@ const ProfileDropdown = ({ onLoginClick }) => {
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item51" onClick={() =>{ navigate('/', { state: { openBookmark: true } }); setIsOpen(false);}}>
+                <button className="menu-item51" onClick={() => { 
+                  if (onBookmarkToggle) {
+                    onBookmarkToggle();
+                  }
+                  setIsOpen(false); 
+                }}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
@@ -124,7 +127,6 @@ const ProfileDropdown = ({ onLoginClick }) => {
         </div>
       )}
     </div>
-    {showBookmark && <BookmarkPage isOpen={showBookmark} onClose={() => setShowBookmark(false)} />}
     </>
   );
 };

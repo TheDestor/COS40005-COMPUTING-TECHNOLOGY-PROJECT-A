@@ -12,25 +12,42 @@
     z-index: 1500; /* make sure it's on top */
   }
   
-  .recent-slide-container {
-    position: fixed;
-    top: 0;
-    left: -50px;
-    width: 300px;
-    height: 100vh;
-    background-color: #f5f5f5;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+.recent-slide-container {
+  position: fixed;
+  top: 0;
+  left: -350px;
+  width: 300px;
+  height: 100vh;
+  background-color: #f5f5f5;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 2000;
+  padding: 16px;
+  overflow-y: auto;
+  opacity: 0;
+}
+
+.recent-slide-container.show {
+  transform: translateX(0);
+  left: 50px;
+  opacity: 1;
+  animation: slideInFromLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slideInFromLeft {
+  0% {
     transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    z-index: 2000;
-    padding: 16px;
-    overflow-y: auto;
+    opacity: 0;
   }
-  
-  .recent-slide-container.show {
+  50% {
+    opacity: 0.7;
+  }
+  100% {
     transform: translateX(0);
-    left: 50px;
+    opacity: 1;
   }
+}
   
   .recent-header {
     display: flex;
@@ -166,24 +183,45 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 60px;
     top: auto;
     width: 100vw;
-    height: 40vh; /* Show 40% of the viewport height */
-    min-height: 180px;
-    max-height: 70vh;
+    height: 40vh;
+    min-height: 200px;
+    max-height: 90vh;
     background: #fff;
     padding: 0;
     z-index: 2000;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s, left 0.3s;
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform: translateY(100%);
+    opacity: 0;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
   }
 
   .recent-slide-container.show {
     transform: translateY(0);
     left: 0;
+    opacity: 1;
+    display: flex;
+    animation: slideInFromBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  @keyframes slideInFromBottom {
+    0% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   .recent-header {
