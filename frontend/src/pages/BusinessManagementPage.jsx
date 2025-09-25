@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   FaSearch, 
   FaBell, 
-  FaEnvelope, 
   FaFilter, 
   FaPrint, 
   FaTrash, 
@@ -15,7 +14,8 @@ import {
   FaSpinner,
   FaLock,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaSync
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -42,6 +42,11 @@ const BusinessManagement = () => {
   const [businessCategories, setBusinessCategories] = useState([]);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   
+  // Notification states
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lastBusinessCount, setLastBusinessCount] = useState(0);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5); // Changed from 10 to 5
@@ -53,6 +58,7 @@ const BusinessManagement = () => {
   const isAdmin = user && user.role === 'cbt_admin';
   
   const printOptionsRef = useRef(null);
+  const notificationRef = useRef(null);
   
   // Log user info for debugging
   useEffect(() => {
@@ -60,14 +66,18 @@ const BusinessManagement = () => {
     console.log("Is user admin?", isAdmin);
   }, [user, isAdmin]);
 
+  // Click outside handlers
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (printOptionsRef.current && !printOptionsRef.current.contains(event.target)) {
         setShowPrintOptions(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
     };
 
-    if (showPrintOptions) {
+    if (showPrintOptions || showNotifications) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -76,7 +86,7 @@ const BusinessManagement = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showPrintOptions]);
+  }, [showPrintOptions, showNotifications]);
 
   // Create axios instance with authentication
   const authAxios = axios.create({
@@ -85,8 +95,50 @@ const BusinessManagement = () => {
     }
   });
 
+  // Add notification when new business is detected
+  const addNotification = (message, type = 'info') => {
+    const newNotification = {
+      id: Date.now(),
+      message,
+      type,
+      time: new Date().toLocaleString(),
+      read: false,
+      timestamp: Date.now()
+    };
+    
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep only last 50 notifications
+  };
+
+  // Mark notification as read
+  const markNotificationRead = (id) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  };
+
+  // Mark all notifications as read
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+  };
+
+  // Get notification type styling
+  const getNotificationTypeClass = (type) => {
+    switch (type) {
+      case 'success': return 'notification-success';
+      case 'warning': return 'notification-warning';
+      case 'error': return 'notification-error';
+      default: return 'notification-info';
+    }
+  };
+
   // Fetch businesses from backend
-  const fetchBusinesses = async () => {
+  const fetchBusinesses = async (showRefreshNotification = false) => {
     if (!isLoggedIn || !accessToken) {
       setError('Authentication required. Please log in.');
       setLoading(false);
@@ -135,8 +187,32 @@ const BusinessManagement = () => {
       if (response.data.success) {
         let businessData = response.data.data || [];
 
+        // Check for new businesses (notifications)
+        if (lastBusinessCount > 0 && businessData.length > lastBusinessCount) {
+          const newBusinessCount = businessData.length - lastBusinessCount;
+          const newBusinesses = businessData.slice(0, newBusinessCount);
+          
+          // Add notifications for new businesses
+          newBusinesses.forEach(business => {
+            addNotification(
+              `New business submission: "${business.name}" by ${business.owner}`,
+              'info'
+            );
+          });
+          
+          // Add summary notification if multiple new businesses
+          if (newBusinessCount > 1) {
+            addNotification(
+              `${newBusinessCount} new business submissions received`,
+              'info'
+            );
+          }
+        }
+        
+        // Update business count for future notifications
+        setLastBusinessCount(businessData.length);
+
         // Client-side filtering as fallback (only if backend doesn't handle the filters properly)
-        // Remove this section if your backend properly handles the status and category parameters
         if (filterStatus !== 'all') {
           businessData = businessData.filter(business => business.status === filterStatus);
         }
@@ -148,29 +224,29 @@ const BusinessManagement = () => {
         setBusinesses(businessData);
         
         // Extract unique categories for filter dropdown
-        // Note: This will only show categories from filtered results
-        // Consider fetching categories separately for a complete list
         if (businessData.length > 0) {
           const categories = [...new Set(businessData.map(b => b.category).filter(Boolean))];
           setBusinessCategories(categories);
         } else {
-          // Clear categories if no businesses match the filter
           setBusinessCategories([]);
         }
         
         // Select first business by default if no business is selected and we have data
         if (businessData.length > 0) {
-          // Only set selected business if we don't have one or if current one is not in filtered results
           if (!selectedBusiness || !businessData.find(b => b._id === selectedBusiness._id)) {
             setSelectedBusiness(businessData[0]);
           }
         } else {
-          // Clear selected business if no businesses match the filter
           setSelectedBusiness(null);
         }
         
         // Clear any previous errors on successful fetch
         setError(null);
+        
+        // Show refresh notification if manually refreshed
+        if (showRefreshNotification) {
+          addNotification('Business data refreshed successfully', 'success');
+        }
       } else {
         setError('Failed to load businesses: ' + (response.data.message || 'Unknown error'));
       }
@@ -217,6 +293,33 @@ const BusinessManagement = () => {
       fetchBusinesses();
     }
   }, [isLoggedIn, accessToken, page, filterStatus, filterCategory]);
+
+  // Auto-refresh businesses every 30 seconds to check for new submissions
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || !isAdmin) return;
+
+    const intervalId = setInterval(() => {
+      fetchBusinesses(false); // Silent refresh without notification
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory]);
+
+  // Initialize notifications with some sample data
+  useEffect(() => {
+    if (isAdmin && notifications.length === 0) {
+      setNotifications([
+        {
+          id: 1,
+          message: "Welcome to Business Management Dashboard",
+          type: "info",
+          time: new Date().toLocaleString(),
+          read: false,
+          timestamp: Date.now()
+        }
+      ]);
+    }
+  }, [isAdmin]);
 
   // Format date to readable string
   const formatDate = (dateString) => {
@@ -273,18 +376,25 @@ const BusinessManagement = () => {
           setSelectedBusiness({ ...selectedBusiness, status: newStatus });
         }
         
-        // Show success message (could use a toast notification here)
-        alert(`Business listing ${newStatus} successfully!`);
+        // Add notification for status update
+        const business = businesses.find(b => b._id === id);
+        if (business) {
+          addNotification(
+            `Business "${business.name}" status updated to ${newStatus}`,
+            newStatus === 'approved' ? 'success' : newStatus === 'rejected' ? 'warning' : 'info'
+          );
+        }
+        
       } else {
-        alert('Failed to update business status: ' + response.data.message);
+        addNotification('Failed to update business status: ' + response.data.message, 'error');
       }
     } catch (err) {
       console.error('Error updating business status:', err);
       
       if (err.response && err.response.status === 403) {
-        alert('Access denied. You do not have permission to update business status.');
+        addNotification('Access denied. You do not have permission to update business status.', 'error');
       } else {
-        alert('Error updating business status: ' + (err.response?.data?.message || err.message));
+        addNotification('Error updating business status: ' + (err.response?.data?.message || err.message), 'error');
       }
     }
   };
@@ -319,6 +429,8 @@ const BusinessManagement = () => {
       const response = await authAxios.delete(`/api/businesses/deleteBusiness/${id}`);
       
       if (response.data.success) {
+        const businessName = businesses.find(b => b._id === id)?.name || 'Unknown';
+        
         // Remove business from the list
         const updatedBusinesses = businesses.filter(item => item._id !== id);
         setBusinesses(updatedBusinesses);
@@ -328,18 +440,19 @@ const BusinessManagement = () => {
           setSelectedBusiness(updatedBusinesses.length > 0 ? updatedBusinesses[0] : null);
         }
         
-        // Show success message
-        alert('Business deleted successfully!');
+        // Add notification for deletion
+        addNotification(`Business "${businessName}" deleted successfully`, 'success');
+        
       } else {
-        alert('Failed to delete business: ' + response.data.message);
+        addNotification('Failed to delete business: ' + response.data.message, 'error');
       }
     } catch (err) {
       console.error('Error deleting business:', err);
       
       if (err.response && err.response.status === 403) {
-        alert('Access denied. You do not have permission to delete businesses.');
+        addNotification('Access denied. You do not have permission to delete businesses.', 'error');
       } else {
-        alert('Error deleting business: ' + (err.response?.data?.message || err.message));
+        addNotification('Error deleting business: ' + (err.response?.data?.message || err.message), 'error');
       }
     }
   };
@@ -352,9 +465,14 @@ const BusinessManagement = () => {
     // Here you could save the notes to the backend if needed
     console.log(`Admin notes for business #${selectedBusiness._id}:`, adminNotes);
     
-    // For now, just show a success message and clear the notes field
-    alert("Notes saved successfully!");
+    // Add notification for notes saved
+    addNotification(`Notes saved for business "${selectedBusiness.name}"`, 'success');
     setAdminNotes('');
+  };
+
+  // Manual refresh handler
+  const handleRefresh = () => {
+    fetchBusinesses(true); // Show refresh notification
   };
 
   // Print functionality
@@ -570,6 +688,9 @@ const BusinessManagement = () => {
     }
   };
 
+  // Get unread notification count
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   // Render unauthorized state
   if (!isAdmin) {
     return (
@@ -656,13 +777,60 @@ const BusinessManagement = () => {
               />
             </div>
             <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
+              <button 
+                className="refresh-btn"
+                onClick={handleRefresh}
+                title="Refresh data"
+                disabled={loading}
+              >
+                <FaSync className={loading ? 'spinning' : ''} />
+              </button>
+              <div className="notification-wrapper" ref={notificationRef}>
+                <div 
+                  className="icon-wrapper notification-icon"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <FaBell className="action-icon" />
+                  {unreadCount > 0 && (
+                    <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                  )}
+                </div>
+                {showNotifications && (
+                  <div className="notification-dropdown">
+                    <div className="dropdown-header">
+                      <h4>Notifications</h4>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllNotificationsRead}
+                          className="mark-all-read"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="notification-list">
+                      {notifications.length > 0 ? (
+                        notifications.map(notification => (
+                          <div 
+                            key={notification.id} 
+                            className={`notification-item ${notification.read ? 'read' : 'unread'} ${getNotificationTypeClass(notification.type)}`}
+                            onClick={() => markNotificationRead(notification.id)}
+                          >
+                            <div className="notification-content">
+                              <p className="notification-message">{notification.message}</p>
+                              <span className="notification-time">{notification.time}</span>
+                            </div>
+                            <div className="notification-type-indicator"></div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-notifications">
+                          <p>No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1046,6 +1214,251 @@ const BusinessManagement = () => {
       </div>
 
       <style jsx>{`
+        /* Notification Styles */
+        .notification-wrapper {
+          position: relative;
+        }
+
+        .notification-icon {
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .notification-icon:hover .action-icon {
+          color: #3b82f6;
+          transform: scale(1.1);
+        }
+
+        .notification-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          width: 380px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          z-index: 1000;
+          max-height: 500px;
+          overflow: hidden;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .dropdown-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid #e5e7eb;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-header h4 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .mark-all-read {
+          background: none;
+          border: none;
+          color: #3b82f6;
+          cursor: pointer;
+          font-size: 0.85rem;
+          font-weight: 500;
+          padding: 4px 8px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+
+        .mark-all-read:hover {
+          color: #2563eb;
+          background: #eff6ff;
+        }
+
+        .notification-list {
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .notification-item {
+          display: flex;
+          align-items: flex-start;
+          padding: 14px 20px;
+          border-bottom: 1px solid #f3f4f6;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .notification-item:hover {
+          background: #f9fafb;
+        }
+
+        .notification-item:last-child {
+          border-bottom: none;
+        }
+
+        .notification-item.unread {
+          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+          border-left: 4px solid #3b82f6;
+        }
+
+        .notification-item.unread:hover {
+          background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+        }
+
+        .notification-content {
+          flex: 1;
+        }
+
+        .notification-message {
+          margin: 0 0 6px 0;
+          font-size: 0.9rem;
+          line-height: 1.4;
+          color: #374151;
+          font-weight: 500;
+        }
+
+        .notification-time {
+          font-size: 0.8rem;
+          color: #6b7280;
+          font-weight: 400;
+        }
+
+        .notification-type-indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-left: 12px;
+          margin-top: 6px;
+          flex-shrink: 0;
+        }
+
+        .notification-info .notification-type-indicator {
+          background: #3b82f6;
+        }
+
+        .notification-success .notification-type-indicator {
+          background: #10b981;
+        }
+
+        .notification-warning .notification-type-indicator {
+          background: #f59e0b;
+        }
+
+        .notification-error .notification-type-indicator {
+          background: #ef4444;
+        }
+
+        .notification-item.read .notification-type-indicator {
+          background: #d1d5db;
+        }
+
+        .no-notifications {
+          padding: 40px 20px;
+          text-align: center;
+          color: #6b7280;
+        }
+
+        .no-notifications p {
+          margin: 0;
+          font-size: 0.9rem;
+        }
+
+        /* Refresh Button Styles */
+        .refresh-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #059669;
+          font-size: 0.9rem;
+          margin-right: 8px;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+          background: #f0fdf4;
+          border-color: #059669;
+          transform: translateY(-1px);
+        }
+
+        .refresh-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        /* Enhanced badge styles */
+        .badge {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          border-radius: 12px;
+          padding: 2px 6px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          min-width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          }
+          50% {
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+          }
+          100% {
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          }
+        }
+
+        .icon-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .action-icon {
+          font-size: 1.2rem;
+          color: #6b7280;
+          transition: all 0.2s ease;
+        }
+
         /* Compact Layout Styles for No-Scroll Business Management */
         .dashboard-content {
           height: 100vh;
@@ -1523,31 +1936,45 @@ const BusinessManagement = () => {
           .pagination-info {
             font-size: 0.75rem;
           }
+
+          .notification-dropdown {
+            width: 320px;
+            left: -280px;
+          }
+
+          .action-icons {
+            flex-direction: column;
+            gap: 4px;
+          }
         }
 
         /* Scrollbar styling for better appearance */
         .compact-list::-webkit-scrollbar,
         .compact-detail-content::-webkit-scrollbar,
-        .compact-description-body::-webkit-scrollbar {
+        .compact-description-body::-webkit-scrollbar,
+        .notification-list::-webkit-scrollbar {
           width: 4px;
         }
 
         .compact-list::-webkit-scrollbar-track,
         .compact-detail-content::-webkit-scrollbar-track,
-        .compact-description-body::-webkit-scrollbar-track {
+        .compact-description-body::-webkit-scrollbar-track,
+        .notification-list::-webkit-scrollbar-track {
           background: #f1f1f1;
         }
 
         .compact-list::-webkit-scrollbar-thumb,
         .compact-detail-content::-webkit-scrollbar-thumb,
-        .compact-description-body::-webkit-scrollbar-thumb {
+        .compact-description-body::-webkit-scrollbar-thumb,
+        .notification-list::-webkit-scrollbar-thumb {
           background: #c1c1c1;
           border-radius: 2px;
         }
 
         .compact-list::-webkit-scrollbar-thumb:hover,
         .compact-detail-content::-webkit-scrollbar-thumb:hover,
-        .compact-description-body::-webkit-scrollbar-thumb:hover {
+        .compact-description-body::-webkit-scrollbar-thumb:hover,
+        .notification-list::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
         }
 
@@ -1594,6 +2021,60 @@ const BusinessManagement = () => {
 
         .retry-button:hover {
           background: #2563eb;
+        }
+
+        /* Enhanced notification animations */
+        .notification-item.unread {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .notification-item.unread::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% {
+            left: -100%;
+          }
+          100% {
+            left: 100%;
+          }
+        }
+
+        /* Better focus states for accessibility */
+        .notification-item:focus,
+        .refresh-btn:focus,
+        .mark-all-read:focus,
+        .pagination-btn:focus,
+        .page-number:focus {
+          outline: 2px solid #3b82f6;
+          outline-offset: 2px;
+        }
+
+        /* Enhanced hover effects */
+        .notification-item:hover .notification-message {
+          color: #1f2937;
+        }
+
+        .business-item.pending {
+          animation: subtle-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes subtle-glow {
+          from {
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.1);
+          }
+          to {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+          }
         }
       `}</style>
     </div>
