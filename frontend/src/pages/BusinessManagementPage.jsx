@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FaSearch, 
   FaBell, 
   FaEnvelope, 
   FaFilter, 
-  FaEllipsisV, 
+  FaPrint, 
   FaTrash, 
   FaCheck, 
   FaTimes,
@@ -13,7 +13,9 @@ import {
   FaClock,
   FaBuilding,
   FaSpinner,
-  FaLock
+  FaLock,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -38,6 +40,11 @@ const BusinessManagement = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [businessCategories, setBusinessCategories] = useState([]);
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Changed from 10 to 5
   
   // Get authentication context
   const { accessToken, isLoggedIn, user } = useAuth();
@@ -45,11 +52,31 @@ const BusinessManagement = () => {
   // Check if user is an admin
   const isAdmin = user && user.role === 'cbt_admin';
   
+  const printOptionsRef = useRef(null);
+  
   // Log user info for debugging
   useEffect(() => {
     console.log("Current user:", user);
     console.log("Is user admin?", isAdmin);
   }, [user, isAdmin]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (printOptionsRef.current && !printOptionsRef.current.contains(event.target)) {
+        setShowPrintOptions(false);
+      }
+    };
+
+    if (showPrintOptions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPrintOptions]);
 
   // Create axios instance with authentication
   const authAxios = axios.create({
@@ -74,15 +101,17 @@ const BusinessManagement = () => {
 
     setLoading(true);
     try {
-      let endpoint = '/api/businesses/getAllBusinesses';
+      // Always use the main endpoint for consistency
+      const endpoint = '/api/businesses/getAllBusinesses';
       
       // Add query parameters for filtering
       const params = new URLSearchParams();
       params.append('page', page);
-      params.append('limit', 10); // Adjust limit as needed
+      params.append('limit', 50); // Fetch more for client-side pagination
       
+      // Add filters as parameters - let backend handle filtering if it supports it
       if (filterStatus !== 'all') {
-        endpoint = `/api/businesses/getBusinessesByStatus/${filterStatus}`;
+        params.append('status', filterStatus);
       }
       
       if (filterCategory !== 'all') {
@@ -104,29 +133,71 @@ const BusinessManagement = () => {
       console.log('First business:', response.data.data && response.data.data.length > 0 ? response.data.data[0] : 'No businesses found');
       
       if (response.data.success) {
-        setBusinesses(response.data.data);
-        setTotalPages(response.data.totalPages);
+        let businessData = response.data.data || [];
+
+        // Client-side filtering as fallback (only if backend doesn't handle the filters properly)
+        // Remove this section if your backend properly handles the status and category parameters
+        if (filterStatus !== 'all') {
+          businessData = businessData.filter(business => business.status === filterStatus);
+        }
+        
+        if (filterCategory !== 'all') {
+          businessData = businessData.filter(business => business.category === filterCategory);
+        }
+
+        setBusinesses(businessData);
         
         // Extract unique categories for filter dropdown
-        if (response.data.data && response.data.data.length > 0) {
-          const categories = [...new Set(response.data.data.map(b => b.category))];
+        // Note: This will only show categories from filtered results
+        // Consider fetching categories separately for a complete list
+        if (businessData.length > 0) {
+          const categories = [...new Set(businessData.map(b => b.category).filter(Boolean))];
           setBusinessCategories(categories);
+        } else {
+          // Clear categories if no businesses match the filter
+          setBusinessCategories([]);
         }
         
-        // Select first business by default if no business is selected
-        if (!selectedBusiness && response.data.data && response.data.data.length > 0) {
-          setSelectedBusiness(response.data.data[0]);
+        // Select first business by default if no business is selected and we have data
+        if (businessData.length > 0) {
+          // Only set selected business if we don't have one or if current one is not in filtered results
+          if (!selectedBusiness || !businessData.find(b => b._id === selectedBusiness._id)) {
+            setSelectedBusiness(businessData[0]);
+          }
+        } else {
+          // Clear selected business if no businesses match the filter
+          setSelectedBusiness(null);
         }
+        
+        // Clear any previous errors on successful fetch
+        setError(null);
       } else {
         setError('Failed to load businesses: ' + (response.data.message || 'Unknown error'));
       }
     } catch (err) {
       console.error('Error fetching businesses:', err);
       
-      if (err.response && err.response.status === 403) {
-        setError('Access denied. You do not have permission to view businesses.');
+      if (err.response) {
+        switch (err.response.status) {
+          case 403:
+            setError('Access denied. You do not have permission to view businesses.');
+            break;
+          case 401:
+            setError('Authentication failed. Please log in again.');
+            break;
+          case 404:
+            setError('Business data not found. The endpoint may have changed.');
+            break;
+          case 500:
+            setError('Server error. Please try again later.');
+            break;
+          default:
+            setError('Failed to load businesses: ' + (err.response.data?.message || 'Network error'));
+        }
+      } else if (err.request) {
+        setError('Network error. Please check your connection and try again.');
       } else {
-        setError('Failed to load businesses. ' + (err.response?.data?.message || err.message));
+        setError('An unexpected error occurred: ' + err.message);
       }
     } finally {
       setLoading(false);
@@ -286,6 +357,135 @@ const BusinessManagement = () => {
     setAdminNotes('');
   };
 
+  // Print functionality
+  const handlePrintBusiness = () => {
+    if (!selectedBusiness) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Business Listing Details</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .business-info { margin-bottom: 20px; }
+            .label { font-weight: bold; color: #555; }
+            .value { margin-left: 10px; }
+            .section { margin-top: 30px; }
+            .description-content { 
+              background: #f9f9f9; 
+              padding: 15px; 
+              border-radius: 5px; 
+              margin-top: 10px;
+              line-height: 1.6;
+            }
+            .status-badge {
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-pending { background: #fef3c7; color: #92400e; }
+            .status-review { background: #dbeafe; color: #1e40af; }
+            .status-approved { background: #d1fae5; color: #065f46; }
+            .status-rejected { background: #fee2e2; color: #dc2626; }
+            .business-image { max-width: 200px; margin: 10px 0; border-radius: 8px; }
+            .owner-section { background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Business Listing Details</h1>
+            <p>Generated on ${new Date().toLocaleDateString()}</p>
+          </div>
+          
+          <div class="business-info">
+            <h2>${selectedBusiness.name}</h2>
+            <img src="${selectedBusiness.businessImage.startsWith('/uploads') 
+              ? `${window.location.origin}${selectedBusiness.businessImage}` 
+              : selectedBusiness.businessImage}" 
+              alt="Business Image" class="business-image" />
+            
+            <p><span class="label">Business ID:</span><span class="value">${selectedBusiness._id}</span></p>
+            <p><span class="label">Category:</span><span class="value">${selectedBusiness.category}</span></p>
+            <p><span class="label">Date Submitted:</span><span class="value">${formatDate(selectedBusiness.submissionDate)}</span></p>
+            <p><span class="label">Status:</span><span class="value">
+              <span class="status-badge status-${selectedBusiness.status.toLowerCase().replace('-', '')}">
+                ${selectedBusiness.status === 'in-review' ? 'In Review' : selectedBusiness.status.charAt(0).toUpperCase() + selectedBusiness.status.slice(1)}
+              </span>
+            </span></p>
+            <p><span class="label">Priority:</span><span class="value">${selectedBusiness.priority.charAt(0).toUpperCase() + selectedBusiness.priority.slice(1)}</span></p>
+            <p><span class="label">Phone:</span><span class="value">${selectedBusiness.phone}</span></p>
+            <p><span class="label">Website:</span><span class="value">${selectedBusiness.website || 'Not provided'}</span></p>
+            <p><span class="label">Opening Hours:</span><span class="value">${selectedBusiness.openingHours || 'Not provided'}</span></p>
+            <p><span class="label">Address:</span><span class="value">${selectedBusiness.address}</span></p>
+            <p><span class="label">Coordinates:</span><span class="value">${selectedBusiness.latitude}, ${selectedBusiness.longitude}</span></p>
+          </div>
+          
+          <div class="owner-section">
+            <h3>Owner Information</h3>
+            <p><span class="label">Owner Name:</span><span class="value">${selectedBusiness.owner}</span></p>
+            <p><span class="label">Owner Email:</span><span class="value">${selectedBusiness.ownerEmail}</span></p>
+          </div>
+          
+          <div class="section">
+            <h3>Business Description:</h3>
+            <div class="description-content">
+              ${selectedBusiness.description}
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    
+    setShowPrintOptions(false);
+  };
+
+  const handleSaveBusiness = () => {
+    if (!selectedBusiness) return;
+
+    const businessData = {
+      id: selectedBusiness._id,
+      name: selectedBusiness.name,
+      owner: selectedBusiness.owner,
+      ownerEmail: selectedBusiness.ownerEmail,
+      category: selectedBusiness.category,
+      description: selectedBusiness.description,
+      address: selectedBusiness.address,
+      phone: selectedBusiness.phone,
+      website: selectedBusiness.website,
+      openingHours: selectedBusiness.openingHours,
+      latitude: selectedBusiness.latitude,
+      longitude: selectedBusiness.longitude,
+      status: selectedBusiness.status,
+      priority: selectedBusiness.priority,
+      submissionDate: selectedBusiness.submissionDate
+    };
+
+    const dataStr = JSON.stringify(businessData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `business_${selectedBusiness._id}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    setShowPrintOptions(false);
+  };
+
   // Filter businesses based on search query (client-side filtering)
   const filteredBusinesses = businesses.filter(business => {
     if (!business) return false;
@@ -298,6 +498,33 @@ const BusinessManagement = () => {
     
     return matchesSearch;
   });
+
+  // Pagination calculations
+  const totalPaginationPages = Math.ceil(filteredBusinesses.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBusinesses = filteredBusinesses.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPaginationPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, filterCategory]);
 
   // Helper function to get status badge styling
   const getStatusBadgeClass = (status) => {
@@ -530,86 +757,118 @@ const BusinessManagement = () => {
           <div className="business-container no-scroll-container">
             {/* Left panel - Business list */}
             <div className="business-list compact-list">
-              {filteredBusinesses.length > 0 ? (
-                filteredBusinesses.map(business => (
-                  <div 
-                    key={business._id}
-                    className={`business-item compact-item ${selectedBusiness && selectedBusiness._id === business._id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
-                    onClick={() => handleSelectBusiness(business)}
-                  >
-                    <div className="business-avatar compact-avatar">
-                      <img 
-                        src={business.businessImage.startsWith('/uploads') 
-                          ? `${window.location.origin}${business.businessImage}` 
-                          : business.businessImage} 
-                        alt={`${business.name} thumbnail`} 
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = defaultBusinessImage;
-                        }}
-                      />
-                    </div>
-                    <div className="business-brief">
-                      <div className="business-header">
-                        <h4 className="business-name">{business.name}</h4>
-                        <span className="business-date compact-date">{formatDate(business.submissionDate)}</span>
-                      </div>
-                      <div className="business-owner compact-owner">
+              {currentBusinesses.length > 0 ? (
+                <>
+                  {currentBusinesses.map(business => (
+                    <div 
+                      key={business._id}
+                      className={`business-item compact-item ${selectedBusiness && selectedBusiness._id === business._id ? 'selected' : ''} ${business.status === 'pending' ? 'pending' : ''}`}
+                      onClick={() => handleSelectBusiness(business)}
+                    >
+                      <div className="business-avatar compact-avatar">
                         <img 
-                          src={business.ownerAvatar.startsWith('/uploads') 
-                            ? `${window.location.origin}${business.ownerAvatar}` 
-                            : business.ownerAvatar} 
-                          alt={`${business.owner}'s avatar`} 
-                          className="owner-avatar"
+                          src={business.businessImage.startsWith('/uploads') 
+                            ? `${window.location.origin}${business.businessImage}` 
+                            : business.businessImage} 
+                          alt={`${business.name} thumbnail`} 
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = defaultAvatarImage;
+                            e.target.src = defaultBusinessImage;
                           }}
                         />
-                        <span>{business.owner}</span>
                       </div>
-                      <div className="business-category compact-category">{business.category}</div>
-                      <div className="business-description-preview compact-preview">
-                        {business.description && business.description.length > 40 
-                          ? `${business.description.substring(0, 40)}...` 
-                          : business.description}
-                      </div>
-                      <div className="business-status">
-                        <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
-                          {business.status === 'in-review' ? 'In Review' : business.status.charAt(0).toUpperCase() + business.status.slice(1)}
-                        </span>
-                        <span className={`priority-badge ${getPriorityBadgeClass(business.priority)}`}>
-                          {renderPriorityIcon(business.priority)}
-                          {business.priority.charAt(0).toUpperCase() + business.priority.slice(1)}
-                        </span>
+                      <div className="business-brief">
+                        <div className="business-header">
+                          <h4 className="business-name">{business.name}</h4>
+                          <span className="business-date compact-date">{formatDate(business.submissionDate)}</span>
+                        </div>
+                        <div className="business-owner compact-owner">
+                          <img 
+                            src={business.ownerAvatar.startsWith('/uploads') 
+                              ? `${window.location.origin}${business.ownerAvatar}` 
+                              : business.ownerAvatar} 
+                            alt={`${business.owner}'s avatar`} 
+                            className="owner-avatar"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = defaultAvatarImage;
+                            }}
+                          />
+                          <span>{business.owner}</span>
+                        </div>
+                        <div className="business-category compact-category">{business.category}</div>
+                        <div className="business-description-preview compact-preview">
+                          {business.description && business.description.length > 40 
+                            ? `${business.description.substring(0, 40)}...` 
+                            : business.description}
+                        </div>
+                        <div className="business-status">
+                          <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
+                            {business.status === 'in-review' ? 'In Review' : business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+                          </span>
+                          <span className={`priority-badge ${getPriorityBadgeClass(business.priority)}`}>
+                            {renderPriorityIcon(business.priority)}
+                            {business.priority.charAt(0).toUpperCase() + business.priority.slice(1)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                  
+                  {/* Professional Pagination Controls */}
+                  {totalPaginationPages > 1 && (
+                    <div className="pagination-container">
+                      <div className="pagination-info">
+                        Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredBusinesses.length)} of {filteredBusinesses.length} businesses
+                      </div>
+                      <div className="pagination-controls">
+                        <button
+                          className="pagination-btn"
+                          onClick={handlePrevious}
+                          disabled={currentPage === 1}
+                        >
+                          <FaChevronLeft /> Previous
+                        </button>
+                        
+                        <div className="page-numbers">
+                          {Array.from({ length: Math.min(5, totalPaginationPages) }, (_, index) => {
+                            let pageNumber;
+                            if (totalPaginationPages <= 5) {
+                              pageNumber = index + 1;
+                            } else if (currentPage <= 3) {
+                              pageNumber = index + 1;
+                            } else if (currentPage >= totalPaginationPages - 2) {
+                              pageNumber = totalPaginationPages - 4 + index;
+                            } else {
+                              pageNumber = currentPage - 2 + index;
+                            }
+                            
+                            return (
+                              <button
+                                key={pageNumber}
+                                className={`page-number ${currentPage === pageNumber ? 'active' : ''}`}
+                                onClick={() => handlePageChange(pageNumber)}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <button
+                          className="pagination-btn"
+                          onClick={handleNext}
+                          disabled={currentPage === totalPaginationPages}
+                        >
+                          Next <FaChevronRight />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="no-businesses">
                   <p>No businesses match your criteria</p>
-                </div>
-              )}
-
-              {/* Pagination controls */}
-              {totalPages > 1 && (
-                <div className="pagination-controls compact-pagination">
-                  <button 
-                    className="page-button"
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    Previous
-                  </button>
-                  <span className="page-info">Page {page} of {totalPages}</span>
-                  <button 
-                    className="page-button"
-                    disabled={page === totalPages}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </button>
                 </div>
               )}
             </div>
@@ -661,12 +920,19 @@ const BusinessManagement = () => {
                     >
                       <FaTrash /> Delete
                     </button>
-                    <div className="more-actions">
-                      <FaEllipsisV />
-                      <div className="more-dropdown">
-                        <button>Message Owner</button>
-                        <button>Export Details</button>
-                        <button>Print Profile</button>
+                    <div
+                      className="print-actions"
+                      ref={printOptionsRef}
+                    >
+                      <button
+                        className="business-action-btn print-btn"
+                        onClick={() => setShowPrintOptions(!showPrintOptions)}
+                      >
+                        <FaPrint />
+                      </button>
+                      <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
+                        <button onClick={handlePrintBusiness}>Print Business</button>
+                        <button onClick={handleSaveBusiness}>Save as File</button>
                       </div>
                     </div>
                   </div>
@@ -836,7 +1102,7 @@ const BusinessManagement = () => {
           flex: 1;
           display: flex;
           overflow: hidden;
-          // margin: 0 20px 20px 20px;
+          margin: 0 20px 20px 20px;
           border-radius: 8px;
           border: 1px solid #e5e7eb;
         }
@@ -846,6 +1112,8 @@ const BusinessManagement = () => {
           overflow-y: auto;
           max-height: none;
           border-right: 1px solid #e5e7eb;
+          display: flex;
+          flex-direction: column;
         }
 
         .compact-item {
@@ -908,18 +1176,77 @@ const BusinessManagement = () => {
           padding: 2px 6px;
         }
 
-        .compact-pagination {
-          padding: 8px;
+        /* Professional Pagination Styles */
+        .pagination-container {
           border-top: 1px solid #e5e7eb;
+          padding: 15px;
+          background: #f9fafb;
+          margin-top: auto;
         }
 
-        .compact-pagination .page-button {
-          padding: 4px 8px;
+        .pagination-info {
           font-size: 0.8rem;
+          color: #6b7280;
+          margin-bottom: 10px;
+          text-align: center;
         }
 
-        .compact-pagination .page-info {
+        .pagination-controls {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .pagination-btn {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
           font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .page-numbers {
+          display: flex;
+          gap: 4px;
+        }
+
+        .page-number {
+          padding: 6px 10px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 35px;
+          text-align: center;
+        }
+
+        .page-number:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+
+        .page-number.active {
+          background: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
         }
 
         .compact-detail {
@@ -965,6 +1292,81 @@ const BusinessManagement = () => {
         .business-action-btn {
           padding: 5px 10px;
           font-size: 0.8rem;
+        }
+
+        /* Print Actions Styles */
+        .print-actions {
+          position: relative;
+        }
+
+        .print-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #059669;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 40px;
+        }
+
+        .print-btn:hover {
+          background: #047857;
+          transform: translateY(-1px);
+        }
+
+        .print-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+          min-width: 140px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.2s ease;
+        }
+
+        .print-dropdown.active {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        .print-dropdown button {
+          display: block;
+          width: 100%;
+          padding: 8px 12px;
+          border: none;
+          background: none;
+          text-align: left;
+          cursor: pointer;
+          font-size: 0.85rem;
+          color: #374151;
+          transition: background-color 0.2s ease;
+        }
+
+        .print-dropdown button:first-child {
+          border-radius: 8px 8px 0 0;
+        }
+
+        .print-dropdown button:last-child {
+          border-radius: 0 0 8px 8px;
+          border-bottom: none;
+        }
+
+        .print-dropdown button:hover {
+          background: #f3f4f6;
+        }
+
+        .print-dropdown button:not(:last-child) {
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .compact-detail-content {
@@ -1107,6 +1509,19 @@ const BusinessManagement = () => {
           
           .compact-grid {
             grid-template-columns: 1fr;
+          }
+
+          .pagination-controls {
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .page-numbers {
+            order: -1;
+          }
+
+          .pagination-info {
+            font-size: 0.75rem;
           }
         }
 
