@@ -208,11 +208,6 @@ const DataManagementPage = () => {
         </div>
       </div>
 
-      <div className="backup-controls">
-        <button className="run-backup"><FaPlay /> Run Backup Now</button>
-        <button className="configure" onClick={() => setShowConfig(true)}><FaCog /> Configure</button>
-      </div>
-
       {showConfig && (
         <BackupConfigurationModal
           onClose={() => setShowConfig(false)}
@@ -225,52 +220,6 @@ const DataManagementPage = () => {
           {renderModalContent()}
         </DetailModal>
       )}
-
-      <div className="backup-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Backup Name</th>
-              <th>Date</th>
-              <th>Size</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {backups.map((backup, index) => (
-              <tr key={backup.id}>
-                <td>{backup.name}</td>
-                <td>{backup.date}</td>
-                <td>{backup.size}</td>
-                <td>{backup.type}</td>
-                <td>
-                  <span className={`status ${backup.status.replace(" ", "").toLowerCase()}`}>
-                    {backup.status}
-                  </span>
-                </td>
-                <td className="actions">
-                  <button 
-                    className="download" 
-                    onClick={() => handleDownloadBackup(backup)}
-                    title="Download backup"
-                  >
-                    <FaDownload />
-                  </button>
-                  <button 
-                    className="delete" 
-                    onClick={() => handleDeleteBackup(backup.id)}
-                    title="Delete backup"
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
     </div>
   );

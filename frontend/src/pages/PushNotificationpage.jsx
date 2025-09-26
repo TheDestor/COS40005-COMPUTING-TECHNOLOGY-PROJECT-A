@@ -8,7 +8,6 @@ const PushNotificationPage = () => {
   const [notifications, setNotifications] = useState({
     push: true,
     location: true,
-    price: true,
     event: true,
   });
 
@@ -17,7 +16,6 @@ const PushNotificationPage = () => {
   const notificationLabels = {
     push: "Push notifications",
     location: "Location-based notifications",
-    price: "Price offer notifications",
     event: "Event notifications",
   };
 
