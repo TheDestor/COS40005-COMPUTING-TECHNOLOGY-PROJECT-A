@@ -8,6 +8,166 @@ import defaultImage from '../assets/Kuching.png';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import AIChatbot from '../components/AiChatbot.jsx';
 
+const TOWN_VIDEOS = {
+  Kuching: [
+    {
+      id: { videoId: 'Ru0fTWfuh8o' },
+      snippet: {
+        title: 'Kuching City Highlights',
+        description: 'Explore the vibrant city of Kuching, Sarawak’s capital, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/Ru0fTWfuh8o/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Sibu: [
+    {
+      id: { videoId: 'gX4FjOAQa2A' },
+      snippet: {
+        title: 'Sibu: The Swan City',
+        description: 'Discover Sibu’s riverfront, local delicacies, and vibrant festivals in this feature video.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/gX4FjOAQa2A/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Miri: [
+    {
+      id: { videoId: 'Orie5jC6mlE' },
+      snippet: {
+        title: 'Miri Adventure',
+        description: 'Experience the adventure capital of Sarawak, from beaches to caves and national parks.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/Orie5jC6mlE/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Bintulu: [
+    {
+      id: { videoId: 'vBRh24zjaCc' },
+      snippet: {
+        title: 'Bintulu: Nature & Industry',
+        description: 'See how Bintulu balances industry and nature, with beautiful parks and vibrant commerce.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/vBRh24zjaCc/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Samarahan: [
+    {
+      id: { videoId: 'a9jdNhyXdCU' },
+      snippet: {
+        title: 'Kota Samarahan: The City of Bridges',
+        description: 'Discover the beauty of Kota Samarahan, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/a9jdNhyXdCU/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Mukah: [
+    {
+      id: { videoId: 'utld6a8X8jo' },
+      snippet: {
+        title: 'Mukah: The City of Bridges',
+        description: 'Discover the beauty of Mukah, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/utld6a8X8jo/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Kapit: [
+    {
+      id: { videoId: 'HtSy7Ah_nwo' },
+      snippet: {
+        title: 'Kapit: The City of Bridges',
+        description: 'Discover the beauty of Kapit, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/HtSy7Ah_nwo/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  "Sri Aman": [
+    {
+      id: { videoId: 'ozJUKtFFfUE' },
+      snippet: {
+        title: 'Sri Aman: The City of Bridges',
+        description: 'Discover the beauty of Sri Aman, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/ozJUKtFFfUE/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Limbang: [
+    {
+      id: { videoId: '2eJrUo0CWfo' },
+      snippet: {
+        title: 'Limbang: The City of Bridges',
+        description: 'Discover the beauty of Limbang, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/2eJrUo0CWfo/mqdefault.jpg' }
+        }
+      }
+    }
+  ],  
+  Serian: [
+    {
+      id: { videoId: 'Ka90wjVr9so' },
+      snippet: {
+        title: 'Serian: The City of Bridges',
+        description: 'Discover the beauty of Serian, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/Ka90wjVr9so/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Sarikei: [
+    {
+      id: { videoId: '6oZFY9q9U9Y' },
+      snippet: {
+        title: 'Sarikei: The City of Bridges',
+        description: 'Discover the beauty of Sarikei, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/6oZFY9q9U9Y/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+  Betong: [
+    {
+      id: { videoId: 'e2rDoT2-tBk' },
+      snippet: {
+        title: 'Betong: The City of Bridges',
+        description: 'Discover the beauty of Betong, with its unique blend of culture, food, and history.',
+        thumbnails: {
+          medium: { url: 'https://i.ytimg.com/vi/e2rDoT2-tBk/mqdefault.jpg' }
+        }
+      }
+    }
+  ],
+};
+
+const DEFAULT_VIDEO = [
+  {
+    id: { videoId: 'KIQueYmDWEQ' },
+    snippet: {
+      title: 'Sarawak Tourism Highlights',
+      description: 'Explore the beauty of Sarawak through this amazing video',
+      thumbnails: {
+        medium: { url: 'https://i.ytimg.com/vi/KIQueYmDWEQ/mqdefault.jpg' }
+      }
+    }
+  }
+];
+
 const CategoryDetailsPage = () => {
   const [townData, setTownData] = useState(null);
   const [divisionItems, setDivisionItems] = useState([]);
@@ -86,55 +246,14 @@ const CategoryDetailsPage = () => {
     if (townData?.name) {
       const fetchVideos = async () => {
         try {
-          const mockVideos = [
-            {
-              id: { videoId: 'dQw4w9WgXcQ' },
-              snippet: {
-                title: `${townData.name} Tourism Highlights`,
-                description: `Explore the beauty of ${townData.name} through this amazing video`,
-                thumbnails: {
-                  medium: { url: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg' }
-                }
-              }
-            },
-            {
-              id: { videoId: '9bZkp7q19f0' },
-              snippet: {
-                title: `Cultural Heritage of ${townData.name}`,
-                description: `Discover the rich cultural traditions of ${townData.name}`,
-                thumbnails: {
-                  medium: { url: 'https://i.ytimg.com/vi/9bZkp7q19f0/mqdefault.jpg' }
-                }
-              }
-            },
-            {
-              id: { videoId: 'J---aiyznGQ' },
-              snippet: {
-                title: `Local Cuisine in ${townData.name}`,
-                description: `Taste the authentic flavors of ${townData.name}`,
-                thumbnails: {
-                  medium: { url: 'https://i.ytimg.com/vi/J---aiyznGQ/mqdefault.jpg' }
-                }
-              }
-            },
-            {
-              id: { videoId: 'L_jWHffIx5E' },
-              snippet: {
-                title: `Nature Adventures in ${townData.name}`,
-                description: `Experience the natural wonders of ${townData.name}`,
-                thumbnails: {
-                  medium: { url: 'https://i.ytimg.com/vi/L_jWHffIx5E/mqdefault.jpg' }
-                }
-              }
-            }
-          ];
-          setVideos(mockVideos);
-          setSelectedVideo(mockVideos[0]);
+          // Use the mapping for the town, fallback to default
+          const videos = TOWN_VIDEOS[townData.name] || DEFAULT_VIDEO;
+          setVideos(videos);
+          setSelectedVideo(videos[0]);
         } catch (error) {
           console.error('Error fetching videos:', error);
         }
       };
-
       fetchVideos();
     }
   }, [townData]);
@@ -298,7 +417,7 @@ const CategoryDetailsPage = () => {
 
       <div className="video-section-container">
       <div className="video-section">
-        <h2>Discover {townData.name} Through Videos</h2>
+        <h2>Discover {townData.name} Through Video</h2>
         
         {selectedVideo && (
           <div className="featured-video">
@@ -307,7 +426,8 @@ const CategoryDetailsPage = () => {
               width="100%"
               height="500"
               src={`https://www.youtube.com/embed/${selectedVideo.id.videoId}`}
-              frameBorder="0"
+              // frameBorder="0"
+              controls="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
@@ -318,7 +438,7 @@ const CategoryDetailsPage = () => {
           </div>
         )}
         
-        <div className="related-videos">
+        {/* <div className="related-videos">
           <h3>More Videos</h3>
           <div className="videos-container">
             <div className="videos-scroll">
@@ -337,7 +457,7 @@ const CategoryDetailsPage = () => {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       </div>
 

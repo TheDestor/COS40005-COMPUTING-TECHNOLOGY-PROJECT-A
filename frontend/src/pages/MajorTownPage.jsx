@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -6,6 +6,10 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { motion } from 'framer-motion';
+import { useInView } from 'framer-motion';
+
+const HERO_VIDEO_ID = 'KIQueYmDWEQ'; 
 
 const MajorTownPage = () => {
   const [data, setData] = useState([]);
@@ -15,6 +19,8 @@ const MajorTownPage = () => {
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory, setCurrentCategory] = useState('');
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, threshold: 0.3 });
 
   // Fetch all locations and filter for Major Towns
   const fetchAllLocations = async () => {
@@ -109,10 +115,26 @@ const MajorTownPage = () => {
       <MenuNavbar />
 
       <div className="hero-banner">
-        <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase() || 'MAJOR TOWNS'}</h1>
-          <p>Exploring {currentCategory || 'Sarawak'}</p>
+        <div className="hero-video-bg">
+          <iframe
+            src={`https://www.youtube.com/embed/${HERO_VIDEO_ID}?autoplay=1&mute=1&controls=0&loop=1&playlist=${HERO_VIDEO_ID}&modestbranding=1&showinfo=0&rel=0`}
+            title="Sarawak Hero Video"
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen={false}
+            style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+          ></iframe>
         </div>
+      </div>
+
+      <div className="hero-overlay-mt">
+        <h1>{currentCategory.toUpperCase() || 'MAJOR TOWNS'}</h1>
+        <p className="hero-intro">
+          Discover Sarawak's vibrant urban centers - from the bustling capital Kuching to the 
+          historic town of Sibu and the riverine charm of Miri. Each major town offers unique 
+          cultural experiences, modern amenities, and gateway access to Sarawak's rich heritage 
+          and natural wonders.
+        </p>
       </div>
 
       <div className="search-section">
