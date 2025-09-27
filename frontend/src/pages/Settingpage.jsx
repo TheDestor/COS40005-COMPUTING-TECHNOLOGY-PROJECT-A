@@ -10,9 +10,11 @@ import MenuNavbar from '../components/MenuNavbar.jsx';
 import SeniorModeConfirm from '../components/SeniorModeConfirm.jsx';
 import LoginPage from './Loginpage.jsx';
 import AIChatbot from '../components/AiChatbot.jsx';
+import AboutMapModal from '../components/AboutMapModal.jsx';
 
 const SettingsPage = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [showAboutMap, setShowAboutMap] = useState(false);
   
   const handleLoginClick = () => {
     setShowLogin(true);
@@ -20,6 +22,14 @@ const SettingsPage = () => {
 
   const closeLogin = () => {
     setShowLogin(false);
+  };
+
+  const handleAboutMapClick = () => {
+    setShowAboutMap(true);
+  };
+
+  const closeAboutMap = () => {
+    setShowAboutMap(false);
   };
 
   const [activeSection, setActiveSection] = useState(() => {
@@ -62,7 +72,7 @@ const SettingsPage = () => {
               />
             </div>
 
-            <div className="setting-item">
+            {/* <div className="setting-item">
               <span>Enable Voice Assistant</span>
               <Switch
                 onChange={setVoiceAssistant}
@@ -72,12 +82,12 @@ const SettingsPage = () => {
                 uncheckedIcon={false}
                 checkedIcon={false}
               />
-            </div>
+            </div> */}
 
             <ul className="settings-list">
               {/* <li onClick={() => navigate('/error')}>Clear cache</li> */}
               {/* <li onClick={() => navigate('/error')}>System updates</li> */}
-              <li onClick={() => navigate('/error')}>About the map</li>
+              <li onClick={handleAboutMapClick}>About the map</li>
             </ul>
           </div>
         );
@@ -174,6 +184,7 @@ const SettingsPage = () => {
         )}
       </>
       {showLogin && <LoginPage onClose={closeLogin} />}
+      {showAboutMap && <AboutMapModal isOpen={showAboutMap} onClose={closeAboutMap} />}
 
       {/* Ai Chatbot */}
       <AIChatbot />
