@@ -39,12 +39,14 @@ const businessUpload = upload.fields([
 ]);
 
 // Public
-businessRouter.post("/addBusiness", attachUserIfPresent, businessUpload, addBusiness);
 businessRouter.get("/approved", getAllApprovedBusinesses);
 
-// Owner-scoped
-businessRouter.get("/mine", verifyJWT, getBusinessesByOwner);
-businessRouter.get("/my-submissions", verifyJWT, getMySubmissions);
+// Business user only routes
+businessRouter.post("/addBusiness", verifyJWT, checkRole(['business']), businessUpload, addBusiness);
+businessRouter.get("/mine", verifyJWT, checkRole(['business']), getBusinessesByOwner);
+businessRouter.get("/my-submissions", verifyJWT, checkRole(['business']), getMySubmissions);
+businessRouter.put("/updateMyBusiness/:id", verifyJWT, checkRole(['business']), businessUpload, updateBusinessDetails);
+businessRouter.patch("/updateMyBusinessStatus/:id", verifyJWT, checkRole(['business']), updateBusinessStatus);
 
 // CBT Admin-only routes
 businessRouter.get("/getAllBusinesses", verifyJWT, checkRole(['cbt_admin']), getAllBusinesses);

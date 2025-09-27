@@ -138,7 +138,7 @@ const Sidebar = () => {
               </NavLink>
             </li>
             <li className="menu-item">
-              <NavLink to="/testing" end>
+              <NavLink to="/" end>
                 <FaMapMarkedAlt className="icon123" />
                 <span className="menu-text">Map</span>
               </NavLink>

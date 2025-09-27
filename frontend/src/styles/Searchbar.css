@@ -3,7 +3,7 @@
 ============================ */
 .styled-searchbar-container {
   z-index: 10001; /* above .sidebar100 (9999) */
-  background-color: #f2ecf7;
+  background-color: #efefef;
   border-radius: 999px;
   padding: 4px 16px;
   display: flex;

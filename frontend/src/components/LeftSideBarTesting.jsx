@@ -132,9 +132,8 @@ async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
     `${end.lng},${end.lat}`
   ].join(';');
   
-  // URL encode the coordinates to handle special characters
-  const encodedCoords = encodeURIComponent(coords);
-  const url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson`;
+  // Don't encode coordinates for OSRM - it expects them as-is
+  const url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson`;
   
   console.log(`Fetching route for ${profile}:`, url);
   
@@ -162,15 +161,14 @@ async function fetchOSRMRouteAlternatives(start, end, waypoints = [], profile = 
     `${end.lng},${end.lat}`
   ].join(';');
   
-  // URL encode the coordinates to handle special characters
-  const encodedCoords = encodeURIComponent(coords);
-  
   // For walking and cycling, don't use alternatives parameter as it may not be supported
   let url;
   if (profile === 'walking' || profile === 'cycling') {
-    url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson`;
+    // Don't encode coordinates for OSRM - it expects them as-is
+    url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson`;
   } else {
-    url = `https://router.project-osrm.org/route/v1/${profile}/${encodedCoords}?overview=full&geometries=geojson&alternatives=true&steps=false&number=${alternatives}`;
+    // Use alternatives for driving but with simpler parameters
+    url = `https://router.project-osrm.org/route/v1/${profile}/${coords}?overview=full&geometries=geojson&alternatives=true`;
   }
   
   console.log(`Fetching alternatives for ${profile}:`, url);
@@ -191,53 +189,119 @@ async function fetchOSRMRouteAlternatives(start, end, waypoints = [], profile = 
   return data;
 }
 
-// GraphHopper routing helper (using your API key)
+// GraphHopper routing helper (using backend API)
 async function fetchGraphHopperRoute(start, end, waypoints = [], profile = 'car') {
-  // GraphHopper expects multiple 'point' parameters, one for each coordinate
-  const allPoints = [start, ...waypoints, end];
-  
-  // Get API key from environment variables (Vite uses import.meta.env)
-  const apiKey = import.meta.env?.VITE_GRAPHHOPPER;
-  
-  if (!apiKey) {
-    console.warn('GraphHopper API key not found, using demo key');
-  }
-  
-  const key = apiKey || 'demo';
-  
-  // Build URL with multiple point parameters
-  const pointParams = allPoints.map(point => `point=${point.lat},${point.lng}`).join('&');
-  const url = `https://graphhopper.com/api/1/route?${pointParams}&vehicle=${profile}&instructions=false&calc_points=true&points_encoded=false&key=${key}&type=json`;
-  
   try {
-    console.log(`Fetching GraphHopper route with ${apiKey ? 'your API key' : 'demo key'}:`, url);
-    console.log(`Points:`, allPoints);
-    console.log(`Points count: ${allPoints.length}`);
+    console.log(`Fetching GraphHopper route via backend API for ${profile}...`);
+    console.log(`Start:`, start);
+    console.log(`End:`, end);
+    console.log(`Waypoints:`, waypoints);
     
-    const response = await fetch(url);
+    const response = await fetch('http://localhost:5050/api/graphhopper/route', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start,
+        end,
+        waypoints,
+        vehicle: profile
+      })
+    });
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`GraphHopper request failed: ${response.status}`, errorText);
-      throw new Error(`GraphHopper request failed: ${response.status} - ${errorText}`);
+      const errorData = await response.json();
+      console.error(`Backend GraphHopper request failed: ${response.status}`, errorData);
+      throw new Error(`Backend GraphHopper request failed: ${response.status} - ${errorData.message}`);
     }
+    
     const data = await response.json();
+    console.log('Backend GraphHopper response:', data);
     
-    // Debug: Log the full response structure
-    console.log('GraphHopper response:', data);
-    
-    // Check if GraphHopper returned valid data
-    if (!data.paths || !data.paths[0]) {
-      console.error('GraphHopper response structure:', data);
-      throw new Error('No route found in GraphHopper response');
+    if (!data.success || !data.routes || data.routes.length === 0) {
+      throw new Error('No routes found in backend GraphHopper response');
     }
     
-    return data;
+    // Convert backend response to expected format
+    return {
+      paths: data.routes.map(route => ({
+        points: {
+          coordinates: route.coordinates.map(([lat, lng]) => [lng, lat]) // Convert back to [lng, lat]
+        },
+        distance: route.distance,
+        time: route.duration * 1000, // Convert seconds to ms
+        instructions: route.roadInfo.map(info => ({
+          street_name: info.road,
+          distance: info.distance,
+          time: info.duration * 1000,
+          text: info.direction
+        }))
+      }))
+    };
   } catch (error) {
-    console.warn('GraphHopper failed:', error);
+    console.warn('Backend GraphHopper failed:', error);
     throw error;
   }
 }
 
+// GraphHopper alternatives helper (using backend API)
+async function fetchGraphHopperAlternatives(start, end, waypoints = [], profile = 'car', alternatives = 3) {
+  try {
+    console.log(`Fetching GraphHopper alternatives via backend API for ${profile}...`);
+    console.log(`Start:`, start);
+    console.log(`End:`, end);
+    console.log(`Waypoints:`, waypoints);
+    console.log(`Alternatives:`, alternatives);
+    
+    const response = await fetch('/api/graphhopper/alternatives', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start,
+        end,
+        waypoints,
+        vehicle: profile,
+        alternatives
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`Backend GraphHopper alternatives request failed: ${response.status}`, errorData);
+      throw new Error(`Backend GraphHopper alternatives request failed: ${response.status} - ${errorData.message}`);
+    }
+    
+    const data = await response.json();
+    console.log('Backend GraphHopper alternatives response:', data);
+    
+    if (!data.success || !data.routes || data.routes.length === 0) {
+      throw new Error('No routes found in backend GraphHopper alternatives response');
+    }
+    
+    // Convert backend response to expected format
+    return {
+      paths: data.routes.map(route => ({
+        points: {
+          coordinates: route.coordinates.map(([lat, lng]) => [lng, lat]) // Convert back to [lng, lat]
+        },
+        distance: route.distance,
+        time: route.duration * 1000, // Convert seconds to ms
+        instructions: route.roadInfo.map(info => ({
+          street_name: info.road,
+          distance: info.distance,
+          time: info.duration * 1000,
+          text: info.direction
+        }))
+      }))
+    };
+  } catch (error) {
+    console.warn('Backend GraphHopper alternatives failed:', error);
+    throw error;
+  }
+}
 
 // Valhalla routing helper (free and open source)
 async function fetchValhallaRoute(start, end, waypoints = [], profile = 'auto') {
@@ -299,7 +363,18 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
             // Try primary service first
             try {
               if (routeConfig.service === 'graphhopper') {
-                routeData = await fetchGraphHopperRoute(start, end, waypoints, routeConfig.profile);
+                console.log(`Using GraphHopper for ${vehicle}...`);
+                // Try alternatives first for driving vehicles
+                if (vehicle === 'Car' || vehicle === 'Bus' || vehicle === 'Motorbike') {
+                  try {
+                    routeData = await fetchGraphHopperAlternatives(start, end, waypoints, routeConfig.profile, 3);
+                  } catch (alternativesError) {
+                    console.log(`GraphHopper alternatives failed, trying basic route:`, alternativesError.message);
+                    routeData = await fetchGraphHopperRoute(start, end, waypoints, routeConfig.profile);
+                  }
+                } else {
+                  routeData = await fetchGraphHopperRoute(start, end, waypoints, routeConfig.profile);
+                }
                 
                 // Check if GraphHopper returned valid coordinates
                 if (routeData.paths && routeData.paths.length > 0) {
@@ -319,11 +394,14 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
                 routeData = await fetchValhallaRoute(start, end, waypoints, routeConfig.profile);
               } else if (routeConfig.service === 'osrm') {
                 if (vehicle === 'Walking' || vehicle === 'Bicycle') {
+                  console.log(`Using OSRM basic route for ${vehicle}...`);
                   routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.profile);
                 } else {
                   try {
+                    console.log(`Trying OSRM alternatives for ${vehicle}...`);
                     routeData = await fetchOSRMRouteAlternatives(start, end, waypoints, routeConfig.profile, 3);
                   } catch (alternativesError) {
+                    console.log(`OSRM alternatives failed, falling back to basic route:`, alternativesError.message);
                     routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.profile);
                   }
                 }
@@ -334,15 +412,19 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
               // Fallback to OSRM
               if (routeConfig.fallbackService === 'osrm') {
                 if (vehicle === 'Walking' || vehicle === 'Bicycle') {
+                  console.log(`Using OSRM basic route for ${vehicle} fallback...`);
                   routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.fallbackProfile);
                 } else {
                   try {
+                    console.log(`Trying OSRM alternatives for ${vehicle} fallback...`);
                     routeData = await fetchOSRMRouteAlternatives(start, end, waypoints, routeConfig.fallbackProfile, 3);
                   } catch (alternativesError) {
+                    console.log(`OSRM alternatives failed, falling back to basic route:`, alternativesError.message);
                     routeData = await fetchOSRMRoute(start, end, waypoints, routeConfig.fallbackProfile);
                   }
                 }
               } else if (routeConfig.fallbackService === 'valhalla') {
+                console.log(`Using Valhalla for ${vehicle} fallback...`);
                 routeData = await fetchValhallaRoute(start, end, waypoints, routeConfig.fallbackProfile);
               }
             }
@@ -464,6 +546,7 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
 
 
 const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef, onSetToggleBookmarkRef }) => {
+  const { user, isLoggedIn } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -1282,32 +1365,36 @@ useEffect(() => {
           <FaBookmark className="icon100" />
           <span className="label100">Bookmark</span>
         </div>
-        <div
-          className={`menu-item100${activeMenu === 'business' ? ' active' : ''}`}
-          onClick={() => {
-            if (activeMenu === 'business') {
-              setActiveMenu('');
-              toggleBusinessPanel();
-            } else {
-              setActiveMenu('business');
-              toggleBusinessPanel();
-            }
-          }}
-        >
-          <FaBuilding className="icon100" />
-          <span className="label100">Business</span>
-        </div>
+        {isLoggedIn && user?.role === 'business' && (
+          <div
+            className={`menu-item100${activeMenu === 'business' ? ' active' : ''}`}
+            onClick={() => {
+              if (activeMenu === 'business') {
+                setActiveMenu('');
+                toggleBusinessPanel();
+              } else {
+                setActiveMenu('business');
+                toggleBusinessPanel();
+              }
+            }}
+          >
+            <FaBuilding className="icon100" />
+            <span className="label100">Business</span>
+          </div>
+        )}
 
-        <div
-          className={`menu-item100${activeMenu === 'managebusiness' ? ' active' : ''}`}
-          onClick={() => {
-            setActiveMenu('managebusiness');
-            window.location.href = '/manage-business';
-          }}
-        >
-          <MdManageAccounts className="icon100" />
-          <span className="label100">Manage Business</span>
-        </div>
+        {isLoggedIn && user?.role === 'business' && (
+          <div
+            className={`menu-item100${activeMenu === 'managebusiness' ? ' active' : ''}`}
+            onClick={() => {
+              setActiveMenu('managebusiness');
+              window.location.href = '/manage-business';
+            }}
+          >
+            <MdManageAccounts className="icon100" />
+            <span className="label100">Manage Business</span>
+          </div>
+        )}
         <div
           className={`menu-item101${activeMenu === 'layers' ? ' active' : ''}`}
           onClick={() => {

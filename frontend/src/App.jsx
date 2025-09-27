@@ -23,7 +23,7 @@ import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
 import ForgetPassword from './pages/ForgetPasswordpage.jsx';
 
 // Map Components Pages
-import HomePage from './pages/Homepage.jsx';
+// import HomePage from './pages/Homepage.jsx';
 import SettingPage from './pages/Settingpage.jsx';
 import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import BookmarkPage from './pages/Bookmarkpage.jsx';
@@ -69,8 +69,8 @@ function App() {
       <BookmarkProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/testing" element={<MapComponentTesting />} />
+            <Route path="/" element={<MapComponentTesting />} />
+            {/* <Route path="/testing" element={<MapComponentTesting />} /> */}
 
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<UserRegistration />} />

@@ -55,6 +55,35 @@ const ClickToSet = ({ onPick }) => {
 };
 
 const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
+  // Get auth context
+  const { accessToken, user, isLoggedIn } = useAuth();
+
+  // Check if user has business role
+  if (!isLoggedIn || user?.role !== 'business') {
+    return (
+      <div className="business-submission-overlay">
+        <div className="business-submission-container">
+          <div className="business-submission-form-wrapper">
+            <div className="form-header">
+              <h2>Access Denied</h2>
+              <p>This form is restricted to business users only.</p>
+              <button className="close-button" onClick={() => window.location.href = '/'}>
+                &times;
+              </button>
+            </div>
+            <div className="form-step">
+              <div className="business-empty">
+                You need to be logged in as a business user to submit business forms.
+                <br />
+                <br />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -420,6 +449,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         const response = await axios.post('/api/businesses/addBusiness', formDataToSend, {
           headers: {
             'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${accessToken}`,
           },
         });
 

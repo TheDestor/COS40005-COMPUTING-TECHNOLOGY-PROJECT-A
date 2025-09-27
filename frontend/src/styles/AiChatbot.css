@@ -32,8 +32,8 @@
 	height: 64px;
 	border-radius: 50%;
 	border: none;
-	background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    /* background-color: #000000; */
+	/* background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);/ */
+    background-color: #efefef;
 	color: white;
 	cursor: pointer;
 	font-size: 22px;

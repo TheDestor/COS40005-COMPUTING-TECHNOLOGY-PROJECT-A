@@ -2,28 +2,33 @@ import jwt from 'jsonwebtoken';
 
 export const verifyJWT = (req, res, next) => {
     console.log(`verifyJWT triggered for: ${req.method} ${req.originalUrl}`);
+    console.log('Authorization header:', req.headers.authorization);
 
-    const authHeader = req.headers.authorization || req.headers.Authorization
+    const authHeader = req.headers.authorization || req.headers.Authorization;
     
     if (!authHeader?.startsWith('Bearer ')) {
+        console.log('No Bearer token found in Authorization header');
         return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const token = authHeader.split(' ')[1]
+    const token = authHeader.split(' ')[1];
     
     jwt.verify(
         token,
         process.env.ACCESS_TOKEN_SECRET,
         (error, decoded) => {
             if (error) {
-                console.log(error)
+                console.log('JWT verification error:', error);
                 return res.status(403).json({ message: "Forbidden" });
             }
-            req.user = decoded.UserInfo._id
-            req.role = decoded.UserInfo.role
+            console.log('Decoded JWT:', decoded);
+            // Support both { UserInfo: { _id, role, email } } and { _id, role, email }
+            req.user = decoded.UserInfo?._id || decoded._id;
+            req.role = decoded.UserInfo?.role || decoded.role;
+            req.userEmail = decoded.UserInfo?.email || decoded.email;
             next();
         }
-    )
+    );
 }
 
 export const checkRole = (allowedRoles) => {

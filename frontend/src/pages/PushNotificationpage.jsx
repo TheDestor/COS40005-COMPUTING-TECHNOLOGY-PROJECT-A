@@ -43,7 +43,7 @@ const PushNotificationPage = () => {
       <h2><MdNotificationsNone size={22} /> Notifications</h2>
 
       {Object.entries(notifications).map(([key, value]) => (
-        <div className="notification-item" key={key}>
+        <div className="notification-item-pn" key={key}>
           <span>{notificationLabels[key]}</span>
           <Switch
             checked={value}

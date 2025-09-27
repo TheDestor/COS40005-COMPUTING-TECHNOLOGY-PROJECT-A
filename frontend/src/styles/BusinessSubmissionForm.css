@@ -17,6 +17,15 @@
   overflow-y: hidden;
 }
 
+.business-empty {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #2c3345;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
 .close-button {
   position: absolute;
   top: 0;

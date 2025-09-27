@@ -2,6 +2,7 @@ import { businessModel } from '../models/BusinessModel.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 
 // Get the directory name using ES modules approach
 const __filename = fileURLToPath(import.meta.url);
@@ -136,6 +137,13 @@ export const addBusiness = async (req, res) => {
         const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
 
         // Create new business with file paths (match model field names)
+        // Debug logging for business creation
+        console.log('=== BUSINESS CREATION DEBUG ===');
+        console.log('req.user:', req.user);
+        console.log('req.userEmail:', req.userEmail);
+        console.log('req.role:', req.role);
+        console.log('businessData.submitterEmail:', businessData.submitterEmail);
+        
         const newBusiness = new businessModel({
             name: String(businessData.name).trim(),
             owner: String(businessData.owner).trim(),
@@ -153,9 +161,13 @@ export const addBusiness = async (req, res) => {
             priority: ['high', 'medium', 'low'].includes(businessData.priority) ? businessData.priority : 'low',
             agreement: businessData.agreement === 'true' || businessData.agreement === true,
             // Create new business with file paths
-            submitterUserId: req.user?._id || req.user?.id || null,
-            submitterEmail: req.user?.email || businessData.submitterEmail || null
+            submitterUserId: req.user ? new mongoose.Types.ObjectId(req.user) : null,
+            submitterEmail: req.userEmail || businessData.submitterEmail || null
         });
+        
+        console.log('Final submitterUserId:', newBusiness.submitterUserId);
+        console.log('Final submitterEmail:', newBusiness.submitterEmail);
+        console.log('=== END BUSINESS CREATION DEBUG ===');
 
         await newBusiness.save();
 
@@ -359,6 +371,26 @@ export const updateBusinessStatus = async (req, res) => {
             }
         }
         
+        // Find business first to check authorization
+        const business = await businessModel.findById(id);
+        if (!business) {
+            return res.status(404).json({
+                success: false,
+                message: "Business not found"
+            });
+        }
+
+        // Authorization check: Only business owner or admin can update status
+        const isAdmin = req.role === 'cbt_admin';
+        const isOwner = business.submitterUserId && business.submitterUserId.toString() === req.user;
+        
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Only the business owner or admin can update business status."
+            });
+        }
+
         // Find and update the business
         const updateData = {};
         if (status) updateData.status = status;
@@ -397,8 +429,8 @@ export const getBusinessesByOwner = async (req, res) => {
     const emailQ = (req.query.email || '').trim();
     const ors = [];
 
-    if (req.user?.id || req.user?._id) ors.push({ submitterUserId: req.user.id || req.user._id });
-    if (req.user?.email) ors.push({ submitterEmail: req.user.email }, { ownerEmail: req.user.email });
+    if (req.user) ors.push({ submitterUserId: new mongoose.Types.ObjectId(req.user) });
+    if (req.userEmail) ors.push({ submitterEmail: req.userEmail }, { ownerEmail: req.userEmail });
     if (emailQ) ors.push({ ownerEmail: emailQ }, { submitterEmail: emailQ });
 
     if (ors.length === 0) {
@@ -435,6 +467,17 @@ export const updateBusinessDetails = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "Business not found"
+            });
+        }
+
+        // Authorization check: Only business owner or admin can edit
+        const isAdmin = req.role === 'cbt_admin';
+        const isOwner = business.submitterUserId && business.submitterUserId.toString() === req.user;
+        
+        if (!isAdmin && !isOwner) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Only the business owner or admin can edit business details."
             });
         }
 
@@ -584,19 +627,63 @@ export const getAllApprovedBusinesses = async (req, res) => {
 // Get all submissions created by the authenticated user (any status)
 export const getMySubmissions = async (req, res) => {
     try {
-      const submitterUserId = req.user?.id || req.user?._id;
+      console.log('getMySubmissions: req.user =', req.user);
+      const submitterUserId = req.user; // req.user is already the string ID from middleware
       if (!submitterUserId) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }
+      
+      // Convert string ID to ObjectId for database query
       const businesses = await businessModel
-        .find({ submitterUserId })
+        .find({ submitterUserId: new mongoose.Types.ObjectId(submitterUserId) })
         .sort({ submissionDate: -1 });
-  
-      res.status(200).json({
-        success: true,
-        count: businesses.length,
-        data: businesses
-      });
+      
+      console.log('getMySubmissions: businesses found =', businesses.length);
+      
+      // If no businesses found by submitterUserId, try to find by email as fallback
+      if (businesses.length === 0 && req.userEmail) {
+        console.log('No businesses found by submitterUserId, trying email fallback...');
+        console.log('Looking for businesses with email:', req.userEmail);
+        const emailBusinesses = await businessModel
+          .find({ 
+            $or: [
+              { submitterEmail: req.userEmail },
+              { ownerEmail: req.userEmail }
+            ]
+          })
+          .sort({ submissionDate: -1 });
+        
+        console.log('getMySubmissions: businesses found by email =', emailBusinesses.length);
+        
+        // Update these businesses with the correct submitterUserId
+        if (emailBusinesses.length > 0) {
+          await businessModel.updateMany(
+            { 
+              $or: [
+                { submitterEmail: req.userEmail },
+                { ownerEmail: req.userEmail }
+              ]
+            },
+            { 
+              submitterUserId: new mongoose.Types.ObjectId(req.user),
+              submitterEmail: req.userEmail 
+            }
+          );
+          console.log('Updated businesses with correct submitterUserId and submitterEmail');
+        }
+        
+        res.status(200).json({
+          success: true,
+          count: emailBusinesses.length,
+          data: emailBusinesses
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          count: businesses.length,
+          data: businesses
+        });
+      }
     } catch (error) {
       res.status(500).json({
         success: false,

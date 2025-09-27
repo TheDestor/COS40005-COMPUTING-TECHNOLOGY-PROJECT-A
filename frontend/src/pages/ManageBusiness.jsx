@@ -10,9 +10,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { FaSearch } from 'react-icons/fa';
 import { RiArrowGoBackLine } from 'react-icons/ri';
-import { FaXmark } from 'react-icons/fa6';
 import { FaBuilding, FaMapMarkerAlt, FaTags } from 'react-icons/fa';
-import { RiMailAddLine } from 'react-icons/ri';
+import { MdEmail } from "react-icons/md";
 import { toast, Toaster } from 'sonner';
 
 const defaultIcon = L.icon({
@@ -75,10 +74,41 @@ const Tabs = ({ active, setActive }) => (
 const ManageBusiness = () => {
   const { user, accessToken, isLoggedIn } = useAuth();
 
+  // Check if user has business role
+  if (!isLoggedIn || user?.role !== 'business') {
+    return (
+      <div className="mb-page">
+        <div className="mb-headerbar">
+          <div>
+            <div className="mb-title">Access Denied</div>
+            <p className="mb-subtitle">This page is restricted to business users only.</p>
+          </div>
+        </div>
+        <div className="mb-content">
+          <div className="mb-card-block">
+            <div className="mb-card-body">
+              <div className="mb-empty">
+                You need to be logged in as a business user to access this page.
+                <br />
+                <br />
+                <button 
+                  className="mb-btn"
+                  onClick={() => window.location.href = '/'}
+                >
+                  Go Back to Map
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [linking, setLinking] = useState(false);
+  // Removed linking state since we removed email functionality
   const [formErrors, setFormErrors] = useState({});
   const [businesses, setBusinesses] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -154,16 +184,13 @@ const ManageBusiness = () => {
     return !!selected && isLoggedIn && !saving && requiredValid && !hasDirtyErrors && hasChanges;
   }, [selected, isLoggedIn, saving, form, baseForm, formErrors, dirtyFields]);
  
-  const [linkedEmails, setLinkedEmails] = useState(() => {
-    const fromLS = JSON.parse(localStorage.getItem('mb_linked_emails') || '[]');
-    if (user?.email && !fromLS.includes(user.email)) fromLS.unshift(user.email);
-    return fromLS.slice(0, 10);
-  });
-  const [emailInput, setEmailInput] = useState('');
-  const [selectedEmail, setSelectedEmail] = useState(() => (user?.email ? user.email : (JSON.parse(localStorage.getItem('mb_linked_emails') || '[]')[0] || '')));
+  // Removed email-related state since we're fetching by user ID
 
   const authAxios = useMemo(() => {
-    const inst = axios.create();
+    const inst = axios.create({
+      baseURL: 'http://localhost:5050', // <-- Add this line
+      withCredentials: true, // <-- If your backend uses cookies for auth
+    });
     if (accessToken) inst.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
     return inst;
   }, [accessToken]);
@@ -173,8 +200,8 @@ const ManageBusiness = () => {
     return () => document.body.classList.remove('manage-business-body');
   }, []);
 
-  const fetchByEmail = async (email) => {
-    if (!email || !isLoggedIn || !accessToken) {
+  const fetchUserBusinesses = async () => {
+    if (!isLoggedIn || !accessToken) {
       setBusinesses([]);
       setSelected(null);
       return;
@@ -182,7 +209,8 @@ const ManageBusiness = () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await authAxios.get('/api/businesses/mine', { params: { email } });
+      // Use the my-submissions endpoint which fetches by user ID
+      const r = await authAxios.get('/api/businesses/my-submissions');
       const list = (r.data?.data || []).filter(Boolean);
       setBusinesses(list);
       if (list.length) {
@@ -206,7 +234,7 @@ const ManageBusiness = () => {
         setForm(null);
       }
     } catch (e) {
-      const msg = e.response?.data?.message || e.message || 'Failed to load businesses for this email.';
+      const msg = e.response?.data?.message || e.message || 'Failed to load your business submissions.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -215,57 +243,10 @@ const ManageBusiness = () => {
   };
 
   useEffect(() => {
-    fetchByEmail(selectedEmail);
-  }, [selectedEmail, isLoggedIn, accessToken]);
+    fetchUserBusinesses();
+  }, [isLoggedIn, accessToken]);
 
-  const addLinkedEmail = async () => {
-    const e = (emailInput || '').trim().toLowerCase();
-    if (!e) return;
-    const valid = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(e);
-    if (!valid) {
-      const msg = 'Please enter a valid email address.';
-      setError(msg);
-      toast.error(msg);
-      return;
-    }
-    if (linkedEmails.includes(e)) {
-      setSelectedEmail(e);
-      setEmailInput('');
-      toast.success('Email selected.');
-      return;
-    }
-    try {
-      setLinking(true);
-      setError(null);
-      const r = await authAxios.get('/api/businesses/mine', { params: { email: e } });
-      const list = (r.data?.data || []).filter(Boolean);
-      if (!list.length) {
-        const msg = 'No submissions found for this email.';
-        setError(msg);
-        toast.error(msg);
-        return;
-      }
-      const next = [e, ...linkedEmails].slice(0, 10);
-      setLinkedEmails(next);
-      setSelectedEmail(e);
-      setEmailInput('');
-      localStorage.setItem('mb_linked_emails', JSON.stringify(next));
-      toast.success('Email linked.');
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to link email.';
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLinking(false);
-    }
-  };
-
-  const removeLinkedEmail = (e) => {
-    const next = linkedEmails.filter(x => x !== e);
-    setLinkedEmails(next);
-    localStorage.setItem('mb_linked_emails', JSON.stringify(next));
-    if (selectedEmail === e) setSelectedEmail(next[0] || '');
-  };
+  // Removed email-related functions since we're fetching by user ID
 
   const filtered = businesses.filter(b => {
     const passStatus = statusFilter === 'all' ? true : (b.status || '').toLowerCase() === statusFilter;
@@ -318,8 +299,8 @@ const ManageBusiness = () => {
         latitude: form.latitude,
         longitude: form.longitude
       };
-      const upd = await authAxios.put(`/api/businesses/updateBusinessDetails/${selected._id}`, payload);
-      const stat = await authAxios.patch(`/api/businesses/updateBusinessStatus/${selected._id}`, { status: 'pending' });
+      const upd = await authAxios.put(`/api/businesses/updateMyBusiness/${selected._id}`, payload);
+      const stat = await authAxios.patch(`/api/businesses/updateMyBusinessStatus/${selected._id}`, { status: 'pending' });
       if (upd.data?.success) {
         const updated = { ...upd.data.data, status: stat.data?.data?.status || 'pending' };
         setBusinesses(prev => prev.map(x => (x._id === updated._id ? updated : x)));
@@ -358,7 +339,7 @@ const ManageBusiness = () => {
         <div className="mb-header-right">
           <button
             className="mb-back"
-            onClick={() => (window.location.href = '/testing')}
+            onClick={() => (window.location.href = '/')}
             title="Back to map"
           >
             <RiArrowGoBackLine />
@@ -397,44 +378,7 @@ const ManageBusiness = () => {
         </div>
       </div>
 
-      {/* LINKED EMAILS + INLINE ADD */}
-      <div className="mb-email-row">
-        <div className="mb-email-chips">
-          {linkedEmails.map(e => (
-            <span
-              key={e}
-              className={`mb-chip email ${selectedEmail === e ? 'active' : ''}`}
-              onClick={() => setSelectedEmail(e)}
-              title={e}
-            >
-              {e}
-              <button
-                className="mb-chip-x"
-                onClick={(ev) => { ev.stopPropagation(); removeLinkedEmail(e); }}
-                aria-label="Remove linked email"
-              >
-                <FaXmark />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="mb-emailbar">
-          <input
-            type="email"
-            inputMode="email"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            className="mb-email-input"
-            placeholder="Enter business email to view submissions"
-            value={emailInput}
-            onChange={(e) => setEmailInput((e.target.value || '').toLowerCase())}
-          />
-          <button className="mb-email-btn" onClick={addLinkedEmail} disabled={linking}>
-            <RiMailAddLine className="mb-ico" /> {linking ? 'Linking...' : 'Link email'}
-          </button>
-        </div>
-      </div>
+      {/* Removed email section since we're fetching by user ID */}
 
       {loading ? (
         <div className="mb-loading">Loading...</div>
@@ -444,7 +388,7 @@ const ManageBusiness = () => {
           <SectionCard title="Submitted Forms">
             <div className="mb-list">
               {filtered.length === 0 ? (
-                <div className="mb-empty">No submissions found for {selectedEmail || 'this account'}.</div>
+                <div className="mb-empty">No business submissions found for your account.</div>
               ) : (
                 filtered.map((b, i) => {
                   const badge = statusBadge(b.status);
@@ -460,6 +404,7 @@ const ManageBusiness = () => {
                       </div>
                       <div className="mb-item-name-strong"><FaBuilding className="mb-ico" />{b.name}</div>
                       <div className="mb-item-addr"><FaMapMarkerAlt className="mb-ico" />{b.address}</div>
+                      <div className="mb-item-meta"><MdEmail className="mb-ico" />{b.ownerEmail}</div>
                       <div className="mb-item-meta"><FaTags className="mb-ico" />{b.category}</div>
                     </div>
                   );

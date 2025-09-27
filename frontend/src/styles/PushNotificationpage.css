@@ -19,7 +19,7 @@
 }
 
 /* ===== NOTIFICATION ITEMS ===== */
-.notification-item {
+.notification-item-pn {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -34,12 +34,12 @@
     margin-right: auto;
 }
 
-.notification-item span {
+.notification-item-pn span {
     flex: 1;
     margin-right: 1rem;
 }
 
-.notification-item:hover {
+.notification-item-pn:hover {
     background-color: #f5faff;
 }
 
@@ -104,7 +104,7 @@
         margin-bottom: 1.5rem;
     }
 
-    .notification-item {
+    .notification-item-pn {
         font-size: 1rem;
         padding: 0.6rem 0.8rem;
     }
@@ -116,7 +116,7 @@
         font-size: 1.2rem;
     }
 
-    .notification-item {
+    .notification-item-pn {
         font-size: 0.9rem;
         padding: 0.5rem 0.7rem;
     }

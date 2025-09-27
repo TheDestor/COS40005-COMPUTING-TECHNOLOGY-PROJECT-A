@@ -13,6 +13,10 @@ body.manage-business-body {
 
 .mb-page {
   width: 100%;
+  margin: 0;
+  padding: 0 20px; 
+  height: 100vh;
+  overflow-y: auto;
 }
 
 /* Header */
@@ -562,6 +566,21 @@ body.manage-business-body {
   border-radius: 50%;
   display: inline-block;
   animation: mbspin .8s linear infinite;
+}
+
+.mb-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mb-btn:hover {
+  background: #3b82f6;
 }
 
 @keyframes mbspin {

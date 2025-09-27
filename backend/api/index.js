@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import authRouter from "../routes/AuthRoutes.js";
 import userRouter from "../routes/UserRoutes.js";
 import locationRouter from "../routes/LocationRoutes.js";
@@ -10,6 +11,7 @@ import businessRouter from "../routes/BusinessRoutes.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import aiRouter from "../routes/AiRoutes.js";
+import graphHopperRouter from "../routes/GraphHopperRoutes.js";
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -25,11 +27,54 @@ const connectDB = async () => {
 connectDB(); // Establish connection to the database as soon as the backend is run
 
 app.disable("x-powered-by");
+
+// CORS configuration - more permissive for development
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Origin', 'Accept'],
+  optionsSuccessStatus: 200
+}));
+
+// Additional CORS headers for preflight requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 app.use(cookieParser());
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Backend server is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use("/api/locations", locationRouter);
 app.use("/api/auth", authRouter);
@@ -38,6 +83,7 @@ app.use("/api/inquiry", inquiryRouter);
 app.use("/api/event", eventRouter);
 app.use("/api/businesses", businessRouter);
 app.use("/api/ai", aiRouter);
+app.use("/api/graphhopper", graphHopperRouter);
 
 // Start the express server on this port
 app.listen(PORT, () => {

@@ -28,7 +28,7 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   }, []);
 
   const menuItems = [
-    { name: 'Map', icon: <FaMapLocationDot />, path: '/testing' },
+    { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
     { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' },
     { name: 'Attractions', icon: <MdForest />, path: '/attractions' },
     { name: 'Shoppings & Leisures', icon: <FaShoppingCart />, path: '/shopping' },

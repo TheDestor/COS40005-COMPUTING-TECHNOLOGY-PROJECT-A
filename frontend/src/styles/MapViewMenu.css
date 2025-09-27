@@ -17,7 +17,7 @@
 .menu-container {
   display: flex;
   flex-direction: row;
-  background-color: #ECE6F0;
+  background-color: #efefef;
   border-radius: 30px;
   padding: 4px;
   margin: 0 6px;
@@ -96,7 +96,7 @@
 
 .menu-item2:hover .menu-icon {
   transform: scale(1.2);
-  color: #007AFF;
+  color: #efefef;
   outline: none;
   border: none;
 }
