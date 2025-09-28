@@ -7,6 +7,8 @@ import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 
+const HERO_VIDEO_ID = 'Jsk5kvZ-DHo'; 
+
 const AccommodationPage = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -159,10 +161,23 @@ const AccommodationPage = () => {
       <MenuNavbar />
 
       <div className="hero-banner">
-        <div className="hero-overlay">
-          <h1>{currentCategory.toUpperCase()}</h1>
-          <p>Exploring {currentCategory}</p>
+        <div className="hero-video-bg">
+          <iframe
+            src={`https://www.youtube.com/embed/${HERO_VIDEO_ID}?autoplay=1&mute=1&controls=0&loop=1&playlist=${HERO_VIDEO_ID}&modestbranding=1&showinfo=0&rel=0`}
+            title="Sarawak Hero Video"
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen={false}
+            style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+          ></iframe>
         </div>
+      </div>
+
+      <div className="hero-overlay-mt">
+        <h1>{currentCategory.toUpperCase() || 'ACCOMODATION'}</h1>
+        <p className="hero-intro">
+            Explore a wide range of accommodations to suit every travel style and budget. Discover everything from modern international hotels to unique homestays, perfectly located in Sarawak's major urban centers.
+        </p>
       </div>
 
       <div className="search-section">

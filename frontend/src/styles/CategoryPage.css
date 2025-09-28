@@ -24,7 +24,7 @@
   color: white;
   overflow: hidden;
   width: 100vw;
-  /* margin-top: 80px;   */
+  margin-top: 80px;  
 }
 
 /* .hero-video-bg {
@@ -129,6 +129,7 @@
   outline: none;
   color: #343a40;
   width: 100%;
+  box-shadow: none !important;
 }
 
 .sort-btn {
