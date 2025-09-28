@@ -317,6 +317,7 @@
     background: #f0f0f0;
     border-radius: 5px;
     cursor: pointer;
+    color: #726666;
   }
   
   .tab-header .active {
@@ -349,14 +350,14 @@
   }
   
   .modal-actions .cancel-btn6,
-  .modal-actions .save-btn {
+  .modal-actions .save-btn-ps {
     padding: 8px 16px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
   }
   
-  .save-btn {
+  .save-btn-ps {
     background-color: #007bff;
     color: white;
   }
@@ -370,6 +371,10 @@
     margin-top: 10px;
     border-radius: 50%;
     border: 2px solid #007bff;
+  }
+
+  .upload-section label {
+    color: #726666;
   }
   
   @keyframes fadeInUp {

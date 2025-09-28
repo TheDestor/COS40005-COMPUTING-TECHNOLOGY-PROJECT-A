@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useLocation } from 'react-router-dom';
 
 import carIcon from '../assets/car.gif';
 import homestayIcon from '../assets/homestay.gif';
@@ -269,6 +270,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
 function MapComponentTesting({  }) {
   const mapRef = useRef();
   const leftSidebarRef = useRef();
+  const location = useLocation();
   const [currentTown, setCurrentTown] = useState('Kuching');
   const [shouldZoom, setShouldZoom] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -388,6 +390,16 @@ function MapComponentTesting({  }) {
   const handleOpenLoginModal = () => {
     setShowLoginModal(true);
   };
+
+  // Handle navigation state for bookmark toggle
+  useEffect(() => {
+    if (location.state?.openBookmark && toggleBookmarkRef.current) {
+      // Small delay to ensure the component is fully mounted
+      setTimeout(() => {
+        toggleBookmarkRef.current();
+      }, 100);
+    }
+  }, [location.state]);
 
   // Set default Major Town data on component mount
   useEffect(() => {

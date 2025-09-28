@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark } from 'react-icons/fi';
 import { FaRegUserCircle, FaUser } from "react-icons/fa";
 import { AiOutlineDashboard } from "react-icons/ai";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
@@ -12,6 +12,7 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSuccess = (msg) => {
     toast.success(msg);
@@ -23,6 +24,24 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
     // navigate('/');
     setIsOpen(false);
     handleSuccess("Logged out successfully!");
+  };
+
+  const handleBookmarkToggle = () => {
+    // Check if user is on the map page (root route)
+    if (location.pathname === '/') {
+      // User is already on the map page, just toggle bookmark
+      if (onBookmarkToggle) {
+        onBookmarkToggle();
+      }
+    } else {
+      // User is on a different page, navigate to map and trigger bookmark toggle
+      navigate('/', { 
+        state: { 
+          openBookmark: true 
+        } 
+      });
+    }
+    setIsOpen(false);
   };
 
   const profileImage = user?.avatarUrl || defaultUserImage;
@@ -92,12 +111,7 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
                   <FiSettings size={18} />
                   General
                 </button>
-                <button className="menu-item51" onClick={() => { 
-                  if (onBookmarkToggle) {
-                    onBookmarkToggle();
-                  }
-                  setIsOpen(false); 
-                }}>
+                <button className="menu-item51" onClick={handleBookmarkToggle}>
                   <FiBookmark size={18} />
                   Bookmark
                 </button>

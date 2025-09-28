@@ -162,7 +162,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
       <div className="avatar-modal">
         <div className="tab-header">
           <button className={activeTab === 'avatar' ? 'active' : ''} onClick={() => setActiveTab('avatar')}>Avatar</button>
-          <button className={activeTab === 'camera' ? 'active' : ''} onClick={() => setActiveTab('camera')}>Camera</button>
+          {/* <button className={activeTab === 'camera' ? 'active' : ''} onClick={() => setActiveTab('camera')}>Camera</button> */}
           <button className={activeTab === 'photo' ? 'active' : ''} onClick={() => setActiveTab('photo')}>Photo</button>
         </div>
 
@@ -180,9 +180,9 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
               ))}
             </div>
           )}
-          {activeTab === 'camera' && (
+          {/* {activeTab === 'camera' && (
             <p>Camera input goes here.</p>
-          )}
+          )} */}
           {activeTab === 'photo' && (
             <div className="upload-section">
               <input
@@ -207,8 +207,8 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
         </div>
 
         <div className="modal-actions">
-          <button onClick={onClose} className="cancel-btn2">Cancel</button>
-          <button onClick={handleSave} className="save-btn" disabled={!selectedFile}>Save</button>
+          <button onClick={onClose} className="cancel-btn6">Cancel</button>
+          <button onClick={handleSave} className="save-btn-ps" disabled={!selectedFile}>Save</button>
         </div>
       </div>
     </div>

@@ -46,7 +46,7 @@ const PushSubscriptionPage = () => {
       <h2><MdSubscriptions size={22} /> Subscriptions</h2>
 
       {Object.entries(subscriptions).map(([key, value]) => (
-        <div className="notification-item" key={key}>
+        <div className="notification-item-pn" key={key}>
           <span>{labels[key]}</span>
           <Switch
             checked={value}
