@@ -41,7 +41,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
     };
   }, []);
 
-  // Fetch suggestions from Photon with Nominatim fallback, debounced and restricted to Sarawak
+  // Fetch suggestions from backend, Photon, and Nominatim with fallback, debounced and restricted to Sarawak
   useEffect(() => {
     if (!inputValue.trim()) {
         setPredictions([]);
@@ -50,21 +50,42 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      fetchPhotonSuggestions(inputValue, controller.signal)
-        .catch((error) => {
-          console.warn('Photon service failed, trying Nominatim fallback:', error);
-          return fetchNominatimSuggestions(inputValue, controller.signal);
-        })
-        .then(data => {
-          if (data && data.length > 0) {
-            setPredictions(data);
-          } else {
-            setPredictions([]);
+      // Try to fetch from all sources in parallel
+      Promise.allSettled([
+        fetchPhotonSuggestions(inputValue, controller.signal).catch(() => []),
+        fetchNominatimSuggestions(inputValue, controller.signal).catch(() => [])
+      ])
+        .then(([backendResult, photonResult, nominatimResult]) => {
+          let allResults = [];
+          
+          // Add backend results first (highest priority)
+          if (backendResult.status === 'fulfilled' && backendResult.value.length > 0) {
+            allResults = [...backendResult.value];
           }
+          
+          // Add external API results if we have less than 5 results
+          if (allResults.length < 5) {
+            if (photonResult.status === 'fulfilled' && photonResult.value.length > 0) {
+              allResults = [...allResults, ...photonResult.value.slice(0, 5 - allResults.length)];
+            } else if (nominatimResult.status === 'fulfilled' && nominatimResult.value.length > 0) {
+              allResults = [...allResults, ...nominatimResult.value.slice(0, 5 - allResults.length)];
+            }
+          }
+          
+          // Remove duplicates based on name and coordinates
+          const uniqueResults = allResults.filter((item, index, self) => 
+            index === self.findIndex(t => 
+              t.name.toLowerCase() === item.name.toLowerCase() && 
+              Math.abs(t.latitude - item.latitude) < 0.0001 && 
+              Math.abs(t.longitude - item.longitude) < 0.0001
+            )
+          );
+          
+          setPredictions(uniqueResults.slice(0, 5));
         })
         .catch((err) => {
           if (err.name !== 'AbortError') {
-            console.error('Both Photon and Nominatim failed:', err);
+            console.error('Search failed:', err);
             setPredictions([]);
           }
         });
@@ -352,10 +373,19 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
                 onMouseDown={() => handlePredictionClick(prediction)}
               >
                 <FiClock className="recent-icon5" />
-                <span>
-                  {prediction.name}
-                  {prediction.description ? `, ${prediction.description}` : ''}
-                </span>
+                <div className="search-result-content">
+                  <div className="search-result-name">{prediction.name}</div>
+                  {prediction.description && (
+                    <div className="search-result-description">
+                      {prediction.description}
+                    </div>
+                  )}
+                  {prediction.source === 'backend' && prediction.category && (
+                    <div className="search-result-category">
+                      {prediction.category} • {prediction.type}
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           ) : recentSearches.length > 0 ? (

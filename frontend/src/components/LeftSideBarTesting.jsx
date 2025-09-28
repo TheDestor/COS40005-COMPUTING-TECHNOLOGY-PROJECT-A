@@ -197,7 +197,7 @@ async function fetchGraphHopperRoute(start, end, waypoints = [], profile = 'car'
     console.log(`End:`, end);
     console.log(`Waypoints:`, waypoints);
     
-    const response = await fetch('http://localhost:5050/api/graphhopper/route', {
+    const response = await fetch('/api/graphhopper/route', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
