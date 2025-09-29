@@ -202,8 +202,93 @@
   color: #333;
 }
 
+.sort-select {
+  width: 100%;
+  max-width: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3345;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid #ccc;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.sort-dropdown {
+  width: 100%;
+  max-width: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Category Font Size */
+.card-content .type-badge {
+  font-size: 0.9rem; /* Adjust category font size */
+  /* font-weight: 600; */
+  color: #fff;
+  background-color: #e7f1ff;
+  padding: 5px 10px;
+  /* display: inline-block; */
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  width: fit-content;
+  text-align: center;
+  text-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Custom colors for different categories */
+.card-content .type-badge {
+  background-color: #007bff; /* Default color */
+}
+
+.card-content .type-badge.shopping-malls {
+  background-color: #4caf50; /* Green for shopping malls */
+}
+
+.card-content .type-badge.fashion-and-jewelry {
+  background-color: #f59e0b; /* Amber for fashion & jewelry */
+}
+
+.card-content .type-badge.wellness-and-entertainment {
+  background-color: #ff5733; /* Red for wellness & entertainment */
+}
+
+.card-content .type-badge.markets-and-bazaars {
+  background-color: #ffc107; /* Yellow for markets & bazaars */
+}
+
+.card-content .type-badge.electronics-and-technology {
+  background-color: #2196f3; /* Blue for electronics & technology */
+}
+
+.card-content .type-badge.books-and-stationery {
+  background-color: #9c27b0; /* Purple for books & stationery */
+}
+
+.card-content .type-badge.sports-and-outdoor {
+  background-color: #009688; /* Teal for sports & outdoor */
+}
+
+.card-content .type-badge.home-and-garden {
+  background-color: #8bc34a; /* Light green for home & garden */
+}
+
 .card-content h3 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin-bottom: 0.7rem;
   color: #222;
 }
@@ -212,9 +297,9 @@
   max-height: 90px;
   overflow-y: auto;
   margin-bottom: 1.1rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.5;
-  color: #333;
+  color: #555;
   flex-grow: 1;
 }
 

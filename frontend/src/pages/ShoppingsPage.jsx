@@ -18,477 +18,118 @@ const ShoppingLeisurePage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Shopping & Leisure');
 
-  // Comprehensive shopping and leisure data for Sarawak
-  const staticShoppingData = [
-    // Shopping Malls - Kuching
-    {
-      name: "The Spring Shopping Mall",
-      desc: "Kuching's premier shopping destination with international and local brands",
-      slug: "the-spring-shopping-mall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 1.5534,
-      lng: 110.3594
-    },
-    {
-      name: "Vivacity Megamall",
-      desc: "Modern shopping complex featuring entertainment and dining options",
-      slug: "vivacity-megamall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 1.5545,
-      lng: 110.3605
-    },
-    {
-      name: "CityONE Megamall",
-      desc: "Family-friendly shopping center with diverse retail options",
-      slug: "cityone-megamall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 1.5556,
-      lng: 110.3616
-    },
-    {
-      name: "Plaza Merdeka",
-      desc: "Historic shopping center in the heart of Kuching",
-      slug: "plaza-merdeka",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 1.5567,
-      lng: 110.3627
-    },
-    {
-      name: "Hock Lee Center",
-      desc: "Popular shopping complex with local and international stores",
-      slug: "hock-lee-center",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 1.5578,
-      lng: 110.3638
-    },
+  const processOSMData = (osmData) => {
+    if (!osmData.elements) return [];
     
-    // Shopping Malls - Other Cities
-    {
-      name: "Boulevard Shopping Mall",
-      desc: "Popular shopping destination in Miri with various stores",
-      slug: "boulevard-shopping-mall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 4.4180,
-      lng: 114.0155
-    },
-    {
-      name: "Bintang Megamall",
-      desc: "Sibu's largest shopping complex with entertainment facilities",
-      slug: "bintang-megamall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 2.2870,
-      lng: 111.8320
-    },
-    {
-      name: "Imperial Mall Miri",
-      desc: "Modern shopping center in Miri with international brands",
-      slug: "imperial-mall-miri",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 4.4191,
-      lng: 114.0166
-    },
-    {
-      name: "Permaisuri Imperial City Mall",
-      desc: "Luxury shopping destination in Miri",
-      slug: "permaisuri-imperial-city-mall",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 4.4202,
-      lng: 114.0177
-    },
-    {
-      name: "Wisma Sanyan",
-      desc: "Sibu's iconic shopping landmark",
-      slug: "wisma-sanyan",
-      image: defaultImage,
-      type: "Shopping Malls",
-      lat: 2.2881,
-      lng: 111.8331
-    },
-    
-    // Fashion & Jewelry
-    {
-      name: "Sarawak Handicraft Center",
-      desc: "Traditional Sarawak crafts, textiles, and jewelry",
-      slug: "sarawak-handicraft-center",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5589,
-      lng: 110.3649
-    },
-    {
-      name: "Main Bazaar",
-      desc: "Historic shopping street with local crafts and souvenirs",
-      slug: "main-bazaar",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5600,
-      lng: 110.3660
-    },
-    {
-      name: "Tun Jugah Shopping Center",
-      desc: "Fashion and lifestyle shopping in Kuching",
-      slug: "tun-jugah-shopping-center",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5611,
-      lng: 110.3671
-    },
-    {
-      name: "Beads & Crafts Gallery",
-      desc: "Traditional beadwork and handmade jewelry",
-      slug: "beads-crafts-gallery",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5622,
-      lng: 110.3682
-    },
-    {
-      name: "Pua Kumbu Gallery",
-      desc: "Traditional Iban textile and weaving center",
-      slug: "pua-kumbu-gallery",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5633,
-      lng: 110.3693
-    },
-    {
-      name: "Borneo Art Gallery",
-      desc: "Contemporary and traditional art pieces",
-      slug: "borneo-art-gallery",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5644,
-      lng: 110.3704
-    },
-    {
-      name: "Silver & Gold Crafts",
-      desc: "Traditional silver and gold jewelry crafting",
-      slug: "silver-gold-crafts",
-      image: defaultImage,
-      type: "Fashion & Jewelry",
-      lat: 1.5655,
-      lng: 110.3715
-    },
-    
-    // Wellness & Entertainment
-    {
-      name: "Cineplex Megamall",
-      desc: "Modern cinema with latest movies and comfortable seating",
-      slug: "cineplex-megamall",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5666,
-      lng: 110.3726
-    },
-    {
-      name: "Sarawak Spa & Wellness",
-      desc: "Traditional and modern spa treatments",
-      slug: "sarawak-spa-wellness",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5677,
-      lng: 110.3737
-    },
-    {
-      name: "Fitness First Kuching",
-      desc: "Modern gym with state-of-the-art equipment",
-      slug: "fitness-first-kuching",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5688,
-      lng: 110.3748
-    },
-    {
-      name: "Borneo Bowling Center",
-      desc: "Family entertainment with bowling and arcade games",
-      slug: "borneo-bowling-center",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5699,
-      lng: 110.3759
-    },
-    {
-      name: "KTV Lounge Sarawak",
-      desc: "Karaoke entertainment with private rooms",
-      slug: "ktv-lounge-sarawak",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5710,
-      lng: 110.3770
-    },
-    {
-      name: "Aqua Zorbing Center",
-      desc: "Water sports and recreational activities",
-      slug: "aqua-zorbing-center",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5721,
-      lng: 110.3781
-    },
-    {
-      name: "Escape Room Challenge",
-      desc: "Interactive puzzle and escape room games",
-      slug: "escape-room-challenge",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5732,
-      lng: 110.3792
-    },
-    {
-      name: "Virtual Reality Arcade",
-      desc: "Latest VR gaming and entertainment experiences",
-      slug: "virtual-reality-arcade",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5743,
-      lng: 110.3803
-    },
-    {
-      name: "Yoga & Meditation Center",
-      desc: "Wellness classes and meditation sessions",
-      slug: "yoga-meditation-center",
-      image: defaultImage,
-      type: "Wellness & Entertainment",
-      lat: 1.5754,
-      lng: 110.3814
-    },
-    
-    // Markets & Bazaars
-    {
-      name: "Sunday Market Kuching",
-      desc: "Traditional weekend market with local products",
-      slug: "sunday-market-kuching",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 1.5765,
-      lng: 110.3825
-    },
-    {
-      name: "Tamu Sibu",
-      desc: "Local market with fresh produce and crafts",
-      slug: "tamu-sibu",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 2.2892,
-      lng: 111.8342
-    },
-    {
-      name: "Central Market Miri",
-      desc: "Traditional market with local goods and food",
-      slug: "central-market-miri",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 4.4203,
-      lng: 114.0177
-    },
-    {
-      name: "Satok Weekend Market",
-      desc: "Kuching's largest weekend market with local delicacies",
-      slug: "satok-weekend-market",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 1.5776,
-      lng: 110.3836
-    },
-    {
-      name: "Bintulu Central Market",
-      desc: "Fresh seafood and local produce market",
-      slug: "bintulu-central-market",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 3.1740,
-      lng: 113.0429
-    },
-    {
-      name: "Kapit Tamu",
-      desc: "Traditional longhouse market with authentic crafts",
-      slug: "kapit-tamu",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 2.0168,
-      lng: 112.9334
-    },
-    {
-      name: "Limbang Night Market",
-      desc: "Evening market with local street food and crafts",
-      slug: "limbang-night-market",
-      image: defaultImage,
-      type: "Markets & Bazaars",
-      lat: 4.7549,
-      lng: 115.0090
-    },
-    
-    // Electronics & Technology
-    {
-      name: "Digital World Kuching",
-      desc: "Electronics and technology retail store",
-      slug: "digital-world-kuching",
-      image: defaultImage,
-      type: "Electronics & Technology",
-      lat: 1.5787,
-      lng: 110.3847
-    },
-    {
-      name: "Tech Hub Miri",
-      desc: "Latest gadgets and computer accessories",
-      slug: "tech-hub-miri",
-      image: defaultImage,
-      type: "Electronics & Technology",
-      lat: 4.4214,
-      lng: 114.0188
-    },
-    {
-      name: "Mobile Zone Sibu",
-      desc: "Smartphones and mobile accessories",
-      slug: "mobile-zone-sibu",
-      image: defaultImage,
-      type: "Electronics & Technology",
-      lat: 2.2903,
-      lng: 111.8353
-    },
-    
-    // Books & Stationery
-    {
-      name: "Popular Bookstore Kuching",
-      desc: "Books, magazines, and educational materials",
-      slug: "popular-bookstore-kuching",
-      image: defaultImage,
-      type: "Books & Stationery",
-      lat: 1.5798,
-      lng: 110.3858
-    },
-    {
-      name: "MPH Bookstore Miri",
-      desc: "International and local book collection",
-      slug: "mph-bookstore-miri",
-      image: defaultImage,
-      type: "Books & Stationery",
-      lat: 4.4225,
-      lng: 114.0199
-    },
-    {
-      name: "Stationery World",
-      desc: "Office supplies and school materials",
-      slug: "stationery-world",
-      image: defaultImage,
-      type: "Books & Stationery",
-      lat: 1.5809,
-      lng: 110.3869
-    },
-    
-    // Sports & Outdoor
-    {
-      name: "Sports Direct Kuching",
-      desc: "Sports equipment and athletic wear",
-      slug: "sports-direct-kuching",
-      image: defaultImage,
-      type: "Sports & Outdoor",
-      lat: 1.5820,
-      lng: 110.3880
-    },
-    {
-      name: "Outdoor Adventure Store",
-      desc: "Camping and hiking equipment",
-      slug: "outdoor-adventure-store",
-      image: defaultImage,
-      type: "Sports & Outdoor",
-      lat: 1.5831,
-      lng: 110.3891
-    },
-    {
-      name: "Bicycle World",
-      desc: "Bicycles and cycling accessories",
-      slug: "bicycle-world",
-      image: defaultImage,
-      type: "Sports & Outdoor",
-      lat: 1.5842,
-      lng: 110.3902
-    },
-    
-    // Home & Garden
-    {
-      name: "IKEA Kuching",
-      desc: "Furniture and home decoration",
-      slug: "ikea-kuching",
-      image: defaultImage,
-      type: "Home & Garden",
-      lat: 1.5853,
-      lng: 110.3913
-    },
-    {
-      name: "Garden Center Miri",
-      desc: "Plants, gardening tools, and outdoor furniture",
-      slug: "garden-center-miri",
-      image: defaultImage,
-      type: "Home & Garden",
-      lat: 4.4236,
-      lng: 114.0210
-    },
-    {
-      name: "Home Decor Plus",
-      desc: "Interior design and home accessories",
-      slug: "home-decor-plus",
-      image: defaultImage,
-      type: "Home & Garden",
-      lat: 1.5864,
-      lng: 110.3924
-    }
-  ];
-
-  const processBackendData = (backendData) => {
-    return backendData
-      .filter(item => 
-        item.category?.toLowerCase() === 'shopping' || 
-        item.category?.toLowerCase() === 'leisure' ||
-        item.type?.toLowerCase().includes('shopping') ||
-        item.type?.toLowerCase().includes('mall') ||
-        item.type?.toLowerCase().includes('market') ||
-        item.type?.toLowerCase().includes('bazaar') ||
-        item.type?.toLowerCase().includes('entertainment') ||
-        item.type?.toLowerCase().includes('fashion') ||
-        item.type?.toLowerCase().includes('electronics') ||
-        item.type?.toLowerCase().includes('sports') ||
-        item.type?.toLowerCase().includes('book') 
-      )
-      .map(item => {
-        // Determine category type based on name and description
-        const name = item.name?.toLowerCase() || '';
-        const desc = item.description?.toLowerCase() || '';
+    return osmData.elements
+      .filter(element => element.tags && element.tags.name)
+      .map(element => {
+        const tags = element.tags;
         let type = 'Other';
         
-        if (name.includes('mall') || name.includes('megamall') || name.includes('shopping center') || name.includes('plaza')) {
-          type = 'Shopping Malls';
-        } else if (name.includes('handicraft') || name.includes('craft') || name.includes('jewelry') || name.includes('fashion') || name.includes('art') || name.includes('gallery')) {
-          type = 'Fashion & Jewelry';
-        } else if (name.includes('spa') || name.includes('gym') || name.includes('cinema') || name.includes('bowling') || name.includes('ktv') || name.includes('entertainment') || name.includes('arcade') || name.includes('yoga')) {
-          type = 'Wellness & Entertainment';
-        } else if (name.includes('market') || name.includes('bazaar') || name.includes('tamu') || name.includes('night market')) {
-          type = 'Markets & Bazaars';
-        } else if (name.includes('digital') || name.includes('tech') || name.includes('mobile') || name.includes('computer') || name.includes('electronics')) {
-          type = 'Electronics & Technology';
-        } else if (name.includes('book') || name.includes('stationery') || name.includes('magazine') || name.includes('educational')) {
-          type = 'Books & Stationery';
-        } else if (name.includes('sport') || name.includes('outdoor') || name.includes('bicycle') || name.includes('adventure') || name.includes('fitness')) {
-          type = 'Sports & Outdoor';
+        // Determine category based on OSM tags
+        if (tags.shop) {
+          switch(tags.shop) {
+            case 'mall':
+            case 'department_store':
+            case 'supermarket':
+              type = 'Shopping Malls';
+              break;
+            case 'clothes':
+            case 'fashion':
+            case 'jewelry':
+            case 'accessories':
+            case 'shoes':
+            case 'bag':
+            case 'tailor':
+              type = 'Fashion and Jewelry';
+              break;
+            case 'electronics':
+            case 'computer':
+            case 'mobile_phone':
+            case 'hifi':
+              type = 'Electronics and Technology';
+              break;
+            case 'books':
+            case 'stationery':
+              type = 'Books and Stationery';
+              break;
+            case 'sports':
+            case 'outdoor':
+            case 'bicycle':
+              type = 'Sports and Outdoor';
+              break;
+            case 'hardware':
+            case 'garden_centre':
+            case 'furniture':
+              type = 'Home and Garden';
+              break;
+            default:
+              type = 'Other';
+          }
+        } else if (tags.leisure) {
+          switch(tags.leisure) {
+            case 'fitness_centre':
+            case 'gym':
+            case 'sports_centre':
+            case 'yoga':
+              type = 'Sports and Outdoor';
+              break;
+            case 'spa':
+            case 'sauna':
+              type = 'Wellness and Entertainment';
+              break;
+            case 'cinema':
+            case 'bowling_alley':
+            case 'amusement_arcade':
+            case 'adult_gaming_centre':
+              type = 'Wellness and Entertainment';
+              break;
+            default:
+              type = 'Wellness and Entertainment';
+          }
+        } else if (tags.amenity === 'marketplace' || tags.amenity === 'market') {
+          type = 'Markets and Bazaars';
+        } else if (tags.amenity === 'cinema' || tags.amenity === 'theatre') {
+          type = 'Wellness and Entertainment';
+        } else if (tags.amenity === 'spa') {
+          type = 'Wellness and Entertainment';
+        }
+
+        // Generate description if not available
+        let description = tags.description || '';
+        if (!description) {
+          if (tags.shop) {
+            description = `A ${tags.shop.replace('_', ' ')} located in Sarawak`;
+          } else if (tags.leisure) {
+            description = `A ${tags.leisure.replace('_', ' ')} facility in Sarawak`;
+          } else {
+            description = 'Shopping and leisure destination in Sarawak';
+          }
+        }
+
+        // Get coordinates
+        let lat, lng;
+        if (element.lat && element.lon) {
+          lat = element.lat;
+          lng = element.lon;
+        } else if (element.center) {
+          lat = element.center.lat;
+          lng = element.center.lon;
+        } else {
+          // Fallback coordinates for Kuching
+          lat = 1.5500;
+          lng = 110.3333;
         }
 
         return {
-          name: item.name || 'Unknown',
-          desc: item.description || 'No description available',
-          slug: item.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-          image: item.image || defaultImage,
+          name: tags.name,
+          desc: description,
+          slug: tags.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
+          image: defaultImage,
           type: type,
-          lat: item.latitude || 0,
-          lng: item.longitude || 0
+          lat: lat,
+          lng: lng
         };
       });
   };
@@ -496,27 +137,154 @@ const ShoppingLeisurePage = () => {
   const fetchShoppingLeisurePlaces = async () => {
     setLoading(true);
     try {
-      // Fetch backend data
-      const backendResponse = await fetch('/api/locations?category=Shopping');
-      const backendData = await backendResponse.json();
-      const processedBackend = processBackendData(backendData);
+      // Using OpenStreetMap Overpass API - completely free, no API key needed
+      // Simplified query that works with the Overpass API
+      const query = `
+        [out:json][timeout:25];
+        (
+          // Shopping places in Sarawak area
+          node["shop"](1.0,109.0,2.5,111.5);
+          node["leisure"](1.0,109.0,2.5,111.5);
+          node["amenity"~"cinema|theatre|spa"](1.0,109.0,2.5,111.5);
+          
+          // Ways for larger shopping areas
+          way["shop"](1.0,109.0,2.5,111.5);
+          way["leisure"](1.0,109.0,2.5,111.5);
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
 
-      // Combine backend data with static data
-      const allData = [...processedBackend, ...staticShoppingData];
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(query)}`
+      });
       
-      // Remove duplicates based on name
-      const uniqueData = allData.filter((item, index, self) => 
-        index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const osmData = await response.json();
+      
+      // Process OSM data to match your format
+      const processedData = processOSMData(osmData);
+      
+      // Remove duplicates based on name and limit to 50
+      const uniqueData = processedData
+        .filter((item, index, self) => 
+          index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
+        )
+        .slice(0, 50); // Ensure we only return max 50 items
       
       setData(uniqueData);
+      
     } catch (error) {
-      console.error('Error fetching shopping places:', error);
-      // Fallback to static data if backend fails
-      setData(staticShoppingData);
+      console.error('Error fetching shopping places from OpenStreetMap:', error);
+      // Fallback to static data if API fails
+      setData(getFallbackData());
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fallback data in case API fails
+  const getFallbackData = () => {
+    return [
+      {
+        name: "Vivacity Megamall",
+        desc: "One of Kuching's largest shopping malls with various retail outlets and entertainment options",
+        slug: "vivacity-megamall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5200,
+        lng: 110.3500
+      },
+      {
+        name: "Spring Shopping Mall",
+        desc: "Popular shopping destination in Kuching with international brands and dining options",
+        slug: "spring-shopping-mall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5300,
+        lng: 110.3400
+      },
+      {
+        name: "Sarawak Handicraft Center",
+        desc: "Traditional Sarawakian crafts and souvenirs including textiles and wood carvings",
+        slug: "sarawak-handicraft-center",
+        image: defaultImage,
+        type: "Fashion and Jewelry",
+        lat: 1.5600,
+        lng: 110.3400
+      },
+      {
+        name: "Plaza Merdeka",
+        desc: "Shopping mall in the heart of Kuching with diverse retail options",
+        slug: "plaza-merdeka",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5581,
+        lng: 110.3469
+      },
+      {
+        name: "The Hills Shopping Mall",
+        desc: "Modern shopping complex with entertainment and dining facilities",
+        slug: "the-hills-shopping-mall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5314,
+        lng: 110.3572
+      },
+      {
+        name: "CityONE Megamall",
+        desc: "Shopping and entertainment complex in Kuching",
+        slug: "cityone-megamall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5256,
+        lng: 110.3297
+      },
+      {
+        name: "Boulevard Shopping Mall",
+        desc: "Well-established shopping center in Kuching",
+        slug: "boulevard-shopping-mall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5564,
+        lng: 110.3458
+      },
+      {
+        name: "Green Heights Shopping Mall",
+        desc: "Neighborhood shopping mall with various amenities",
+        slug: "green-heights-shopping-mall",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5483,
+        lng: 110.3292
+      },
+      {
+        name: "Riverside Shopping Complex",
+        desc: "Riverside shopping experience in Kuching",
+        slug: "riverside-shopping-complex",
+        image: defaultImage,
+        type: "Shopping Malls",
+        lat: 1.5597,
+        lng: 110.3450
+      },
+      {
+        name: "Satok Weekend Market",
+        desc: "Famous local market offering fresh produce and handicrafts",
+        slug: "satok-weekend-market",
+        image: defaultImage,
+        type: "Markets and Bazaars",
+        lat: 1.5589,
+        lng: 110.3383
+      }
+    ].slice(0, 50);
   };
 
   useEffect(() => {
@@ -550,7 +318,7 @@ const ShoppingLeisurePage = () => {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading...</p>
+        <p>Loading shopping and leisure destinations...</p>
       </div>
     );
   }
@@ -599,52 +367,65 @@ const ShoppingLeisurePage = () => {
             >
               <option value="all">All Categories</option>
               <option value="Shopping Malls">Shopping Malls</option>
-              <option value="Fashion & Jewelry">Fashion & Jewelry</option>
-              <option value="Wellness & Entertainment">Wellness & Entertainment</option>
-              <option value="Markets & Bazaars">Markets & Bazaars</option>
-              <option value="Electronics & Technology">Electronics & Technology</option>
-              <option value="Books & Stationery">Books & Stationery</option>
-              <option value="Sports & Outdoor">Sports & Outdoor</option>
-              <option value="Home & Garden">Home & Garden</option>
+              <option value="Fashion and Jewelry">Fashion and Jewelry</option>
+              <option value="Wellness and Entertainment">Wellness and Entertainment</option>
+              <option value="Markets and Bazaars">Markets and Bazaars</option>
+              <option value="Electronics and Technology">Electronics and Technology</option>
+              <option value="Books and Stationery">Books and Stationery</option>
+              <option value="Sports and Outdoor">Sports and Outdoor</option>
+              <option value="Home and Garden">Home and Garden</option>
               <option value="Other">Other</option>
             </select>
           </div>
         </div>
       </div>
 
+      {/* <div className="results-info">
+        <p>Showing {filteredData.length} of {data.length} locations</p>
+      </div> */}
+
       <div className="cards-section">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div
-            className="card-wrapper"
-            key={index}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img src={item.image} alt={item.name} />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
-                <div className="desc-scroll">
-                  <p>{item.desc}</p>
-                </div>
-                <div className="button-container">
-                  <Link
-                    to={`/discover/${item.slug}`}
-                    state={{
-                      name: item.name,
-                      image: item.image,
-                      desc: item.desc,
-                      coordinates: [item.lat, item.lng]
-                    }}
-                    className="explore-btn"
-                  >
-                    Explore
-                  </Link>
+        {filteredData.length > 0 ? (
+          filteredData.slice(0, visibleItems).map((item, index) => (
+            <div
+              className="card-wrapper"
+              key={index}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                <img src={item.image} alt={item.name} />
+                <div className="card-content">
+                  <h3>{highlightMatch(item.name)}</h3>
+                  <div className="rating">⭐⭐⭐⭐⭐</div>
+                  <div className="desc-scroll">
+                    <p>{item.desc}</p>
+                  </div>
+                  <div className={`type-badge ${item.type.replace(/\s+/g, '-').toLowerCase()}`}>
+                    {item.type}
+                  </div>
+                  <div className="button-container">
+                    <Link
+                      to={`/discover/${item.slug}`}
+                      state={{
+                        name: item.name,
+                        image: item.image,
+                        desc: item.desc,
+                        coordinates: [item.lat, item.lng]
+                      }}
+                      className="explore-btn"
+                    >
+                      Explore
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="no-results">
+            <p>No shopping and leisure destinations found. Try adjusting your search or check back later.</p>
           </div>
-        ))}
+        )}
       </div>
 
       {filteredData.length > visibleItems && (
