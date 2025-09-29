@@ -112,7 +112,7 @@ const MajorTownPage = () => {
 
   return (
     <div className="category-page">
-      <MenuNavbar />
+      <MenuNavbar onLoginClick={handleLoginClick}/>
 
       <div className="hero-banner">
         <div className="hero-video-bg">

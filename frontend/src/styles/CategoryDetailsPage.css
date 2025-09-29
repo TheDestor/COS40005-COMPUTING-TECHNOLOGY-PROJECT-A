@@ -61,7 +61,7 @@
 
 /* Video Section */
 .video-section {
-  padding: 3rem 2rem;
+  padding: 1.5rem 2rem;
   max-width: 1250px;
   margin: 0 auto;
   width: 100%;
@@ -178,7 +178,7 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
-  border-top: 1px solid #e1e5e9;
+  /* border-top: 1px solid #e1e5e9; */
 }
 
 .section-header-container {
@@ -511,6 +511,16 @@
   animation: spin 1s linear infinite;
 }
 
+.empty-card {
+  visibility: hidden; /* Hide empty cards but maintain layout */
+  pointer-events: none; /* Prevent interaction with empty cards */
+}
+
+.empty-card-content {
+  display: none; /* Hide content of empty cards */
+}
+
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -574,6 +584,7 @@
   height: 320px;
   position: relative;
   perspective: 1000px;
+  /* transition: all 0.5s ease-in-out; */
 }
 
 .carousel-card {
@@ -607,6 +618,7 @@
   transform: scale(1.13) translateY(-10px) rotateY(0deg);
   z-index: 3;
   box-shadow: none;
+  opacity: 1;
 }
 
 /* 1st card: incline inwards (leftmost) */
@@ -620,12 +632,14 @@
 .carousel-card.left1 {
   transform: translateX(-50px) rotateY(30deg) scale(0.98);
   z-index: 2;
+  opacity: 0.9;
 }
 
 /* 4th card: incline inwards (right) */
 .carousel-card.right1 {
   transform: translateX(50px) rotateY(-30deg) scale(0.98);
   z-index: 2;
+  opacity: 0.9;
 }
 
 /* 5th card: incline inwards (rightmost) */
@@ -821,6 +835,12 @@
   color: #bbb;
   cursor: not-allowed;
   background: #f5f5f5;
+  opacity: 0.3;
+}
+
+.carousel-arrow:disabled:hover {
+  background-color: transparent;
+  transform: none;
 }
 
 .card-reflection {
@@ -838,6 +858,7 @@
   justify-content: center;
   border-radius: 16px;
   margin: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-reflection img {
@@ -1049,5 +1070,11 @@
 
   .pagination-info {
     width: 100%;
+  }
+
+  .category-explore-btn,
+  .official-site-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import MenuNavbar from '../components/MenuNavbar';
+import MenuNavBar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
@@ -158,7 +158,7 @@ const AccommodationPage = () => {
 
   return (
     <div className="category-page">
-      <MenuNavbar />
+      <MenuNavBar onLoginClick={handleLoginClick}/>
 
       <div className="hero-banner">
         <div className="hero-video-bg">

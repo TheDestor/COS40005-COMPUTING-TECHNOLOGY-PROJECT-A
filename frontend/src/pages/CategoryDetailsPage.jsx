@@ -14,7 +14,7 @@ const TOWN_VIDEOS = {
       id: { videoId: 'Ru0fTWfuh8o' },
       snippet: {
         title: 'Kuching City Highlights',
-        description: 'Explore the vibrant city of Kuching, Sarawak’s capital, with its unique blend of culture, food, and history.',
+        description: 'Experience Sarawak\'s charming capital - a city of contrasts where modern waterfronts meet historic landmarks, and vibrant markets coexist with lush rainforest sanctuaries.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/Ru0fTWfuh8o/mqdefault.jpg' }
         }
@@ -25,8 +25,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'gX4FjOAQa2A' },
       snippet: {
-        title: 'Sibu: The Swan City',
-        description: 'Discover Sibu’s riverfront, local delicacies, and vibrant festivals in this feature video.',
+        title: 'Sibu: The Riverfront Gateway',
+        description: 'Discover Sibu, the bustling commercial hub on the Rajang River, famous for its vibrant waterfront, rich Foochow heritage, and mouthwatering local delicacies.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/gX4FjOAQa2A/mqdefault.jpg' }
         }
@@ -37,8 +37,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'Orie5jC6mlE' },
       snippet: {
-        title: 'Miri Adventure',
-        description: 'Experience the adventure capital of Sarawak, from beaches to caves and national parks.',
+        title: 'Miri: Resort City Adventure',
+        description: 'Explore Miri, Sarawak\'s northern gateway, where oil heritage meets natural wonders - from stunning national parks and pristine beaches to vibrant city life.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/Orie5jC6mlE/mqdefault.jpg' }
         }
@@ -49,8 +49,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'vBRh24zjaCc' },
       snippet: {
-        title: 'Bintulu: Nature & Industry',
-        description: 'See how Bintulu balances industry and nature, with beautiful parks and vibrant commerce.',
+        title: 'Bintulu: Energy & Nature Hub',
+        description: 'Experience Bintulu\'s unique blend of industrial prowess and natural beauty, featuring world-class LNG facilities alongside breathtaking coastal parks and cultural sites.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/vBRh24zjaCc/mqdefault.jpg' }
         }
@@ -61,8 +61,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'a9jdNhyXdCU' },
       snippet: {
-        title: 'Kota Samarahan: The City of Bridges',
-        description: 'Discover the beauty of Kota Samarahan, with its unique blend of culture, food, and history.',
+        title: 'Samarahan: Education City',
+        description: 'Discover Samarahan, Sarawak\'s emerging educational hub known for its prestigious universities, tranquil environment, and close-knit academic community.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/a9jdNhyXdCU/mqdefault.jpg' }
         }
@@ -73,8 +73,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'utld6a8X8jo' },
       snippet: {
-        title: 'Mukah: The City of Bridges',
-        description: 'Discover the beauty of Mukah, with its unique blend of culture, food, and history.',
+        title: 'Mukah: Melanau Heritage',
+        description: 'Immerse in Mukah\'s rich Melanau culture, famous for its traditional sago production, unique tall houses, and the vibrant annual Kaul Festival celebrations.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/utld6a8X8jo/mqdefault.jpg' }
         }
@@ -85,8 +85,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'HtSy7Ah_nwo' },
       snippet: {
-        title: 'Kapit: The City of Bridges',
-        description: 'Discover the beauty of Kapit, with its unique blend of culture, food, and history.',
+        title: 'Kapit: Heart of the Rajang',
+        description: 'Journey to Kapit, the gateway to Sarawak\'s interior, offering authentic Iban longhouse experiences and access to the mighty Rajang River\'s upper reaches.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/HtSy7Ah_nwo/mqdefault.jpg' }
         }
@@ -97,8 +97,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'ozJUKtFFfUE' },
       snippet: {
-        title: 'Sri Aman: The City of Bridges',
-        description: 'Discover the beauty of Sri Aman, with its unique blend of culture, food, and history.',
+        title: 'Sri Aman: Tidal Bore Wonder',
+        description: 'Witness Sri Aman\'s famous Benak tidal bore phenomenon while exploring this historic town\'s colonial forts and serene riverside charm.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/ozJUKtFFfUE/mqdefault.jpg' }
         }
@@ -109,8 +109,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: '2eJrUo0CWfo' },
       snippet: {
-        title: 'Limbang: The City of Bridges',
-        description: 'Discover the beauty of Limbang, with its unique blend of culture, food, and history.',
+        title: 'Limbang: Border Town Charm',
+        description: 'Explore Limbang\'s unique position bordering Brunei, featuring rich historical sites, traditional markets, and access to remote national parks.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/2eJrUo0CWfo/mqdefault.jpg' }
         }
@@ -121,8 +121,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'Ka90wjVr9so' },
       snippet: {
-        title: 'Serian: The City of Bridges',
-        description: 'Discover the beauty of Serian, with its unique blend of culture, food, and history.',
+        title: 'Serian: Bidayuh Heartland',
+        description: 'Discover Serian, the cultural heartland of the Bidayuh people, known for its fertile farmlands, traditional longhouses, and warm community spirit.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/Ka90wjVr9so/mqdefault.jpg' }
         }
@@ -133,8 +133,8 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: '6oZFY9q9U9Y' },
       snippet: {
-        title: 'Sarikei: The City of Bridges',
-        description: 'Discover the beauty of Sarikei, with its unique blend of culture, food, and history.',
+        title: 'Sarikei: Pineapple Paradise',
+        description: 'Experience Sarikei, Sarawak\'s agricultural gem famous for its sweet pineapples, lush fruit orchards, and picturesque riverine landscapes.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/6oZFY9q9U9Y/mqdefault.jpg' }
         }
@@ -145,14 +145,14 @@ const TOWN_VIDEOS = {
     {
       id: { videoId: 'e2rDoT2-tBk' },
       snippet: {
-        title: 'Betong: The City of Bridges',
-        description: 'Discover the beauty of Betong, with its unique blend of culture, food, and history.',
+        title: 'Betong: Saribas Gateway',
+        description: 'Explore Betong in the scenic Saribas region, known for its iconic clock tower, traditional Iban culture, and beautiful rural countryside.',
         thumbnails: {
           medium: { url: 'https://i.ytimg.com/vi/e2rDoT2-tBk/mqdefault.jpg' }
         }
       }
     }
-  ],
+  ]
 };
 
 const DEFAULT_VIDEO = [
@@ -354,6 +354,7 @@ const CategoryDetailsPage = () => {
 
   const handlePrev = () => {
     if (filteredItems.length > 1) {
+      // Push cards to the right (advance start forward)
       setCarouselStart((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
     }
   };
@@ -399,12 +400,12 @@ const CategoryDetailsPage = () => {
 
   return (
     <div className="details-page">
-      <MenuNavbar />
+      <MenuNavbar onLoginClick={handleLoginClick}/>
 
       {/* Hero Banner with Centered About Section */}
       <div 
         className="hero-banner with-centered-about"
-        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${townData.image || defaultImage})` }}
+        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(${townData.image || defaultImage})` }}
       >
         {/* Centered About Section */}
         <div className="centered-about-section">
@@ -437,27 +438,6 @@ const CategoryDetailsPage = () => {
             </div>
           </div>
         )}
-        
-        {/* <div className="related-videos">
-          <h3>More Videos</h3>
-          <div className="videos-container">
-            <div className="videos-scroll">
-              {videos.map((video, index) => (
-                <div 
-                  key={index} 
-                  className={`video-thumbnail ${selectedVideo?.id.videoId === video.id.videoId ? 'active' : ''}`}
-                  onClick={() => setSelectedVideo(video)}
-                >
-                  <img 
-                    src={video.snippet.thumbnails.medium.url} 
-                    alt={video.snippet.title} 
-                  />
-                  <p>{video.snippet.title}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
       </div>
       </div>
 
@@ -560,25 +540,28 @@ const CategoryDetailsPage = () => {
                   name: visibleCards[2].name,
                   image: visibleCards[2].image,
                   desc: visibleCards[2].description,
-                  coordinates: [visibleCards[2].latitude, visibleCards[2].longitude]
+                  coordinates: [visibleCards[2].latitude, visibleCards[2].longitude],
+                  website: visibleCards[2].website
                 }}
                 className="category-explore-btn"
               >
                 Explore more
               </Link>
               <a
-                href={visibleCards[2].officialSite || "#"}
-                className={`official-site-btn${visibleCards[2].officialSite ? "" : " disabled"}`}
+                href={visibleCards[2].url || "#"}
+                className={`official-site-btn${visibleCards[2].url ? "" : " disabled"}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                tabIndex={visibleCards[2].officialSite ? 0 : -1}
+                tabIndex={visibleCards[2].url ? 0 : -1}
               >
-                Official Site
+                Related Site
               </a>
             </div>
           </div>
         )}
       </div>
+
+      {showLogin && <LoginPage onClose={closeLogin} />}
 
       {/* Ai Chatbot */}
       <AIChatbot />
