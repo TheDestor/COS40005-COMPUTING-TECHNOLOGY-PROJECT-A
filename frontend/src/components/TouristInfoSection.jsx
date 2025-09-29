@@ -30,7 +30,7 @@ const CacheDebugPanel = () => {
           usagePercent: ((cacheSize / (5 * 1024 * 1024)) * 100).toFixed(1) // 5MB limit
         });
       } catch (error) {
-        console.error('Cache debug error:', error);
+        // console.error('Cache debug error:', error);
       }
     };
     
@@ -86,7 +86,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
       const cached = localStorage.getItem(CACHE_CONFIG.CACHE_KEY);
       return cached ? JSON.parse(cached) : {};
     } catch (error) {
-      console.warn('Failed to read cache from localStorage:', error);
+      // console.warn('Failed to read cache from localStorage:', error);
       return {};
     }
   };
@@ -96,14 +96,14 @@ const TouristInfoSection = ({ selectedLocation }) => {
       // Check size before saving
       const cacheSize = new Blob([JSON.stringify(cacheData)]).size;
       if (cacheSize > 4.5 * 1024 * 1024) { // 4.5MB warning
-        console.warn('Cache approaching limit, cleaning up...');
+        // console.warn('Cache approaching limit, cleaning up...');
         cacheData = cleanupCache(cacheData);
       }
       
       localStorage.setItem(CACHE_CONFIG.CACHE_KEY, JSON.stringify(cacheData));
-      console.log('💾 Cache saved successfully');
+      // console.log('💾 Cache saved successfully');
     } catch (error) {
-      console.warn('Failed to write cache:', error);
+      // console.warn('Failed to write cache:', error);
       if (error.name === 'QuotaExceededError') {
         const cleanedCache = cleanupCache(cacheData);
         localStorage.setItem(CACHE_CONFIG.CACHE_KEY, JSON.stringify(cleanedCache));
@@ -119,7 +119,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
       return cache; // No cleanup needed
     }
 
-    console.log('🧹 Cleaning up cache...');
+    // console.log('🧹 Cleaning up cache...');
 
     // Sort by priority: low priority → least viewed → oldest
     entries.sort((a, b) => {
@@ -139,8 +139,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
     const keptEntries = entries.slice(-CACHE_CONFIG.MAX_CACHE_SIZE);
     const removedEntries = entries.slice(0, entries.length - CACHE_CONFIG.MAX_CACHE_SIZE);
     
-    console.log('🗑️ Removed:', removedEntries.map(([key]) => key));
-    console.log('💾 Kept:', keptEntries.map(([key]) => key));
+    // console.log('🗑️ Removed:', removedEntries.map(([key]) => key));
+    // console.log('💾 Kept:', keptEntries.map(([key]) => key));
     
     return Object.fromEntries(keptEntries);
   };
@@ -184,7 +184,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
 
   const setCachedReels = (locationName, reelsData, category = 'unknown') => {
     if (!shouldCacheLocation(category)) {
-      console.log('🚫 Skipping cache for category:', category);
+      // console.log('🚫 Skipping cache for category:', category);
       return;
     }
 
@@ -197,7 +197,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
       viewCount: 1
     };
     
-    console.log('✅ Caching:', locationName, 'with', reelsData.length, 'videos');
+    // console.log('✅ Caching:', locationName, 'with', reelsData.length, 'videos');
     setCache(cache);
   };
 
@@ -215,13 +215,13 @@ const TouristInfoSection = ({ selectedLocation }) => {
     const locationName = selectedLocation.name;
     const category = selectedLocation.category || 'unknown';
     
-    console.log('🔍 Fetching for:', locationName, 'Category:', category);
+    // console.log('🔍 Fetching for:', locationName, 'Category:', category);
     
     // Check cache first (unless force refresh)
     if (!forceRefresh) {
       const cached = getCachedReels(locationName);
       if (cached) {
-        console.log('⚡ Loading from cache:', locationName);
+        // console.log('⚡ Loading from cache:', locationName);
         setReels(cached.reels);
         setLastUpdated(cached.timestamp);
         setShowScrollIndicator(true);
@@ -238,7 +238,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
       const searchQuery = `${selectedLocation.name} sarawak tourism shorts`;
       const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 
-      console.log('🌐 API Call:', locationName);
+      // console.log('🌐 API Call:', locationName);
       const response = await fetch(apiUrl);
       const data = await response.json();
 
@@ -279,7 +279,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
       setTimeout(() => setShowScrollIndicator(false), 3000);
       
     } catch (error) {
-      console.error('Fetch error:', error);
+      // console.error('Fetch error:', error);
       
       // Final fallback to cache
       const cached = getCachedReels(locationName);
@@ -334,8 +334,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
       'Storage Used': `${((new Blob([JSON.stringify(cache)]).size/(5*1024*1024))*100).toFixed(1)}%`
     };
     
-    console.log('🧪 CACHE TEST RESULTS:');
-    console.table(testResults);
+    // console.log('🧪 CACHE TEST RESULTS:');
+    // console.table(testResults);
     
     alert(`Cache Test:\nLocations: ${Object.keys(cache).length}/${CACHE_CONFIG.MAX_CACHE_SIZE}\nSize: ${(new Blob([JSON.stringify(cache)]).size/1024).toFixed(1)}KB\nCurrent: ${cache[selectedLocation?.name] ? 'CACHED ✅' : 'NOT CACHED ❌'}`);
   };
@@ -352,37 +352,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
         className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
         style={containerStyle}
       >
-        {!isCollapsed && (
-          <div className="cache-controls">
-            <button 
-              className={`refresh-btn ${isRefreshing ? 'refreshing' : ''}`}
-              onClick={refreshData}
-              disabled={loading || isRefreshing}
-              title="Refresh data"
-            >
-              <FiRefreshCw />
-            </button>
-            {lastUpdated && (
-              <span className="last-updated">
-                Updated: {formatTime(lastUpdated)}
-              </span>
-            )}
-            <button 
-              onClick={toggleDebug}
-              style={{marginLeft: '10px', background: '#666', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '10px'}}
-              title="Toggle debug panel"
-            >
-              {showDebug ? '❌' : '🐛'}
-            </button>
-            <button 
-              onClick={runCacheTest}
-              style={{marginLeft: '5px', background: '#28a745', color: 'white', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '10px'}}
-              title="Test cache system"
-            >
-              🧪
-            </button>
-          </div>
-        )}
+        
 
         {!isCollapsed && reels.length > 0 && showScrollIndicator && (
           <div className="scroll-down-indicator">

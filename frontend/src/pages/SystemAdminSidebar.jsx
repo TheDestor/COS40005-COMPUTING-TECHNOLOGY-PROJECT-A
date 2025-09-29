@@ -102,12 +102,12 @@ return (
               <span className="menu-text">User Management</span>
             </NavLink>
           </li>
-          <li className="menu-item">
+          {/* <li className="menu-item">
             <NavLink to="/system-monitoring">
               <FaServer className="sidebar-icon2" />
               <span className="menu-text">System Monitoring</span>
             </NavLink>
-          </li>
+          </li> */}
           <li className="menu-item">
             <NavLink to="/data-management">
               <FaDatabase className="sidebar-icon2" />

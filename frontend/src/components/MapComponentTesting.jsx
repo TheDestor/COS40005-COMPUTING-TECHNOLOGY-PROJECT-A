@@ -737,16 +737,17 @@ function MapComponentTesting({  }) {
         >
           <CustomInfoWindow
             location={{
-              name: selectedLocation.name,
-              image: selectedLocation.image || 'default-image.jpg',
-              description: selectedLocation.description || "No description available.",
-              latitude: selectedLocation.latitude || "N/A",
-              longitude: selectedLocation.longitude || "N/A",
-              url: selectedLocation.url || 'No URL provided',
-              rating: selectedLocation.rating,
-              openNowText: selectedLocation.openNowText,
-              open24Hours: selectedLocation.open24Hours,
-              type: selectedLocation.type
+              // name: selectedLocation.name,
+              // image: selectedLocation.image || 'default-image.jpg',
+              // description: selectedLocation.description || "No description available.",
+              // latitude: selectedLocation.latitude || "N/A",
+              // longitude: selectedLocation.longitude || "N/A",
+              // url: selectedLocation.url || 'No URL provided',
+              // rating: selectedLocation.rating,
+              // openNowText: selectedLocation.openNowText,
+              // open24Hours: selectedLocation.open24Hours,
+              // type: selectedLocation.type
+              ...selectedLocation
             }}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}

@@ -549,7 +549,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         
         <div className="form-group-bsf">
           <label htmlFor="ownerEmail">
-            <FaEnvelope /> Email Address*
+            <FaEnvelope /> Contact Email Address*
           </label>
           <input
             type="email"

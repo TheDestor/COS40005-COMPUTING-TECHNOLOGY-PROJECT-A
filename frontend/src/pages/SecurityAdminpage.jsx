@@ -292,34 +292,6 @@ const SecurityAdminPage = () => {
         </div>
       </div>
 
-      {/* Security Policies */}
-      <div className="security-policies">
-        <label>
-          <input
-            type="checkbox"
-            checked={policies.twoFA}
-            onChange={() => togglePolicy('twoFA')}
-          />
-          Require 2FA
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={policies.autoLock}
-            onChange={() => togglePolicy('autoLock')}
-          />
-          Auto-lock inactive sessions
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={policies.passwordComplexity}
-            onChange={() => togglePolicy('passwordComplexity')}
-          />
-          Password complexity
-        </label>
-      </div>
-
       {/* Threat Chart */}
       <div className="chart-section">
         <h3>Security Threats Over Time</h3>
@@ -327,7 +299,7 @@ const SecurityAdminPage = () => {
         <div ref={chartRef} className="security-chart"></div>
       </div>
 
-      {/* Alerts */}
+      {/* Alerts
       <div className="alerts-section">
         <h3>Recent Security Alerts</h3>
 
@@ -364,7 +336,7 @@ const SecurityAdminPage = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
     </div>
   );

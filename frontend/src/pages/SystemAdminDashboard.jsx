@@ -321,40 +321,6 @@ const SystemAdminDashboard = () => {
     };
   }, []);
 
-  const renderTable = (title, headers, data, icon) => (
-    <div className="table-section">
-      <div className="table-header-admin">
-        <h3>
-          <span className="header-icon-admin">{icon}</span>
-          {title}
-        </h3>
-        <button className="view-all">View All</button>
-      </div>
-      <div className="table-scroll-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              {headers.map((head, idx) => (
-                <th key={idx}>{head}</th>
-              ))}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, idx) => (
-              <tr key={idx}>
-                {Object.values(row).map((val, i) => (
-                  <td key={i}>{val}</td>
-                ))}
-                <td><button className="details-button">Details</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
   return (
     <div className="admin-container">
     <SystemAdminSidebar />
@@ -445,70 +411,7 @@ const SystemAdminDashboard = () => {
             </table>
           </div>
         </div>
-
-        {/* Pending Reviews Section - Moved from CBT Dashboard */}
-        <div className="table-section">
-          <div className="table-header-admin">
-            <h3>
-              <span className="header-icon-admin"><FaStar /></span>
-              Pending Reviews
-            </h3>
-            <button className="view-all">View All Reviews</button>
-          </div>
-          <div className="reviews-list-container">
-            <table className="reviews-table data-table">
-              <thead>
-                <tr>
-                  <th>Reviewer</th>
-                  <th>Business</th>
-                  <th>Rating</th>
-                  <th>Review Content</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingReviews.map(review => (
-                  <tr key={review.id}>
-                    <td className="reviewer-cell">
-                      <img src={review.userImage} alt={review.author} className="user-avatar" />
-                      <span>{review.author}</span>
-                    </td>
-                    <td>{review.business}</td>
-                    <td>{renderStarRating(review.rating)}</td>
-                    <td>
-                      <div className="review-content">
-                        {review.content}
-                      </div>
-                    </td>
-                    <td>{new Date(review.date).toLocaleDateString()}</td>
-                    <td className="review-actions-cell">
-                      <div className="review-action">
-                        <button 
-                          className="action-btn approve-btn"
-                          onClick={() => handleReviewAction(review.id, 'approved')}
-                        >
-                          Approve
-                        </button>
-                        <button 
-                          className="action-btn reject-btn"
-                          onClick={() => handleReviewAction(review.id, 'rejected')}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
-
-      {/* Keep the existing admin activities and system alerts tables */}
-      {renderTable('Recent Admin Activity', ['Admin', 'Action', 'Date', 'Status'], adminActivities, <FaUserCog />)}
-      {renderTable('System Alerts', ['Alert', 'Message', 'Date', 'Status'], systemAlerts, <FaExclamationTriangle />)}
     </div>
     </div>
   );
