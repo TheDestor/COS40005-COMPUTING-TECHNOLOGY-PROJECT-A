@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   FaBed, FaUniversity, FaMountain, FaPlaneDeparture,
   FaUmbrellaBeach, FaHospital, FaCalendarAlt, FaShoppingCart 
@@ -13,20 +13,7 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 const RADIUS_KM = 10;
 const DEFAULT_CENTER = { lat: 1.5533, lng: 110.3592 };
 
-const useCurrentPosition = () => {
-  const [pos, setPos] = useState(null);
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    const opts = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
-    navigator.geolocation.getCurrentPosition(
-      (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => {},
-      opts
-    );
-  }, []);
-  return pos;
-};
-
+// Static data - defined outside component
 const menuItems = [
   { name: 'Major Town', icon: <FaLocationDot />, isFetchOnly: true },
   { name: 'Attractions', icon: <MdForest />, isFetchOnly: true },
@@ -53,332 +40,91 @@ const sarawakDivisions = [
   { name: 'Limbang', latitude: 4.7548, longitude: 115.0089 }
 ];
 
-const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting }) => {
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter'
+];
+
+// Memoized custom hook for current position
+const useCurrentPosition = () => {
+  const [pos, setPos] = useState(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const opts = { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 };
+    navigator.geolocation.getCurrentPosition(
+      (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => {},
+      opts
+    );
+  }, []);
+  return pos;
+};
+
+// Memoized component
+const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting }) => {
+  // Cache references
+  const overpassCacheRef = useRef(new Map());
+  const lastFetchRef = useRef({});
+  const categoryDataCacheRef = useRef(new Map());
+
   const [selectedMenu, setSelectedMenu] = useState(activeOption || 'Major Town');
   const [locationsData, setLocationsData] = useState([]);
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
   const [isMobileMenu, setIsMobileMenu] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // 🚀 FIXED: Proper caching with all data sources
-  const [categoryData, setCategoryData] = useState({});
-  const [isPreloading, setIsPreloading] = useState(false);
-  const [preloadedCategories, setPreloadedCategories] = useState(new Set(['Major Town']));
-
-  const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState(
-    activeOption === null ? { name: 'Select Category', icon: <FaLocationDot /> } : 
-    menuItems.find(item => item.name === (activeOption || 'Major Town')) || menuItems[0]
-  );
+  const [loadingStates, setLoadingStates] = useState({});
   const [temporarySelection, setTemporarySelection] = useState(null);
 
   const currentPos = useCurrentPosition();
 
-  // 🚀 FIXED: Proper preloading with ALL data sources
-  useEffect(() => {
-    const preloadCategories = async () => {
-      setIsPreloading(true);
-      
-      // Preload Major Town instantly
-      const majorTownData = sarawakDivisions.map(town => ({
-        name: town.name,
-        latitude: town.latitude,
-        longitude: town.longitude,
-        image: defaultImage,
-        description: 'Division in Sarawak, Malaysia.',
-        type: 'Major Town'
-      }));
-      
-      setCategoryData(prev => ({ ...prev, 'Major Town': majorTownData }));
-      
-      // Preload other categories with ALL data sources
-      const categoriesToLoad = menuItems
-        .filter(item => item.isFetchOnly && item.name !== 'Major Town')
-        .map(item => item.name);
-      
-      console.log('🚀 Preloading categories with ALL data sources:', categoriesToLoad);
-      
-      // Load categories with proper error handling
-      for (const category of categoriesToLoad) {
-        try {
-          const data = await fetchAllDataSources(category);
-          if (data && data.length > 0) {
-            setCategoryData(prev => ({ ...prev, [category]: data }));
-            setPreloadedCategories(prev => new Set([...prev, category]));
-            console.log(`✅ Preloaded: ${category} (${data.length} items from all sources)`);
-          }
-        } catch (error) {
-          console.warn(`⚠️ Failed to preload ${category}:`, error);
-        }
-      }
-      
-      setIsPreloading(false);
-    };
+  // Memoized mobile menu state
+  const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState(
+    activeOption === null ? { name: 'Select Category', icon: <FaLocationDot /> } : 
+    menuItems.find(item => item.name === (activeOption || 'Major Town')) || menuItems[0]
+  );
 
-    preloadCategories();
-  }, []);
+  // Optimized category mapping
+  const menuToBusinessCategoryMap = useMemo(() => ({
+    'attractions': 'Attractions',
+    'accommodation': 'Accommodation',
+    'food & beverages': 'Food & Beverages',
+    'transportation': 'Transportation',
+    'shoppings & leisures': 'Shoppings & Leisures',
+    'tour guides': 'Tour Guides',
+    'events': 'Events'
+  }), []);
 
-  // 🚀 FIXED: Function that fetches ALL data sources
-  const fetchAllDataSources = async (categoryName) => {
-    try {
-      if (categoryName === 'Major Town') {
-        return sarawakDivisions.map(town => ({
-          name: town.name,
-          latitude: town.latitude,
-          longitude: town.longitude,
-          image: defaultImage,
-          description: 'Division in Sarawak, Malaysia.',
-          type: 'Major Town'
-        }));
-      }
+  const menuToBusinessCategory = useCallback((menuCategory) => {
+    return menuToBusinessCategoryMap[(menuCategory || '').toLowerCase()] || null;
+  }, [menuToBusinessCategoryMap]);
 
-      if (categoryName.toLowerCase() === 'events') {
-        return await fetchBackendEvents();
-      }
+  // Optimized Overpass configuration
+  const menuToOverpassMap = useMemo(() => ({
+    'food & beverages': [{ key: 'amenity', values: ['restaurant','cafe','fast_food','food_court','bar','pub','bakery','ice_cream'] }],
+    'accommodation': [{ key: 'tourism', values: ['hotel','guest_house','motel','hostel','apartment','camp_site','chalet'] }],
+    'transportation': [
+      { key: 'amenity', values: ['bus_station','ferry_terminal','taxi'] },
+      { key: 'public_transport', values: ['stop_position','station','platform'] },
+      { key: 'aeroway', values: ['aerodrome','terminal'] },
+      { key: 'railway', values: ['station','halt'] }
+    ],
+    'attractions': [
+      { key: 'tourism', values: ['attraction','museum','zoo','theme_park','gallery','aquarium','artwork'] },
+      { key: 'leisure', values: ['park','nature_reserve','garden'] }
+    ],
+    'shoppings & leisures': [
+      { key: 'shop', values: ['mall','supermarket','department_store','convenience','clothes','gift','sports','toys'] },
+      { key: 'leisure', values: ['fitness_centre','sports_centre','bowling_alley','amusement_arcade','escape_room','nightclub'] }
+    ],
+    'tour guides': [{ key: 'office', values: ['tourism'] }, { key: 'tourism', values: ['information','guidepost'] }],
+    'events': [{ key: 'amenity', values: ['community_centre','theatre','conference_centre'] }]
+  }), []);
 
-      console.log(`📡 Fetching ALL data for: ${categoryName}`);
-      
-      // 🚀 FIXED: Fetch from ALL sources simultaneously
-      const [backendResults, businessResults, overpassResults] = await Promise.all([
-        fetchBackendData(categoryName).catch(() => []),
-        fetchApprovedBusinesses(categoryName).catch(() => []),
-        currentPos ? fetchOverpassPlaces(categoryName, currentPos, RADIUS_KM * 1000).catch(() => []) : []
-      ]);
+  const menuToOverpass = useCallback((menuCategory) => {
+    return menuToOverpassMap[(menuCategory || '').toLowerCase()] || null;
+  }, [menuToOverpassMap]);
 
-      console.log(`📊 ${categoryName} - Backend: ${backendResults.length}, Business: ${businessResults.length}, Overpass: ${overpassResults.length}`);
-      
-      // Combine all data
-      const allData = [...backendResults, ...businessResults, ...overpassResults];
-      
-      // Deduplicate
-      const uniqueData = allData.reduce((acc, current) => {
-        if (!current) return acc;
-        const key = `${current.name}_${current.latitude}_${current.longitude}`;
-        if (!acc.some(item => 
-          item.name === current.name && 
-          item.latitude === current.latitude && 
-          item.longitude === current.longitude
-        )) {
-          acc.push(current);
-        }
-        return acc;
-      }, []);
-
-      console.log(`🎯 ${categoryName} - Total unique places: ${uniqueData.length}`);
-      return uniqueData;
-    } catch (error) {
-      console.error(`Error fetching ${categoryName}:`, error);
-      return [];
-    }
-  };
-
-  // 🚀 ORIGINAL DATA FETCHING FUNCTIONS (preserved)
-  const fetchBackendData = async (categoryName) => {
-    try {
-      const response = await fetch('/api/locations');
-      if (!response.ok) throw new Error('Failed to fetch backend data');
-      const data = await response.json();
-
-      return data.filter(item => {
-        switch(categoryName.toLowerCase()) {
-          case 'attractions': return item.category === 'Attraction';
-          case 'accommodation': return item.category === 'Accommodation';
-          case 'food & beverages': return item.category === 'Restaurant';
-          case 'transportation': return item.category === 'Transport';
-          default: return item.category === categoryName;
-        }
-      }).map(item => ({
-        name: item.name,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        image: item.image || defaultImage,
-        description: item.description || 'No description available',
-        rating: item.rating || null,
-        type: item.category,
-        source: 'backend'
-      }));
-    } catch (error) {
-      console.error('Backend fetch error:', error);
-      return [];
-    }
-  };
-
-  const fetchApprovedBusinesses = async (menuCategoryName) => {
-    try {
-      const apiCategory = menuToBusinessCategory(menuCategoryName);
-      if (!apiCategory) return [];
-      const res = await fetch(`/api/businesses/approved?category=${encodeURIComponent(apiCategory)}&limit=200`);
-      if (!res.ok) throw new Error('Failed to fetch approved businesses');
-      const json = await res.json();
-      const list = (json.data || []).filter(Boolean);
-
-      return list
-        .filter(b => b && b.latitude != null && b.longitude != null)
-        .map(b => ({
-          name: b.name,
-          latitude: Number(b.latitude),
-          longitude: Number(b.longitude),
-          image: b.businessImage
-            ? (String(b.businessImage).startsWith('/uploads')
-                ? `${window.location.origin}${b.businessImage}`
-                : b.businessImage)
-            : undefined,
-          description: b.description || 'Business',
-          type: menuCategoryName,
-          source: 'businesses'
-        }));
-    } catch (e) {
-      console.error('Approved businesses fetch error:', e);
-      return [];
-    }
-  };
-
-  const fetchBackendEvents = async () => {
-    try {
-      const res = await fetch('/api/event/getAllEvents');
-      if (!res.ok) throw new Error('Failed to fetch events');
-      const json = await res.json();
-      const list = (json.events || []).filter(Boolean);
-      return list
-        .filter(e => e?.coordinates?.latitude != null && e?.coordinates?.longitude != null)
-        .map(e => ({
-          name: e.name,
-          latitude: Number(e.coordinates.latitude),
-          longitude: Number(e.coordinates.longitude),
-          image: e.imageUrl || defaultImage,
-          description: e.description || 'Event',
-          type: 'Events',
-          source: 'events'
-        }));
-    } catch (e) {
-      console.error('Events fetch error:', e);
-      return [];
-    }
-  };
-
-  const menuToBusinessCategory = (menuCategory) => {
-    switch ((menuCategory || '').toLowerCase()) {
-      case 'attractions': return 'Attractions';
-      case 'accommodation': return 'Accommodation';
-      case 'food & beverages': return 'Food & Beverages';
-      case 'transportation': return 'Transportation';
-      case 'shoppings & leisures': return 'Shoppings & Leisures';
-      case 'tour guides': return 'Tour Guides';
-      case 'events': return 'Events';
-      default: return null;
-    }
-  };
-
-  // 🚀 FIXED: Click handler that uses ALL preloaded data
-  const handleMenuItemClick = useCallback((item) => {
-    if (isRoutingActive && activeOption === null && onClearRouting) {
-      onClearRouting();
-    }
-
-    if (isRoutingActive && activeOption === null) {
-      setTemporarySelection(item.name);
-      if (isMobileMenu) {
-        setSelectedMobileMenuItem(item);
-        setIsDropdownOpen(false);
-      }
-    } else {
-      setSelectedMenu(item.name);
-      if (isMobileMenu) {
-        setSelectedMobileMenuItem(item);
-        setIsDropdownOpen(false);
-      }
-    }
-
-    if (item.isFetchOnly) {
-      // 🚀 FIXED: Use preloaded data that includes ALL sources
-      if (categoryData[item.name]) {
-        const instantData = categoryData[item.name];
-        setLocationsData(instantData);
-        if (onSelect) onSelect(item.name, instantData);
-        if (onSelectCategory) onSelectCategory(item.name, instantData);
-        
-        // Auto-zoom
-        if (instantData.length > 0 && window.mapRef) {
-          if (item.name === 'Major Town') {
-            const bounds = new L.LatLngBounds();
-            instantData.forEach(location => {
-              bounds.extend([location.latitude, location.longitude]);
-            });
-            window.mapRef.fitBounds(bounds, { padding: [20, 20] });
-          } else {
-            const firstItem = instantData[0];
-            window.mapRef.panTo({ lat: firstItem.latitude, lng: firstItem.longitude });
-            window.mapRef.setZoom(14);
-          }
-        }
-        
-        console.log(`⚡ INSTANT: ${item.name} (${instantData.length} items from all sources)`);
-      } else {
-        // Fallback: fetch on demand with ALL data sources
-        console.log(`🔄 Loading on demand: ${item.name}`);
-        setSelectedSearchPlace(null);
-        fetchAllDataSources(item.name).then(fullData => {
-          if (fullData.length > 0) {
-            setLocationsData(fullData);
-            if (onSelect) onSelect(item.name, fullData);
-            if (onSelectCategory) onSelectCategory(item.name, fullData);
-            
-            // Cache it
-            setCategoryData(prev => ({ ...prev, [item.name]: fullData }));
-            setPreloadedCategories(prev => new Set([...prev, item.name]));
-          }
-        });
-      }
-    } else {
-      if (onSelect) onSelect(item.name);
-      if (onSelectCategory) onSelectCategory(item.name);
-    }
-  }, [isRoutingActive, activeOption, onClearRouting, isMobileMenu, categoryData, onSelect, onSelectCategory]);
-
-  // 🚀 ORIGINAL OVERPASS FUNCTIONS (preserved)
-  const OVERPASS_URLS = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter'
-  ];
-
-  const overpassCacheRef = { current: new Map() };
-  const lastFetchRef = { current: {} };
-
-  const cacheKey = (category, lat, lng, radius) =>
-    `${category}|${lat.toFixed(4)}|${lng.toFixed(4)}|${radius}`;
-
-  const menuToOverpass = (menuCategory) => {
-    switch ((menuCategory || '').toLowerCase()) {
-      case 'food & beverages':
-        return [{ key: 'amenity', values: ['restaurant','cafe','fast_food','food_court','bar','pub','bakery','ice_cream'] }];
-      case 'accommodation':
-        return [{ key: 'tourism', values: ['hotel','guest_house','motel','hostel','apartment','camp_site','chalet'] }];
-      case 'transportation':
-        return [
-          { key: 'amenity', values: ['bus_station','ferry_terminal','taxi'] },
-          { key: 'public_transport', values: ['stop_position','station','platform'] },
-          { key: 'aeroway', values: ['aerodrome','terminal'] },
-          { key: 'railway', values: ['station','halt'] }
-        ];
-      case 'attractions':
-        return [
-          { key: 'tourism', values: ['attraction','museum','zoo','theme_park','gallery','aquarium','artwork'] },
-          { key: 'leisure', values: ['park','nature_reserve','garden'] }
-        ];
-      case 'shoppings & leisures':
-        return [
-          { key: 'shop', values: ['mall','supermarket','department_store','convenience','clothes','gift','sports','toys'] },
-          { key: 'leisure', values: ['fitness_centre','sports_centre','bowling_alley','amusement_arcade','escape_room','nightclub'] }
-        ];
-      case 'tour guides':
-        return [{ key: 'office', values: ['tourism'] }, { key: 'tourism', values: ['information','guidepost'] }];
-      case 'events':
-        return [{ key: 'amenity', values: ['community_centre','theatre','conference_centre'] }];
-      default:
-        return null;
-    }
-  };
-
-  const buildOverpassQL = (rules, center, radiusMeters) => {
+  const buildOverpassQL = useCallback((rules, center, radiusMeters) => {
     const { lat, lng } = center;
     const blocks = rules.flatMap(({ key, values }) =>
       values.map(v => `
@@ -389,48 +135,55 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, 
     ).join('\n');
 
     return `
-      [out:json][timeout:25];
+      [out:json][timeout:15];
       (
         ${blocks}
       );
-      out center 50;
+      out center 30;
     `;
-  };
+  }, []);
 
-  const fetchOverpassWithFallback = async (ql) => {
+  const fetchOverpassWithFallback = useCallback(async (ql) => {
     for (const url of OVERPASS_URLS) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Language': 'en' },
-          body: new URLSearchParams({ data: ql }).toString()
+          body: new URLSearchParams({ data: ql }).toString(),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
         if (res.ok) return await res.json();
       } catch (_) { /* try next */ }
     }
-    throw new Error('All Overpass endpoints failed');
-  };
+    return { elements: [] };
+  }, []);
 
-  const fetchOverpassPlaces = async (categoryName, center, radiusMeters = 10000) => {
+  const fetchOverpassPlaces = useCallback(async (categoryName, center, radiusMeters = 10000) => {
     const rules = menuToOverpass(categoryName);
     if (!rules) return [];
 
     const now = Date.now();
     const last = lastFetchRef.current[categoryName] || 0;
-    if (now - last < 2000) {
-      const k = cacheKey(categoryName, center.lat, center.lng, radiusMeters);
-      const cached = overpassCacheRef.current.get(k);
+    if (now - last < 1500) {
+      const key = `${categoryName}|${center.lat.toFixed(4)}|${center.lng.toFixed(4)}|${radiusMeters}`;
+      const cached = overpassCacheRef.current.get(key);
       if (cached) return cached.data;
     }
     lastFetchRef.current[categoryName] = now;
 
-    const key = cacheKey(categoryName, center.lat, center.lng, radiusMeters);
+    const key = `${categoryName}|${center.lat.toFixed(4)}|${center.lng.toFixed(4)}|${radiusMeters}`;
     const cached = overpassCacheRef.current.get(key);
     if (cached && now - cached.ts < 5 * 60 * 1000) {
       return cached.data;
     }
 
-    const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 15000)));
+    const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 10000)));
 
     try {
       const data = await fetchOverpassWithFallback(ql);
@@ -448,7 +201,7 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, 
           type: categoryName,
           source: 'overpass'
         };
-      }).filter(Boolean);
+      }).filter(Boolean).slice(0, 40);
 
       overpassCacheRef.current.set(key, { ts: now, data: elements });
       return elements;
@@ -456,27 +209,317 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, 
       console.error('Overpass error:', e);
       return [];
     }
-  };
+  }, [menuToOverpass, buildOverpassQL, fetchOverpassWithFallback]);
 
-  // 🚀 REST OF YOUR ORIGINAL CODE
+  // Optimized resize handler
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileMenu(window.innerWidth <= 768); 
+      setIsMobileMenu(window.innerWidth <= 768);
     };
+    
+    let timeoutId;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 100);
+    };
+    
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', debouncedResize);
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
-  const handleDropdownToggle = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
+  const fetchApprovedBusinesses = useCallback(async (menuCategoryName) => {
+    const cacheKey = `businesses_${menuCategoryName}`;
+    const now = Date.now();
+    const cached = categoryDataCacheRef.current.get(cacheKey);
+    
+    if (cached && now - cached.timestamp < 300000) {
+      return cached.data;
+    }
 
+    try {
+      const apiCategory = menuToBusinessCategory(menuCategoryName);
+      if (!apiCategory) return [];
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const res = await fetch(`/api/businesses/approved?category=${encodeURIComponent(apiCategory)}&limit=100`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) return [];
+      const json = await res.json();
+      const list = (json.data || []).filter(Boolean);
+
+      const result = list
+        .filter(b => b && b.latitude != null && b.longitude != null)
+        .slice(0, 50)
+        .map(b => ({
+          name: b.name,
+          latitude: Number(b.latitude),
+          longitude: Number(b.longitude),
+          image: b.businessImage
+            ? (String(b.businessImage).startsWith('/uploads')
+                ? `${window.location.origin}${b.businessImage}`
+                : b.businessImage)
+            : undefined,
+          description: b.description || 'Business',
+          type: menuCategoryName,
+          source: 'businesses',
+          website: b.website || '',
+          openingHours: b.openingHours || '',
+          phone: b.phone || '',
+          owner: b.owner || '',
+          ownerEmail: b.ownerEmail || '',
+          address: b.address || '',
+          category: b.category || '',
+        }));
+
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
+      return result;
+    } catch (e) {
+      console.error('Approved businesses fetch error:', e);
+      return [];
+    }
+  }, [menuToBusinessCategory]);
+
+  const fetchBackendEvents = useCallback(async () => {
+    const cacheKey = 'events';
+    const now = Date.now();
+    const cached = categoryDataCacheRef.current.get(cacheKey);
+    
+    if (cached && now - cached.timestamp < 300000) {
+      return cached.data;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const res = await fetch('/api/event/getAllEvents', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) return [];
+      const json = await res.json();
+      const list = (json.events || []).filter(Boolean);
+      const result = list
+        .filter(e => e?.coordinates?.latitude != null && e?.coordinates?.longitude != null)
+        .slice(0, 30)
+        .map(e => ({
+          name: e.name,
+          latitude: Number(e.coordinates.latitude),
+          longitude: Number(e.coordinates.longitude),
+          image: e.imageUrl || defaultImage,
+          description: e.description || 'Event',
+          type: 'Events',
+          source: 'events'
+        }));
+
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
+      return result;
+    } catch (e) {
+      console.error('Events fetch error:', e);
+      return [];
+    }
+  }, []);
+
+  const fetchBackendData = useCallback(async (categoryName) => {
+    const cacheKey = `backend_${categoryName}`;
+    const now = Date.now();
+    const cached = categoryDataCacheRef.current.get(cacheKey);
+    
+    if (cached && now - cached.timestamp < 300000) {
+      return cached.data;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch('/api/locations', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) return [];
+      const data = await response.json();
+
+      const result = data.filter(item => {
+        switch(categoryName.toLowerCase()) {
+          case 'attractions': return item.category === 'Attraction';
+          case 'accommodation': return item.category === 'Accommodation';
+          case 'food & beverages': return item.category === 'Restaurant';
+          case 'transportation': return item.category === 'Transport';
+          default: return item.category === categoryName;
+        }
+      }).map(item => ({
+        ...item,
+        name: item.name,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        image: item.image || defaultImage,
+        description: item.description || 'No description available',
+        rating: item.rating || null,
+        type: item.category,
+        source: 'backend',
+      })).slice(0, 50);
+
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
+      return result;
+    } catch (error) {
+      console.error('Backend fetch error:', error);
+      return [];
+    }
+  }, []);
+
+  // Main data fetcher
+  const fetchPlacesByCategory = useCallback(async (categoryName, _location, radiusMeters = RADIUS_KM * 1000) => {
+    setLoadingStates(prev => ({ ...prev, [categoryName]: true }));
+
+    try {
+      // Special case: backend Events
+      if ((categoryName || '').toLowerCase() === 'events') {
+        const events = await fetchBackendEvents();
+        setLocationsData(events);
+        if (onSelect) onSelect(categoryName, events);
+        if (onSelectCategory) onSelectCategory(categoryName, events);
+        if (events.length > 0 && window.mapRef) {
+          window.mapRef.panTo({ lat: events[0].latitude, lng: events[0].longitude });
+          window.mapRef.setZoom(14);
+        }
+        return;
+      }
+
+      // Use cached data if available
+      const cacheKey = `category_${categoryName}_${currentPos ? `${currentPos.lat}_${currentPos.lng}` : 'default'}`;
+      const now = Date.now();
+      const cached = categoryDataCacheRef.current.get(cacheKey);
+      
+      if (cached && now - cached.timestamp < 300000) {
+        setLocationsData(cached.data);
+        if (onSelect) onSelect(categoryName, cached.data);
+        if (onSelectCategory) onSelectCategory(categoryName, cached.data);
+        if (cached.data.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+          window.mapRef.panTo({ lat: cached.data[0].latitude, lng: cached.data[0].longitude });
+          window.mapRef.setZoom(14);
+        }
+        return;
+      }
+
+      // Fetch fresh data
+      const [backendResults, businessResults, overpassResults] = await Promise.all([
+        fetchBackendData(categoryName),
+        fetchApprovedBusinesses(categoryName),
+        currentPos && typeof fetchOverpassPlaces === 'function' 
+          ? fetchOverpassPlaces(categoryName, currentPos, radiusMeters)
+          : Promise.resolve([])
+      ]);
+
+      const combined = [...backendResults, ...businessResults, ...overpassResults].reduce((acc, cur) => {
+        if (!cur) return acc;
+        const key = `${cur.name}|${Math.round(Number(cur.latitude) * 1e5)}|${Math.round(Number(cur.longitude) * 1e5)}`;
+        if (!acc.find(i => `${i.name}|${Math.round(Number(i.latitude) * 1e5)}|${Math.round(Number(i.longitude) * 1e5)}` === key)) {
+          acc.push(cur);
+        }
+        return acc;
+      }, []).slice(0, 80);
+
+      // Cache the results
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: combined });
+
+      setLocationsData(combined);
+      if (onSelect) onSelect(categoryName, combined);
+      if (onSelectCategory) onSelectCategory(categoryName, combined);
+      if (combined.length > 0 && categoryName !== 'Major Town' && window.mapRef) {
+        window.mapRef.panTo({ lat: combined[0].latitude, lng: combined[0].longitude });
+        window.mapRef.setZoom(14);
+      }
+    } catch (error) {
+      console.error('Fetch category error:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [categoryName]: false }));
+    }
+  }, [currentPos, fetchBackendData, fetchApprovedBusinesses, fetchOverpassPlaces, fetchBackendEvents, onSelect, onSelectCategory]);
+
+  // Menu item click handler
+  const handleMenuItemClick = useCallback((item) => {
+    // Clear routing if we're in routing mode and user selects a category
+    if (isRoutingActive && activeOption === null && onClearRouting) {
+      onClearRouting();
+    }
+
+    // Always update the local state for visual feedback
+    if (isRoutingActive && activeOption === null) {
+      // In routing mode, use temporary selection for visual feedback
+      setTemporarySelection(item.name);
+      if (isMobileMenu) {
+        setSelectedMobileMenuItem(item);
+        setIsDropdownOpen(false);
+      }
+    } else {
+      // Normal mode
+      setSelectedMenu(item.name);
+      if (isMobileMenu) {
+        setSelectedMobileMenuItem(item);
+        setIsDropdownOpen(false);
+      }
+    }
+
+    setLocationsData([]);
+
+    if (item.isFetchOnly) {
+      if (item.name === 'Major Town') {
+        setSelectedSearchPlace(null);
+        const formatted = sarawakDivisions.map(town => ({
+          name: town.name,
+          latitude: town.latitude,
+          longitude: town.longitude,
+          image: defaultImage,
+          description: 'Division in Sarawak, Malaysia.',
+          type: 'Major Town'
+        }));
+        setLocationsData(formatted);
+        if (onSelect) onSelect(item.name, formatted);
+        if (onSelectCategory) onSelectCategory(item.name, formatted);
+      } else {
+        setSelectedSearchPlace(null);
+        fetchPlacesByCategory(item.name, { latitude: 1.5533, longitude: 110.3592 });
+      }
+      // zoom to user's current location (if available)
+      if (currentPos && typeof onZoomToPlace === 'function') {
+        onZoomToPlace({ latitude: currentPos.lat, longitude: currentPos.lng, category: item.name });
+      }
+    } else {
+      if (onSelect) onSelect(item.name);
+      if (onSelectCategory) onSelectCategory(item.name);
+      if (currentPos && typeof onZoomToPlace === 'function') {
+        onZoomToPlace({ latitude: currentPos.lat, longitude: currentPos.lng, category: item.name });
+      }
+    }
+  }, [isRoutingActive, activeOption, onClearRouting, isMobileMenu, currentPos, onSelect, onSelectCategory, onZoomToPlace, fetchPlacesByCategory]);
+
+  const handleDropdownToggle = useCallback(() => {
+    setIsDropdownOpen(!isDropdownOpen);
+  }, [isDropdownOpen]);
+
+  // Effect for active option changes
   useEffect(() => {
     if (activeOption === null && isRoutingActive) {
+      // Routing mode - clear visual selection but allow interaction
       setSelectedMenu('');
       setSelectedMobileMenuItem({ name: 'Select Category', icon: <FaLocationDot /> });
     } else if (!activeOption) {
+      // No active option but not routing mode - default to Major Town
       const defaultItem = menuItems.find(item => item.name === 'Major Town');
       if (defaultItem) handleMenuItemClick(defaultItem);
     } else {
@@ -485,11 +528,54 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, 
     }
   }, [activeOption, isRoutingActive, handleMenuItemClick]);
 
+  // Clear temporary selection when routing ends
   useEffect(() => {
     if (!isRoutingActive) {
       setTemporarySelection(null);
     }
   }, [isRoutingActive]);
+
+  // Memoized menu item rendering for desktop
+  const renderDesktopMenuItems = useCallback(() => {
+    return menuItems.map((item) => {
+      const isActive = isRoutingActive && activeOption === null 
+        ? temporarySelection === item.name 
+        : selectedMenu === item.name;
+
+      return (
+        <button
+          key={item.name}
+          className={`menu-item2 ${isActive ? 'active' : ''}`}
+          onClick={() => handleMenuItemClick(item)}
+        >
+          <div className={`icon-container ${isActive ? 'active-icon-container' : ''}`}>
+            <span className={`menu-icon ${isActive ? 'active-icon' : ''}`}>
+              {item.icon}
+            </span>
+          </div>
+          <span className={`menu-text2 ${isActive ? 'active-text' : ''}`}>
+            {item.name}
+          </span>
+        </button>
+      );
+    });
+  }, [selectedMenu, isRoutingActive, activeOption, temporarySelection, handleMenuItemClick]);
+
+  // Memoized dropdown menu items
+  const renderDropdownMenuItems = useCallback(() => {
+    return menuItems.map((item) => {
+      return (
+        <button
+          key={item.name}
+          className={`mapview-dropdown-menu-item ${selectedMobileMenuItem.name === item.name ? 'active-mapview-dropdown-item' : ''}`}
+          onClick={() => handleMenuItemClick(item)}
+        >
+          <span className="mapview-dropdown-item-icon">{item.icon}</span>
+          <span className="mapview-dropdown-item-text">{item.name}</span>
+        </button>
+      );
+    });
+  }, [selectedMobileMenuItem, handleMenuItemClick]);
 
   return (
     <div className="mapview-container">
@@ -497,74 +583,24 @@ const MapViewMenu = ({ onSelect, activeOption, onSelectCategory, onZoomToPlace, 
         <div className="mapview-dropdown-wrapper">
           <button className="dropdown-toggle-mapview-button" onClick={handleDropdownToggle}>
             <span className="dropdown-toggle-mapview-icon">{selectedMobileMenuItem.icon}</span>
-            <span className="dropdown-toggle-mapview-text">
-              {selectedMobileMenuItem.name}
-              {isPreloading && !preloadedCategories.has(selectedMobileMenuItem.name) && (
-                <span className="preloading-dot"> ●</span>
-              )}
-            </span>
+            <span className="dropdown-toggle-mapview-text">{selectedMobileMenuItem.name}</span>
             <span className="dropdown-toggle-mapview-icon">
               {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
             </span>
           </button>
           {isDropdownOpen && (
             <div className="mapview-dropdown-menu-list">
-              {menuItems.map((item) => (
-                <button
-                  key={item.name}
-                  className={`mapview-dropdown-menu-item ${selectedMobileMenuItem.name === item.name ? 'active-mapview-dropdown-item' : ''}`}
-                  onClick={() => handleMenuItemClick(item)}
-                >
-                  <span className="mapview-dropdown-item-icon">{item.icon}</span>
-                  <span className="mapview-dropdown-item-text">
-                    {item.name}
-                    {isPreloading && !preloadedCategories.has(item.name) && (
-                      <span className="preloading-dot"> ●</span>
-                    )}
-                  </span>
-                </button>
-              ))}
+              {renderDropdownMenuItems()}
             </div>
           )}
         </div>
       ) : (
         <div className="menu-container">
-          {menuItems.map((item) => {
-            const isActive = isRoutingActive && activeOption === null 
-              ? temporarySelection === item.name 
-              : selectedMenu === item.name;
-            return (
-              <button
-                key={item.name}
-                className={`menu-item2 ${isActive ? 'active' : ''}`}
-                onClick={() => handleMenuItemClick(item)}
-              >
-                <div className={`icon-container ${isActive ? 'active-icon-container' : ''}`}>
-                  <span className={`menu-icon ${isActive ? 'active-icon' : ''}`}>
-                    {item.icon}
-                    {isPreloading && !preloadedCategories.has(item.name) && (
-                      <span className="preloading-dot">●</span>
-                    )}
-                  </span>
-                </div>
-                <span className={`menu-text2 ${isActive ? 'active-text' : ''}`}>
-                  <div className="menu-text-wrapper">
-                    <span>{item.name}</span>
-                  </div>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-      
-      {isPreloading && (
-        <div className="preloading-indicator">
-          <small>Loading categories... {preloadedCategories.size}/{menuItems.length}</small>
+          {renderDesktopMenuItems()}
         </div>
       )}
     </div>
   );
-};
+});
 
 export default MapViewMenu;
