@@ -12,6 +12,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import aiRouter from "../routes/AiRoutes.js";
 import graphHopperRouter from "../routes/GraphHopperRoutes.js";
+// import geoapifyRouter from "../routes/geoapifyRoutes.js";
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -67,15 +68,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Simple test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'CORS test successful',
-    origin: req.headers.origin,
-    timestamp: new Date().toISOString()
-  });
-});
-
 app.use("/api/locations", locationRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
@@ -84,6 +76,10 @@ app.use("/api/event", eventRouter);
 app.use("/api/businesses", businessRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/graphhopper", graphHopperRouter);
+
+// Import and use geoapify routes
+import geoapifyRouter from "../routes/geoapifyRoutes.js";
+app.use("/api/geoapify", geoapifyRouter);
 
 // Start the express server on this port
 app.listen(PORT, () => {

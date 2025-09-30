@@ -1,356 +1,1063 @@
-/* DiscoverPlaces.css */
-/* Base Page Styles */
-.details-page {
+/* =============================================
+   DISCOVER PLACES - RESPONSIVE CSS
+   Organized by section with detailed comments
+   Mobile-first responsive design
+============================================= */
+
+/* =============================================
+   BASE & LAYOUT STYLES
+============================================= */
+
+/* Main page container - ensures full width and proper layout */
+.details-page-dp {
   background: #ffffff;
   min-height: 100vh;
+  width: 100vw;
+  /* width: 100%; */
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
-.loading-spinner {
+/* =============================================
+   LOADING & ANIMATION STYLES
+============================================= */
+
+/* Loading spinner animation */
+.spinner-dp {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(102, 126, 234, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+/* Main loading section container */
+.loading-section-dp {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-container {
+  padding: 60px 20px;
   text-align: center;
-  padding: 2rem;
+  min-height: 50vh;
 }
 
-.error-content {
-  max-width: 600px;
-  margin: 2rem auto;
+/* Keyframe animations for various elements */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.hero-overlay {
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(400px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(400px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* =============================================
+   HERO BANNER SECTION
+============================================= */
+
+/* Main hero banner with background image */
+.hero-banner-dp {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  max-height: 600px;
+  background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://ik.imagekit.io/tvlk/blog/2023/05/shutterstock_1179100084.jpg?tr=q-70,c-at_max,w-500,h-300,dpr-2');
+  background-size: cover;
+  background-position: center;
+  background-attachment: scroll;
+  color: white;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+
+/* Overlay for better text readability */
+.hero-banner-dp::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(32, 58, 67, 0.2), rgba(15, 32, 39, 0.2));
+  z-index: 1;
+}
+
+/* Hero text content container */
+.hero-overlay-dp {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
+  z-index: 2;
+  width: 90%;
+  max-width: 800px;
+  padding: 2rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.hero-overlay h1 {
-  font-size: 2.5rem;
+/* Responsive hero title */
+.hero-overlay-dp h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  line-height: 1.2;
 }
 
-/* Town Overview Section */
-.town-overview {
-  padding: 2rem 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.overlay-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  align-items: center;
-}
-
-.text-content h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-}
-
-.overview-text {
-  line-height: 1.8;
-  color: #4a4a4a;
-  font-size: 1.1rem;
-}
-
-/* Image Section */
-.image-content {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.coordinates-badge {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  font-size: 0.9rem;
-}
-
-/* Nearby Places Section */
-.nearby-places-section {
-  padding: 40px 20px;
-  background: #f9f9f9;
-  margin-top: 40px;
-}
-
-.nearby-places-section h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  color: #2c3e50;
-}
-
-.nearby-places-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.places-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 2rem;
-}
-
-.place-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.place-card:hover {
-  transform: scale(1.03);
-}
-
-.place-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-}
-
-
-.place-info {
-  padding: 1rem;
-}
-
-.place-info h3 {
-  margin: 0 0 0.5rem;
-}
-
-.rating {
-  color: #f39c12;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.place-rating {
-  color: #f39c12;
-  font-weight: 600;
-  margin: 10px 0;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.address {
-  color: #555;
-  font-size: 0.85rem;
-}
-
-.place-address {
-  color: #7f8c8d;
-  font-size: 0.9rem;
-  line-height: 1.4;
+/* Hero subtitle */
+.hero-overlay-dp p {
+  color: #ecf0f1;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
   margin: 0;
 }
 
-.place-modal {
+/* =============================================
+   TOWN OVERVIEW SECTION
+============================================= */
+
+/* Main overview section container */
+.town-overview-dp {
+  padding: 3rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeUp 0.8s ease-out;
+}
+
+/* Grid layout for text and image */
+.overlay-container-dp {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Text content area with card-like appearance */
+.text-content-dp {
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  order: 2;
+}
+
+/* Section title */
+.text-content-dp h2 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Description text */
+.overview-text-dp {
+  line-height: 1.8;
+  color: #4a4a4a;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  margin-bottom: 1.5rem !important;
+}
+
+/* =============================================
+   INFORMATION DISPLAY STYLES
+============================================= */
+
+/* Container for location information */
+.location-info-dp, 
+.category-info-dp, 
+.coordinates-info-dp, 
+.website-info-dp, 
+.phone-info-dp, 
+.hours-info-dp {
+  margin-bottom: 0.75rem;
+}
+
+/* Individual detail items with icon and text */
+.location-detail-dp, 
+.category-detail-dp, 
+.coordinates-detail-dp, 
+.website-details-dp, 
+.phone-detail-dp, 
+.hours-detail-dp {
+  display: flex;
+  align-items: center;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: #555;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Icons used in detail items */
+.detail-icon-dp {
+  color: #27ae60;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* =============================================
+   IMAGE SECTION
+============================================= */
+
+/* Image container with shadow and hover effects */
+.image-content-dp {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  order: 1;
+  height: 300px;
+}
+
+/* Image styling */
+.image-content-dp img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+/* =============================================
+   MAP SECTION
+============================================= */
+
+/* Map section container */
+.map-section-dp {
+  padding: 2rem 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Map section title */
+.map-section-dp h2 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  position: relative;
+  display: inline-block;
+}
+
+/* Title underline decoration */
+.map-section-dp h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: #27ae60;
+}
+
+/* Map container with responsive height */
+.map-container-dp {
+  height: 50vh;
+  min-height: 300px;
+  max-height: 500px;
+  width: 100%;
+  border-radius: 0px !important;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  border: 2px solid #f0f0f0;
+}
+
+/* =============================================
+   SEARCH CONTROLS SECTION
+============================================= */
+
+/* Search controls container */
+.search-controls-dp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 0 2rem;
+}
+
+/* Section title with places count */
+.search-controls-dp h2 {
+  text-align: center;
+  color: #2c3e50;
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  margin: 0;
+}
+
+/* Places count badge */
+.places-count-dp {
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Radius selector container */
+.radius-selector-dp {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Radius label */
+.radius-selector-dp label {
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+/* Radius dropdown select */
+.radius-selector-dp select {
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2c3e50;
+  min-width: 120px;
+}
+
+/* =============================================
+   REFRESH BUTTON STYLES
+============================================= */
+
+/* Main refresh button */
+.refresh-btn-dp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  white-space: nowrap;
+}
+
+/* Hover state for refresh button */
+.refresh-btn-dp:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Disabled state for refresh button */
+.refresh-btn-dp:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinning icon for refresh */
+.refresh-btn-dp svg.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* =============================================
+   CACHE INFORMATION STYLES
+============================================= */
+
+/* Cache info banner */
+.cache-info-dp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  margin: 15px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  flex-wrap: wrap;
+}
+
+/* Hover effect for cache info */
+.cache-info-dp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Memory cache variant */
+.cache-info-dp.cache-memory {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+/* Database cache variant */
+.cache-info-dp.cache-database {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Cache refresh link button */
+.cache-refresh-link-dp {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Hover state for cache refresh */
+.cache-refresh-link-dp:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Disabled state for cache refresh */
+.cache-refresh-link-dp:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================
+   QUOTA WARNING BANNER
+============================================= */
+
+/* Quota warning banner */
+.quota-warning-banner-dp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  margin: 20px;
+  background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(255, 94, 98, 0.3);
+  animation: slideDown 0.3s ease-out;
+  flex-wrap: wrap;
+}
+
+/* =============================================
+   ERROR BANNER STYLES
+============================================= */
+
+/* Error banner container */
+.error-banner-dp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  margin: 15px 0;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 3px 10px rgba(245, 87, 108, 0.3);
+  flex-wrap: wrap;
+}
+
+/* =============================================
+   CATEGORY FILTERS SECTION
+============================================= */
+
+/* Category filters container */
+.category-filters-dp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 2rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  justify-content: center;
+}
+
+/* Individual category filter button */
+.category-btn-dp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #4b5563;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+  justify-content: center;
+}
+
+/* Hover state for category buttons */
+.category-btn-dp:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+/* Active state for category buttons */
+.category-btn-dp.active-dp {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Disabled state for category buttons */
+.category-btn-dp:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================
+   PLACES GRID & CARDS SECTION
+============================================= */
+
+/* Nearby places section background */
+.nearby-places-section-dp {
+  padding: 0 2rem;
+  background: linear-gradient(to bottom, #f9f9f9, #f0f0f0);
+}
+
+/* Responsive grid for place cards */
+.places-grid-dp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Individual place card */
+.place-card-dp {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Hover effect for place cards */
+.place-card-dp:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Place card images */
+.place-card-dp img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+/* Image hover effect */
+.place-card-dp:hover img {
+  transform: scale(1.05);
+}
+
+/* Place information container */
+.place-info-dp {
+  padding: 1.2rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Place type badge */
+.place-type-dp {
+  display: inline-flex;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+}
+
+/* Place name/title */
+.place-info-dp h3 {
+  margin: 0 0 0.8rem;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: #2c3e50;
+  transition: color 0.3s ease;
+  line-height: 1.3;
+}
+
+/* Hover effect for place name */
+.place-card-dp:hover .place-info-dp h3 {
+  color: #27ae60;
+}
+
+/* Rating display */
+.rating-dp {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f59e0b;
+}
+
+/* Reviews count text */
+.reviews-count-dp {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Address text */
+.address-dp {
+  color: #555;
+  font-size: 0.85rem;
+  margin-top: auto;
+  line-height: 1.4;
+}
+
+/* =============================================
+   LOAD MORE & VIEW ALL BUTTONS
+============================================= */
+
+/* Load more buttons container */
+.load-more-container-dp {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  padding: 0 1rem;
+}
+
+/* Load more button */
+.load-more-btn-dp,
+.view-all-btn-dp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+  justify-content: center;
+}
+
+/* Primary load more button */
+.load-more-btn-dp {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Hover effect for load more */
+.load-more-btn-dp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Secondary view all button */
+.view-all-btn-dp {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+/* Hover effect for view all */
+.view-all-btn-dp:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* =============================================
+   NO RESULTS SECTION
+============================================= */
+
+/* No results state container */
+.no-results-dp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6b7280;
+  min-height: 300px;
+}
+
+/* No results icon */
+.no-results-dp svg {
+  font-size: clamp(2rem, 10vw, 3rem);
+  margin-bottom: 1rem;
+  color: #9ca3af;
+}
+
+/* No results title */
+.no-results-dp p:first-of-type {
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+/* No results description */
+.no-results-dp p {
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+/* =============================================
+   SUCCESS NOTIFICATION
+============================================= */
+
+/* Success notification toast */
+.refresh-success-notification {
+  position: fixed;
+  top: 80px;
+  right: 1rem;
+  left: 1rem;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* =============================================
+   MODAL STYLES
+============================================= */
+
+/* Modal overlay */
+.place-modal-dp {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(5px);
+  padding: 1rem;
 }
 
-.modal-content {
+/* Modal content container */
+.modal-content-dp {
   background: #fff;
-  border-radius: 10px;
-  padding: 2rem;
-  max-width: 700px;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 90vw;
   width: 100%;
   position: relative;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: #ccc;
-  border: none;
-  font-size: 1.5rem;
+/* =============================================
+   RESPONSIVE BREAKPOINTS
+============================================= */
+
+/* Small devices (landscape phones, 576px and up) */
+@media (max-width: 576px) {
+  .town-overview-dp { padding: 3rem 1.5rem; }
+  .overlay-container-dp { grid-template-columns: 1fr; }
+  .image-content-dp { height: 350px; }
+  .category-btn-dp { flex: 0 1 calc(50% - 0.5rem); }
+  .refresh-success-notification { 
+    left: auto; 
+    right: 1rem; 
+    max-width: 300px; 
+  }
+
+  /* Category filters container */
+.category-filters-dp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  justify-content: center;
+}
+
+/* Individual category filter button - Mobile first (icon only) */
+.category-btn-dp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: white;
+  border: 2px solid transparent;
   cursor: pointer;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-}
-
-.photo-gallery img {
-  width: 100%;
-  margin-top: 1rem;
-  border-radius: 6px;
-}
-
-/* Buttons & Actions */
-.explore-btn {
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
-  background-color: #27ae60;
-  color: white;
-  border-radius: 5px;
-  text-decoration: none;
   transition: all 0.3s ease;
   font-weight: 500;
-  border: none;
-  cursor: pointer;
+  color: #4b5563;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+  width: 50px; /* Fixed size for circular buttons */
+  height: 50px;
+  aspect-ratio: 1; /* Ensure perfect circle */
 }
 
-.explore-btn:hover {
-  background-color: #219a52;
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+/* Hide text on mobile */
+.category-btn-dp span {
+  display: none;
 }
 
-.map-btn {
-  padding: 0.6rem 1.2rem;
-  background-color: #2980b9;
+/* Show tooltip on hover for mobile */
+.category-btn-dp:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
   color: white;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-left: 1rem;
-}
-
-.map-btn:hover {
-  background-color: #2471a3;
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
-.location-actions {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-}
-
-/* Quick Facts Section */
-.quick-facts {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 10px;
-  margin-top: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.quick-facts h3 {
-  color: #27ae60;
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-}
-
-.quick-facts ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.quick-facts li {
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e0e0e0;
-  color: #4a4a4a;
-}
-
-.quick-facts li:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-/* Image Enhancements */
-.image-content img {
-  width: 100%;
-  max-height: 500px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* Loading & Error States */
-.loading-text, .no-results {
-  text-align: center;
-  padding: 30px;
-  color: #95a5a6;
-  font-size: 1.1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .overlay-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .hero-banner {
-    height: 300px;
-  }
-  
-  .hero-overlay h1 {
-    font-size: 2rem;
-  }
-  
-  .nearby-places-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .location-actions {
-    flex-direction: column;
-  }
-  
-  .map-btn {
-    margin-left: 0;
-    margin-top: 1rem;
-  }
-}
-
-.category-selector {
-  margin: 20px auto;
-  text-align: center;
-  font-size: 16px;
-}
-
-.category-selector select {
-  margin-left: 10px;
   padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
 }
+
+/* Category button icons - larger on mobile */
+.category-btn-dp svg {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* Hover state for category buttons */
+.category-btn-dp:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+/* Active state for category buttons */
+.category-btn-dp.active-dp {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  .hero-banner-dp { background-attachment: fixed; }
+  .overlay-container-dp { 
+    grid-template-columns: 1fr 1fr; 
+    gap: 2.5rem; 
+  }
+  .text-content-dp { order: 1; }
+  .image-content-dp { 
+    order: 2; 
+    height: 400px; 
+  }
+  .search-controls-dp { 
+    flex-direction: row; 
+    justify-content: space-between; 
+    align-items: center; 
+  }
+  .category-filters-dp { padding: 1.5rem; }
+  /* .category-btn-dp { flex: 0 1 calc(33.333% - 0.5rem); } */
+  .places-grid-dp { padding: 1.5rem; }
+  .modal-content-dp { 
+    padding: 2rem; 
+    max-width: 600px; 
+  }
+  .category-btn-dp {
+    border-radius: 25px;
+    width: auto;
+    height: auto;
+    aspect-ratio: auto;
+    padding: 0.75rem 1rem;
+    justify-content: flex-start;
+    min-width: 120px;
+  }
+  
+  /* Show text on tablet and larger */
+  .category-btn-dp span {
+    display: inline;
+  }
+  
+  /* Remove tooltip on larger screens */
+  .category-btn-dp:hover::after {
+    display: none;
+  }
+  
+  .category-btn-dp {
+    flex: 0 1 calc(33.333% - 0.5rem);
+  }
+  
+  /* Smaller icons on larger screens */
+  .category-btn-dp svg {
+    font-size: 1rem;
+  }
+
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .town-overview-dp { padding: 4rem 2rem; }
+  .hero-banner-dp { height: 70vh; }
+  .map-container-dp { height: 60vh; }
+  .category-btn-dp { flex: 0 1 calc(20% - 0.5rem); }
+  .places-grid-dp { 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 2rem; 
+  }
+  .modal-content-dp { max-width: 700px; }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .town-overview-dp { padding: 4rem; }
+  .hero-banner-dp { 
+    height: 80vh; 
+    max-height: 800px; 
+  }
+  .places-grid-dp { 
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  }
+  .modal-content-dp { max-width: 800px; }
+}
+
+/* =============================================
+   ACCESSIBILITY & SPECIAL CASES
+============================================= */
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .place-card-dp:hover { transform: none; }
+  .category-btn-dp:hover { transform: none; }
+  .refresh-btn-dp:hover:not(:disabled) { transform: none; }
+  .hero-banner-dp { background-attachment: scroll; }
+}
+
+/* High DPI screens optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .hero-banner-dp {
+    background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://ik.imagekit.io/tvlk/blog/2023/05/shutterstock_1179100084.jpg?tr=q-70,c-at_max,w-1000,h-600,dpr-2');
+  }
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .spinner-dp { animation: none; }
+  .cache-info-dp svg { animation: none; }
+  .quota-warning-banner-dp svg { animation: none; }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .details-page-dp { background: #1a1a1a; color: #e0e0e0; }
+  .text-content-dp { background-color: #2d2d2d; color: #e0e0e0; }
+  .text-content-dp h2 { color: #ffffff; }
+  .overview-text-dp { color: #b0b0b0; }
+  .place-card-dp { background: #2d2d2d; color: #e0e0e0; }
+  .place-info-dp h3 { color: #ffffff; }
+  .address-dp { color: #b0b0b0; }
+  .category-filters-dp { background: linear-gradient(135deg, #2d2d2d 0%, #3d3d3d 100%); }
+  .category-btn-dp { background: #3d3d3d; color: #e0e0e0; }
+  .location-detail-dp, .category-detail-dp, .coordinates-detail-dp, .website-details-dp, .phone-detail-dp, .hours-detail-dp { color: #b0b0b0; }
+  .website-info-dp a { color: #4ea1ff; }
+}
+
+/* Print styles for better printing experience */
+@media print {
+  .hero-banner-dp { background: none !important; color: black !important; height: auto !important; }
+  .hero-overlay-dp { position: static !important; transform: none !important; background: none !important; color: black !important; }
+  .refresh-btn-dp, .cache-refresh-link-dp, .load-more-btn-dp, .view-all-btn-dp { display: none !important; }
+  .map-container-dp { height: 300px !important; }
+} 
