@@ -692,3 +692,38 @@ export const getMySubmissions = async (req, res) => {
       });
     }
   };
+
+  // Get approved businesses by category (Public route)
+export const getApprovedBusinessesByCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+        
+        if (!category) {
+            return res.status(400).json({
+                success: false,
+                message: "Category parameter is required"
+            });
+        }
+
+        // Find businesses that are approved and match the category
+        const businesses = await businessModel.find({
+            status: 'approved',
+            category: { $regex: new RegExp(category, 'i') } // Case-insensitive search
+        }).select('-__v -createdAt -updatedAt'); // Exclude unnecessary fields
+
+        return res.status(200).json({
+            success: true,
+            data: businesses,
+            count: businesses.length,
+            message: `Found ${businesses.length} approved businesses in category: ${category}`
+        });
+
+    } catch (error) {
+        console.error('Error fetching approved businesses by category:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};

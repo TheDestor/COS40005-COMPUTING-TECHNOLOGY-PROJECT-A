@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, act } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -7,6 +7,7 @@ import '../styles/CategoryDetailsPage.css';
 import defaultImage from '../assets/Kuching.png';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { toast } from 'sonner';
 
 const TOWN_VIDEOS = {
   Kuching: [
@@ -398,6 +399,12 @@ const CategoryDetailsPage = () => {
     }
   }
 
+  const activeCategory = selectedCategory;
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategory(categoryId);
+    setCarouselStart(0); // Reset carousel to start
+  }
+
   return (
     <div className="details-page">
       <MenuNavbar onLoginClick={handleLoginClick}/>
@@ -463,10 +470,11 @@ const CategoryDetailsPage = () => {
             {categories.map(category => (
               <button
                 key={category.id}
-                className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category.id)}
+                className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
+                onClick={() => handleCategoryChange(category.id)}
               >
-                {category.name}
+                <span className="btn-icon">{category.icon}</span>
+                <span className="btn-text">{category.name}</span>
               </button>
             ))}
           </div>
@@ -535,13 +543,17 @@ const CategoryDetailsPage = () => {
             </p>
             <div className="carousel-description-actions">
               <Link
-                to={`/discover/${visibleCards[2].slug}`}
+                to={`/discover/${encodeURIComponent(visibleCards[2].name)}`}
                 state={{
+                  category: visibleCards[2].category,
+                  type: visibleCards[2].type,
+                  division: visibleCards[2].division,
                   name: visibleCards[2].name,
-                  image: visibleCards[2].image,
-                  desc: visibleCards[2].description,
-                  coordinates: [visibleCards[2].latitude, visibleCards[2].longitude],
-                  website: visibleCards[2].website
+                  latitude: visibleCards[2].latitude,
+                  longitude: visibleCards[2].longitude,
+                  url: visibleCards[2].url,
+                  description: visibleCards[2].description,
+                  image: visibleCards[2].image
                 }}
                 className="category-explore-btn"
               >

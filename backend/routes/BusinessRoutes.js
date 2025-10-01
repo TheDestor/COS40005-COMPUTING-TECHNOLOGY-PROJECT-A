@@ -13,7 +13,8 @@ import {
     getBusinessesByStatus,
     getAllApprovedBusinesses,
     getBusinessesByOwner,
-    getMySubmissions
+    getMySubmissions,
+    getApprovedBusinessesByCategory
 } from "../controllers/BusinessController.js";
 
 const businessRouter = Router();
@@ -40,6 +41,7 @@ const businessUpload = upload.fields([
 
 // Public
 businessRouter.get("/approved", getAllApprovedBusinesses);
+businessRouter.get("/approved/category/:category", getApprovedBusinessesByCategory);
 
 // Business user only routes
 businessRouter.post("/addBusiness", verifyJWT, checkRole(['business']), businessUpload, addBusiness);
