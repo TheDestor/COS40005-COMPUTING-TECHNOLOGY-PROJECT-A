@@ -1768,20 +1768,12 @@ useEffect(() => {
                 setActiveMenu('');
               }}
               showLoginOverlay={openLoginOverlay}
-              onBookmarkClick={(bookmark) => {
-                const bookmarkData = {
-                  name: bookmark.name,
-                  latitude: bookmark.latitude,
-                  longitude: bookmark.longitude,
-                  description: bookmark.description,
-                  type: bookmark.type
-                };
-                
-                // Set both selected place and search bar place to ensure marker appears
+              onBookmarkClick={(bookmarkData) => {
+                // Use the data directly as provided by BookmarkPage
                 setSelectedPlace(bookmarkData);
                 setSelectedSearchBarPlace(bookmarkData);
                 
-                // Close the bookmark panel after clicking
+                // Close the bookmark panel
                 setShowBookmarkpage(false);
                 setActiveMenu('');
               }}

@@ -63,17 +63,55 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay, onBookmarkClick }) =>
     }
   };
 
-  // Handle bookmark click to plot on map
+  // Handle bookmark click to plot on map - UPDATED to include all fields
   const handleBookmarkClick = (bookmark) => {
     if (onBookmarkClick) {
-      onBookmarkClick({
+      // Create a complete location object with all saved fields
+      const locationData = {
+        // Basic location fields
         name: bookmark.name,
         latitude: bookmark.latitude,
         longitude: bookmark.longitude,
         description: bookmark.description || '',
         type: bookmark.type || 'Bookmark',
-        image: bookmark.image
-      });
+        image: bookmark.image,
+        
+        // Website/URL fields
+        website: bookmark.website,
+        url: bookmark.url || bookmark.website,
+        
+        // Business-specific fields
+        openingHours: bookmark.openingHours,
+        phone: bookmark.phone,
+        address: bookmark.address,
+        category: bookmark.category,
+        owner: bookmark.owner,
+        ownerEmail: bookmark.ownerEmail,
+        businessImage: bookmark.businessImage || bookmark.image,
+        
+        // Event-specific fields
+        eventType: bookmark.eventType,
+        startDate: bookmark.startDate,
+        endDate: bookmark.endDate,
+        startTime: bookmark.startTime,
+        endTime: bookmark.endTime,
+        registrationRequired: bookmark.registrationRequired,
+        
+        // Additional fields that might be present
+        rating: bookmark.rating,
+        division: bookmark.division,
+        source: bookmark.source,
+        
+        // Ensure we have coordinates in both formats for compatibility
+        coordinates: {
+          latitude: bookmark.latitude,
+          longitude: bookmark.longitude
+        },
+        lat: bookmark.latitude,
+        lng: bookmark.longitude
+      };
+
+      onBookmarkClick(locationData);
     }
     toast.success(`${bookmark.name} plotted on map`);
   };
@@ -96,58 +134,72 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay, onBookmarkClick }) =>
         <FaArrowLeft className="back-icon3" onClick={onClose} />
       </div>
 
-      {/* Delete button and select all */}
-      {bookmarks && bookmarks.length > 0 && selected.length > 0 && (
-        <div className="bookmark-actions">
-          <label className="select-all-label">
-            <input
-              type="checkbox"
-              checked={selected.length === bookmarks.length && bookmarks.length > 0}
-              onChange={handleSelectAll}
-            />
-            Select All
-          </label>
-          <button
-            className="bookmark-delete-btn"
-            onClick={handleDeleteSelected}
-            title="Delete selected"
-          >
-            <FaTrashAlt /> Delete
-          </button>
-        </div>
-      )}
-
-      <div className="bookmark-list">
-        {bookmarks && bookmarks.length > 0 ? (
-          bookmarks.map((bookmark) => (
-            <div 
-              className="bookmark-item" 
-              key={bookmark.name}
-              onClick={() => handleBookmarkClick(bookmark)}
-            >
+      <div className="bookmark-content">
+        {/* Delete button and select all */}
+        {bookmarks && bookmarks.length > 0 && selected.length > 0 && (
+          <div className="bookmark-actions">
+            <label className="select-all-label">
               <input
                 type="checkbox"
-                checked={selected.includes(bookmark.name)}
-                onChange={() => handleSelect(bookmark)}
-                className="bookmark-checkbox"
-                onClick={(e) => e.stopPropagation()}
+                checked={selected.length === bookmarks.length && bookmarks.length > 0}
+                onChange={handleSelectAll}
               />
-              <img
-                src={bookmark.image || defaultImage}
-                alt={bookmark.name}
-                className="bookmark-item-image"
-                onError={(e) => {
-                  e.target.src = defaultImage;
-                }}
-              />
-              <span className="bookmark-item-name">{bookmark.name}</span>
-            </div>
-          ))
-        ) : (
-          <div className="bookmark-empty-message">You have no bookmarks yet.</div>
+              Select All
+            </label>
+            <button
+              className="bookmark-delete-btn"
+              onClick={handleDeleteSelected}
+              title="Delete selected"
+            >
+              <FaTrashAlt /> Delete
+            </button>
+          </div>
         )}
+
+        <div className="bookmark-list-container">
+          <div className="bookmark-list">
+            {bookmarks && bookmarks.length > 0 ? (
+              bookmarks.map((bookmark) => (
+                <div 
+                  className="bookmark-item" 
+                  key={bookmark.name}
+                  onClick={() => handleBookmarkClick(bookmark)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(bookmark.name)}
+                    onChange={() => handleSelect(bookmark)}
+                    className="bookmark-checkbox"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <img
+                    src={bookmark.image || defaultImage}
+                    alt={bookmark.name}
+                    className="bookmark-item-image"
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
+                  />
+                  <div className="bookmark-item-info">
+                    <span className="bookmark-item-name">{bookmark.name}</span>
+                    {bookmark.type && (
+                      <span className="bookmark-item-type">{bookmark.type}</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="bookmark-empty-state">
+                <div className="bookmark-empty-message">
+                  You have no bookmarks yet.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Modal code remains the same */}
       {confirmState.open && (
         <div className="bookmark-modal-overlay" onClick={closeConfirm}>
           <div className="bookmark-modal" onClick={(e) => e.stopPropagation()}>

@@ -966,7 +966,7 @@ body.manage-business-body {
 .mb-confirmation-icon {
   font-size: 48px;
   color: #f59e0b;
-  margin-bottom: 16px;
+  /* margin-bottom: 16px; */
 }
 
 .mb-confirmation-content h4 {

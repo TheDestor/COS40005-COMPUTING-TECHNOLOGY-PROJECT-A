@@ -422,6 +422,7 @@
 .info-desc, .info-owner, .info-hours, .info-website-card {
   word-break: break-word;
   overflow-wrap: anywhere;
+  text-align: left;
 }
 
 @media (max-width: 480px) {

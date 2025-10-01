@@ -38,16 +38,23 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
   // Determine the type of location based on available fields
   const getLocationType = () => {
-    if (location.ownerEmail || location.category === 'Accommodation') {
-      return 'business';
-    } else if (location.startDate || location.eventType) {
-      return 'event';
-    } else if (location.type === 'Major Town' || majorTowns.includes(location.name)) {
-      return 'majorTown';
-    } else {
-      return 'location';
-    }
-  };
+  // Check for business fields first
+  if (location.ownerEmail || location.owner || location.category === 'Accommodation' || location.category === 'Food & Beverages' || location.category === 'Tour Guides' || location.category === 'Transportation' || location.category === 'Shoppings & Leisures') {
+    return 'business';
+  } 
+  // Check for event fields
+  else if (location.startDate || location.eventType || location.registrationRequired || location.type === 'Events') {
+    return 'event';
+  } 
+  // Check for major town
+  else if (location.type === 'Major Town' || majorTowns.includes(location.name) || location.division) {
+    return 'majorTown';
+  } 
+  // Default to location
+  else {
+    return 'location';
+  }
+};
 
   const locationType = getLocationType();
 
@@ -131,7 +138,29 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
             website: location.website || location.url,
             latitude: location.latitude || location.lat,
             longitude: location.longitude || location.lng,
-            type: location.type || location.category || 'tourist_attraction'
+            type: location.type || location.category || 'tourist_attraction',
+            
+            // Business-specific fields
+            openingHours: location.openingHours,
+            phone: location.phone,
+            address: location.address,
+            category: location.category,
+            owner: location.owner,
+            ownerEmail: location.ownerEmail,
+            businessImage: location.businessImage,
+            
+            // Event-specific fields
+            eventType: location.eventType,
+            startDate: location.startDate,
+            endDate: location.endDate,
+            startTime: location.startTime,
+            endTime: location.endTime,
+            registrationRequired: location.registrationRequired,
+            
+            // Additional fields
+            rating: location.rating,
+            division: location.division,
+            source: location.source,
           };
           addBookmark(bookmarkData);
           toast.success("Bookmark saved successfully!");

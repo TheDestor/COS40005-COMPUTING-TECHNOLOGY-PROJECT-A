@@ -326,6 +326,49 @@ function MapComponentTesting({  }) {
     setNearbyPlaces([]);
   };
 
+  // Fetch Major Towns from backend on initial load
+  const fetchMajorTowns = useCallback(async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const res = await fetch('/api/locations', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) return [];
+      const data = await res.json();
+
+      // Filter to only include Major Town locations
+      const majorTowns = data
+        .filter(item => 
+          item && 
+          item.latitude != null && 
+          item.longitude != null && 
+          (item.category === 'Major Town' || item.type === 'Major Town')
+        )
+        .map(item => ({
+          name: item.name,
+          latitude: Number(item.latitude),
+          longitude: Number(item.longitude),
+          image: item.image,
+          description: item.description || 'Major Town in Sarawak',
+          type: 'Major Town',
+          source: 'backend',
+          division: item.division || '',
+          url: item.url || '',
+          category: item.category || 'Major Town'
+        }));
+
+      return majorTowns;
+    } catch (error) {
+      console.error('Major Towns fetch error:', error);
+      return [];
+    }
+  }, []);
+
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
     closeInfoWindow(); // Close info window when menu category changes
@@ -412,8 +455,27 @@ function MapComponentTesting({  }) {
     }
   }, [location.state]);
 
-  // REMOVED: The useEffect that was fetching Major Town data from backend
-  // Now we rely entirely on the MapViewMenu to fetch and pass the data
+  // Fetch Major Town data on component mount
+  useEffect(() => {
+    const loadInitialMajorTowns = async () => {
+      // Only fetch if we don't have any locations yet and no search bar place is selected
+      if (locations.length === 0 && !selectedSearchBarPlace) {
+        const majorTowns = await fetchMajorTowns();
+        if (majorTowns.length > 0) {
+          setLocations(majorTowns);
+          // Optionally fit the map bounds to show all major towns
+          if (mapRef.current) {
+            const bounds = L.latLngBounds(
+              majorTowns.map(loc => [loc.latitude, loc.longitude])
+            );
+            mapRef.current.fitBounds(bounds);
+          }
+        }
+      }
+    };
+
+    loadInitialMajorTowns();
+  }, [fetchMajorTowns, locations.length, selectedSearchBarPlace]);
 
   // Fit map to markers when locations change
   useEffect(() => {
