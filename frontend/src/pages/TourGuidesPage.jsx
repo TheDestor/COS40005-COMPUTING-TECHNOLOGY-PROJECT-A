@@ -6,6 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { FaPhone } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = '102WPe0tHJI'; 
 
@@ -18,6 +19,162 @@ const TourGuidePage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Tour Guides');
 
+  // Fetch business locations with category "Tour Guides"
+  const fetchBusinessTourGuides = async () => {
+    try {
+      const response = await fetch('/api/businesses/approved/category/Tour Guides');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch business tour guides');
+      }
+      
+      const businessData = result.data || [];
+      
+      return businessData.map(business => ({
+        name: business.name || 'Unknown Business',
+        desc: business.description || 'No description available',
+        slug: business.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown-business',
+        image: business.businessImage || defaultImage,
+        type: 'Business',
+        division: business.division || 'Unknown',
+        latitude: business.latitude || 0,
+        longitude: business.longitude || 0,
+        url: business.website || '',
+        category: business.category || 'Tour Guides',
+        owner: business.owner,
+        ownerEmail: business.ownerEmail,
+        phone: business.phone,
+        address: business.address,
+        openingHours: business.openingHours,
+        ownerAvatar: business.ownerAvatar,
+        source: 'business'
+      }));
+    } catch (error) {
+      console.error('Error fetching business tour guides:', error);
+      return [];
+    }
+  };
+
+  // Fetch tour guide locations from database
+  const fetchTourGuideLocations = async () => {
+    try {
+      const response = await fetch('/api/locations?category=Tour');
+      const fetchedData = await response.json();
+      
+      // Filter for tour guide related categories
+      const tourGuideData = fetchedData.filter(item => 
+        item.category?.toLowerCase().includes('tour') || 
+        item.category?.toLowerCase().includes('guide') ||
+        item.type?.toLowerCase().includes('tour') ||
+        item.type?.toLowerCase().includes('guide')
+      );
+      
+      return tourGuideData.map(item => ({
+        name: item.name || item.Name || 'Unknown',
+        desc: item.description || item.desc || 'No description available',
+        slug: (item.name || item.Name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+        image: item.image || defaultImage,
+        type: item.type || 'Other',
+        division: item.division || 'Unknown',
+        latitude: item.latitude || item.lat || 0,
+        longitude: item.longitude || item.lng || 0,
+        url: item.url || '',
+        category: item.category || 'Tour',
+        source: 'database'
+      }));
+    } catch (error) {
+      console.error('Error fetching tour guide locations:', error);
+      return [];
+    }
+  };
+
+  // Fetch tour guide services from Overpass API (OpenStreetMap)
+  const fetchOverpassTourGuides = async () => {
+    try {
+      // Sarawak bounding box (approximate)
+      const sarawakBbox = '1.0,109.5,3.5,115.5';
+      
+      // Overpass query for tourism services in Sarawak
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          // Tourism information
+          node["tourism"="information"](${sarawakBbox});
+          way["tourism"="information"](${sarawakBbox});
+          relation["tourism"="information"](${sarawakBbox});
+          
+          // Tour operators
+          node["tourism"="yes"]["name"](${sarawakBbox});
+          way["tourism"="yes"]["name"](${sarawakBbox});
+          relation["tourism"="yes"]["name"](${sarawakBbox});
+        );
+        out center 100;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return result.elements.map(element => {
+        const tags = element.tags || {};
+        const name = tags.name || 'Tour Service';
+        
+        // Determine coordinates
+        let lat, lon;
+        if (element.center) {
+          lat = element.center.lat;
+          lon = element.center.lon;
+        } else {
+          lat = element.lat;
+          lon = element.lon;
+        }
+
+        // Determine type based on OSM tags
+        let type = 'General Tours';
+        if (tags.tourism === 'information') type = 'Tour Information';
+        else if (tags.tourism === 'yes') type = 'Tour Service';
+
+        // Create description from available tags
+        let description = tags.description || tags.wikipedia || '';
+        if (!description) {
+          description = `Tour guide service in Sarawak`;
+          if (tags.operator) description += ` operated by ${tags.operator}`;
+        }
+
+        return {
+          name: name,
+          desc: description,
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          image: defaultImage,
+          type: type,
+          division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
+          latitude: lat,
+          longitude: lon,
+          url: tags.website || '',
+          category: 'Tour Guides',
+          source: 'overpass',
+          osmTags: tags
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching Overpass tour guides:', error);
+      return [];
+    }
+  };
+
   // Comprehensive tour guide data for Sarawak
   const staticTourGuideData = [
     // Cultural Tours
@@ -27,8 +184,10 @@ const TourGuidePage = () => {
       slug: "sarawak-cultural-heritage-tours",
       image: defaultImage,
       type: "Cultural Tours",
-      lat: 1.5534,
-      lng: 110.3594
+      division: "Kuching",
+      latitude: 1.5534,
+      longitude: 110.3594,
+      source: 'static'
     },
     {
       name: "Kuching Heritage Walk",
@@ -36,8 +195,10 @@ const TourGuidePage = () => {
       slug: "kuching-heritage-walk",
       image: defaultImage,
       type: "Cultural Tours",
-      lat: 1.5545,
-      lng: 110.3605
+      division: "Kuching",
+      latitude: 1.5545,
+      longitude: 110.3605,
+      source: 'static'
     },
     {
       name: "Longhouse Cultural Experience",
@@ -45,8 +206,10 @@ const TourGuidePage = () => {
       slug: "longhouse-cultural-experience",
       image: defaultImage,
       type: "Cultural Tours",
-      lat: 1.5556,
-      lng: 110.3616
+      division: "Kuching",
+      latitude: 1.5556,
+      longitude: 110.3616,
+      source: 'static'
     },
     {
       name: "Miri Cultural Center Tours",
@@ -54,8 +217,10 @@ const TourGuidePage = () => {
       slug: "miri-cultural-center-tours",
       image: defaultImage,
       type: "Cultural Tours",
-      lat: 4.4180,
-      lng: 114.0155
+      division: "Miri",
+      latitude: 4.4180,
+      longitude: 114.0155,
+      source: 'static'
     },
     
     // Adventure Tours
@@ -65,8 +230,10 @@ const TourGuidePage = () => {
       slug: "borneo-adventure-expeditions",
       image: defaultImage,
       type: "Adventure Tours",
-      lat: 1.5567,
-      lng: 110.3627
+      division: "Kuching",
+      latitude: 1.5567,
+      longitude: 110.3627,
+      source: 'static'
     },
     {
       name: "Gunung Mulu National Park Guide",
@@ -74,8 +241,10 @@ const TourGuidePage = () => {
       slug: "gunung-mulu-national-park-guide",
       image: defaultImage,
       type: "Adventure Tours",
-      lat: 4.0500,
-      lng: 114.8167
+      division: "Miri",
+      latitude: 4.0500,
+      longitude: 114.8167,
+      source: 'static'
     },
     {
       name: "Bako National Park Hiking",
@@ -83,8 +252,10 @@ const TourGuidePage = () => {
       slug: "bako-national-park-hiking",
       image: defaultImage,
       type: "Adventure Tours",
-      lat: 1.7167,
-      lng: 110.4667
+      division: "Kuching",
+      latitude: 1.7167,
+      longitude: 110.4667,
+      source: 'static'
     },
     {
       name: "Niah Caves Adventure Tours",
@@ -92,8 +263,10 @@ const TourGuidePage = () => {
       slug: "niah-caves-adventure-tours",
       image: defaultImage,
       type: "Adventure Tours",
-      lat: 3.8167,
-      lng: 113.7667
+      division: "Miri",
+      latitude: 3.8167,
+      longitude: 113.7667,
+      source: 'static'
     },
     
     // Nature Tours
@@ -103,8 +276,10 @@ const TourGuidePage = () => {
       slug: "wildlife-photography-tours",
       image: defaultImage,
       type: "Nature Tours",
-      lat: 1.5578,
-      lng: 110.3638
+      division: "Kuching",
+      latitude: 1.5578,
+      longitude: 110.3638,
+      source: 'static'
     },
     {
       name: "Proboscis Monkey River Tours",
@@ -112,8 +287,10 @@ const TourGuidePage = () => {
       slug: "proboscis-monkey-river-tours",
       image: defaultImage,
       type: "Nature Tours",
-      lat: 1.5589,
-      lng: 110.3649
+      division: "Kuching",
+      latitude: 1.5589,
+      longitude: 110.3649,
+      source: 'static'
     },
     {
       name: "Bird Watching Expeditions",
@@ -121,8 +298,10 @@ const TourGuidePage = () => {
       slug: "bird-watching-expeditions",
       image: defaultImage,
       type: "Nature Tours",
-      lat: 1.5600,
-      lng: 110.3660
+      division: "Kuching",
+      latitude: 1.5600,
+      longitude: 110.3660,
+      source: 'static'
     },
     {
       name: "Mangrove Forest Tours",
@@ -130,8 +309,10 @@ const TourGuidePage = () => {
       slug: "mangrove-forest-tours",
       image: defaultImage,
       type: "Nature Tours",
-      lat: 1.5611,
-      lng: 110.3671
+      division: "Kuching",
+      latitude: 1.5611,
+      longitude: 110.3671,
+      source: 'static'
     },
     
     // City Tours
@@ -141,8 +322,10 @@ const TourGuidePage = () => {
       slug: "kuching-city-explorer",
       image: defaultImage,
       type: "City Tours",
-      lat: 1.5622,
-      lng: 110.3682
+      division: "Kuching",
+      latitude: 1.5622,
+      longitude: 110.3682,
+      source: 'static'
     },
     {
       name: "Miri City Discovery",
@@ -150,8 +333,10 @@ const TourGuidePage = () => {
       slug: "miri-city-discovery",
       image: defaultImage,
       type: "City Tours",
-      lat: 4.4191,
-      lng: 114.0166
+      division: "Miri",
+      latitude: 4.4191,
+      longitude: 114.0166,
+      source: 'static'
     },
     {
       name: "Sibu Heritage Tours",
@@ -159,8 +344,10 @@ const TourGuidePage = () => {
       slug: "sibu-heritage-tours",
       image: defaultImage,
       type: "City Tours",
-      lat: 2.2870,
-      lng: 111.8320
+      division: "Sibu",
+      latitude: 2.2870,
+      longitude: 111.8320,
+      source: 'static'
     },
     {
       name: "Bintulu Industrial Tours",
@@ -168,8 +355,10 @@ const TourGuidePage = () => {
       slug: "bintulu-industrial-tours",
       image: defaultImage,
       type: "City Tours",
-      lat: 3.1739,
-      lng: 113.0428
+      division: "Bintulu",
+      latitude: 3.1739,
+      longitude: 113.0428,
+      source: 'static'
     },
     
     // Food Tours
@@ -179,8 +368,10 @@ const TourGuidePage = () => {
       slug: "sarawak-food-adventures",
       image: defaultImage,
       type: "Food Tours",
-      lat: 1.5633,
-      lng: 110.3693
+      division: "Kuching",
+      latitude: 1.5633,
+      longitude: 110.3693,
+      source: 'static'
     },
     {
       name: "Kuching Night Market Tours",
@@ -188,8 +379,10 @@ const TourGuidePage = () => {
       slug: "kuching-night-market-tours",
       image: defaultImage,
       type: "Food Tours",
-      lat: 1.5644,
-      lng: 110.3704
+      division: "Kuching",
+      latitude: 1.5644,
+      longitude: 110.3704,
+      source: 'static'
     },
     {
       name: "Traditional Cooking Classes",
@@ -197,8 +390,10 @@ const TourGuidePage = () => {
       slug: "traditional-cooking-classes",
       image: defaultImage,
       type: "Food Tours",
-      lat: 1.5655,
-      lng: 110.3715
+      division: "Kuching",
+      latitude: 1.5655,
+      longitude: 110.3715,
+      source: 'static'
     },
     
     // Photography Tours
@@ -208,8 +403,10 @@ const TourGuidePage = () => {
       slug: "sarawak-landscape-photography",
       image: defaultImage,
       type: "Photography Tours",
-      lat: 1.5666,
-      lng: 110.3726
+      division: "Kuching",
+      latitude: 1.5666,
+      longitude: 110.3726,
+      source: 'static'
     },
     {
       name: "Sunrise & Sunset Tours",
@@ -217,8 +414,10 @@ const TourGuidePage = () => {
       slug: "sunrise-sunset-tours",
       image: defaultImage,
       type: "Photography Tours",
-      lat: 1.5677,
-      lng: 110.3737
+      division: "Kuching",
+      latitude: 1.5677,
+      longitude: 110.3737,
+      source: 'static'
     },
     
     // Eco Tours
@@ -228,8 +427,10 @@ const TourGuidePage = () => {
       slug: "sustainable-tourism-guides",
       image: defaultImage,
       type: "Eco Tours",
-      lat: 1.5688,
-      lng: 110.3748
+      division: "Kuching",
+      latitude: 1.5688,
+      longitude: 110.3748,
+      source: 'static'
     },
     {
       name: "Community-Based Tourism",
@@ -237,8 +438,10 @@ const TourGuidePage = () => {
       slug: "community-based-tourism",
       image: defaultImage,
       type: "Eco Tours",
-      lat: 1.5699,
-      lng: 110.3759
+      division: "Kuching",
+      latitude: 1.5699,
+      longitude: 110.3759,
+      source: 'static'
     },
     
     // Specialized Tours
@@ -248,8 +451,10 @@ const TourGuidePage = () => {
       slug: "archaeological-site-tours",
       image: defaultImage,
       type: "Specialized Tours",
-      lat: 1.5710,
-      lng: 110.3770
+      division: "Miri",
+      latitude: 1.5710,
+      longitude: 110.3770,
+      source: 'static'
     },
     {
       name: "Religious Heritage Tours",
@@ -257,8 +462,10 @@ const TourGuidePage = () => {
       slug: "religious-heritage-tours",
       image: defaultImage,
       type: "Specialized Tours",
-      lat: 1.5721,
-      lng: 110.3781
+      division: "Kuching",
+      latitude: 1.5721,
+      longitude: 110.3781,
+      source: 'static'
     },
     {
       name: "Art & Craft Workshops",
@@ -266,85 +473,82 @@ const TourGuidePage = () => {
       slug: "art-craft-workshops",
       image: defaultImage,
       type: "Specialized Tours",
-      lat: 1.5732,
-      lng: 110.3792
+      division: "Kuching",
+      latitude: 1.5732,
+      longitude: 110.3792,
+      source: 'static'
     }
   ];
 
-  const processBackendData = (backendData) => {
-    return backendData
-      .filter(item => 
-        item.category?.toLowerCase() === 'tour' || 
-        item.category?.toLowerCase() === 'guide' ||
-        item.type?.toLowerCase().includes('tour') ||
-        item.type?.toLowerCase().includes('guide') ||
-        item.name?.toLowerCase().includes('tour') ||
-        item.name?.toLowerCase().includes('guide')
-      )
-      .map(item => {
-        // Determine tour type based on name and description
-        const name = item.name?.toLowerCase() || '';
-        const desc = item.description?.toLowerCase() || '';
-        let type = 'General Tours';
+  const fetchAllTourGuides = async () => {
+    setLoading(true);
+    try {
+      // Fetch from all sources
+      const [tourGuideLocations, businessTourGuides, overpassTourGuides, staticTourGuides] = await Promise.all([
+        fetchTourGuideLocations(),
+        fetchBusinessTourGuides(),
+        fetchOverpassTourGuides(),
+        Promise.resolve(staticTourGuideData)
+      ]);
+
+      // Combine all data
+      const allData = [...tourGuideLocations, ...businessTourGuides, ...overpassTourGuides, ...staticTourGuides];
+      
+      // Remove duplicates based on name and coordinates
+      const uniqueData = allData.filter((item, index, self) =>
+        index === self.findIndex(t => 
+          t.name === item.name && 
+          Math.abs((t.latitude || t.lat) - (item.latitude || item.lat)) < 0.001 && 
+          Math.abs((t.longitude || t.lng) - (item.longitude || item.lng)) < 0.001
+        )
+      );
+
+      // Process and enhance the data
+      const processedData = uniqueData.map(item => {
+        const name = item.name;
+        const lowerName = name.toLowerCase();
         
-        if (name.includes('cultural') || name.includes('heritage') || name.includes('longhouse')) {
-          type = 'Cultural Tours';
-        } else if (name.includes('adventure') || name.includes('hiking') || name.includes('trekking') || name.includes('cave')) {
-          type = 'Adventure Tours';
-        } else if (name.includes('nature') || name.includes('wildlife') || name.includes('bird') || name.includes('mangrove')) {
-          type = 'Nature Tours';
-        } else if (name.includes('city') || name.includes('urban') || name.includes('downtown')) {
-          type = 'City Tours';
-        } else if (name.includes('food') || name.includes('culinary') || name.includes('cooking')) {
-          type = 'Food Tours';
-        } else if (name.includes('photography') || name.includes('photo')) {
-          type = 'Photography Tours';
-        } else if (name.includes('eco') || name.includes('sustainable') || name.includes('community')) {
-          type = 'Eco Tours';
-        } else if (name.includes('archaeological') || name.includes('religious') || name.includes('art')) {
-          type = 'Specialized Tours';
+        // Determine type if not already set
+        let type = item.type;
+        if (!type || type === 'Other') {
+          if (lowerName.includes('cultural') || lowerName.includes('heritage') || lowerName.includes('longhouse')) {
+            type = 'Cultural Tours';
+          } else if (lowerName.includes('adventure') || lowerName.includes('hiking') || lowerName.includes('trekking') || lowerName.includes('cave')) {
+            type = 'Adventure Tours';
+          } else if (lowerName.includes('nature') || lowerName.includes('wildlife') || lowerName.includes('bird') || lowerName.includes('mangrove')) {
+            type = 'Nature Tours';
+          } else if (lowerName.includes('city') || lowerName.includes('urban') || lowerName.includes('downtown')) {
+            type = 'City Tours';
+          } else if (lowerName.includes('food') || lowerName.includes('culinary') || lowerName.includes('cooking')) {
+            type = 'Food Tours';
+          } else if (lowerName.includes('photography') || lowerName.includes('photo')) {
+            type = 'Photography Tours';
+          } else if (lowerName.includes('eco') || lowerName.includes('sustainable') || lowerName.includes('community')) {
+            type = 'Eco Tours';
+          } else if (lowerName.includes('archaeological') || lowerName.includes('religious') || lowerName.includes('art')) {
+            type = 'Specialized Tours';
+          } else if (item.source === 'business') type = 'Business';
+          else type = 'General Tours';
         }
 
         return {
-          name: item.name || 'Unknown',
-          desc: item.description || 'Professional tour guide service',
-          slug: item.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-          image: item.image || defaultImage,
-          type: type,
-          lat: item.latitude || 0,
-          lng: item.longitude || 0
+          ...item,
+          type,
+          lat: item.latitude || item.lat || 0,
+          lng: item.longitude || item.lng || 0
         };
-    });
-  };
+      });
 
-  const loadTourGuides = async () => {
-    setLoading(true);
-    try {
-      // Fetch backend data
-      const backendResponse = await fetch('/api/locations?category=Tour');
-      const backendData = await backendResponse.json();
-      const processedBackend = processBackendData(backendData);
-
-      // Combine backend data with static data
-      const allData = [...processedBackend, ...staticTourGuideData];
-      
-      // Remove duplicates based on name
-      const uniqueData = allData.filter((item, index, self) => 
-        index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-      );
-      
-      setData(uniqueData);
+      setData(processedData);
     } catch (error) {
-      console.error('Error fetching tour guides:', error);
-      // Fallback to static data if backend fails
-      setData(staticTourGuideData);
+      console.error('Error fetching all tour guides:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTourGuides();
+    fetchAllTourGuides();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -374,7 +578,7 @@ const TourGuidePage = () => {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading...</p>
+        <p>Loading Tour Guides...</p>
       </div>
     );
   }
@@ -397,9 +601,9 @@ const TourGuidePage = () => {
       </div>
 
       <div className="hero-overlay-mt">
-        <h1>{currentCategory.toUpperCase() || 'TOUR GUIDE'}</h1>
+        <h1>{currentCategory.toUpperCase() || 'TOUR GUIDES'}</h1>
         <p className="hero-intro">
-            Connect with certified local guides who bring Sarawak to life. Get personalized tours, deep cultural insights, and access hidden gems in Kuching, Miri, Sibu, and throughout the state for an unforgettable experience.
+          Connect with certified local guides who bring Sarawak to life. Get personalized tours, deep cultural insights, and access hidden gems in Kuching, Miri, Sibu, and throughout the state for an unforgettable experience.
         </p>
       </div>
 
@@ -430,6 +634,9 @@ const TourGuidePage = () => {
               <option value="Photography Tours">Photography Tours</option>
               <option value="Eco Tours">Eco Tours</option>
               <option value="Specialized Tours">Specialized Tours</option>
+              <option value="Tour Information">Tour Information</option>
+              <option value="Tour Service">Tour Service</option>
+              <option value="Business">Business</option>
               <option value="General Tours">General Tours</option>
             </select>
           </div>
@@ -440,14 +647,20 @@ const TourGuidePage = () => {
         {filteredData.slice(0, visibleItems).map((item, index) => (
           <div
             className="card-wrapper"
-            key={index}
+            key={`${item.source}-${item.name}-${index}`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
               <img src={item.image} alt={item.name} />
               <div className="card-content">
                 <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="card-meta">
+                  <span className="type-badge">{item.type}</span>
+                  {item.division && <span className="division-badge">{item.division}</span>}
+                  {item.source === 'business' && <span className="business-badge">Business</span>}
+                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                  {item.source === 'static' && <span className="static-badge">Local</span>}
+                </div>
                 <div className="desc-scroll">
                   <p>{item.desc}</p>
                 </div>
@@ -457,8 +670,18 @@ const TourGuidePage = () => {
                     state={{
                       name: item.name,
                       image: item.image,
-                      desc: item.desc,
-                      coordinates: [item.lat, item.lng]
+                      description: item.desc,
+                      latitude: item.latitude || item.lat,
+                      longitude: item.longitude || item.lng,
+                      category: item.category,
+                      type: item.type,
+                      division: item.division,
+                      url: item.url,
+                      phone: item.phone,
+                      address: item.address,
+                      openingHours: item.openingHours,
+                      source: item.source,
+                      osmTags: item.osmTags
                     }}
                     className="explore-btn"
                   >
@@ -470,6 +693,12 @@ const TourGuidePage = () => {
           </div>
         ))}
       </div>
+
+      {filteredData.length === 0 && !loading && (
+        <div className="no-results">
+          <p>No tour guides found. Try adjusting your search criteria.</p>
+        </div>
+      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

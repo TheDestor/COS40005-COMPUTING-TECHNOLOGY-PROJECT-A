@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import MenuNavBar from '../components/MenuNavbar';
+import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
 import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { FaPhone } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'Jsk5kvZ-DHo'; 
 
@@ -14,114 +15,470 @@ const AccommodationPage = () => {
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
+  const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Accommodation');
 
-  const getCurrentLocation = () => {
-    return new Promise((resolve) => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            });
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            resolve({ lat: 1.5533, lng: 110.3592 });
-          }
-        );
-      } else {
-        resolve({ lat: 1.5533, lng: 110.3592 });
+  // Fetch business locations with category "Accommodation"
+  const fetchBusinessAccommodation = async () => {
+    try {
+      const response = await fetch('/api/businesses/approved/category/Accommodation');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch business accommodation');
+      }
+      
+      const businessData = result.data || [];
+      
+      return businessData.map(business => ({
+        name: business.name || 'Unknown Business',
+        desc: business.description || 'No description available',
+        slug: business.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown-business',
+        image: business.businessImage || defaultImage,
+        type: 'Business',
+        division: business.division || 'Unknown',
+        latitude: business.latitude || 0,
+        longitude: business.longitude || 0,
+        url: business.website || '',
+        category: business.category || 'Accommodation',
+        owner: business.owner,
+        ownerEmail: business.ownerEmail,
+        phone: business.phone,
+        address: business.address,
+        openingHours: business.openingHours,
+        ownerAvatar: business.ownerAvatar,
+        source: 'business'
+      }));
+    } catch (error) {
+      console.error('Error fetching business accommodation:', error);
+      return [];
+    }
   };
 
-  const fetchGooglePlaces = async (location) => {
-    return new Promise((resolve) => {
-      if (!window.google) {
-        console.error("Google Maps API not loaded");
-        return resolve([]);
-      }
-
-      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
-      const request = {
-        location: new window.google.maps.LatLng(location.lat, location.lng),
-        radius: 50000,
-        type: 'lodging'
-      };
-
-      const processResults = (results, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-          const formatted = results.map(place => {
-            const types = place.types || [];
-            let placeType = 'Other';
-            if (types.includes('hotel')) placeType = 'Hotel';
-            else if (types.includes('homestay')) placeType = 'Homestay';
-            else if (types.includes('hostel')) placeType = 'Hostel';
-            else if (types.includes('resort')) placeType = 'Resort';
-            else if (types.includes('guest_house')) placeType = 'Guest House';
-
-            return {
-              name: place.name,
-              desc: place.vicinity || 'Google Places result',
-              slug: place.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-              image: place.photos?.[0]?.getUrl({ maxWidth: 300 }) || defaultImage,
-              type: placeType,
-              lat: place.geometry?.location?.lat(),
-              lng: place.geometry?.location?.lng()
-            };
-          });
-          resolve(formatted);
-        } else {
-          resolve([]);
-        }
-      };
-
-      service.nearbySearch(request, processResults);
-    });
-  };
-
-  const processBackendData = (backendData) => {
-    return backendData
-      .filter(item => item.category?.toLowerCase() === 'accommodation')
-      .map(item => ({
-        name: item.Name || item.name,
-        desc: item.description || item.Desc,
-        slug: item.slug || item.Name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+  // Fetch accommodation locations from database
+  const fetchAccommodationLocations = async () => {
+    try {
+      const response = await fetch('/api/locations?category=Accommodation');
+      const fetchedData = await response.json();
+      
+      // Filter for accommodation related categories
+      const accommodationData = fetchedData.filter(item => 
+        item.category?.toLowerCase().includes('accommodation') || 
+        item.type?.toLowerCase().includes('hotel') ||
+        item.type?.toLowerCase().includes('resort') ||
+        item.type?.toLowerCase().includes('homestay') ||
+        item.type?.toLowerCase().includes('hostel') ||
+        item.type?.toLowerCase().includes('guest')
+      );
+      
+      return accommodationData.map(item => ({
+        name: item.name || item.Name || 'Unknown',
+        desc: item.description || item.desc || 'No description available',
+        slug: (item.name || item.Name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
         image: item.image || defaultImage,
         type: item.type || 'Other',
-        lat: item.latitude || item.lat,
-        lng: item.longitude || item.lng
+        division: item.division || 'Unknown',
+        latitude: item.latitude || item.lat || 0,
+        longitude: item.longitude || item.lng || 0,
+        url: item.url || '',
+        category: item.category || 'Accommodation',
+        source: 'database'
       }));
+    } catch (error) {
+      console.error('Error fetching accommodation locations:', error);
+      return [];
+    }
   };
 
-  const fetchAccommodations = async () => {
+  // Fetch accommodation places from Overpass API (OpenStreetMap)
+  const fetchOverpassAccommodation = async () => {
+    try {
+      // Sarawak bounding box (approximate)
+      const sarawakBbox = '1.0,109.5,3.5,115.5';
+      
+      // Overpass query for accommodation in Sarawak
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          // Hotels
+          node["tourism"="hotel"](${sarawakBbox});
+          way["tourism"="hotel"](${sarawakBbox});
+          relation["tourism"="hotel"](${sarawakBbox});
+          
+          // Hostels
+          node["tourism"="hostel"](${sarawakBbox});
+          way["tourism"="hostel"](${sarawakBbox});
+          relation["tourism"="hostel"](${sarawakBbox});
+          
+          // Guest houses
+          node["tourism"="guest_house"](${sarawakBbox});
+          way["tourism"="guest_house"](${sarawakBbox});
+          relation["tourism"="guest_house"](${sarawakBbox});
+          
+          // Apartments
+          node["tourism"="apartment"](${sarawakBbox});
+          way["tourism"="apartment"](${sarawakBbox});
+          relation["tourism"="apartment"](${sarawakBbox});
+          
+          // Camp sites
+          node["tourism"="camp_site"](${sarawakBbox});
+          way["tourism"="camp_site"](${sarawakBbox});
+          relation["tourism"="camp_site"](${sarawakBbox});
+          
+          // Chalets
+          node["tourism"="chalet"](${sarawakBbox});
+          way["tourism"="chalet"](${sarawakBbox});
+          relation["tourism"="chalet"](${sarawakBbox});
+        );
+        out center 100;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return result.elements.map(element => {
+        const tags = element.tags || {};
+        const name = tags.name || 'Unnamed Accommodation';
+        
+        // Determine coordinates
+        let lat, lon;
+        if (element.center) {
+          lat = element.center.lat;
+          lon = element.center.lon;
+        } else {
+          lat = element.lat;
+          lon = element.lon;
+        }
+
+        // Determine type based on OSM tags
+        let type = 'Other';
+        if (tags.tourism === 'hotel') type = 'Hotel';
+        else if (tags.tourism === 'hostel') type = 'Hostel';
+        else if (tags.tourism === 'guest_house') type = 'Guest House';
+        else if (tags.tourism === 'apartment') type = 'Apartment';
+        else if (tags.tourism === 'camp_site') type = 'Camp Site';
+        else if (tags.tourism === 'chalet') type = 'Chalet';
+
+        // Create description from available tags
+        let description = tags.description || tags.wikipedia || '';
+        if (!description) {
+          description = `A ${type.toLowerCase()} in Sarawak`;
+          if (tags.operator) description += ` operated by ${tags.operator}`;
+        }
+
+        return {
+          name: name,
+          desc: description,
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          image: defaultImage,
+          type: type,
+          division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
+          latitude: lat,
+          longitude: lon,
+          url: tags.website || '',
+          category: 'Accommodation',
+          source: 'overpass',
+          osmTags: tags
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching Overpass accommodation:', error);
+      return [];
+    }
+  };
+
+  // Comprehensive accommodation data for Sarawak
+  const staticAccommodationData = [
+    // Hotels in Kuching
+    {
+      name: "Hilton Kuching",
+      desc: "Luxury hotel with river views and premium amenities in city center",
+      slug: "hilton-kuching",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Kuching",
+      latitude: 1.5580,
+      longitude: 110.3480,
+      source: 'static'
+    },
+    {
+      name: "Pullman Kuching",
+      desc: "Modern hotel with business facilities and comfortable rooms",
+      slug: "pullman-kuching",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Kuching",
+      latitude: 1.5590,
+      longitude: 110.3490,
+      source: 'static'
+    },
+    {
+      name: "Grand Margherita Hotel",
+      desc: "Iconic hotel overlooking Sarawak River with extensive facilities",
+      slug: "grand-margherita-hotel",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Kuching",
+      latitude: 1.5600,
+      longitude: 110.3500,
+      source: 'static'
+    },
+    {
+      name: "Batik Boutique Hotel",
+      desc: "Boutique hotel with local cultural themes and personalized service",
+      slug: "batik-boutique-hotel",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Kuching",
+      latitude: 1.5610,
+      longitude: 110.3510,
+      source: 'static'
+    },
+    
+    // Hotels in Miri
+    {
+      name: "Miri Marriott Resort & Spa",
+      desc: "Beachfront resort with luxury accommodations and spa facilities",
+      slug: "miri-marriott-resort-spa",
+      image: defaultImage,
+      type: "Resort",
+      division: "Miri",
+      latitude: 4.4180,
+      longitude: 114.0155,
+      source: 'static'
+    },
+    {
+      name: "Imperial Hotel Miri",
+      desc: "Business hotel in city center with conference facilities",
+      slug: "imperial-hotel-miri",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Miri",
+      latitude: 4.4190,
+      longitude: 114.0160,
+      source: 'static'
+    },
+    
+    // Hotels in Sibu
+    {
+      name: "Premier Hotel Sibu",
+      desc: "Modern hotel with river views and central location",
+      slug: "premier-hotel-sibu",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Sibu",
+      latitude: 2.2870,
+      longitude: 111.8320,
+      source: 'static'
+    },
+    {
+      name: "Kingwood Hotel Sibu",
+      desc: "Comfortable hotel with good amenities and friendly service",
+      slug: "kingwood-hotel-sibu",
+      image: defaultImage,
+      type: "Hotel",
+      division: "Sibu",
+      latitude: 2.2880,
+      longitude: 111.8330,
+      source: 'static'
+    },
+    
+    // Resorts
+    {
+      name: "Damai Beach Resort",
+      desc: "Beachfront resort with private beach and water sports",
+      slug: "damai-beach-resort",
+      image: defaultImage,
+      type: "Resort",
+      division: "Kuching",
+      latitude: 1.7500,
+      longitude: 110.3300,
+      source: 'static'
+    },
+    {
+      name: "Borneo Highlands Resort",
+      desc: "Mountain resort with cool climate and panoramic views",
+      slug: "borneo-highlands-resort",
+      image: defaultImage,
+      type: "Resort",
+      division: "Kuching",
+      latitude: 1.4000,
+      longitude: 110.2800,
+      source: 'static'
+    },
+    
+    // Homestays
+    {
+      name: "Kampung Buntal Homestay",
+      desc: "Traditional fishing village experience with local family",
+      slug: "kampung-buntal-homestay",
+      image: defaultImage,
+      type: "Homestay",
+      division: "Kuching",
+      latitude: 1.6800,
+      longitude: 110.4500,
+      source: 'static'
+    },
+    {
+      name: "Annah Rais Homestay",
+      desc: "Authentic Bidayuh longhouse experience in traditional village",
+      slug: "annah-rais-homestay",
+      image: defaultImage,
+      type: "Homestay",
+      division: "Kuching",
+      latitude: 1.3000,
+      longitude: 110.2000,
+      source: 'static'
+    },
+    
+    // Hostels
+    {
+      name: "Kuching Backpackers Hostel",
+      desc: "Budget-friendly accommodation for travelers and backpackers",
+      slug: "kuching-backpackers-hostel",
+      image: defaultImage,
+      type: "Hostel",
+      division: "Kuching",
+      latitude: 1.5620,
+      longitude: 110.3520,
+      source: 'static'
+    },
+    {
+      name: "Miri Travellers Lodge",
+      desc: "Affordable hostel with dormitory and private rooms",
+      slug: "miri-travellers-lodge",
+      image: defaultImage,
+      type: "Hostel",
+      division: "Miri",
+      latitude: 4.4200,
+      longitude: 114.0170,
+      source: 'static'
+    },
+    
+    // Guest Houses
+    {
+      name: "Riverside Guest House",
+      desc: "Cozy guest house with personalized service and home-cooked meals",
+      slug: "riverside-guest-house",
+      image: defaultImage,
+      type: "Guest House",
+      division: "Kuching",
+      latitude: 1.5630,
+      longitude: 110.3530,
+      source: 'static'
+    },
+    {
+      name: "Sibu Heritage Guest House",
+      desc: "Restored heritage building with traditional charm",
+      slug: "sibu-heritage-guest-house",
+      image: defaultImage,
+      type: "Guest House",
+      division: "Sibu",
+      latitude: 2.2890,
+      longitude: 111.8340,
+      source: 'static'
+    },
+    
+    // Luxury Resorts
+    {
+      name: "The Culvert Miri",
+      desc: "Luxury eco-resort with private villas and nature experiences",
+      slug: "the-culvert-miri",
+      image: defaultImage,
+      type: "Resort",
+      division: "Miri",
+      latitude: 4.4210,
+      longitude: 114.0180,
+      source: 'static'
+    },
+    {
+      name: "Tusan Beach Resort",
+      desc: "Seaside resort famous for its beautiful beach and blue tears phenomenon",
+      slug: "tusan-beach-resort",
+      image: defaultImage,
+      type: "Resort",
+      division: "Miri",
+      latitude: 4.3500,
+      longitude: 113.9500,
+      source: 'static'
+    }
+  ];
+
+  const fetchAllAccommodation = async () => {
     setLoading(true);
     try {
-      // Fetch backend data
-      const backendResponse = await fetch('/api/locations?category=Accommodation');
-      const backendData = await backendResponse.json();
-      const processedBackend = processBackendData(backendData);
+      // Fetch from all sources
+      const [accommodationLocations, businessAccommodation, overpassAccommodation, staticAccommodation] = await Promise.all([
+        fetchAccommodationLocations(),
+        fetchBusinessAccommodation(),
+        fetchOverpassAccommodation(),
+        Promise.resolve(staticAccommodationData)
+      ]);
 
-      // Fetch Google Places data
-      const location = await getCurrentLocation();
-      const googleResults = await fetchGooglePlaces(location);
+      // Combine all data
+      const allData = [...accommodationLocations, ...businessAccommodation, ...overpassAccommodation, ...staticAccommodation];
+      
+      // Remove duplicates based on name and coordinates
+      const uniqueData = allData.filter((item, index, self) =>
+        index === self.findIndex(t => 
+          t.name === item.name && 
+          Math.abs((t.latitude || t.lat) - (item.latitude || item.lat)) < 0.001 && 
+          Math.abs((t.longitude || t.lng) - (item.longitude || item.lng)) < 0.001
+        )
+      );
 
-      // Combine data
-      const allData = [...processedBackend, ...googleResults];
-      setData(allData);
+      // Process and enhance the data
+      const processedData = uniqueData.map(item => {
+        const name = item.name;
+        const lowerName = name.toLowerCase();
+        
+        // Determine type if not already set
+        let type = item.type;
+        if (!type || type === 'Other') {
+          if (lowerName.includes('hotel') && !lowerName.includes('apartment')) type = 'Hotel';
+          else if (lowerName.includes('resort')) type = 'Resort';
+          else if (lowerName.includes('homestay')) type = 'Homestay';
+          else if (lowerName.includes('hostel')) type = 'Hostel';
+          else if (lowerName.includes('guest')) type = 'Guest House';
+          else if (lowerName.includes('apartment')) type = 'Apartment';
+          else if (lowerName.includes('chalet')) type = 'Chalet';
+          else if (lowerName.includes('camp')) type = 'Camp Site';
+          else if (item.source === 'business') type = 'Business';
+          else type = 'Other';
+        }
+
+        return {
+          ...item,
+          type,
+          lat: item.latitude || item.lat || 0,
+          lng: item.longitude || item.lng || 0
+        };
+      });
+
+      setData(processedData);
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+      console.error('Error fetching all accommodation places:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAccommodations();
+    fetchAllAccommodation();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -143,22 +500,22 @@ const AccommodationPage = () => {
 
   const filteredData = data.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === 'all' || item.type === selectedType;
-    return matchesSearch && matchesType;
+    const matchesSort = sortOrder === 'all' || item.type === sortOrder;
+    return matchesSearch && matchesSort;
   });
 
   if (loading) {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading...</p>
+        <p>Loading Accommodation...</p>
       </div>
     );
   }
 
   return (
     <div className="category-page">
-      <MenuNavBar onLoginClick={handleLoginClick}/>
+      <MenuNavbar onLoginClick={handleLoginClick}/>
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -174,9 +531,9 @@ const AccommodationPage = () => {
       </div>
 
       <div className="hero-overlay-mt">
-        <h1>{currentCategory.toUpperCase() || 'ACCOMODATION'}</h1>
+        <h1>{currentCategory.toUpperCase() || 'ACCOMMODATION'}</h1>
         <p className="hero-intro">
-            Explore a wide range of accommodations to suit every travel style and budget. Discover everything from modern international hotels to unique homestays, perfectly located in Sarawak's major urban centers.
+          Explore a wide range of accommodations to suit every travel style and budget. Discover everything from modern international hotels to unique homestays, perfectly located in Sarawak's major urban centers.
         </p>
       </div>
 
@@ -194,16 +551,20 @@ const AccommodationPage = () => {
 
           <div className="sort-dropdown">
             <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
               className="sort-select"
             >
-              <option value="all">All Types</option>
+              <option value="all">All Categories</option>
               <option value="Hotel">Hotel</option>
+              <option value="Resort">Resort</option>
               <option value="Homestay">Homestay</option>
               <option value="Hostel">Hostel</option>
-              <option value="Resort">Resort</option>
               <option value="Guest House">Guest House</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Chalet">Chalet</option>
+              <option value="Camp Site">Camp Site</option>
+              <option value="Business">Business</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -214,14 +575,20 @@ const AccommodationPage = () => {
         {filteredData.slice(0, visibleItems).map((item, index) => (
           <div
             className="card-wrapper"
-            key={index}
+            key={`${item.source}-${item.name}-${index}`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
               <img src={item.image} alt={item.name} />
               <div className="card-content">
                 <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="card-meta">
+                  <span className="type-badge">{item.type}</span>
+                  {item.division && <span className="division-badge">{item.division}</span>}
+                  {item.source === 'business' && <span className="business-badge">Business</span>}
+                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                  {item.source === 'static' && <span className="static-badge">Local</span>}
+                </div>
                 <div className="desc-scroll">
                   <p>{item.desc}</p>
                 </div>
@@ -231,8 +598,18 @@ const AccommodationPage = () => {
                     state={{
                       name: item.name,
                       image: item.image,
-                      desc: item.desc,
-                      coordinates: [item.lat, item.lng]
+                      description: item.desc,
+                      latitude: item.latitude || item.lat,
+                      longitude: item.longitude || item.lng,
+                      category: item.category,
+                      type: item.type,
+                      division: item.division,
+                      url: item.url,
+                      phone: item.phone,
+                      address: item.address,
+                      openingHours: item.openingHours,
+                      source: item.source,
+                      osmTags: item.osmTags
                     }}
                     className="explore-btn"
                   >
@@ -244,6 +621,12 @@ const AccommodationPage = () => {
           </div>
         ))}
       </div>
+
+      {filteredData.length === 0 && !loading && (
+        <div className="no-results">
+          <p>No accommodation places found. Try adjusting your search criteria.</p>
+        </div>
+      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

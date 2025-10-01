@@ -133,8 +133,8 @@ export const addBusiness = async (req, res) => {
         }
 
         // Save files and get paths
-        const businessImagePath = saveFile(req.files.businessImage[0]);
-        const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
+        const businessImageUrl = saveFileAndGetUrl(req.files.businessImage[0], req);
+        const ownerAvatarUrl = saveFileAndGetUrl(req.files.ownerAvatar[0], req);
 
         // Create new business with file paths (match model field names)
         // Debug logging for business creation
@@ -156,8 +156,8 @@ export const addBusiness = async (req, res) => {
             openingHours: businessData.openingHours ?? null,
             latitude,
             longitude,
-            businessImage: businessImagePath,
-            ownerAvatar: ownerAvatarPath,
+            businessImage: businessImageUrl,
+            ownerAvatar: ownerAvatarUrl,
             priority: ['high', 'medium', 'low'].includes(businessData.priority) ? businessData.priority : 'low',
             agreement: businessData.agreement === 'true' || businessData.agreement === true,
             // Create new business with file paths
@@ -167,6 +167,8 @@ export const addBusiness = async (req, res) => {
         
         console.log('Final submitterUserId:', newBusiness.submitterUserId);
         console.log('Final submitterEmail:', newBusiness.submitterEmail);
+        console.log('Business Image URL:', businessImageUrl);
+        console.log('Owner Avatar URL:', ownerAvatarUrl);
         console.log('=== END BUSINESS CREATION DEBUG ===');
 
         await newBusiness.save();
@@ -183,6 +185,30 @@ export const addBusiness = async (req, res) => {
             message: "Failed to add business",
             error: error.message
         });
+    }
+};
+
+const saveFileAndGetUrl = (file, req) => {
+    try {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const uploadsDir = path.resolve(__dirname, '..', 'api', 'uploads');
+        fs.mkdirSync(uploadsDir, { recursive: true });
+
+        const ext = path.extname(file.originalname) || '.png';
+        const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '_');
+        const filename = `${Date.now()}-${base}${ext}`;
+        
+        // Write file to uploads directory
+        fs.writeFileSync(path.join(uploadsDir, filename), file.buffer);
+
+        // Generate URL (same pattern as Add Event)
+        const baseUrl = `${req.protocol}://localhost:${process.env.PORT || 5050}`;
+        return `${baseUrl}/uploads/${filename}`;
+
+    } catch (error) {
+        console.error("Error saving file:", error);
+        throw new Error(`Failed to save file: ${error.message}`);
     }
 };
 
@@ -502,21 +528,15 @@ export const updateBusinessDetails = async (req, res) => {
             updateData.agreement = updateData.agreement === 'true' || updateData.agreement === true;
         }
         
-        // Handle file uploads if provided (match model field names)
+        // Handle file uploads if provided (using same pattern as addBusiness)
         if (req.files) {
             if (req.files.businessImage) {
-                if (business.businessImage) {
-                    const oldImagePath = path.join(__dirname, '..', business.businessImage);
-                    if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
-                }
-                updateData.businessImage = saveFile(req.files.businessImage[0]);
+                // Use the same saveFileAndGetUrl function as addBusiness
+                updateData.businessImage = saveFileAndGetUrl(req.files.businessImage[0], req);
             }
             if (req.files.ownerAvatar) {
-                if (business.ownerAvatar) {
-                    const oldAvatarPath = path.join(__dirname, '..', business.ownerAvatar);
-                    if (fs.existsSync(oldAvatarPath)) fs.unlinkSync(oldAvatarPath);
-                }
-                updateData.ownerAvatar = saveFile(req.files.ownerAvatar[0]);
+                // Use the same saveFileAndGetUrl function as addBusiness
+                updateData.ownerAvatar = saveFileAndGetUrl(req.files.ownerAvatar[0], req);
             }
         }
         

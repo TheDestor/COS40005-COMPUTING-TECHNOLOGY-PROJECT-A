@@ -427,10 +427,15 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         // Add all form fields
         Object.keys(formData).forEach(key => {
           if (key === 'businessImage' || key === 'ownerAvatar') {
+            // Add the file directly to FormData (same as Add Event page)
             if (formData[key]) {
               formDataToSend.append(key, formData[key]);
             }
+          } else if (key === 'targetAudience') {
+            // Handle array fields if needed
+            formDataToSend.append(key, JSON.stringify(formData[key]));
           } else {
+            // Add regular fields
             formDataToSend.append(key, formData[key]);
           }
         });

@@ -6,6 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { FaPhone } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = '32OVK42tig4'; 
 
@@ -18,6 +19,183 @@ const FoodBeveragePage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Food & Beverages');
 
+  // Fetch business locations with category "Food & Beverages"
+  const fetchBusinessFood = async () => {
+    try {
+      const response = await fetch('/api/businesses/approved/category/Food & Beverages');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch business food');
+      }
+      
+      const businessData = result.data || [];
+      
+      return businessData.map(business => ({
+        name: business.name || 'Unknown Business',
+        desc: business.description || 'No description available',
+        slug: business.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown-business',
+        image: business.businessImage || defaultImage,
+        type: 'Business',
+        division: business.division || 'Unknown',
+        latitude: business.latitude || 0,
+        longitude: business.longitude || 0,
+        url: business.website || '',
+        category: business.category || 'Food & Beverages',
+        owner: business.owner,
+        ownerEmail: business.ownerEmail,
+        phone: business.phone,
+        address: business.address,
+        openingHours: business.openingHours,
+        ownerAvatar: business.ownerAvatar,
+        source: 'business'
+      }));
+    } catch (error) {
+      console.error('Error fetching business food:', error);
+      return [];
+    }
+  };
+
+  // Fetch food locations from database
+  const fetchFoodLocations = async () => {
+    try {
+      const response = await fetch('/api/locations?category=Food');
+      const fetchedData = await response.json();
+      
+      // Filter for food related categories
+      const foodData = fetchedData.filter(item => 
+        item.category?.toLowerCase().includes('food') || 
+        item.category?.toLowerCase().includes('restaurant') ||
+        item.category?.toLowerCase().includes('cafe') ||
+        item.type?.toLowerCase().includes('food') ||
+        item.type?.toLowerCase().includes('restaurant') ||
+        item.type?.toLowerCase().includes('cafe')
+      );
+      
+      return foodData.map(item => ({
+        name: item.name || item.Name || 'Unknown',
+        desc: item.description || item.desc || 'No description available',
+        slug: (item.name || item.Name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+        image: item.image || defaultImage,
+        type: item.type || 'Other',
+        division: item.division || 'Unknown',
+        latitude: item.latitude || item.lat || 0,
+        longitude: item.longitude || item.lng || 0,
+        url: item.url || '',
+        category: item.category || 'Food',
+        source: 'database'
+      }));
+    } catch (error) {
+      console.error('Error fetching food locations:', error);
+      return [];
+    }
+  };
+
+  // Fetch food places from Overpass API (OpenStreetMap)
+  const fetchOverpassFood = async () => {
+    try {
+      // Sarawak bounding box (approximate)
+      const sarawakBbox = '1.0,109.5,3.5,115.5';
+      
+      // Overpass query for food and beverage in Sarawak
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          // Restaurants and food places
+          node["amenity"="restaurant"](${sarawakBbox});
+          way["amenity"="restaurant"](${sarawakBbox});
+          relation["amenity"="restaurant"](${sarawakBbox});
+          
+          // Cafes and coffee shops
+          node["amenity"="cafe"](${sarawakBbox});
+          way["amenity"="cafe"](${sarawakBbox});
+          relation["amenity"="cafe"](${sarawakBbox});
+          
+          // Bars and pubs
+          node["amenity"="bar"](${sarawakBbox});
+          way["amenity"="bar"](${sarawakBbox});
+          relation["amenity"="bar"](${sarawakBbox});
+          
+          // Fast food
+          node["amenity"="fast_food"](${sarawakBbox});
+          way["amenity"="fast_food"](${sarawakBbox});
+          relation["amenity"="fast_food"](${sarawakBbox});
+          
+          // Food courts
+          node["amenity"="food_court"](${sarawakBbox});
+          way["amenity"="food_court"](${sarawakBbox});
+          relation["amenity"="food_court"](${sarawakBbox});
+        );
+        out center 100;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return result.elements.map(element => {
+        const tags = element.tags || {};
+        const name = tags.name || 'Unnamed Food Place';
+        
+        // Determine coordinates
+        let lat, lon;
+        if (element.center) {
+          lat = element.center.lat;
+          lon = element.center.lon;
+        } else {
+          lat = element.lat;
+          lon = element.lon;
+        }
+
+        // Determine type based on OSM tags
+        let type = 'Other';
+        if (tags.amenity === 'restaurant') type = 'Restaurant';
+        else if (tags.amenity === 'cafe') type = 'Cafe';
+        else if (tags.amenity === 'bar') type = 'Bar';
+        else if (tags.amenity === 'fast_food') type = 'Fast Food';
+        else if (tags.amenity === 'food_court') type = 'Food Court';
+        else if (tags.cuisine) type = tags.cuisine.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+        // Create description from available tags
+        let description = tags.description || tags.wikipedia || '';
+        if (!description) {
+          description = `A ${type.toLowerCase()} in Sarawak`;
+          if (tags.cuisine) description += ` serving ${tags.cuisine.replace('_', ' ')} cuisine`;
+        }
+
+        return {
+          name: name,
+          desc: description,
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          image: defaultImage,
+          type: type,
+          division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
+          latitude: lat,
+          longitude: lon,
+          url: tags.website || '',
+          category: 'Food & Beverages',
+          source: 'overpass',
+          osmTags: tags
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching Overpass food:', error);
+      return [];
+    }
+  };
+
   // Comprehensive food and beverage data for Sarawak
   const staticFoodData = [
     // Traditional Sarawak Cuisine
@@ -27,8 +205,10 @@ const FoodBeveragePage = () => {
       slug: "top-spot-food-court",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5534,
-      lng: 110.3594
+      division: "Kuching",
+      latitude: 1.5534,
+      longitude: 110.3594,
+      source: 'static'
     },
     {
       name: "Kolo Mee Stall - Lau Ya Keng",
@@ -36,8 +216,10 @@ const FoodBeveragePage = () => {
       slug: "lau-ya-keng-kolo-mee",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5545,
-      lng: 110.3605
+      division: "Kuching",
+      latitude: 1.5545,
+      longitude: 110.3605,
+      source: 'static'
     },
     {
       name: "Sarawak Laksa House",
@@ -45,8 +227,10 @@ const FoodBeveragePage = () => {
       slug: "sarawak-laksa-house",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5556,
-      lng: 110.3616
+      division: "Kuching",
+      latitude: 1.5556,
+      longitude: 110.3616,
+      source: 'static'
     },
     {
       name: "Manok Pansoh Restaurant",
@@ -54,8 +238,10 @@ const FoodBeveragePage = () => {
       slug: "manok-pansoh-restaurant",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5567,
-      lng: 110.3627
+      division: "Kuching",
+      latitude: 1.5567,
+      longitude: 110.3627,
+      source: 'static'
     },
     {
       name: "Umai Corner",
@@ -63,8 +249,10 @@ const FoodBeveragePage = () => {
       slug: "umai-corner",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5578,
-      lng: 110.3638
+      division: "Kuching",
+      latitude: 1.5578,
+      longitude: 110.3638,
+      source: 'static'
     },
     {
       name: "Midin Stir-fry Stall",
@@ -72,8 +260,10 @@ const FoodBeveragePage = () => {
       slug: "midin-stir-fry-stall",
       image: defaultImage,
       type: "Traditional Sarawak",
-      lat: 1.5589,
-      lng: 110.3649
+      division: "Kuching",
+      latitude: 1.5589,
+      longitude: 110.3649,
+      source: 'static'
     },
     
     // Chinese Cuisine
@@ -83,8 +273,10 @@ const FoodBeveragePage = () => {
       slug: "chong-choon-cafe",
       image: defaultImage,
       type: "Chinese Cuisine",
-      lat: 1.5600,
-      lng: 110.3660
+      division: "Kuching",
+      latitude: 1.5600,
+      longitude: 110.3660,
+      source: 'static'
     },
     {
       name: "Jin Xiang Restaurant",
@@ -92,8 +284,10 @@ const FoodBeveragePage = () => {
       slug: "jin-xiang-restaurant",
       image: defaultImage,
       type: "Chinese Cuisine",
-      lat: 1.5611,
-      lng: 110.3671
+      division: "Kuching",
+      latitude: 1.5611,
+      longitude: 110.3671,
+      source: 'static'
     },
     {
       name: "Dim Sum Palace",
@@ -101,8 +295,10 @@ const FoodBeveragePage = () => {
       slug: "dim-sum-palace",
       image: defaultImage,
       type: "Chinese Cuisine",
-      lat: 1.5622,
-      lng: 110.3682
+      division: "Kuching",
+      latitude: 1.5622,
+      longitude: 110.3682,
+      source: 'static'
     },
     
     // Malay Cuisine
@@ -112,8 +308,10 @@ const FoodBeveragePage = () => {
       slug: "nasi-lemak-sarawak",
       image: defaultImage,
       type: "Malay Cuisine",
-      lat: 1.5633,
-      lng: 110.3693
+      division: "Kuching",
+      latitude: 1.5633,
+      longitude: 110.3693,
+      source: 'static'
     },
     {
       name: "Ayam Penyet Corner",
@@ -121,8 +319,10 @@ const FoodBeveragePage = () => {
       slug: "ayam-penyet-corner",
       image: defaultImage,
       type: "Malay Cuisine",
-      lat: 1.5644,
-      lng: 110.3704
+      division: "Kuching",
+      latitude: 1.5644,
+      longitude: 110.3704,
+      source: 'static'
     },
     
     // International Cuisine
@@ -132,8 +332,10 @@ const FoodBeveragePage = () => {
       slug: "the-junk-restaurant",
       image: defaultImage,
       type: "International Cuisine",
-      lat: 1.5655,
-      lng: 110.3715
+      division: "Kuching",
+      latitude: 1.5655,
+      longitude: 110.3715,
+      source: 'static'
     },
     {
       name: "Little Italy",
@@ -141,8 +343,10 @@ const FoodBeveragePage = () => {
       slug: "little-italy",
       image: defaultImage,
       type: "International Cuisine",
-      lat: 1.5666,
-      lng: 110.3726
+      division: "Kuching",
+      latitude: 1.5666,
+      longitude: 110.3726,
+      source: 'static'
     },
     {
       name: "Sushi King",
@@ -150,8 +354,10 @@ const FoodBeveragePage = () => {
       slug: "sushi-king",
       image: defaultImage,
       type: "International Cuisine",
-      lat: 1.5677,
-      lng: 110.3737
+      division: "Kuching",
+      latitude: 1.5677,
+      longitude: 110.3737,
+      source: 'static'
     },
     
     // Cafes & Coffee
@@ -160,18 +366,22 @@ const FoodBeveragePage = () => {
       desc: "Specialty coffee roastery with single-origin beans and expert baristas",
       slug: "black-bean-coffee",
       image: defaultImage,
-      type: "Cafes & Coffee",
-      lat: 1.5688,
-      lng: 110.3748
+      type: "Cafe",
+      division: "Kuching",
+      latitude: 1.5688,
+      longitude: 110.3748,
+      source: 'static'
     },
     {
       name: "Starbucks Waterfront",
       desc: "Popular coffee chain with waterfront views and comfortable seating",
       slug: "starbucks-waterfront",
       image: defaultImage,
-      type: "Cafes & Coffee",
-      lat: 1.5699,
-      lng: 110.3759
+      type: "Cafe",
+      division: "Kuching",
+      latitude: 1.5699,
+      longitude: 110.3759,
+      source: 'static'
     },
     
     // Street Food & Hawker
@@ -180,18 +390,22 @@ const FoodBeveragePage = () => {
       desc: "Famous weekend market with local street food and fresh produce",
       slug: "satok-weekend-market",
       image: defaultImage,
-      type: "Street Food & Hawker",
-      lat: 1.5710,
-      lng: 110.3770
+      type: "Food Court",
+      division: "Kuching",
+      latitude: 1.5710,
+      longitude: 110.3770,
+      source: 'static'
     },
     {
       name: "Carpenter Street Hawker",
       desc: "Historic street with traditional hawker stalls and local delicacies",
       slug: "carpenter-street-hawker",
       image: defaultImage,
-      type: "Street Food & Hawker",
-      lat: 1.5721,
-      lng: 110.3781
+      type: "Street Food",
+      division: "Kuching",
+      latitude: 1.5721,
+      longitude: 110.3781,
+      source: 'static'
     },
     
     // Seafood Specialties
@@ -200,18 +414,22 @@ const FoodBeveragePage = () => {
       desc: "Fresh seafood from Bintulu waters with traditional cooking methods",
       slug: "bintulu-seafood-restaurant",
       image: defaultImage,
-      type: "Seafood Specialties",
-      lat: 3.1739,
-      lng: 113.0428
+      type: "Seafood",
+      division: "Bintulu",
+      latitude: 3.1739,
+      longitude: 113.0428,
+      source: 'static'
     },
     {
       name: "Kuching Prawn Mee",
       desc: "Famous prawn noodle soup with rich broth and fresh prawns",
       slug: "kuching-prawn-mee",
       image: defaultImage,
-      type: "Seafood Specialties",
-      lat: 1.5732,
-      lng: 110.3792
+      type: "Seafood",
+      division: "Kuching",
+      latitude: 1.5732,
+      longitude: 110.3792,
+      source: 'static'
     },
     
     // Desserts & Sweets
@@ -220,18 +438,22 @@ const FoodBeveragePage = () => {
       desc: "Traditional cendol with palm sugar and coconut milk",
       slug: "cendol-kuching",
       image: defaultImage,
-      type: "Desserts & Sweets",
-      lat: 1.5743,
-      lng: 110.3803
+      type: "Dessert",
+      division: "Kuching",
+      latitude: 1.5743,
+      longitude: 110.3803,
+      source: 'static'
     },
     {
       name: "Kuih Lapis Sarawak",
       desc: "Famous Sarawak layered cake and traditional kuih",
       slug: "kuih-lapis-sarawak",
       image: defaultImage,
-      type: "Desserts & Sweets",
-      lat: 1.5754,
-      lng: 110.3814
+      type: "Dessert",
+      division: "Kuching",
+      latitude: 1.5754,
+      longitude: 110.3814,
+      source: 'static'
     },
     
     // Bars & Nightlife
@@ -240,99 +462,96 @@ const FoodBeveragePage = () => {
       desc: "Trendy bar with craft cocktails and live music",
       slug: "the-junk-bar",
       image: defaultImage,
-      type: "Bars & Nightlife",
-      lat: 1.5765,
-      lng: 110.3825
+      type: "Bar",
+      division: "Kuching",
+      latitude: 1.5765,
+      longitude: 110.3825,
+      source: 'static'
     },
     {
       name: "Waterfront Bar",
       desc: "Riverside bar with sunset views and premium drinks",
       slug: "waterfront-bar",
       image: defaultImage,
-      type: "Bars & Nightlife",
-      lat: 1.5776,
-      lng: 110.3836
+      type: "Bar",
+      division: "Kuching",
+      latitude: 1.5776,
+      longitude: 110.3836,
+      source: 'static'
     }
   ];
 
-  const processBackendData = (backendData) => {
-    return backendData
-      .filter(item => 
-        item.category?.toLowerCase() === 'food' || 
-        item.category?.toLowerCase() === 'restaurant' ||
-        item.category?.toLowerCase() === 'cafe' ||
-        item.type?.toLowerCase().includes('restaurant') ||
-        item.type?.toLowerCase().includes('food') ||
-        item.type?.toLowerCase().includes('cafe') ||
-        item.type?.toLowerCase().includes('bar') ||
-        item.type?.toLowerCase().includes('bakery')
-      )
-      .map(item => {
-        // Determine category type based on name and description
-        const name = item.name?.toLowerCase() || '';
-        const desc = item.description?.toLowerCase() || '';
-        let type = 'Other';
+  const fetchAllFood = async () => {
+    setLoading(true);
+    try {
+      // Fetch from all sources
+      const [foodLocations, businessFood, overpassFood, staticFood] = await Promise.all([
+        fetchFoodLocations(),
+        fetchBusinessFood(),
+        fetchOverpassFood(),
+        Promise.resolve(staticFoodData)
+      ]);
+
+      // Combine all data
+      const allData = [...foodLocations, ...businessFood, ...overpassFood, ...staticFood];
+      
+      // Remove duplicates based on name and coordinates
+      const uniqueData = allData.filter((item, index, self) =>
+        index === self.findIndex(t => 
+          t.name === item.name && 
+          Math.abs((t.latitude || t.lat) - (item.latitude || item.lat)) < 0.001 && 
+          Math.abs((t.longitude || t.lng) - (item.longitude || item.lng)) < 0.001
+        )
+      );
+
+      // Process and enhance the data
+      const processedData = uniqueData.map(item => {
+        const name = item.name;
+        const lowerName = name.toLowerCase();
         
-        if (name.includes('laksa') || name.includes('kolo mee') || name.includes('sarawak') || name.includes('traditional') || name.includes('dayak') || name.includes('iban')) {
-          type = 'Traditional Sarawak';
-        } else if (name.includes('chinese') || name.includes('dim sum') || name.includes('hakka') || name.includes('teochew')) {
-          type = 'Chinese Cuisine';
-        } else if (name.includes('malay') || name.includes('nasi lemak') || name.includes('rendang') || name.includes('satay')) {
-          type = 'Malay Cuisine';
-        } else if (name.includes('italian') || name.includes('japanese') || name.includes('korean') || name.includes('thai') || name.includes('western')) {
-          type = 'International Cuisine';
-        } else if (name.includes('coffee') || name.includes('cafe') || name.includes('tea')) {
-          type = 'Cafes & Coffee';
-        } else if (name.includes('hawker') || name.includes('street') || name.includes('market') || name.includes('stall')) {
-          type = 'Street Food & Hawker';
-        } else if (name.includes('seafood') || name.includes('prawn') || name.includes('fish') || name.includes('crab')) {
-          type = 'Seafood Specialties';
-        } else if (name.includes('dessert') || name.includes('cendol') || name.includes('kuih') || name.includes('ice cream')) {
-          type = 'Desserts & Sweets';
-        } else if (name.includes('bar') || name.includes('pub') || name.includes('karaoke') || name.includes('nightlife')) {
-          type = 'Bars & Nightlife';
+        // Determine type if not already set
+        let type = item.type;
+        if (!type || type === 'Other') {
+          if (lowerName.includes('laksa') || lowerName.includes('kolo mee') || lowerName.includes('sarawak') || lowerName.includes('traditional') || lowerName.includes('dayak') || lowerName.includes('iban')) {
+            type = 'Traditional Sarawak';
+          } else if (lowerName.includes('chinese') || lowerName.includes('dim sum') || lowerName.includes('hakka') || lowerName.includes('teochew')) {
+            type = 'Chinese Cuisine';
+          } else if (lowerName.includes('malay') || lowerName.includes('nasi lemak') || lowerName.includes('rendang') || lowerName.includes('satay')) {
+            type = 'Malay Cuisine';
+          } else if (lowerName.includes('italian') || lowerName.includes('japanese') || lowerName.includes('korean') || lowerName.includes('thai') || lowerName.includes('western')) {
+            type = 'International Cuisine';
+          } else if (lowerName.includes('coffee') || lowerName.includes('cafe') || lowerName.includes('tea')) {
+            type = 'Cafe';
+          } else if (lowerName.includes('hawker') || lowerName.includes('street') || lowerName.includes('market') || lowerName.includes('stall')) {
+            type = 'Street Food';
+          } else if (lowerName.includes('seafood') || lowerName.includes('prawn') || lowerName.includes('fish') || lowerName.includes('crab')) {
+            type = 'Seafood';
+          } else if (lowerName.includes('dessert') || lowerName.includes('cendol') || lowerName.includes('kuih') || lowerName.includes('ice cream')) {
+            type = 'Dessert';
+          } else if (lowerName.includes('bar') || lowerName.includes('pub') || lowerName.includes('karaoke') || lowerName.includes('nightlife')) {
+            type = 'Bar';
+          } else if (item.source === 'business') type = 'Business';
+          else type = 'Other';
         }
 
         return {
-          name: item.name || 'Unknown',
-          desc: item.description || 'No description available',
-          slug: item.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
-          image: item.image || defaultImage,
-          type: type,
-          lat: item.latitude || 0,
-          lng: item.longitude || 0
+          ...item,
+          type,
+          lat: item.latitude || item.lat || 0,
+          lng: item.longitude || item.lng || 0
         };
       });
-  };
 
-  const fetchFoodBeveragePlaces = async () => {
-    setLoading(true);
-    try {
-      // Fetch backend data
-      const backendResponse = await fetch('/api/locations?category=Food');
-      const backendData = await backendResponse.json();
-      const processedBackend = processBackendData(backendData);
-
-      // Combine backend data with static data
-      const allData = [...processedBackend, ...staticFoodData];
-      
-      // Remove duplicates based on name
-      const uniqueData = allData.filter((item, index, self) => 
-        index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-      );
-      
-      setData(uniqueData);
+      setData(processedData);
     } catch (error) {
-      console.error('Error fetching food places:', error);
-      // Fallback to static data if backend fails
-      setData(staticFoodData);
+      console.error('Error fetching all food places:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFoodBeveragePlaces();
+    fetchAllFood();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -362,7 +581,7 @@ const FoodBeveragePage = () => {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading...</p>
+        <p>Loading Food & Beverages...</p>
       </div>
     );
   }
@@ -385,9 +604,9 @@ const FoodBeveragePage = () => {
       </div>
 
       <div className="hero-overlay-mt">
-        <h1>{currentCategory.toUpperCase() || 'FOOD AND BEVERAGE'}</h1>
+        <h1>{currentCategory.toUpperCase() || 'FOOD & BEVERAGES'}</h1>
         <p className="hero-intro">
-            Taste your way through Sarawak's rich cultural heritage. Explore unique local specialties, vibrant night markets, and dining experiences that tell the story of Borneo's diverse communities.
+          Taste your way through Sarawak's rich cultural heritage. Explore unique local specialties, vibrant night markets, and dining experiences that tell the story of Borneo's diverse communities.
         </p>
       </div>
 
@@ -414,11 +633,15 @@ const FoodBeveragePage = () => {
               <option value="Chinese Cuisine">Chinese Cuisine</option>
               <option value="Malay Cuisine">Malay Cuisine</option>
               <option value="International Cuisine">International Cuisine</option>
-              <option value="Cafes & Coffee">Cafes & Coffee</option>
-              <option value="Street Food & Hawker">Street Food & Hawker</option>
-              <option value="Seafood Specialties">Seafood Specialties</option>
-              <option value="Desserts & Sweets">Desserts & Sweets</option>
-              <option value="Bars & Nightlife">Bars & Nightlife</option>
+              <option value="Cafe">Cafe</option>
+              <option value="Street Food">Street Food</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Dessert">Dessert</option>
+              <option value="Bar">Bar</option>
+              <option value="Restaurant">Restaurant</option>
+              <option value="Fast Food">Fast Food</option>
+              <option value="Food Court">Food Court</option>
+              <option value="Business">Business</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -429,14 +652,20 @@ const FoodBeveragePage = () => {
         {filteredData.slice(0, visibleItems).map((item, index) => (
           <div
             className="card-wrapper"
-            key={index}
+            key={`${item.source}-${item.name}-${index}`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
               <img src={item.image} alt={item.name} />
               <div className="card-content">
                 <h3>{highlightMatch(item.name)}</h3>
-                <div className="rating">⭐⭐⭐⭐⭐</div>
+                <div className="card-meta">
+                  <span className="type-badge">{item.type}</span>
+                  {item.division && <span className="division-badge">{item.division}</span>}
+                  {item.source === 'business' && <span className="business-badge">Business</span>}
+                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                  {item.source === 'static' && <span className="static-badge">Local</span>}
+                </div>
                 <div className="desc-scroll">
                   <p>{item.desc}</p>
                 </div>
@@ -446,8 +675,18 @@ const FoodBeveragePage = () => {
                     state={{
                       name: item.name,
                       image: item.image,
-                      desc: item.desc,
-                      coordinates: [item.lat, item.lng]
+                      description: item.desc,
+                      latitude: item.latitude || item.lat,
+                      longitude: item.longitude || item.lng,
+                      category: item.category,
+                      type: item.type,
+                      division: item.division,
+                      url: item.url,
+                      phone: item.phone,
+                      address: item.address,
+                      openingHours: item.openingHours,
+                      source: item.source,
+                      osmTags: item.osmTags
                     }}
                     className="explore-btn"
                   >
@@ -459,6 +698,12 @@ const FoodBeveragePage = () => {
           </div>
         ))}
       </div>
+
+      {filteredData.length === 0 && !loading && (
+        <div className="no-results">
+          <p>No food and beverage places found. Try adjusting your search criteria.</p>
+        </div>
+      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

@@ -8,9 +8,9 @@ import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaCamera, FaUpload, FaTimes, FaEye, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { RiArrowGoBackLine } from 'react-icons/ri';
-import { FaBuilding, FaMapMarkerAlt, FaTags } from 'react-icons/fa';
+import { FaBuilding, FaMapMarkerAlt, FaTags, FaUser } from 'react-icons/fa';
 import { MdEmail } from "react-icons/md";
 import { toast, Toaster } from 'sonner';
 
@@ -71,6 +71,147 @@ const Tabs = ({ active, setActive }) => (
   </div>
 );
 
+// Image Preview Modal Component
+const ImagePreviewModal = ({ isOpen, onClose, businessImage, ownerAvatar, businessName, ownerName }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="mb-modal-overlay" onClick={onClose}>
+      <div className="mb-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-modal-header">
+          <h3>Image Preview</h3>
+          <button className="mb-modal-close" onClick={onClose}>
+            <FaTimes />
+          </button>
+        </div>
+        <div className="mb-modal-body">
+          <div className="mb-image-preview-grid">
+            <div className="mb-preview-item">
+              <h4>Business Image</h4>
+              <div className="mb-preview-image-container">
+                {businessImage ? (
+                  <img src={businessImage} alt={`${businessName} preview`} />
+                ) : (
+                  <div className="mb-preview-placeholder">
+                    <FaBuilding />
+                    <span>No Business Image</span>
+                  </div>
+                )}
+              </div>
+              <p>{businessName}</p>
+            </div>
+            <div className="mb-preview-item">
+              <h4>Owner Avatar</h4>
+              <div className="mb-preview-image-container">
+                {ownerAvatar ? (
+                  <img src={ownerAvatar} alt={`${ownerName} avatar`} />
+                ) : (
+                  <div className="mb-preview-placeholder">
+                    <FaUser />
+                    <span>No Owner Avatar</span>
+                  </div>
+                )}
+              </div>
+              <p>{ownerName}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Confirmation Modal Component
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, businessData, loading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="mb-modal-overlay" onClick={onClose}>
+      <div className="mb-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-modal-header">
+          <h3>Confirm Submission</h3>
+          <button className="mb-modal-close" onClick={onClose} disabled={loading}>
+            <FaTimes />
+          </button>
+        </div>
+        <div className="mb-modal-body">
+          <div className="mb-confirmation-content">
+            <div className="mb-confirmation-icon">
+              <FaExclamationTriangle />
+            </div>
+            <h4>Please review your changes before submitting</h4>
+            <p>Your business details will be sent to administrators for review. Once submitted, the status will change to "Pending" until approved.</p>
+            
+            <div className="mb-changes-summary">
+              <h5>Changes Summary:</h5>
+              <div className="mb-changes-list">
+                {businessData.name && (
+                  <div className="mb-change-item">
+                    <strong>Business Name:</strong> {businessData.name}
+                  </div>
+                )}
+                {businessData.address && (
+                  <div className="mb-change-item">
+                    <strong>Address:</strong> {businessData.address}
+                  </div>
+                )}
+                {businessData.phone && (
+                  <div className="mb-change-item">
+                    <strong>Phone:</strong> {businessData.phone}
+                  </div>
+                )}
+                {businessData.website && (
+                  <div className="mb-change-item">
+                    <strong>Website:</strong> {businessData.website}
+                  </div>
+                )}
+                {businessData.latitude && businessData.longitude && (
+                  <div className="mb-change-item">
+                    <strong>Location:</strong> {businessData.latitude}, {businessData.longitude}
+                  </div>
+                )}
+                {(businessData.businessImageFile || businessData.ownerAvatarFile) && (
+                  <div className="mb-change-item">
+                    <strong>Images Updated:</strong> 
+                    {businessData.businessImageFile && " Business Image"}
+                    {businessData.businessImageFile && businessData.ownerAvatarFile && " and "}
+                    {businessData.ownerAvatarFile && " Owner Avatar"}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="mb-confirmation-actions">
+              <button 
+                className="mb-confirm-btn mb-confirm-cancel"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="mb-confirm-btn mb-confirm-submit"
+                onClick={onConfirm}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="mb-btn-spinner" /> Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FaCheck /> Confirm & Submit
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ManageBusiness = () => {
   const { user, accessToken, isLoggedIn } = useAuth();
 
@@ -108,7 +249,6 @@ const ManageBusiness = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  // Removed linking state since we removed email functionality
   const [formErrors, setFormErrors] = useState({});
   const [businesses, setBusinesses] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -117,6 +257,10 @@ const ManageBusiness = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dirtyFields, setDirtyFields] = useState({});
   const [baseForm, setBaseForm] = useState(null);
+  const [businessImageFile, setBusinessImageFile] = useState(null);
+  const [ownerAvatarFile, setOwnerAvatarFile] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const LIMIT = 500;
   const countNonSpace = (s) => (s || '').replace(/\s/g, '').length;
@@ -157,10 +301,21 @@ const ManageBusiness = () => {
       if (!v) return '';
       return /^(\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4})$/.test(v) ? '' : 'Phone must be XXX-XXX-XXXX or XXX-XXXX-XXXX.';
     },
-    website: (v) => v && !/^https?:\/\/[^\s]+$/i.test(v) ? 'Invalid URL. Include http(s)://' : '',
     openingHours: (_) => '',
-    latitude: (v) => v && isNaN(Number(v)) ? 'Latitude must be a number.' : '',
-    longitude: (v) => v && isNaN(Number(v)) ? 'Longitude must be a number.' : ''
+    latitude: (v) => {
+      if (!v) return 'Latitude is required.';
+      const num = Number(v);
+      if (isNaN(num)) return 'Latitude must be a number.';
+      if (num < -90 || num > 90) return 'Latitude must be between -90 and 90.';
+      return '';
+    },
+    longitude: (v) => {
+      if (!v) return 'Longitude is required.';
+      const num = Number(v);
+      if (isNaN(num)) return 'Longitude must be a number.';
+      if (num < -180 || num > 180) return 'Longitude must be between -180 and 180.';
+      return '';
+    }
   };
   const handleChange = (name, value) => {
     const type =
@@ -179,17 +334,17 @@ const ManageBusiness = () => {
     const hasDirtyErrors = Object.entries(formErrors).some(([k, v]) => dirtyFields[k] && v);
     const requiredValid =
       !validators.name(form.name || '') &&
-      !validators.address(form.address || '');
-    const hasChanges = keys.some(k => (baseForm[k] || '') !== (form[k] || ''));
+      !validators.address(form.address || '') &&
+      !validators.latitude(form.latitude || '') &&
+      !validators.longitude(form.longitude || '');
+    const hasChanges = keys.some(k => (baseForm[k] || '') !== (form[k] || '')) || businessImageFile || ownerAvatarFile;
     return !!selected && isLoggedIn && !saving && requiredValid && !hasDirtyErrors && hasChanges;
-  }, [selected, isLoggedIn, saving, form, baseForm, formErrors, dirtyFields]);
- 
-  // Removed email-related state since we're fetching by user ID
+  }, [selected, isLoggedIn, saving, form, baseForm, formErrors, dirtyFields, businessImageFile, ownerAvatarFile]);
 
   const authAxios = useMemo(() => {
     const inst = axios.create({
-      baseURL: 'http://localhost:5050', // <-- Add this line
-      withCredentials: true, // <-- If your backend uses cookies for auth
+      baseURL: 'http://localhost:5050',
+      withCredentials: true,
     });
     if (accessToken) inst.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
     return inst;
@@ -209,7 +364,6 @@ const ManageBusiness = () => {
     setLoading(true);
     setError(null);
     try {
-      // Use the my-submissions endpoint which fetches by user ID
       const r = await authAxios.get('/api/businesses/my-submissions');
       const list = (r.data?.data || []).filter(Boolean);
       setBusinesses(list);
@@ -224,7 +378,9 @@ const ManageBusiness = () => {
           website: b.website || '',
           openingHours: b.openingHours || '',
           latitude: b.latitude ?? '',
-          longitude: b.longitude ?? ''
+          longitude: b.longitude ?? '',
+          businessImage: b.businessImage || '',
+          ownerAvatar: b.ownerAvatar || ''
         };
         setForm(nextForm);
         setBaseForm(nextForm);
@@ -246,8 +402,6 @@ const ManageBusiness = () => {
     fetchUserBusinesses();
   }, [isLoggedIn, accessToken]);
 
-  // Removed email-related functions since we're fetching by user ID
-
   const filtered = businesses.filter(b => {
     const passStatus = statusFilter === 'all' ? true : (b.status || '').toLowerCase() === statusFilter;
     const s = `${b.name} ${b.address} ${b.category}`.toLowerCase();
@@ -264,48 +418,132 @@ const ManageBusiness = () => {
       website: b.website || '',
       openingHours: b.openingHours || '',
       latitude: b.latitude ?? '',
-      longitude: b.longitude ?? ''
+      longitude: b.longitude ?? '',
+      businessImage: b.businessImage || '',
+      ownerAvatar: b.ownerAvatar || ''
     };
     setForm(nextForm);
     setBaseForm(nextForm);
+    setBusinessImageFile(null);
+    setOwnerAvatarFile(null);
     setDirtyFields({});
   };
 
-  const requestAdminReview = async (e) => {
-    e.preventDefault();
-    if (!selected || !isLoggedIn || !accessToken) return;
+  const handleFileUpload = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
 
+      if (type === 'businessImage') {
+        setBusinessImageFile(file);
+      } else if (type === 'ownerAvatar') {
+        setOwnerAvatarFile(file);
+      }
+    }
+  };
+
+  const triggerFileInput = (type) => {
+    if (type === 'businessImage') {
+      document.getElementById('business-image-upload').click();
+    } else if (type === 'ownerAvatar') {
+      document.getElementById('owner-avatar-upload').click();
+    }
+  };
+
+  const getFileName = (file, currentUrl) => {
+    let fileName = 'No file selected';
+    
+    if (file) {
+      fileName = file.name;
+    } else if (currentUrl) {
+      fileName = currentUrl.split('/').pop() || 'Current Image';
+    }
+    
+    // Limit filename length to 25 characters
+    if (fileName.length > 5) {
+      const extension = fileName.split('.').pop();
+      const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+      const truncatedName = nameWithoutExt.substring(0, 5);
+      fileName = `${truncatedName}...${extension ? '.' + extension : ''}`;
+    }
+    
+    return fileName;
+  };
+
+  const validateForm = () => {
     const all = ['name','description','address','phone','website','openingHours','latitude','longitude'];
     const errObj = {};
     all.forEach(k => { errObj[k] = validators[k]?.(form[k]) || ''; });
+    
     if (Object.values(errObj).some(Boolean)) {
       setFormErrors(errObj);
       const msg = 'Please fix the highlighted errors before submitting.';
       setError(msg);
       toast.error(msg);
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmitRequest = async () => {
+    if (!selected || !isLoggedIn || !accessToken) return;
+
+    // Validate form first
+    if (!validateForm()) {
+      setShowConfirmationModal(false);
       return;
     }
 
     try {
       setSaving(true);
       setError(null);
-      const payload = {
-        name: form.name,
-        description: form.description,
-        address: form.address,
-        phone: form.phone,
-        website: form.website,
-        openingHours: form.openingHours,
-        latitude: form.latitude,
-        longitude: form.longitude
-      };
-      const upd = await authAxios.put(`/api/businesses/updateMyBusiness/${selected._id}`, payload);
+      
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('description', form.description);
+      formData.append('address', form.address);
+      formData.append('phone', form.phone);
+      formData.append('website', form.website);
+      formData.append('openingHours', form.openingHours);
+      formData.append('latitude', form.latitude);
+      formData.append('longitude', form.longitude);
+      
+      // Append images if changed
+      if (businessImageFile) {
+        formData.append('businessImage', businessImageFile);
+      }
+      if (ownerAvatarFile) {
+        formData.append('ownerAvatar', ownerAvatarFile);
+      }
+
+      const upd = await authAxios.put(`/api/businesses/updateMyBusiness/${selected._id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       const stat = await authAxios.patch(`/api/businesses/updateMyBusinessStatus/${selected._id}`, { status: 'pending' });
+      
       if (upd.data?.success) {
         const updated = { ...upd.data.data, status: stat.data?.data?.status || 'pending' };
         setBusinesses(prev => prev.map(x => (x._id === updated._id ? updated : x)));
         setSelected(updated);
-        toast.success('Changes submitted for review.');
+        setBusinessImageFile(null);
+        setOwnerAvatarFile(null);
+        setBaseForm(form);
+        setShowConfirmationModal(false);
+        toast.success('Changes submitted successfully! Your business is now pending admin review.');
       } else {
         const msg = upd.data?.message || 'Failed to submit update.';
         setError(msg);
@@ -320,6 +558,18 @@ const ManageBusiness = () => {
     }
   };
 
+  const handleSubmitClick = (e) => {
+    e.preventDefault();
+    
+    // Validate form first
+    if (!validateForm()) {
+      return;
+    }
+
+    // Show confirmation modal
+    setShowConfirmationModal(true);
+  };
+
   const stats = {
     total: businesses.length,
     pending: businesses.filter(b => (b.status || '').toLowerCase() === 'pending').length,
@@ -329,7 +579,6 @@ const ManageBusiness = () => {
 
   return (
     <div className="mb-page">
-      {/* <ToastContainer position="top-right" autoClose={4000} newestOnTop /> */}
       {/* HEADER */}
       <div className="mb-headerbar">
         <div>
@@ -378,8 +627,6 @@ const ManageBusiness = () => {
         </div>
       </div>
 
-      {/* Removed email section since we're fetching by user ID */}
-
       {loading ? (
         <div className="mb-loading">Loading...</div>
       ) : (
@@ -416,77 +663,236 @@ const ManageBusiness = () => {
           {/* RIGHT DETAIL */}
           <div className="mb-rightstack">
             {selected ? (
-              <SectionCard title="Business Details">
-                <div className="mb-two-col">
-                  <div>
-                    <div className="mb-map-body">
-                      {(() => {
-                        const lat = Number(form.latitude);
-                        const lng = Number(form.longitude);
-                        const has = Number.isFinite(lat) && Number.isFinite(lng);
-                        const center = has ? [lat, lng] : [1.5533, 110.3592];
-                        return (
-                          <MapContainer center={center} zoom={has ? 15 : 12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
-                            {has && (
-                              <>
-                                <Marker
-                                  position={[lat, lng]}
-                                  icon={defaultIcon}
-                                  draggable={true}
-                                  eventHandlers={{
-                                    dragend: (e) => {
-                                      const ll = e.target.getLatLng();
-                                      setForm(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
-                                    }
-                                  }}
-                                />
-                                <Recenter lat={lat} lng={lng} />
-                              </>
-                            )}
-                          </MapContainer>
-                        );
-                      })()}
-                    </div>
-                    <div className="mb-coord-bar">
-                      <div>Lat: {form.latitude || '-'}</div>
-                      <div>Lng: {form.longitude || '-'}</div>
-                    </div>
-                  </div>
-
-                  <form id="mb-edit-form" onSubmit={requestAdminReview}>
-                    <div className="mb-field"><input className={`mb-input ${formErrors.name ? 'invalid' : ''}`} name="name" value={form.name} onChange={(e) => handleChange('name', e.target.value)} required disabled={saving} /><label>Name</label>{formErrors.name && <div className="mb-field-error">{formErrors.name}</div>}</div>
-                    <div className="mb-field">
-                        <textarea className={`mb-input ${formErrors.description ? 'invalid' : ''}`} name="description" rows={4} value={form.description} onChange={(e) => handleChange('description', e.target.value)} disabled={saving} />
-                        <label>Description</label>
-                        <div className="mb-hint">{countNonSpace(form.description)} / 500</div>
-                        {formErrors.description && <div className="mb-field-error">{formErrors.description}</div>}
-                    </div>
-                    <div className="mb-field"><input className={`mb-input ${formErrors.address ? 'invalid' : ''}`} name="address" value={form.address} onChange={(e) => handleChange('address', e.target.value)} disabled={saving} /><label>Address</label>{formErrors.address && <div className="mb-field-error">{formErrors.address}</div>}</div>
-
-                    <div className="mb-form-grid">
+              <SectionCard 
+                title="Business Details"
+                right={
+                  <button 
+                    className="mb-preview-btn"
+                    onClick={() => setShowImageModal(true)}
+                    title="Preview Images"
+                  >
+                    <FaEye /> Preview Images
+                  </button>
+                }
+              >
+                <div className="mb-compact-layout">
+                  <div className="mb-compact-grid">
+                    {/* Map Section */}
+                    <div className="mb-map-section">
+                      <div className="mb-map-body">
+                        {(() => {
+                          const lat = Number(form.latitude);
+                          const lng = Number(form.longitude);
+                          const has = Number.isFinite(lat) && Number.isFinite(lng);
+                          const center = has ? [lat, lng] : [1.5533, 110.3592];
+                          return (
+                            <MapContainer center={center} zoom={has ? 15 : 12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
+                              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+                              {has && (
+                                <>
+                                  <Marker
+                                    position={[lat, lng]}
+                                    icon={defaultIcon}
+                                    draggable={true}
+                                    eventHandlers={{
+                                      dragend: (e) => {
+                                        const ll = e.target.getLatLng();
+                                        setForm(prev => ({ 
+                                          ...prev, 
+                                          latitude: String(ll.lat), 
+                                          longitude: String(ll.lng) 
+                                        }));
+                                      }
+                                    }}
+                                  />
+                                  <Recenter lat={lat} lng={lng} />
+                                </>
+                              )}
+                            </MapContainer>
+                          );
+                        })()}
+                      </div>
+                      {/* Editable Coordinates under the map */}
+                      <div className="mb-coord-inputs">
                         <div className="mb-field">
-                        <input className={`mb-input ${formErrors.phone ? 'invalid' : ''}`} name="phone" value={form.phone}
-                            onChange={(e) => handleChange('phone', e.target.value)}
-                            placeholder="XXX-XXX-XXXX or XXX-XXXX-XXXX" disabled={saving} pattern="\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4}" title="Format: XXX-XXX-XXXX or XXX-XXXX-XXXX" />
-                        <label>Phone</label>
-                        {formErrors.phone && <div className="mb-field-error">{formErrors.phone}</div>}
+                          <input
+                            type="text"
+                            className={`mb-input ${formErrors.latitude ? 'invalid' : ''}`}
+                            value={form.latitude || ''}
+                            onChange={(e) => handleChange('latitude', e.target.value)}
+                            placeholder="e.g., 1.5533"
+                            disabled={saving}
+                          />
+                          <label>Latitude</label>
+                          {formErrors.latitude && <div className="mb-coord-error">{formErrors.latitude}</div>}
                         </div>
-                        <div className="mb-field"><input className={`mb-input ${formErrors.website ? 'invalid' : ''}`} name="website" value={form.website} onChange={(e) => handleChange('website', e.target.value)} placeholder="https://..." disabled={saving} /><label>Website</label>{formErrors.website && <div className="mb-field-error">{formErrors.website}</div>}</div>
+                        <div className="mb-field">
+                          <input
+                            type="text"
+                            className={`mb-input ${formErrors.longitude ? 'invalid' : ''}`}
+                            value={form.longitude || ''}
+                            onChange={(e) => handleChange('longitude', e.target.value)}
+                            placeholder="e.g., 110.3592"
+                            disabled={saving}
+                          />
+                          <label>Longitude</label>
+                          {formErrors.longitude && <div className="mb-coord-error">{formErrors.longitude}</div>}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="mb-form-grid">
-                        <div className="mb-field"><input className={`mb-input ${formErrors.openingHours ? 'invalid' : ''}`} name="openingHours" value={form.openingHours} onChange={(e) => handleChange('openingHours', e.target.value)} disabled={saving} /><label>Opening Hours</label>{formErrors.openingHours && <div className="mb-field-error">{formErrors.openingHours}</div>}</div>
-                        <div className="mb-coords">
-                        <div className="mb-field"><input className={`mb-input ${formErrors.latitude ? 'invalid' : ''}`} name="latitude" value={form.latitude} onChange={(e) => handleChange('latitude', e.target.value)} disabled={saving} /><label>Latitude</label>{formErrors.latitude && <div className="mb-field-error">{formErrors.latitude}</div>}</div>
-                        <div className="mb-field"><input className={`mb-input ${formErrors.longitude ? 'invalid' : ''}`} name="longitude" value={form.longitude} onChange={(e) => handleChange('longitude', e.target.value)} disabled={saving} /><label>Longitude</label>{formErrors.longitude && <div className="mb-field-error">{formErrors.longitude}</div>}</div>
-                        </div>
-                    </div>
-                  </form>
+                    {/* Form Section */}
+                    <form id="mb-edit-form" onSubmit={handleSubmitClick} className="mb-form-section">
+                      {/* Image Upload Section */}
+                      <div className="mb-image-upload-section">
+                        <div className="mb-image-upload-row">
+                          <div className="mb-upload-group">
+                            <label className="mb-upload-label">
+                              <FaBuilding /> Business Image
+                            </label>
+                            <div className="mb-upload-controls">
+                              <input
+                                type="file"
+                                id="business-image-upload"
+                                accept="image/*"
+                                onChange={(e) => handleFileUpload(e, 'businessImage')}
+                                style={{ display: 'none' }}
+                              />
+                              <button
+                                type="button"
+                                className="mb-upload-btn"
+                                onClick={() => triggerFileInput('businessImage')}
+                              >
+                                <FaUpload /> Upload
+                              </button>
+                              <span className="mb-file-name" title={businessImageFile ? businessImageFile.name : (form.businessImage || 'No file selected')}>
+                                {getFileName(businessImageFile, form.businessImage)}
+                              </span>
+                            </div>
+                          </div>
 
-                  <div className="mb-actions mb-center-actions">
-                    <button type="submit" form="mb-edit-form" disabled={saving || !canSubmit}>{saving ? <span className="mb-btn-spinner" /> : 'Submit Changes'}</button>
-                    <span className="mb-note">Changes will be sent to admins. Status becomes Pending until verified.</span>
+                          <div className="mb-upload-group">
+                            <label className="mb-upload-label">
+                              <FaUser /> Owner Avatar
+                            </label>
+                            <div className="mb-upload-controls">
+                              <input
+                                type="file"
+                                id="owner-avatar-upload"
+                                accept="image/*"
+                                onChange={(e) => handleFileUpload(e, 'ownerAvatar')}
+                                style={{ display: 'none' }}
+                              />
+                              <button
+                                type="button"
+                                className="mb-upload-btn"
+                                onClick={() => triggerFileInput('ownerAvatar')}
+                              >
+                                <FaUpload /> Upload
+                              </button>
+                              <span className="mb-file-name" title={ownerAvatarFile ? ownerAvatarFile.name : (form.ownerAvatar || 'No file selected')}>
+                                {getFileName(ownerAvatarFile, form.ownerAvatar)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Form Fields */}
+                      <div className="mb-form-fields">
+                        <div className="mb-field-row">
+                          <div className="mb-field">
+                            <input 
+                              className={`mb-input ${formErrors.name ? 'invalid' : ''}`} 
+                              name="name" 
+                              value={form.name} 
+                              onChange={(e) => handleChange('name', e.target.value)} 
+                              required 
+                              disabled={saving} 
+                            />
+                            <label>Business Name</label>
+                            {formErrors.name && <div className="mb-field-error">{formErrors.name}</div>}
+                          </div>
+                          
+                          <div className="mb-field">
+                            <input 
+                              className={`mb-input ${formErrors.phone ? 'invalid' : ''}`} 
+                              name="phone" 
+                              value={form.phone}
+                              onChange={(e) => handleChange('phone', e.target.value)}
+                              placeholder="XXX-XXX-XXXX or XXX-XXXX-XXXX" 
+                              disabled={saving} 
+                              pattern="\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4}" 
+                              title="Format: XXX-XXX-XXXX or XXX-XXXX-XXXX" 
+                            />
+                            <label>Phone</label>
+                            {formErrors.phone && <div className="mb-field-error">{formErrors.phone}</div>}
+                          </div>
+                        </div>
+
+                        <div className="mb-field">
+                          <textarea 
+                            className={`mb-input ${formErrors.description ? 'invalid' : ''}`} 
+                            name="description" 
+                            rows={3} 
+                            value={form.description} 
+                            onChange={(e) => handleChange('description', e.target.value)} 
+                            disabled={saving} 
+                          />
+                          <label>Description</label>
+                          <div className="mb-hint">{countNonSpace(form.description)} / 500</div>
+                          {formErrors.description && <div className="mb-field-error">{formErrors.description}</div>}
+                        </div>
+                        
+                        <div className="mb-field">
+                          <input 
+                              className={`mb-input ${formErrors.address ? 'invalid' : ''}`} 
+                              name="address" 
+                              value={form.address} 
+                              onChange={(e) => handleChange('address', e.target.value)} 
+                              disabled={saving} 
+                            />
+                            <label>Address</label>
+                            {formErrors.address && <div className="mb-field-error">{formErrors.address}</div>}
+                        </div>
+
+                        <div className="mb-field-row">
+                          <div className="mb-field">
+                            <input 
+                              className={`mb-input ${formErrors.website ? 'invalid' : ''}`} 
+                              name="website" 
+                              value={form.website} 
+                              onChange={(e) => handleChange('website', e.target.value)} 
+                              placeholder="https://..." 
+                              disabled={saving} 
+                            />
+                            <label>Website</label>
+                            {formErrors.website && <div className="mb-field-error">{formErrors.website}</div>}
+                          </div>
+                          
+                          <div className="mb-field">
+                            <input 
+                              className={`mb-input ${formErrors.openingHours ? 'invalid' : ''}`} 
+                              name="openingHours" 
+                              value={form.openingHours} 
+                              onChange={(e) => handleChange('openingHours', e.target.value)} 
+                              disabled={saving} 
+                            />
+                            <label>Opening Hours</label>
+                            {formErrors.openingHours && <div className="mb-field-error">{formErrors.openingHours}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  
+                  {/* Submit button placed at the bottom middle */}
+                  <div className="mb-submit-section">
+                    <div className="mb-actions">
+                      <button type="submit" form="mb-edit-form" disabled={saving || !canSubmit}>
+                        {saving ? <span className="mb-btn-spinner" /> : 'Submit Changes'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </SectionCard>
@@ -496,6 +902,34 @@ const ManageBusiness = () => {
           </div>
         </div>
       )}
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        businessImage={form?.businessImage}
+        ownerAvatar={form?.ownerAvatar}
+        businessName={form?.name}
+        ownerName={selected?.owner}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleSubmitRequest}
+        businessData={{
+          name: form?.name,
+          address: form?.address,
+          phone: form?.phone,
+          website: form?.website,
+          latitude: form?.latitude,
+          longitude: form?.longitude,
+          businessImageFile: businessImageFile,
+          ownerAvatarFile: ownerAvatarFile
+        }}
+        loading={saving}
+      />
     </div>
   );
 };

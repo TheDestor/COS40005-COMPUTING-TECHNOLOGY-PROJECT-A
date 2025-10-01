@@ -42,6 +42,8 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       return 'business';
     } else if (location.startDate || location.eventType) {
       return 'event';
+    } else if (location.type === 'Major Town' || majorTowns.includes(location.name)) {
+      return 'majorTown';
     } else {
       return 'location';
     }
@@ -164,6 +166,17 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     }
   };
 
+  // Get division information for major towns
+  const getDivisionInfo = () => {
+    // If division is explicitly provided, use it
+    if (location.division) {
+      return location.division;
+    }
+    
+    // Otherwise, use the town name as the division (since major towns are also divisions in Sarawak)
+    return location.name;
+  };
+
   // Format date for events
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -234,7 +247,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     return process.env.REACT_APP_BACKEND_URL || 'http://localhost:5050';
   };
 
-  // Fixed image URL handler - SPECIFIC FIX FOR BUSINESS IMAGES
+  // Fixed image URL handler
   const getImageUrl = () => {
     console.log('Location data for image:', {
       name: location.name,
@@ -253,6 +266,9 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       imageSource = location.businessImage || location.image || defaultImage;
     } else if (locationType === 'event') {
       imageSource = location.imageUrl || location.image || defaultImage;
+    } else if (locationType === 'majorTown') {
+      // For major towns, use image if available, otherwise default
+      imageSource = location.image || location.imageUrl || defaultImage;
     } else {
       imageSource = location.image || location.businessImage || location.imageUrl || defaultImage;
     }
@@ -389,6 +405,33 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     </>
   );
 
+  const renderMajorTownDetails = () => (
+    <>
+      {/* Show division */}
+      <div className="info-row">
+        <span className="info-row-icon"><FaMapMarkerAlt /></span>
+        <span className="info-row-text">
+          <strong>Division:</strong> {getDivisionInfo()}
+        </span>
+      </div>
+
+      {/* Show website if available */}
+      {getWebsiteUrl() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaGlobe /></span>
+          <a
+            href={getWebsiteUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="info-row-link"
+          >
+            {getWebsiteHostname() || 'Visit Website'}
+          </a>
+        </div>
+      )}
+    </>
+  );
+
   const renderLocationDetails = () => (
     <>
       {getWebsiteUrl() && (
@@ -459,6 +502,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         {/* Render details based on location type */}
         {locationType === 'business' && renderBusinessDetails()}
         {locationType === 'event' && renderEventDetails()}
+        {locationType === 'majorTown' && renderMajorTownDetails()}
         {locationType === 'location' && renderLocationDetails()}
 
         <div className="info-actions info-actions-right">

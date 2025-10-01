@@ -25,21 +25,6 @@ const menuItems = [
   { name: 'Events', icon: <FaCalendarAlt />, isFetchOnly: true }
 ];
 
-const sarawakDivisions = [
-  { name: 'Kuching', latitude: 1.5534, longitude: 110.3594 },
-  { name: 'Samarahan', latitude: 1.4599, longitude: 110.4883 },
-  { name: 'Serian', latitude: 1.1670, longitude: 110.5665 },
-  { name: 'Sri Aman', latitude: 1.2370, longitude: 111.4621 },
-  { name: 'Betong', latitude: 1.4115, longitude: 111.5290 },
-  { name: 'Sarikei', latitude: 2.1271, longitude: 111.5182 },
-  { name: 'Sibu', latitude: 2.2870, longitude: 111.8320 },
-  { name: 'Mukah', latitude: 2.8988, longitude: 112.0914 },
-  { name: 'Kapit', latitude: 2.0167, longitude: 112.9333 },
-  { name: 'Bintulu', latitude: 3.1739, longitude: 113.0428 },
-  { name: 'Miri', latitude: 4.4180, longitude: 114.0155 },
-  { name: 'Limbang', latitude: 4.7548, longitude: 115.0089 }
-];
-
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter'
@@ -231,6 +216,59 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     };
   }, []);
 
+  // Fetch Major Towns from backend - specifically only Major Town locations
+  const fetchMajorTowns = useCallback(async () => {
+    const cacheKey = 'major_towns';
+    const now = Date.now();
+    const cached = categoryDataCacheRef.current.get(cacheKey);
+    
+    if (cached && now - cached.timestamp < 300000) { // 5 minutes cache
+      return cached.data;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      // Fetch all locations first
+      const res = await fetch('/api/locations', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) return [];
+      const data = await res.json();
+
+      // Filter to only include Major Town locations
+      const result = data
+        .filter(item => 
+          item && 
+          item.latitude != null && 
+          item.longitude != null && 
+          (item.category === 'Major Town' || item.type === 'Major Town')
+        )
+        .map(item => ({
+          name: item.name,
+          latitude: Number(item.latitude),
+          longitude: Number(item.longitude),
+          image: item.image || defaultImage,
+          description: item.description || 'Major Town in Sarawak',
+          type: 'Major Town',
+          source: 'backend',
+          division: item.division || '',
+          url: item.url || '',
+          category: item.category || 'Major Town'
+        }));
+
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
+      return result;
+    } catch (error) {
+      console.error('Major Towns fetch error:', error);
+      return [];
+    }
+  }, []);
+
   const fetchApprovedBusinesses = useCallback(async (menuCategoryName) => {
     const cacheKey = `businesses_${menuCategoryName}`;
     const now = Date.now();
@@ -342,6 +380,11 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
   }, []);
 
   const fetchBackendData = useCallback(async (categoryName) => {
+    // Skip for Major Town since we have a dedicated function for it
+    if (categoryName.toLowerCase() === 'major town') {
+      return [];
+    }
+
     const cacheKey = `backend_${categoryName}`;
     const now = Date.now();
     const cached = categoryDataCacheRef.current.get(cacheKey);
@@ -369,6 +412,9 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           case 'accommodation': return item.category === 'Accommodation';
           case 'food & beverages': return item.category === 'Restaurant';
           case 'transportation': return item.category === 'Transport';
+          case 'shoppings & leisures': return ['Shopping', 'Leisure'].includes(item.category);
+          case 'tour guides': return item.category === 'Tour Guide';
+          case 'events': return item.category === 'Event';
           default: return item.category === categoryName;
         }
       }).map(item => ({
@@ -396,6 +442,19 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     setLoadingStates(prev => ({ ...prev, [categoryName]: true }));
 
     try {
+      // Special case: Major Town - fetch from backend
+      if ((categoryName || '').toLowerCase() === 'major town') {
+        const majorTowns = await fetchMajorTowns();
+        setLocationsData(majorTowns);
+        if (onSelect) onSelect(categoryName, majorTowns);
+        if (onSelectCategory) onSelectCategory(categoryName, majorTowns);
+        if (majorTowns.length > 0 && window.mapRef) {
+          window.mapRef.panTo({ lat: majorTowns[0].latitude, lng: majorTowns[0].longitude });
+          window.mapRef.setZoom(10); // Zoom out a bit for major towns to see more area
+        }
+        return;
+      }
+
       // Special case: backend Events
       if ((categoryName || '').toLowerCase() === 'events') {
         const events = await fetchBackendEvents();
@@ -425,7 +484,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         return;
       }
 
-      // Fetch fresh data
+      // Fetch fresh data for other categories
       const [backendResults, businessResults, overpassResults] = await Promise.all([
         fetchBackendData(categoryName),
         fetchApprovedBusinesses(categoryName),
@@ -458,7 +517,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     } finally {
       setLoadingStates(prev => ({ ...prev, [categoryName]: false }));
     }
-  }, [currentPos, fetchBackendData, fetchApprovedBusinesses, fetchOverpassPlaces, fetchBackendEvents, onSelect, onSelectCategory]);
+  }, [currentPos, fetchBackendData, fetchApprovedBusinesses, fetchOverpassPlaces, fetchBackendEvents, fetchMajorTowns, onSelect, onSelectCategory]);
 
   // Menu item click handler
   const handleMenuItemClick = useCallback((item) => {
@@ -489,17 +548,8 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     if (item.isFetchOnly) {
       if (item.name === 'Major Town') {
         setSelectedSearchPlace(null);
-        const formatted = sarawakDivisions.map(town => ({
-          name: town.name,
-          latitude: town.latitude,
-          longitude: town.longitude,
-          image: town.image || defaultImage,
-          description: 'Division in Sarawak, Malaysia.',
-          type: 'Major Town'
-        }));
-        setLocationsData(formatted);
-        if (onSelect) onSelect(item.name, formatted);
-        if (onSelectCategory) onSelectCategory(item.name, formatted);
+        // This will now trigger the fetchMajorTowns function
+        fetchPlacesByCategory(item.name, { latitude: 1.5533, longitude: 110.3592 });
       } else {
         setSelectedSearchPlace(null);
         fetchPlacesByCategory(item.name, { latitude: 1.5533, longitude: 110.3592 });

@@ -6,6 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
+import { FaPhone } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'f8NnjAeb304'; 
 
@@ -18,277 +19,236 @@ const ShoppingLeisurePage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Shopping & Leisure');
 
-  const processOSMData = (osmData) => {
-    if (!osmData.elements) return [];
-    
-    return osmData.elements
-      .filter(element => element.tags && element.tags.name)
-      .map(element => {
-        const tags = element.tags;
-        let type = 'Other';
-        
-        // Determine category based on OSM tags
-        if (tags.shop) {
-          switch(tags.shop) {
-            case 'mall':
-            case 'department_store':
-            case 'supermarket':
-              type = 'Shopping Malls';
-              break;
-            case 'clothes':
-            case 'fashion':
-            case 'jewelry':
-            case 'accessories':
-            case 'shoes':
-            case 'bag':
-            case 'tailor':
-              type = 'Fashion and Jewelry';
-              break;
-            case 'electronics':
-            case 'computer':
-            case 'mobile_phone':
-            case 'hifi':
-              type = 'Electronics and Technology';
-              break;
-            case 'books':
-            case 'stationery':
-              type = 'Books and Stationery';
-              break;
-            case 'sports':
-            case 'outdoor':
-            case 'bicycle':
-              type = 'Sports and Outdoor';
-              break;
-            case 'hardware':
-            case 'garden_centre':
-            case 'furniture':
-              type = 'Home and Garden';
-              break;
-            default:
-              type = 'Other';
-          }
-        } else if (tags.leisure) {
-          switch(tags.leisure) {
-            case 'fitness_centre':
-            case 'gym':
-            case 'sports_centre':
-            case 'yoga':
-              type = 'Sports and Outdoor';
-              break;
-            case 'spa':
-            case 'sauna':
-              type = 'Wellness and Entertainment';
-              break;
-            case 'cinema':
-            case 'bowling_alley':
-            case 'amusement_arcade':
-            case 'adult_gaming_centre':
-              type = 'Wellness and Entertainment';
-              break;
-            default:
-              type = 'Wellness and Entertainment';
-          }
-        } else if (tags.amenity === 'marketplace' || tags.amenity === 'market') {
-          type = 'Markets and Bazaars';
-        } else if (tags.amenity === 'cinema' || tags.amenity === 'theatre') {
-          type = 'Wellness and Entertainment';
-        } else if (tags.amenity === 'spa') {
-          type = 'Wellness and Entertainment';
-        }
-
-        // Generate description if not available
-        let description = tags.description || '';
-        if (!description) {
-          if (tags.shop) {
-            description = `A ${tags.shop.replace('_', ' ')} located in Sarawak`;
-          } else if (tags.leisure) {
-            description = `A ${tags.leisure.replace('_', ' ')} facility in Sarawak`;
-          } else {
-            description = 'Shopping and leisure destination in Sarawak';
-          }
-        }
-
-        // Get coordinates
-        let lat, lng;
-        if (element.lat && element.lon) {
-          lat = element.lat;
-          lng = element.lon;
-        } else if (element.center) {
-          lat = element.center.lat;
-          lng = element.center.lon;
-        } else {
-          // Fallback coordinates for Kuching
-          lat = 1.5500;
-          lng = 110.3333;
-        }
-
-        return {
-          name: tags.name,
-          desc: description,
-          slug: tags.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
-          image: defaultImage,
-          type: type,
-          lat: lat,
-          lng: lng
-        };
-      });
-  };
-
-  const fetchShoppingLeisurePlaces = async () => {
-    setLoading(true);
+  // Fetch business locations with category "Shopping & Leisure"
+  const fetchBusinessShopping = async () => {
     try {
-      // Using OpenStreetMap Overpass API - completely free, no API key needed
-      // Simplified query that works with the Overpass API
-      const query = `
-        [out:json][timeout:25];
-        (
-          // Shopping places in Sarawak area
-          node["shop"](1.0,109.0,2.5,111.5);
-          node["leisure"](1.0,109.0,2.5,111.5);
-          node["amenity"~"cinema|theatre|spa"](1.0,109.0,2.5,111.5);
-          
-          // Ways for larger shopping areas
-          way["shop"](1.0,109.0,2.5,111.5);
-          way["leisure"](1.0,109.0,2.5,111.5);
-        );
-        out body;
-        >;
-        out skel qt;
-      `;
-
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `data=${encodeURIComponent(query)}`
-      });
+      const response = await fetch('/api/businesses/approved/category/Shopping & Leisure');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const osmData = await response.json();
+      const result = await response.json();
       
-      // Process OSM data to match your format
-      const processedData = processOSMData(osmData);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch business shopping');
+      }
       
-      // Remove duplicates based on name and limit to 50
-      const uniqueData = processedData
-        .filter((item, index, self) => 
-          index === self.findIndex(t => t.name.toLowerCase() === item.name.toLowerCase())
-        )
-        .slice(0, 50); // Ensure we only return max 50 items
+      const businessData = result.data || [];
       
-      setData(uniqueData);
-      
+      return businessData.map(business => ({
+        name: business.name || 'Unknown Business',
+        desc: business.description || 'No description available',
+        slug: business.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown-business',
+        image: business.businessImage || defaultImage,
+        type: 'Business',
+        division: business.division || 'Unknown',
+        latitude: business.latitude || 0,
+        longitude: business.longitude || 0,
+        url: business.website || '',
+        category: business.category || 'Shopping & Leisure',
+        owner: business.owner,
+        ownerEmail: business.ownerEmail,
+        phone: business.phone,
+        address: business.address,
+        openingHours: business.openingHours,
+        ownerAvatar: business.ownerAvatar,
+        source: 'business'
+      }));
     } catch (error) {
-      console.error('Error fetching shopping places from OpenStreetMap:', error);
-      // Fallback to static data if API fails
-      setData(getFallbackData());
+      console.error('Error fetching business shopping:', error);
+      return [];
+    }
+  };
+
+  // Fetch shopping locations from database
+  const fetchShoppingLocations = async () => {
+    try {
+      const response = await fetch('/api/locations?category=Shopping');
+      const fetchedData = await response.json();
+      
+      // Filter for shopping related categories
+      const shoppingData = fetchedData.filter(item => 
+        item.category?.toLowerCase().includes('shopping') || 
+        item.type?.toLowerCase().includes('mall') ||
+        item.type?.toLowerCase().includes('market')
+      );
+      
+      return shoppingData.map(item => ({
+        name: item.name || item.Name || 'Unknown',
+        desc: item.description || item.desc || 'No description available',
+        slug: (item.name || item.Name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
+        image: item.image || defaultImage,
+        type: item.type || 'Other',
+        division: item.division || 'Unknown',
+        latitude: item.latitude || item.lat || 0,
+        longitude: item.longitude || item.lng || 0,
+        url: item.url || '',
+        category: item.category || 'Shopping',
+        source: 'database'
+      }));
+    } catch (error) {
+      console.error('Error fetching shopping locations:', error);
+      return [];
+    }
+  };
+
+  // Fetch shopping places from Overpass API (OpenStreetMap)
+  const fetchOverpassShopping = async () => {
+    try {
+      // Sarawak bounding box (approximate)
+      const sarawakBbox = '1.0,109.5,3.5,115.5';
+      
+      // Overpass query for shopping and leisure in Sarawak
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          // Shopping places
+          node["shop"](${sarawakBbox});
+          way["shop"](${sarawakBbox});
+          relation["shop"](${sarawakBbox});
+          
+          // Leisure and entertainment
+          node["leisure"](${sarawakBbox});
+          way["leisure"](${sarawakBbox});
+          relation["leisure"](${sarawakBbox});
+          
+          // Malls and shopping centers
+          node["building"="retail"](${sarawakBbox});
+          way["building"="retail"](${sarawakBbox});
+          relation["building"="retail"](${sarawakBbox});
+          
+          // Markets
+          node["amenity"="marketplace"](${sarawakBbox});
+          way["amenity"="marketplace"](${sarawakBbox});
+          relation["amenity"="marketplace"](${sarawakBbox});
+        );
+        out center 100;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return result.elements.map(element => {
+        const tags = element.tags || {};
+        const name = tags.name || 'Unnamed Shopping Place';
+        
+        // Determine coordinates
+        let lat, lon;
+        if (element.center) {
+          lat = element.center.lat;
+          lon = element.center.lon;
+        } else {
+          lat = element.lat;
+          lon = element.lon;
+        }
+
+        // Determine type based on OSM tags
+        let type = 'Other';
+        if (tags.shop === 'mall' || tags.building === 'retail') type = 'Shopping Mall';
+        else if (tags.shop === 'supermarket') type = 'Supermarket';
+        else if (tags.shop === 'department_store') type = 'Department Store';
+        else if (tags.amenity === 'marketplace') type = 'Market';
+        else if (tags.leisure === 'fitness_centre') type = 'Fitness Center';
+        else if (tags.leisure === 'sports_centre') type = 'Sports Center';
+        else if (tags.leisure === 'park') type = 'Park';
+        else if (tags.shop) type = tags.shop.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        else if (tags.leisure) type = tags.leisure.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+        // Create description from available tags
+        let description = tags.description || tags.wikipedia || '';
+        if (!description) {
+          description = `A ${type.toLowerCase()} in Sarawak`;
+          if (tags.operator) description += ` operated by ${tags.operator}`;
+        }
+
+        return {
+          name: name,
+          desc: description,
+          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          image: defaultImage,
+          type: type,
+          division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
+          latitude: lat,
+          longitude: lon,
+          url: tags.website || '',
+          category: 'Shopping & Leisure',
+          source: 'overpass',
+          osmTags: tags
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching Overpass shopping:', error);
+      return [];
+    }
+  };
+
+  const fetchAllShopping = async () => {
+    setLoading(true);
+    try {
+      // Fetch from all sources
+      const [shoppingLocations, businessShopping, overpassShopping] = await Promise.all([
+        fetchShoppingLocations(),
+        fetchBusinessShopping(),
+        fetchOverpassShopping()
+      ]);
+
+      // Combine all data
+      const allData = [...shoppingLocations, ...businessShopping, ...overpassShopping];
+      
+      // Remove duplicates based on name and coordinates
+      const uniqueData = allData.filter((item, index, self) =>
+        index === self.findIndex(t => 
+          t.name === item.name && 
+          Math.abs(t.latitude - item.latitude) < 0.001 && 
+          Math.abs(t.longitude - item.longitude) < 0.001
+        )
+      );
+
+      // Process and enhance the data
+      const processedData = uniqueData.map(item => {
+        const name = item.name;
+        const lowerName = name.toLowerCase();
+        
+        // Determine type if not already set
+        let type = item.type;
+        if (!type || type === 'Other') {
+          if (lowerName.includes('mall') || lowerName.includes('shopping')) type = 'Shopping Mall';
+          else if (lowerName.includes('market')) type = 'Market';
+          else if (lowerName.includes('supermarket')) type = 'Supermarket';
+          else if (lowerName.includes('fitness') || lowerName.includes('gym')) type = 'Fitness Center';
+          else if (lowerName.includes('sports')) type = 'Sports Center';
+          else if (lowerName.includes('park')) type = 'Park';
+          else if (item.source === 'business') type = 'Business';
+          else type = 'Other';
+        }
+
+        return {
+          ...item,
+          type,
+          lat: item.latitude || item.lat || 0,
+          lng: item.longitude || item.lng || 0
+        };
+      });
+
+      setData(processedData);
+    } catch (error) {
+      console.error('Error fetching all shopping places:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fallback data in case API fails
-  const getFallbackData = () => {
-    return [
-      {
-        name: "Vivacity Megamall",
-        desc: "One of Kuching's largest shopping malls with various retail outlets and entertainment options",
-        slug: "vivacity-megamall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5200,
-        lng: 110.3500
-      },
-      {
-        name: "Spring Shopping Mall",
-        desc: "Popular shopping destination in Kuching with international brands and dining options",
-        slug: "spring-shopping-mall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5300,
-        lng: 110.3400
-      },
-      {
-        name: "Sarawak Handicraft Center",
-        desc: "Traditional Sarawakian crafts and souvenirs including textiles and wood carvings",
-        slug: "sarawak-handicraft-center",
-        image: defaultImage,
-        type: "Fashion and Jewelry",
-        lat: 1.5600,
-        lng: 110.3400
-      },
-      {
-        name: "Plaza Merdeka",
-        desc: "Shopping mall in the heart of Kuching with diverse retail options",
-        slug: "plaza-merdeka",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5581,
-        lng: 110.3469
-      },
-      {
-        name: "The Hills Shopping Mall",
-        desc: "Modern shopping complex with entertainment and dining facilities",
-        slug: "the-hills-shopping-mall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5314,
-        lng: 110.3572
-      },
-      {
-        name: "CityONE Megamall",
-        desc: "Shopping and entertainment complex in Kuching",
-        slug: "cityone-megamall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5256,
-        lng: 110.3297
-      },
-      {
-        name: "Boulevard Shopping Mall",
-        desc: "Well-established shopping center in Kuching",
-        slug: "boulevard-shopping-mall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5564,
-        lng: 110.3458
-      },
-      {
-        name: "Green Heights Shopping Mall",
-        desc: "Neighborhood shopping mall with various amenities",
-        slug: "green-heights-shopping-mall",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5483,
-        lng: 110.3292
-      },
-      {
-        name: "Riverside Shopping Complex",
-        desc: "Riverside shopping experience in Kuching",
-        slug: "riverside-shopping-complex",
-        image: defaultImage,
-        type: "Shopping Malls",
-        lat: 1.5597,
-        lng: 110.3450
-      },
-      {
-        name: "Satok Weekend Market",
-        desc: "Famous local market offering fresh produce and handicrafts",
-        slug: "satok-weekend-market",
-        image: defaultImage,
-        type: "Markets and Bazaars",
-        lat: 1.5589,
-        lng: 110.3383
-      }
-    ].slice(0, 50);
-  };
-
   useEffect(() => {
-    fetchShoppingLeisurePlaces();
+    fetchAllShopping();
   }, []);
 
   const handleLoginClick = () => setShowLogin(true);
@@ -318,7 +278,7 @@ const ShoppingLeisurePage = () => {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
-        <p>Loading shopping and leisure destinations...</p>
+        <p>Loading Shopping & Leisure...</p>
       </div>
     );
   }
@@ -341,9 +301,9 @@ const ShoppingLeisurePage = () => {
       </div>
 
       <div className="hero-overlay-mt">
-        <h1>{currentCategory.toUpperCase() || 'SHOPPING AND LEISURE'}</h1>
+        <h1>{currentCategory.toUpperCase() || 'SHOPPING & LEISURE'}</h1>
         <p className="hero-intro">
-            Take home a piece of Sarawak's rich heritage. Discover traditional handicrafts, local artisan products, and modern retail experiences that showcase the state's unique cultural diversity.
+          Take home a piece of Sarawak's rich heritage. Discover traditional handicrafts, local artisan products, and modern retail experiences that showcase the state's unique cultural diversity.
         </p>
       </div>
 
@@ -366,67 +326,75 @@ const ShoppingLeisurePage = () => {
               className="sort-select"
             >
               <option value="all">All Categories</option>
-              <option value="Shopping Malls">Shopping Malls</option>
-              <option value="Fashion and Jewelry">Fashion and Jewelry</option>
-              <option value="Wellness and Entertainment">Wellness and Entertainment</option>
-              <option value="Markets and Bazaars">Markets and Bazaars</option>
-              <option value="Electronics and Technology">Electronics and Technology</option>
-              <option value="Books and Stationery">Books and Stationery</option>
-              <option value="Sports and Outdoor">Sports and Outdoor</option>
-              <option value="Home and Garden">Home and Garden</option>
+              <option value="Shopping Mall">Shopping Mall</option>
+              <option value="Supermarket">Supermarket</option>
+              <option value="Department Store">Department Store</option>
+              <option value="Market">Market</option>
+              <option value="Fitness Center">Fitness Center</option>
+              <option value="Sports Center">Sports Center</option>
+              <option value="Park">Park</option>
+              <option value="Business">Business</option>
               <option value="Other">Other</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* <div className="results-info">
-        <p>Showing {filteredData.length} of {data.length} locations</p>
-      </div> */}
-
       <div className="cards-section">
-        {filteredData.length > 0 ? (
-          filteredData.slice(0, visibleItems).map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className={`type-badge ${item.type.replace(/\s+/g, '-').toLowerCase()}`}>
-                    {item.type}
-                  </div>
-                  <div className="button-container">
-                    <Link
-                      to={`/discover/${item.slug}`}
-                      state={{
-                        name: item.name,
-                        image: item.image,
-                        desc: item.desc,
-                        coordinates: [item.lat, item.lng]
-                      }}
-                      className="explore-btn"
-                    >
-                      Explore
-                    </Link>
-                  </div>
+        {filteredData.slice(0, visibleItems).map((item, index) => (
+          <div
+            className="card-wrapper"
+            key={`${item.source}-${item.name}-${index}`}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+              <img src={item.image} alt={item.name} />
+              <div className="card-content">
+                <h3>{highlightMatch(item.name)}</h3>
+                <div className="card-meta">
+                  <span className="type-badge">{item.type}</span>
+                  {item.division && <span className="division-badge">{item.division}</span>}
+                  {item.source === 'business' && <span className="business-badge">Business</span>}
+                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                </div>
+                <div className="desc-scroll">
+                  <p>{item.desc}</p>
+                </div>
+                <div className="button-container">
+                  <Link
+                    to={`/discover/${item.slug}`}
+                    state={{
+                      name: item.name,
+                      image: item.image,
+                      description: item.desc,
+                      latitude: item.latitude || item.lat,
+                      longitude: item.longitude || item.lng,
+                      category: item.category,
+                      type: item.type,
+                      division: item.division,
+                      url: item.url,
+                      phone: item.phone,
+                      address: item.address,
+                      openingHours: item.openingHours,
+                      source: item.source,
+                      osmTags: item.osmTags
+                    }}
+                    className="explore-btn"
+                  >
+                    Explore
+                  </Link>
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="no-results">
-            <p>No shopping and leisure destinations found. Try adjusting your search or check back later.</p>
           </div>
-        )}
+        ))}
       </div>
+
+      {filteredData.length === 0 && !loading && (
+        <div className="no-results">
+          <p>No shopping and leisure destinations found. Try adjusting your search criteria.</p>
+        </div>
+      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

@@ -305,8 +305,7 @@
 }
 
 .desc-scroll {
-  flex: 1;
-  min-height: 80px;
+  flex: 1; 
   max-height: 120px;
   overflow-y: auto;
   margin: 0.5rem 0;

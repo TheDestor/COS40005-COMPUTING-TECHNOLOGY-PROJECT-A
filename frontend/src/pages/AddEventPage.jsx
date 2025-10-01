@@ -127,7 +127,7 @@ const EventCard = ({ event, type, onEdit, onDelete, onClick }) => {
           <FaCalendar className="date-icon" />
           <span>{formatDate(event.startDate)}</span>
         </div>
-        {type === 'upcoming' && (
+        {(type === 'upcoming' || type === 'past') && (
           <div className="event-actions">
             <button 
               className="action-btn edit-btn"
@@ -279,14 +279,40 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
   useEffect(() => {
     if (type === 'edit' && event) {
       setIsEditMode(true);
+      
+      // Check if this is a past event
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+      const eventEndDate = new Date(event.endDate);
+      eventEndDate.setHours(0, 0, 0, 0);
+      
+      const isPastEvent = eventEndDate < currentDate;
+      
+      // Format date for input (YYYY-MM-DD)
+      const formatDateForInput = (dateString) => {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // Get tomorrow's date for past events
+      const getTomorrowDate = () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return formatDateForInput(tomorrow);
+      };
+
       setEditForm({
         name: event.name,
         description: event.description,
         eventType: event.eventType,
         targetAudience: event.targetAudience.join(', '),
         registrationRequired: event.registrationRequired,
-        startDate: event.startDate.split('T')[0],
-        endDate: event.endDate.split('T')[0],
+        // For past events, use tomorrow's date. For upcoming events, use existing dates
+        startDate: isPastEvent ? getTomorrowDate() : formatDateForInput(event.startDate),
+        endDate: isPastEvent ? getTomorrowDate() : formatDateForInput(event.endDate),
         startTime: event.startTime,
         endTime: event.endTime,
         latitude: event.coordinates?.latitude || 1.5533,
@@ -716,9 +742,51 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     </button>
                     <button 
                       className="save-btn"
-                      onClick={() => onSave(event._id)}
+                      onClick={() => {
+                        if (type === 'edit' && event) {
+                          // Check if this is a past event
+                          const currentDate = new Date();
+                          currentDate.setHours(0, 0, 0, 0);
+                          const eventEndDate = new Date(event.endDate);
+                          eventEndDate.setHours(0, 0, 0, 0);
+                          
+                          if (eventEndDate < currentDate) {
+                            // This is a past event - create new event instead of updating
+                            const newEventData = {
+                              name: editForm.name,
+                              description: editForm.description,
+                              eventType: editForm.eventType,
+                              targetAudience: editForm.targetAudience?.split(',').map(a => a.trim()).filter(a => a) || [],
+                              registrationRequired: editForm.registrationRequired,
+                              startDate: editForm.startDate,
+                              endDate: editForm.endDate,
+                              startTime: editForm.startTime,
+                              endTime: editForm.endTime,
+                              latitude: parseFloat(editForm.latitude) || 1.5533,
+                              longitude: parseFloat(editForm.longitude) || 110.3592,
+                              eventOrganizers: editForm.eventOrganizers,
+                              // Fix: Handle both string and array formats for eventHashtags
+                              eventHashtags: typeof editForm.eventHashtags === 'string' 
+                                ? editForm.eventHashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
+                                : editForm.eventHashtags || [],
+                              imageFile: imageFile,
+                              originalImageUrl: event.imageUrl
+                            };
+                            onSave(newEventData, true); // true indicates creating new event from past
+                          } else {
+                            // This is an upcoming event - update normally
+                            onSave(event._id);
+                          }
+                        }
+                      }}
                     >
-                      Save Changes
+                      {type === 'edit' && event && (() => {
+                        const currentDate = new Date();
+                        currentDate.setHours(0, 0, 0, 0);
+                        const eventEndDate = new Date(event.endDate);
+                        eventEndDate.setHours(0, 0, 0, 0);
+                        return eventEndDate < currentDate ? 'Create New Event' : 'Save Changes';
+                      })()}
                     </button>
                   </div>
                 </div>
@@ -827,10 +895,21 @@ const AddEventPage = () => {
   // Date and Time states
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+
+  const [startDate, setStartDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow;
+  });
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   // Coordinates state
@@ -854,7 +933,7 @@ const AddEventPage = () => {
   
   const fileInputRef = useRef(null);
 
-  const tabs = ['Add Event', 'Past Events', 'Schedule Upcoming Events'];
+  const tabs = ['Add Event', 'Past Events', 'Schedule Upcoming Events', 'On-going Events'];
   
   const locations = ['Sarawak Cultural Village', 'Damai Beach', 'Kuching Waterfront'];
   const eventTypes = ['Festival', 'Workshop & Seminars', 'Community & Seasonal Bazaars', 'Music, Arts & Performance', 'Food & Culinary', 'Sporting', 'Art & Performance'];
@@ -871,7 +950,7 @@ const AddEventPage = () => {
   }, [uploadedImage]);
 
   useEffect(() => {
-    if (activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events') {
+    if (activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events' || activeTab === 'On-going Events') {
       fetchEvents();
     }
   }, [activeTab]);
@@ -891,16 +970,32 @@ const AddEventPage = () => {
       const response = await ky.get('/api/event/getAllEvents').json();
       
       const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0); // Set to beginning of today
+      
       let filteredEvents;
       
       if (activeTab === 'Past Events') {
         filteredEvents = response.events.filter(event => 
           new Date(event.endDate) < currentDate
         );
+      } else if (activeTab === 'On-going Events') {
+        filteredEvents = response.events.filter(event => {
+          const eventStartDate = new Date(event.startDate);
+          const eventEndDate = new Date(event.endDate);
+          eventStartDate.setHours(0, 0, 0, 0);
+          eventEndDate.setHours(0, 0, 0, 0);
+          
+          // Event is ongoing if current date is between start date and end date (inclusive)
+          return currentDate >= eventStartDate && currentDate <= eventEndDate;
+        });
       } else if (activeTab === 'Schedule Upcoming Events') {
-        filteredEvents = response.events.filter(event => 
-          new Date(event.startDate) >= currentDate
-        );
+        filteredEvents = response.events.filter(event => {
+          const eventStartDate = new Date(event.startDate);
+          eventStartDate.setHours(0, 0, 0, 0);
+          
+          // Event is upcoming if start date is after current date (haven't started yet)
+          return eventStartDate > currentDate;
+        });
       }
       
       setEvents(filteredEvents);
@@ -1022,10 +1117,15 @@ const AddEventPage = () => {
     });
     setOtherAudience('');
     setRegistrationRequired('No');
-    setStartDate(null);
-    setEndDate(null);
-    setStartTime('');
-    setEndTime('');
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    setStartDate(tomorrow);
+    setEndDate(tomorrow);
+    setStartTime('09:00');
+    setEndTime('17:00');
+
     setUploadedImage(null);
     setImageFile(null);
     setLatitude(1.5533);
@@ -1401,6 +1501,91 @@ const AddEventPage = () => {
     }
   };
 
+  const createNewEventFromPast = async (eventData) => {
+    try {
+      const formData = new FormData();
+      
+      // Add all fields to formData from the past event data
+      formData.append('name', eventData.name);
+      formData.append('description', eventData.description);
+      formData.append('eventType', eventData.eventType);
+      formData.append('latitude', eventData.latitude.toString());
+      formData.append('longitude', eventData.longitude.toString());
+      formData.append('eventOrganizers', eventData.eventOrganizers);
+      
+      // Handle eventHashtags - convert array to comma-separated string
+      formData.append('eventHashtags', 
+        Array.isArray(eventData.eventHashtags) 
+          ? eventData.eventHashtags.join(', ') 
+          : eventData.eventHashtags || ''
+      );
+      
+      // Handle target audience
+      formData.append('targetAudience', JSON.stringify(eventData.targetAudience));
+      
+      formData.append('registrationRequired', eventData.registrationRequired);
+      
+      // Format dates correctly for the backend
+      if (eventData.startDate) {
+        const startDateObj = new Date(eventData.startDate);
+        formData.append('startDate', startDateObj.toISOString());
+      }
+      
+      if (eventData.endDate) {
+        const endDateObj = new Date(eventData.endDate);
+        formData.append('endDate', endDateObj.toISOString());
+      }
+      
+      formData.append('startTime', eventData.startTime);
+      formData.append('endTime', eventData.endTime);
+      
+      // Handle image - this is the key fix
+      if (eventData.imageFile) {
+        // User uploaded a new image
+        formData.append('image', eventData.imageFile);
+      } else if (eventData.originalImageUrl) {
+        // Use the original image from the past event
+        // We need to convert the image URL to a File object
+        try {
+          const imageFile = await urlToFile(eventData.originalImageUrl, 'event-image.jpg');
+          formData.append('image', imageFile);
+        } catch (error) {
+          console.error('Error converting image URL to file:', error);
+          toast.error('Failed to use the previous event image. Please upload a new image.');
+          return;
+        }
+      } else {
+        toast.error('Event image is required');
+        return;
+      }
+
+      const response = await ky.post(
+        "/api/event/addEvent",
+        {
+          headers: { 
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: formData
+        }
+      ).json();
+
+      if (response.success) {
+        // Refresh events to show the new one
+        fetchEvents();
+        closeEventModal();
+        toast.success('New event created successfully from past event!');
+      }
+    } catch (error) {
+      console.error('Error creating new event from past:', error);
+      let msg = 'Error creating new event.';
+      try {
+        const data = await error.response?.json();
+        if (data?.message) msg = data.message;
+      } catch {}
+      toast.error(msg);
+    }
+  };
+
   const deleteEvent = async (eventId) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
@@ -1732,7 +1917,7 @@ const AddEventPage = () => {
           </div>
         </div>
       );
-    } else if (activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events') {
+    } else if (activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events' || activeTab === 'On-going Events') {
       if (loading) {
         return <div className="loading">Loading events...</div>;
       }
@@ -1826,7 +2011,15 @@ const AddEventPage = () => {
             isOpen={isModalOpen}
             onClose={closeEventModal}
             type={modalType}
-            onSave={updateEvent}
+            onSave={(eventIdOrData, isNewFromPast = false) => {
+              if (isNewFromPast) {
+                // Creating new event from past event
+                createNewEventFromPast(eventIdOrData);
+              } else {
+                // Updating existing event
+                updateEvent(eventIdOrData);
+              }
+            }}
             editForm={editForm}
             setEditForm={setEditForm}
             uploadedImage={uploadedImage}

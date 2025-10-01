@@ -412,26 +412,8 @@ function MapComponentTesting({  }) {
     }
   }, [location.state]);
 
-  // Set default Major Town data on component mount
-  useEffect(() => {
-    const defaultMajorTowns = [
-      { name: 'Kuching', latitude: 1.5534, longitude: 110.3594, type: 'Major Town', description: 'Capital city of Sarawak' },
-      { name: 'Samarahan', latitude: 1.4599, longitude: 110.4883, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Serian', latitude: 1.1670, longitude: 110.5665, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Sri Aman', latitude: 1.2370, longitude: 111.4621, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Betong', latitude: 1.4115, longitude: 111.5290, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Sarikei', latitude: 2.1271, longitude: 111.5182, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Sibu', latitude: 2.2870, longitude: 111.8320, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Mukah', latitude: 2.8988, longitude: 112.0914, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Kapit', latitude: 2.0167, longitude: 112.9333, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Bintulu', latitude: 3.1739, longitude: 113.0428, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Miri', latitude: 4.4180, longitude: 114.0155, type: 'Major Town', description: 'Division in Sarawak' },
-      { name: 'Limbang', latitude: 4.7548, longitude: 115.0089, type: 'Major Town', description: 'Division in Sarawak' }
-    ];
-    if (!selectedSearchBarPlace) {
-      setLocations(defaultMajorTowns);
-    }
-  }, [selectedSearchBarPlace]);
+  // REMOVED: The useEffect that was fetching Major Town data from backend
+  // Now we rely entirely on the MapViewMenu to fetch and pass the data
 
   // Fit map to markers when locations change
   useEffect(() => {

@@ -961,7 +961,6 @@ input:focus:invalid {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
   flex-grow: 1;
 }
 
