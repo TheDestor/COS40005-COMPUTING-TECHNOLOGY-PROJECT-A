@@ -7,7 +7,7 @@ import { FaLocationDot } from "react-icons/fa6";
 import { MdForest } from "react-icons/md";
 import { IoFastFood } from "react-icons/io5";
 import '../styles/MapViewMenu.css';
-import defaultImage from '../assets/Kuching.png';
+import defaultImage from '../assets/default.png';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 const RADIUS_KM = 10;
@@ -139,7 +139,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       (
         ${blocks}
       );
-      out center 30;
+      out center 300;
     `;
   }, []);
 
@@ -313,7 +313,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       const list = (json.events || []).filter(Boolean);
       const result = list
         .filter(e => e?.coordinates?.latitude != null && e?.coordinates?.longitude != null)
-        .slice(0, 30)
+        .slice(0, 300)
         .map(e => ({
           name: e.name,
           latitude: Number(e.coordinates.latitude),
@@ -321,10 +321,19 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           image: e.imageUrl || defaultImage,
           description: e.description || 'Event',
           type: 'Events',
-          source: 'events'
+          source: 'events',
+          startDate: e.startDate,
+
+          // Include additional event data if needed
+          endDate: e.endDate,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          eventType: e.eventType,
+          registrationRequired: e.registrationRequired
         }));
 
       categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
+      console.log('Fetched events:', result);
       return result;
     } catch (e) {
       console.error('Events fetch error:', e);
@@ -484,7 +493,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           name: town.name,
           latitude: town.latitude,
           longitude: town.longitude,
-          image: defaultImage,
+          image: town.image || defaultImage,
           description: 'Division in Sarawak, Malaysia.',
           type: 'Major Town'
         }));

@@ -132,7 +132,8 @@ const categoryIcons = {
 function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
-
+    // Normalize the type for Events
+    const locationType = location.type || 'Major Town';
     
     if (categoryIcons[location.type]) {
       // console.log('Found icon for type:', location.type);
@@ -157,7 +158,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
       {selectedSearchBarPlace && selectedSearchBarPlace.latitude && selectedSearchBarPlace.longitude ? (
         <>
           <Marker
-            position={[selectedSearchBarPlace.latitude, selectedSearchBarPlace.longitude]}
+            position={[selectedSearchBarPlace.coordinates?.latitude || selectedSearchBarPlace.latitude, selectedSearchBarPlace.coordinates?.longitude || selectedSearchBarPlace.longitude]}
             icon={searchPlaceIcon}
             eventHandlers={{
               click: () => onMarkerClick(selectedSearchBarPlace)
@@ -352,6 +353,16 @@ function MapComponentTesting({  }) {
 
   // Handler for marker clicks
   const handleMarkerClick = (location) => {
+    // Normalize the location data to handle both formats
+    const normalizedLocation = {
+      ...location,
+      // If coordinates exist, use them, otherwise use direct lat/lng
+      latitude: location.coordinates?.latitude || location.latitude,
+      longitude: location.coordinates?.longitude || location.longitude,
+      // Ensure we have the original coordinates object if it exists
+      coordinates: location.coordinates
+    };
+
     // If clicking the same marker, toggle the info window
     if (selectedLocation && selectedLocation.name === location.name) {
       closeInfoWindow();
