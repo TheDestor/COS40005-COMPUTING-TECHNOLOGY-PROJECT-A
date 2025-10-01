@@ -88,11 +88,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-bottom: 1px solid #f1f5f9;
   animation: fadeInDown 0.3s ease-out;
   flex-shrink: 0; /* Prevent actions from shrinking */
-  position: sticky;
+  /* position: sticky; */
   top: 68px; /* Height of header */
   z-index: 5;
   background: #ffffff;
