@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import carIcon from '../assets/car.gif';
 import homestayIcon from '../assets/homestay.gif';
@@ -81,38 +82,38 @@ const createIcon = (iconUrl) =>
     className: 'custom-leaflet-icon'
   });
 
-  const searchPlaceIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Or use your own pin image
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
-    className: 'custom-leaflet-icon'
-  });
-  
-  // Route markers with different colors
-  const startMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
-  
-  const endMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
-  
-  const waypointMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
+const searchPlaceIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+  className: 'custom-leaflet-icon'
+});
+
+// Route markers with different colors
+const startMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+
+const endMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+
+const waypointMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
 
 const categoryIcons = {
   'Major Town': createIcon(townIcon),
@@ -126,21 +127,18 @@ const categoryIcons = {
   'Tour Guides': createIcon(tourIcon),
   'Events': createIcon(eventIcon),
   'Restaurant': createIcon(restaurantIcon),
+  'Starting Point': startMarkerIcon,
+  'Destination': endMarkerIcon,
+  'Waypoint': waypointMarkerIcon,
 };
 
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
-    // Normalize the type for Events
-    const locationType = location.type || 'Major Town';
-    
     if (categoryIcons[location.type]) {
-      // console.log('Found icon for type:', location.type);
       return categoryIcons[location.type];
     }
-    
-    // console.log('No icon found for type:', location.type, '- using default');
     return categoryIcons['Major Town'];
   };
 
@@ -163,14 +161,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
             eventHandlers={{
               click: () => onMarkerClick(selectedSearchBarPlace)
             }}
-            // riseOnHover={false}
-            // autoPan={false}
-          >
-            {/* <Popup>
-              <strong>{selectedSearchBarPlace.name || 'Selected Place'}</strong>
-              {selectedSearchBarPlace.description && <div>{selectedSearchBarPlace.description}</div>}
-            </Popup> */}
-          </Marker>
+          />
           <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
             {nearbyPlaces.map((loc, idx) => (
               <Marker
@@ -180,11 +171,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                 eventHandlers={{
                   click: () => onMarkerClick(loc)
                 }}
-                // riseOnHover={false} 
-                // autoPan={false}
-              >
-                {/* <Popup>{loc.name}</Popup> */}
-              </Marker>
+              />
             ))}
           </MarkerClusterGroup>
         </>
@@ -205,26 +192,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                         click: () => onMarkerClick(loc)
                       }}
                       className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
-                      // riseOnHover={false}
-                      // autoPan={false}
                     />
-                    //   <Popup>
-                    //     <div style={{ textAlign: 'center' }}>
-                    //       <img
-                    //         src={icon.options.iconUrl}
-                    //         alt={loc.type}
-                    //         style={{ width: 30, height: 30, marginBottom: 8 }}
-                    //       />
-                    //       <div>
-                    //         <strong>{loc.name}</strong>
-                    //         <br />
-                    //         <small>Type: {loc.type}</small>
-                    //         <br />
-                    //         {loc.description || 'No description'}
-                    //       </div>
-                    //     </div>
-                    //   </Popup>
-                    // </Marker>
                   );
                 })}
               </MarkerClusterGroup>
@@ -241,23 +209,6 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                     }}
                     className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
                   />
-                  //   <Popup>
-                  //     <div style={{ textAlign: 'center' }}>
-                  //       <img
-                  //         src={icon.options.iconUrl}
-                  //         alt={loc.type}
-                  //         style={{ width: 30, height: 30, marginBottom: 8 }}
-                  //       />
-                  //       <div>
-                  //         <strong>{loc.name}</strong>
-                  //         <br />
-                  //         <small>Type: {loc.type}</small>
-                  //         <br />
-                  //         {loc.description || 'No description'}
-                  //       </div>
-                  //     </div>
-                  //   </Popup>
-                  // </Marker>
                 );
               })
             )
@@ -267,6 +218,11 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
     </>
   );
 }
+
+// Create a ref-forwarded version of LeftSideBarTesting
+const LeftSideBarTestingWithRef = forwardRef((props, ref) => {
+  return <LeftSideBarTesting {...props} ref={ref} />;
+});
 
 function MapComponentTesting({  }) {
   const mapRef = useRef();
@@ -288,6 +244,10 @@ function MapComponentTesting({  }) {
   const [routeAlternatives, setRouteAlternatives] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
+
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [destinationInput, setDestinationInput] = useState('');
+
   const [routeInfo, setRouteInfo] = useState({
     startingPoint: '',
     destination: '',
@@ -315,6 +275,30 @@ function MapComponentTesting({  }) {
     setSelectedLocation(null);
     setShowReviewPage(false);
   };
+
+  // Updated handleDirectionsClick function
+  const handleDirectionsClick = (locationData) => {
+  console.log('Directions clicked for:', locationData);
+  
+  // Use the ref to call LeftSideBarTesting's internal method
+  if (leftSidebarRef.current && leftSidebarRef.current.setDestinationFromExternal) {
+    leftSidebarRef.current.setDestinationFromExternal(
+      locationData.name, 
+      { 
+        lat: locationData.latitude || locationData.coordinates?.latitude, 
+        lng: locationData.longitude || locationData.coordinates?.longitude 
+      }
+    );
+  }
+  
+  // Open the sidebar
+  setIsSidebarExpanded(true);
+  
+  // Close the info window
+  setSelectedLocation(null);
+  
+  // toast.success(`"${locationData.name}" set as destination`);
+};
 
   // Function to clear all routing data
   const clearAllRoutingData = () => {
@@ -371,73 +355,58 @@ function MapComponentTesting({  }) {
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
-    closeInfoWindow(); // Close info window when menu category changes
+    closeInfoWindow();
     setSelectedSearchBarPlace(null);
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
-    
-    // Clear routing data when category is selected
     clearAllRoutingData();
   };
 
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
-    closeInfoWindow(); // Close info window when new place is searched
+    closeInfoWindow();
     setLocations([]);
     setSelectedSearchBarPlace({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
   const handleZoomToPlace = (place) => {
-    closeInfoWindow(); // Close info window when zooming to place
+    closeInfoWindow();
     setSelectedSearchPlace(place);
   };
 
-  // Handler for marker clicks
-  const handleMarkerClick = (location) => {
-    // Normalize the location data to handle both formats
-    const normalizedLocation = {
-      ...location,
-      // If coordinates exist, use them, otherwise use direct lat/lng
-      latitude: location.coordinates?.latitude || location.latitude,
-      longitude: location.coordinates?.longitude || location.longitude,
-      // Ensure we have the original coordinates object if it exists
-      coordinates: location.coordinates
-    };
-
-    // If clicking the same marker, toggle the info window
-    if (selectedLocation && selectedLocation.name === location.name) {
-      closeInfoWindow();
-    } else {
-      setSelectedLocation(location);
-      
-      // Fly to the marker with smooth animation
-      if (mapRef.current) {
-        const map = mapRef.current;
-        const markerPosition = [location.latitude, location.longitude];
-        
-        // Calculate optimal zoom level for a good view
-        const currentZoom = map.getZoom();
-        const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
-        
-        // Fly to the marker position with smooth animation
-        map.flyTo(markerPosition, optimalZoom, {
-          duration: 1.8, // Smooth animation duration
-          easeLinearity: 0.25
-        });
-      }
-    }
+  // Handler for marker clicks - UPDATED to handle route markers
+  const handleMarkerClick = async (location) => {
+  const normalizedLocation = {
+    ...location,
+    latitude: location.coordinates?.latitude || location.latitude,
+    longitude: location.coordinates?.longitude || location.longitude,
+    coordinates: location.coordinates
   };
+
+  if (selectedLocation && selectedLocation.name === location.name) {
+    closeInfoWindow();
+  } else {
+    setSelectedLocation(normalizedLocation);
+    
+    if (mapRef.current) {
+      const map = mapRef.current;
+      const markerPosition = [normalizedLocation.latitude, normalizedLocation.longitude];
+      const currentZoom = map.getZoom();
+      const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
+      
+      map.flyTo(markerPosition, optimalZoom, {
+        duration: 1.8,
+        easeLinearity: 0.25
+      });
+    }
+  }
+};
 
   // Handler for closing the info window
   const handleCloseInfoWindow = () => {
     closeInfoWindow();
-  };
-
-  // Handler for showing review page
-  const handleShowReview = () => {
-    setShowReviewPage(true);
   };
 
   // Handler for opening login modal
@@ -448,7 +417,6 @@ function MapComponentTesting({  }) {
   // Handle navigation state for bookmark toggle
   useEffect(() => {
     if (location.state?.openBookmark && toggleBookmarkRef.current) {
-      // Small delay to ensure the component is fully mounted
       setTimeout(() => {
         toggleBookmarkRef.current();
       }, 100);
@@ -458,12 +426,10 @@ function MapComponentTesting({  }) {
   // Fetch Major Town data on component mount
   useEffect(() => {
     const loadInitialMajorTowns = async () => {
-      // Only fetch if we don't have any locations yet and no search bar place is selected
       if (locations.length === 0 && !selectedSearchBarPlace) {
         const majorTowns = await fetchMajorTowns();
         if (majorTowns.length > 0) {
           setLocations(majorTowns);
-          // Optionally fit the map bounds to show all major towns
           if (mapRef.current) {
             const bounds = L.latLngBounds(
               majorTowns.map(loc => [loc.latitude, loc.longitude])
@@ -490,7 +456,6 @@ function MapComponentTesting({  }) {
   // Close info window when map is clicked
   useEffect(() => {
     const handleMapClick = (e) => {
-      // Check if the click target is actually the map (not a marker or control)
       const target = e.target;
       const isMarker = target.closest('.leaflet-marker-icon') || 
                       target.closest('.leaflet-popup') ||
@@ -521,18 +486,6 @@ function MapComponentTesting({  }) {
     }
   }, [isRoutingActive]);
 
-  // Close info window when weather/town changes
-  useEffect(() => {
-    if (shouldZoom) {
-      closeInfoWindow();
-    }
-  }, [shouldZoom, currentTown]);
-
-  // Close info window when base layer changes
-  useEffect(() => {
-    closeInfoWindow();
-  }, [baseLayer]);
-
   // Memoize callback functions to prevent infinite re-renders
   const handleRouteAlternativesChange = useCallback((alternatives, selectedIndex) => {
     setRouteAlternatives(alternatives);
@@ -551,47 +504,100 @@ function MapComponentTesting({  }) {
   useEffect(() => {
     const handleNearbyPlaceSelected = (event) => {
       const placeData = event.detail;
-      
-      // Set the selected location to show the info window
       setSelectedLocation(placeData);
       
-      // Fly to the marker with smooth animation
       if (mapRef.current) {
         const map = mapRef.current;
         const markerPosition = [placeData.latitude, placeData.longitude];
-        
-        // Calculate optimal zoom level for a good view
         const currentZoom = map.getZoom();
         const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
         
-        // Fly to the marker position with smooth animation
         map.flyTo(markerPosition, optimalZoom, {
-          duration: 1.8, // Smooth animation duration
+          duration: 1.8,
           easeLinearity: 0.25
         });
       }
     };
 
     window.addEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
-
     return () => {
       window.removeEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
     };
   }, []);
 
   useEffect(() => {
-    // Routing is active if both start and end are set (and valid), or if there are any waypoints
     const routingActive =
-      !!osrmRouteCoords[0] && // Assuming osrmRouteCoords[0] is the start
-      !!osrmRouteCoords[osrmRouteCoords.length - 1] && // Assuming osrmRouteCoords[osrmRouteCoords.length - 1] is the end
+      !!osrmRouteCoords[0] &&
+      !!osrmRouteCoords[osrmRouteCoords.length - 1] &&
       (osrmWaypoints.length === 0 || osrmWaypoints.some(Boolean));
     setIsRoutingActive(routingActive);
   }, [osrmRouteCoords, osrmWaypoints]);
 
+  // Enhanced createRouteMarkerLocation function with reverse geocoding
+  const createRouteMarkerLocation = async (position, type, name, description, routeInfo = {}) => {
+    let detailedDescription = description;
+    let address = '';
+    let division = '';
+    
+    // Try to get address and division from coordinates using reverse geocoding
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}&addressdetails=1`, {
+        headers: {
+          'User-Agent': 'SarawakTourismApp/1.0'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data && data.display_name) {
+          address = data.display_name;
+          detailedDescription = `${description}\n\nAddress: ${address}`;
+        }
+        
+        // Extract division/state information
+        if (data.address) {
+          division = data.address.state || data.address.region || data.address.county || '';
+        }
+        console.log('Reverse geocoding result:', data);
+      }
+    } catch (error) {
+      console.log('Reverse geocoding failed, using coordinates only');
+    }
+    
+    return {
+      name: name,
+      latitude: position[0],
+      longitude: position[1],
+      description: detailedDescription,
+      type: type,
+      coordinates: {
+        latitude: position[0],
+        longitude: position[1]
+      },
+      // Include all possible location details
+      address: address,
+      division: division,
+      website: routeInfo.website || '',
+      phone: routeInfo.phone || '',
+      ownerEmail: routeInfo.ownerEmail || '',
+      openingHours: routeInfo.openingHours || '',
+      startDate: routeInfo.startDate || '',
+      endDate: routeInfo.endDate || '',
+      startTime: routeInfo.startTime || '',
+      endTime: routeInfo.endTime || '',
+      eventType: routeInfo.eventType || '',
+      registrationRequired: routeInfo.registrationRequired || '',
+      category: type,
+      source: 'route_marker'
+    };
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* Left Sidebar */}
-      <LeftSideBarTesting 
+      {/* Left Sidebar with ref */}
+      <LeftSideBarTestingWithRef 
+        ref={leftSidebarRef}
         setOsrmRouteCoords={setOsrmRouteCoords}
         setOsrmWaypoints={setOsrmWaypoints}
         setIsRoutingActive={setIsRoutingActive}
@@ -612,6 +618,10 @@ function MapComponentTesting({  }) {
         onSetToggleBookmarkRef={(func) => {
           toggleBookmarkRef.current = func;
         }}
+        isExpand={isSidebarExpanded}
+        setIsExpand={setIsSidebarExpanded}
+        destinationInput={destinationInput}
+        setDestinationInput={setDestinationInput}
       />
 
       {/* Top Header Container */}
@@ -698,26 +708,32 @@ function MapComponentTesting({  }) {
           selectedCategory={activeOption}
           zoomTrigger={zoomTrigger}
         />
-                {osrmRouteCoords.length > 0 && (
+        {osrmRouteCoords.length > 0 && (
           <>
             {/* Start marker - Green */}
             <Marker 
               position={osrmRouteCoords[0]} 
               icon={startMarkerIcon}
               eventHandlers={{
-                click: () => {
-                  const startLocation = {
-                    name: routeInfo.startingPoint || 'Starting Point',
-                    latitude: osrmRouteCoords[0][0],
-                    longitude: osrmRouteCoords[0][1],
-                    description: routeInfo.startingPoint ? `Starting location: ${routeInfo.startingPoint}` : 'Your journey begins here',
-                    type: 'Starting Point'
-                  };
+                click: async () => {
+                  const startLocation = await createRouteMarkerLocation(
+                    osrmRouteCoords[0], 
+                    'Starting Point',
+                    routeInfo.startingPoint || 'Starting Point',
+                    `Starting location for your journey`,
+                    {
+                      website: routeInfo.startingPointWebsite,
+                      phone: routeInfo.startingPointPhone,
+                      ownerEmail: routeInfo.startingPointEmail,
+                      address: routeInfo.startingPointAddress,
+                      openingHours: routeInfo.startingPointHours
+                    }
+                  );
                   handleMarkerClick(startLocation);
                 }
               }}
             />
-            
+
             {/* Waypoint markers - Custom numbered */}
             {osrmWaypoints && osrmWaypoints.length > 0 && osrmWaypoints.map((pos, idx) => (
               <Marker 
@@ -725,33 +741,46 @@ function MapComponentTesting({  }) {
                 position={[pos.lat, pos.lng]} 
                 icon={createWaypointMarkerIcon(idx + 1)}
                 eventHandlers={{
-                  click: () => {
-                    const waypointLocation = {
-                      name: `Waypoint ${idx + 1}`,
-                      latitude: pos.lat,
-                      longitude: pos.lng,
-                      description: `Stop ${idx + 1} on your route`,
-                      type: 'Waypoint'
-                    };
+                  click: async () => {
+                    const waypointInfo = routeInfo.waypoints?.[idx] || {};
+                    const waypointLocation = await createRouteMarkerLocation(
+                      [pos.lat, pos.lng],
+                      'Waypoint',
+                      waypointInfo.name || `Waypoint ${idx + 1}`,
+                      `Stop ${idx + 1} on your route`,
+                      waypointInfo
+                    );
                     handleMarkerClick(waypointLocation);
                   }
                 }}
               />
             ))}
-            
+
             {/* End marker - Red */}
             <Marker 
               position={osrmRouteCoords[osrmRouteCoords.length - 1]} 
               icon={endMarkerIcon}
               eventHandlers={{
-                click: () => {
-                  const endLocation = {
-                    name: routeInfo.destination || 'Destination',
-                    latitude: osrmRouteCoords[osrmRouteCoords.length - 1][0],
-                    longitude: osrmRouteCoords[osrmRouteCoords.length - 1][1],
-                    description: routeInfo.destination ? `Destination: ${routeInfo.destination}` : 'You have arrived!',
-                    type: 'Destination'
-                  };
+                click: async () => {
+                  const endLocation = await createRouteMarkerLocation(
+                    osrmRouteCoords[osrmRouteCoords.length - 1],
+                    routeInfo.name,
+                    routeInfo.destination || 'Destination',
+                    `Your destination location`,
+                    {
+                      website: routeInfo.website,
+                      phone: routeInfo.destinationPhone,
+                      ownerEmail: routeInfo.destinationEmail,
+                      address: routeInfo.destinationAddress,
+                      openingHours: routeInfo.destinationHours,
+                      startDate: routeInfo.startDate,
+                      endDate: routeInfo.endDate,
+                      startTime: routeInfo.startTime,
+                      endTime: routeInfo.endTime,
+                      eventType: routeInfo.eventType,
+                      registrationRequired: routeInfo.registrationRequired
+                    }
+                  );
                   handleMarkerClick(endLocation);
                 }
               }}
@@ -769,51 +798,38 @@ function MapComponentTesting({  }) {
                 />
               );
             })}
-            
-
             <MapZoomControllerTesting routeCoords={osrmRouteCoords} />
           </>
         )}
-        
-        {/* Nearby Places - No markers, only zoom functionality handled by sidebar */}
       </MapContainer>
 
-      {/* Custom Info Window */}
+      {/* Custom Info Window - UPDATED to show route markers */}
       {selectedLocation && !showReviewPage && (
         <div className="custom-info-window-container"
           onClick={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: '50%',
-            left: '350px', // Fixed distance from left edge
+            left: '350px',
             transform: 'translateY(-50%)',
             zIndex: 1000
           }}
         >
           <CustomInfoWindow
-            location={{
-              // name: selectedLocation.name,
-              // image: selectedLocation.image || 'default-image.jpg',
-              // description: selectedLocation.description || "No description available.",
-              // latitude: selectedLocation.latitude || "N/A",
-              // longitude: selectedLocation.longitude || "N/A",
-              // url: selectedLocation.url || 'No URL provided',
-              // rating: selectedLocation.rating,
-              // openNowText: selectedLocation.openNowText,
-              // open24Hours: selectedLocation.open24Hours,
-              // type: selectedLocation.type
-              ...selectedLocation
-            }}
+            location={selectedLocation}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}
-            // onShowReview={handleShowReview}
             onOpenLoginModal={handleOpenLoginModal}
+            onDirectionsClick={handleDirectionsClick}
+            // Add custom props for route markers
+            isRouteMarker={selectedLocation.type === 'Starting Point' || selectedLocation.type === 'Destination' || selectedLocation.type === 'Waypoint'}
+            routeMarkerType={selectedLocation.type}
           />
         </div>
       )}
 
-      {/* Tourist Info Section (YouTube Reels) */}
-      {selectedLocation && (
+      {/* Tourist Info Section (YouTube Reels) - Only show for non-route markers */}
+      {selectedLocation && selectedLocation.type !== 'Starting Point' && selectedLocation.type !== 'Destination' && selectedLocation.type !== 'Waypoint' && (
         <TouristInfoSection selectedLocation={selectedLocation} />
       )}
 
