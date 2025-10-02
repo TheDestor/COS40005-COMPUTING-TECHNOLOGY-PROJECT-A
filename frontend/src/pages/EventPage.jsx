@@ -20,6 +20,14 @@ const EventPage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Events');
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(() => {
+  const savedTab = localStorage.getItem('eventPageActiveTab');
+    return savedTab === 'ongoing' || savedTab === 'upcoming' ? savedTab : 'ongoing';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('eventPageActiveTab', activeTab);
+  }, [activeTab]);
   
   // Add auth context
   const { user, isAuthenticated } = useAuth();
@@ -60,7 +68,7 @@ const EventPage = () => {
           const eventAudiences = item.targetAudience || [];
           
           // System admin, CBT admin, and business users can see all events
-          if (userRole === 'system_admin' || userRole === 'cbt_admin' || userType === 'business') {
+          if (userRole === 'system_admin' || userRole === 'cbt_admin' || userRole === 'business') {
             return true;
           } else {
             // Tourist users (including non-logged in) can only see tourist events
@@ -129,6 +137,20 @@ const EventPage = () => {
     });
   };
 
+  // Format date range like "October 1, 2025 - October 3, 2025"
+  const formatDateRange = (startDate, endDate) => {
+    if (!startDate && !endDate) return 'Date not specified';
+    if (!startDate) return `Until ${formatDate(endDate)}`;
+    if (!endDate) return `From ${formatDate(startDate)}`;
+    
+    // If same date, show only one date
+    if (formatDate(startDate) === formatDate(endDate)) {
+      return formatDate(startDate);
+    }
+    
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  };
+
   // Format time period like "01:19 - 13:21"
   const formatTimePeriod = (startTime, endTime) => {
     if (!startTime && !endTime) return 'Time not specified';
@@ -159,7 +181,44 @@ const EventPage = () => {
     return 'Tourist (showing tourist-focused events only)';
   };
 
-  const filteredData = data.filter(item => {
+  // Categorize events into ongoing and upcoming
+  const categorizeEvents = () => {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    const ongoingEvents = data.filter(item => {
+      const startDate = item.startDate ? new Date(item.startDate) : null;
+      const endDate = item.endDate ? new Date(item.endDate) : null;
+      
+      if (!startDate || !endDate) return false;
+      
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+      
+      return startDate <= currentDate && endDate >= currentDate;
+    });
+
+    const upcomingEvents = data.filter(item => {
+      const startDate = item.startDate ? new Date(item.startDate) : null;
+      
+      if (!startDate) return false;
+      
+      startDate.setHours(0, 0, 0, 0);
+      return startDate > currentDate;
+    });
+
+    return { ongoingEvents, upcomingEvents };
+  };
+
+  const { ongoingEvents, upcomingEvents } = categorizeEvents();
+
+  // Get events based on active tab
+  const getActiveTabEvents = () => {
+    return activeTab === 'ongoing' ? ongoingEvents : upcomingEvents;
+  };
+
+  // Apply search and sort filters to the active tab events
+  const filteredData = getActiveTabEvents().filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSort = sortOrder === 'all' || item.type === sortOrder;
     return matchesSearch && matchesSort;
@@ -215,12 +274,69 @@ const EventPage = () => {
         <span>{getViewingDescription()}</span>
       </div>
 
+      {/* Tabs Section */}
+      <div className="events-tabs-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        margin: '20px 0',
+        padding: '0 20px'
+      }}>
+        <div className="events-tabs" style={{
+          display: 'flex',
+          background: '#f8f9fa',
+          borderRadius: '50px',
+          padding: '5px',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+        }}>
+          <button
+            className={`tab-button ${activeTab === 'ongoing' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('ongoing');
+              setVisibleItems(12);
+            }}
+            style={{
+              padding: '12px 30px',
+              border: 'none',
+              borderRadius: '50px',
+              background: activeTab === 'ongoing' ? 'linear-gradient(135deg, #007bff, #0056b3)' : 'transparent',
+              color: activeTab === 'ongoing' ? 'white' : '#333',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              fontSize: '1rem'
+            }}
+          >
+            On-going Events ({ongoingEvents.length})
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'upcoming' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('upcoming');
+              setVisibleItems(12);
+            }}
+            style={{
+              padding: '12px 30px',
+              border: 'none',
+              borderRadius: '50px',
+              background: activeTab === 'upcoming' ? 'linear-gradient(135deg, #28a745, #20c997)' : 'transparent',
+              color: activeTab === 'upcoming' ? 'white' : '#333',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              fontSize: '1rem'
+            }}
+          >
+            Upcoming Events ({upcomingEvents.length})
+          </button>
+        </div>
+      </div>
+
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar">
             <input
               type="text"
-              placeholder={`Search ${currentCategory}...`}
+              placeholder={`Search ${activeTab === 'ongoing' ? 'On-going' : 'Upcoming'} Events...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
@@ -262,15 +378,29 @@ const EventPage = () => {
                 <h3>{highlightMatch(item.name)}</h3>
                 <div className="card-meta">
                   <span className="type-badge">{item.type}</span>
-                  {item.startDate && (
-                    <span className="date-badge">
-                      {formatDate(item.startDate)}
-                    </span>
-                  )}
+                  {/* Remove the date badge from here */}
+                  {/* Add status badge */}
+                  <span 
+                    className="status-badge"
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      color: '#fff',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      background: activeTab === 'ongoing' 
+                        ? 'linear-gradient(135deg, #28a745, #20c997)' 
+                        : 'linear-gradient(135deg, #ffc107, #fd7e14)'
+                    }}
+                  >
+                    {activeTab === 'ongoing' ? 'On-going' : 'Upcoming'}
+                  </span>
                 </div>
                 
                 {/* Description moved above event details */}
-                <div className="desc-scroll">
+                <div className="description-area">
                   <p>{item.desc}</p>
                 </div>
 
@@ -279,11 +409,11 @@ const EventPage = () => {
                   <div className="event-detail-item">
                     <span className="event-detail-label">Date:</span>
                     <span className="event-detail-value">
-                      {formatDate(item.startDate)}
+                      {formatDateRange(item.startDate, item.endDate)}
                     </span>
                   </div>
                   <div className="event-detail-item">
-                    <span className="event-detail-label">Period:</span>
+                    <span className="event-detail-label">Time:</span>
                     <span className="event-detail-value">
                       {formatTimePeriod(item.startTime, item.endTime)}
                     </span>
@@ -302,13 +432,7 @@ const EventPage = () => {
                       <span className="event-detail-value">{item.eventOrganizers}</span>
                     </div>
                   )}
-                  {/* Show target audience */}
-                  <div className="event-detail-item">
-                    <span className="event-detail-label">Audience:</span>
-                    <span className="event-detail-value">
-                      {item.targetAudience.join(', ')}
-                    </span>
-                  </div>
+                  {/* Remove audience section as requested */}
                 </div>
 
                 <div className="button-container">
@@ -344,7 +468,7 @@ const EventPage = () => {
 
       {filteredData.length === 0 && !loading && !error && (
         <div className="no-results">
-          <p>No events found. Try adjusting your search criteria.</p>
+          <p>No {activeTab === 'ongoing' ? 'on-going' : 'upcoming'} events found. Try adjusting your search criteria.</p>
           <button onClick={() => {
             setSearchQuery('');
             setSortOrder('all');

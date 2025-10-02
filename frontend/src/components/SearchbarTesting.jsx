@@ -25,6 +25,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   const [predictions, setPredictions] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Sarawak bounding box: 109.5,0.8,115.5,5.5
   const sarawakBbox = '109.5,0.8,115.5,5.5';
@@ -44,10 +45,12 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   // Fetch suggestions from backend, Photon, and Nominatim with fallback, debounced and restricted to Sarawak
   useEffect(() => {
     if (!inputValue.trim()) {
-        setPredictions([]);
-        return;
-      }
+      setPredictions([]);
+      setIsLoading(false);
+      return;
+    }
 
+    setIsLoading(true);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       // Try to fetch from all sources in parallel
@@ -55,19 +58,17 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
         fetchPhotonSuggestions(inputValue, controller.signal).catch(() => []),
         fetchNominatimSuggestions(inputValue, controller.signal).catch(() => [])
       ])
-        .then(([backendResult, photonResult, nominatimResult]) => {
+        .then(([photonResult, nominatimResult]) => {
           let allResults = [];
           
-          // Add backend results first (highest priority)
-          if (backendResult.status === 'fulfilled' && backendResult.value.length > 0) {
-            allResults = [...backendResult.value];
+          // Add Photon results first
+          if (photonResult.status === 'fulfilled' && photonResult.value.length > 0) {
+            allResults = [...photonResult.value];
           }
           
-          // Add external API results if we have less than 5 results
+          // Add Nominatim results if we have less than 5 results
           if (allResults.length < 5) {
-            if (photonResult.status === 'fulfilled' && photonResult.value.length > 0) {
-              allResults = [...allResults, ...photonResult.value.slice(0, 5 - allResults.length)];
-            } else if (nominatimResult.status === 'fulfilled' && nominatimResult.value.length > 0) {
+            if (nominatimResult.status === 'fulfilled' && nominatimResult.value.length > 0) {
               allResults = [...allResults, ...nominatimResult.value.slice(0, 5 - allResults.length)];
             }
           }
@@ -88,103 +89,134 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
             console.error('Search failed:', err);
             setPredictions([]);
           }
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
     }, 300); // Wait 300ms after user stops typing
 
     return () => {
       clearTimeout(timeoutId);
       controller.abort();
+      setIsLoading(false);
     };
   }, [inputValue]);
 
-  // Fetch suggestions from Photon API with timeout
+  // Fetch suggestions from Photon API with timeout - FIXED VERSION
   const fetchPhotonSuggestions = async (query, signal) => {
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Photon API timeout')), 5000);
-    });
-    
-    const fetchPromise = fetch(
-      `https://corsproxy.io/?https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lang=en&limit=5&bbox=${sarawakBbox}`,
-      { signal }
-    );
-    
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
-    
-    if (!response.ok) {
-      throw new Error(`Photon API error: ${response.status}`);
+    try {
+      // Use direct Photon API without CORS proxy
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lang=en&limit=5&bbox=${sarawakBbox}`;
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Photon API timeout')), 8000);
+      });
+      
+      const fetchPromise = fetch(url, { 
+        signal,
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      if (!response.ok) {
+        throw new Error(`Photon API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Sarawak bounding box
+      const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
+      return (data.features || [])
+        .filter(feature => {
+          const lat = feature.geometry.coordinates[1];
+          const lon = feature.geometry.coordinates[0];
+          // Only keep results within Sarawak bounds
+          return (
+            lat >= minLat && lat <= maxLat &&
+            lon >= minLon && lon <= maxLon
+          );
+        })
+        .map(feature => ({
+          name: feature.properties.name || feature.properties.city || feature.properties.country,
+          description: feature.properties.country
+            ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
+            : feature.properties.osm_value,
+          latitude: feature.geometry.coordinates[1],
+          longitude: feature.geometry.coordinates[0],
+          placeId: feature.properties.osm_id,
+          full: feature,
+          source: 'photon'
+        }));
+    } catch (error) {
+      console.warn('Photon API failed:', error.message);
+      return []; // Return empty array instead of throwing
     }
-    
-    const data = await response.json();
-    
-    // Sarawak bounding box
-    const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
-    return (data.features || [])
-      .filter(feature => {
-        const lat = feature.geometry.coordinates[1];
-        const lon = feature.geometry.coordinates[0];
-        // Only keep results within Sarawak bounds
-        return (
-          lat >= minLat && lat <= maxLat &&
-          lon >= minLon && lon <= maxLon
-        );
-      })
-      .map(feature => ({
-        name: feature.properties.name || feature.properties.city || feature.properties.country,
-        description: feature.properties.country
-          ? `${feature.properties.city || ''} ${feature.properties.country}`.trim()
-          : feature.properties.osm_value,
-        latitude: feature.geometry.coordinates[1],
-        longitude: feature.geometry.coordinates[0],
-        placeId: feature.properties.osm_id,
-        full: feature,
-        source: 'photon'
-      }));
   };
 
-  // Fetch suggestions from Nominatim API (fallback) with timeout
+  // Fetch suggestions from Nominatim API (fallback) with timeout - FIXED VERSION
   const fetchNominatimSuggestions = async (query, signal) => {
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Nominatim API timeout')), 8000);
-    });
-    
-    const fetchPromise = fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=my&bounded=1&viewbox=109.5,0.8,115.5,5.5`,
-      { 
+    try {
+      // Use your own backend proxy for Nominatim to avoid CORS issues
+      const url = `/api/nominatim/search?q=${encodeURIComponent(query)}&limit=5&countrycodes=my&bounded=1&viewbox=109.5,0.8,115.5,5.5`;
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Nominatim API timeout')), 8000);
+      });
+      
+      const fetchPromise = fetch(url, { 
         signal,
         headers: {
-          'User-Agent': 'SarawakTourismApp/1.0' // Required by Nominatim
+          'User-Agent': 'SarawakTourismApp/1.0',
+          'Accept': 'application/json',
         }
+      });
+      
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      if (!response.ok) {
+        throw new Error(`Nominatim API error: ${response.status}`);
       }
-    );
-    
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
-    
-    if (!response.ok) {
-      throw new Error(`Nominatim API error: ${response.status}`);
+      
+      const data = await response.json();
+      
+      // Filter and format Nominatim results for Sarawak
+      const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
+      return (data || [])
+        .filter(item => {
+          const lat = parseFloat(item.lat);
+          const lon = parseFloat(item.lon);
+          return (
+            lat >= minLat && lat <= maxLat &&
+            lon >= minLon && lon <= maxLon
+          );
+        })
+        .map(item => ({
+          name: item.display_name.split(',')[0].trim(), // First part of display name
+          description: item.display_name.split(',').slice(1).join(',').trim(), // Rest of the address
+          latitude: parseFloat(item.lat),
+          longitude: parseFloat(item.lon),
+          placeId: item.place_id,
+          full: item,
+          source: 'nominatim'
+        }));
+    } catch (error) {
+      console.warn('Nominatim API failed:', error.message);
+      return []; // Return empty array instead of throwing
     }
+  };
+
+  // Alternative: Use a simple CORS proxy for development
+  const fetchWithCorsProxy = async (url, signal) => {
+    // For development, you can use a simple CORS proxy
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
     
-    const data = await response.json();
-    
-    // Filter and format Nominatim results for Sarawak
-    const minLat = 0.8, maxLat = 5.5, minLon = 109.5, maxLon = 115.5;
-    return data
-      .filter(item => {
-        const lat = parseFloat(item.lat);
-        const lon = parseFloat(item.lon);
-        return (
-          lat >= minLat && lat <= maxLat &&
-          lon >= minLon && lon <= maxLon
-        );
-      })
-      .map(item => ({
-        name: item.display_name.split(',')[0].trim(), // First part of display name
-        description: item.display_name.split(',').slice(1).join(',').trim(), // Rest of the address
-        latitude: parseFloat(item.lat),
-        longitude: parseFloat(item.lon),
-        placeId: item.place_id,
-        full: item,
-        source: 'nominatim'
-      }));
+    const response = await fetch(proxyUrl, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
   };
 
   const handlePlace = (place) => {
@@ -192,7 +224,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       console.error('No geometry found for selected place');
       return;
     }
-    console.log(place);
+    console.log('Selected place:', place);
     onPlaceSelected && onPlaceSelected(place);
     updateRecentSearches(place);
     
@@ -238,7 +270,9 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
         // notify listeners to refresh
         window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'add', item: place } }));
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error updating localStorage:', error);
+    }
   };
 
   const handleRecentClick = (place) => {
@@ -366,28 +400,36 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       {isFocused && (
         <div className="recent-dropdown5">
           {inputValue.trim() ? (
-            predictions.map((prediction, idx) => (
-              <div
-                key={idx}
-                className={`recent-item5 ${highlightedIndex === idx ? 'highlighted' : ''}`}
-                onMouseDown={() => handlePredictionClick(prediction)}
-              >
-                <FiClock className="recent-icon5" />
-                <div className="search-result-content">
-                  <div className="search-result-name">{prediction.name}</div>
-                  {prediction.description && (
-                    <div className="search-result-description">
-                      {prediction.description}
-                    </div>
-                  )}
-                  {prediction.source === 'backend' && prediction.category && (
-                    <div className="search-result-category">
-                      {prediction.category} • {prediction.type}
-                    </div>
-                  )}
+            <>
+              {isLoading && (
+                <div className="search-loading">
+                  <div className="loading-spinner"></div>
+                  Searching...
                 </div>
-              </div>
-            ))
+              )}
+              {!isLoading && predictions.length === 0 && (
+                <div className="search-no-results">
+                  No results found for "{inputValue}"
+                </div>
+              )}
+              {predictions.map((prediction, idx) => (
+                <div
+                  key={idx}
+                  className={`recent-item5 ${highlightedIndex === idx ? 'highlighted' : ''}`}
+                  onMouseDown={() => handlePredictionClick(prediction)}
+                >
+                  <FiClock className="recent-icon5" />
+                  <div className="search-result-content">
+                    <div className="search-result-name">{prediction.name}</div>
+                    {prediction.description && (
+                      <div className="search-result-description">
+                        {prediction.description}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
           ) : recentSearches.length > 0 ? (
             <>
               {recentSearches.map((place, idx) => (
@@ -404,7 +446,11 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
                 More from recent history
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="search-no-results">
+              {/* Start typing to search for locations */}
+            </div>
+          )}
         </div>
       )}
     </div>

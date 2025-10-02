@@ -2,7 +2,7 @@
    1. Searchbar Container Styles
 ============================ */
 .styled-searchbar-container {
-  z-index: 10001; /* above .sidebar100 (9999) */
+  z-index: 999; /* above .sidebar100 (9999) */
   background-color: #efefef;
   border-radius: 999px;
   padding: 4px 16px;

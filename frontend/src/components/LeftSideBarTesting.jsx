@@ -57,7 +57,7 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <input
         value={value}
         onChange={handleInput}
@@ -65,9 +65,7 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
         autoComplete="off"
       />
       {showDropdown && suggestions.length > 0 && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', zIndex: 1000, border: '1px solid #ccc'
-        }}>
+        <div className='photon-autocomplete-dropdown'>
           {suggestions.map((feature, idx) => (
             <div
               key={idx}
@@ -778,7 +776,7 @@ const handleClearAllRouting = () => {
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    return hours > 0 ? `${hours}h ${minutes}mins` : `${minutes}mins`;
   };
 
   const formatDistance = (meters) => {
@@ -894,6 +892,17 @@ const handleClearAllRouting = () => {
   };
 
   const toggleBookmark = () => {
+    console.log('toggleBookmark called, isLoggedIn:', isLoggedIn);
+    
+    // Check if user is logged in before opening bookmark panel
+    if (!isLoggedIn) {
+      console.log('User not logged in, opening login overlay');
+      toast.info('Please login to access your bookmarks');
+      openLoginOverlay();
+      return;
+    }
+    
+    console.log('User is logged in, toggling bookmark panel');
     if (isExpanded) setIsExpanded(false);
     if (showRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
@@ -1353,6 +1362,12 @@ useEffect(() => {
         <div
           className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
           onClick={() => {
+            // Check authentication first
+            if (!isLoggedIn) {
+              toast.info('Please login to access your bookmarks');
+              return;
+            }
+
             if (activeMenu === 'bookmark') {
               setActiveMenu('');
               toggleBookmark();
@@ -1444,7 +1459,7 @@ useEffect(() => {
               
           <div className="input-container">
             <div className="input-box">
-              <FaMapMarkerAlt className="input-icon red" />
+              <FaMapMarkerAlt className="input-icon-lsb red" />
               <PhotonAutocompleteInput
                 value={startingPoint}
                 onChange={setStartingPoint}
@@ -1466,13 +1481,13 @@ useEffect(() => {
                   <IoCloseOutline />
                 </button>
               )}
-              <FaSearch className="input-icon" />
+              <FaSearch className="input-icon-lsb-search" />
             </div>
           </div>
 
           <div className="input-container">
             <div className="input-box">
-              <FaMapMarkerAlt className="input-icon red" />
+              <FaMapMarkerAlt className="input-icon-lsb red" />
               <PhotonAutocompleteInput
                 value={destination}
                 onChange={setDestination}
@@ -1494,14 +1509,14 @@ useEffect(() => {
                   <IoCloseOutline />
                 </button>
               )}
-              <FaSearch className="input-icon" />
+              <FaSearch className="input-icon-lsb-search" />
             </div>
           </div>
 
           {addDestinations.map((dest, index) => (
             <div className="input-container" key={index}>
               <div className="input-box">
-                <FaMapMarkerAlt className="input-icon-add" />
+                <FaMapMarkerAlt className="input-icon-lsb-add" />
                 <PhotonAutocompleteInput
                   value={addDestinations[index]}
                   onChange={val => {
@@ -1536,7 +1551,7 @@ useEffect(() => {
                   }}
                   placeholder={`Add destination ${index + 1}`}
                 />
-                <button onClick={() => {
+                <button className="clear-button2" onClick={() => {
                     setAddDestinations(prev => prev.filter((_, i) => i !== index));
                     setWaypointCoords(prev => prev.filter((_, i) => i !== index));
                 }}>
@@ -1573,43 +1588,44 @@ useEffect(() => {
             </div>
           </div>
 
-          {isLoading && <div className="loading-message">Calculating route...</div>}
-            {routeSummary && (
-              <div className="route-summary-container">
-                <div className="route-summary-header">
-                  <FaMapMarkerAlt className="section-icon" />
-                  <h4>Route Summary</h4>
-                </div>
-                <div className="route-summary-item">
-                  <FaMapMarkerAlt className="summary-icon" />
-                  <span className="summary-label">Distance:</span>
-                  <span className="summary-value">{(routeSummary.distance / 1000).toFixed(2)} km</span>
-                </div>
-                <div className="route-summary-item">
-                  <FaClock className="summary-icon" />
-                  <span className="summary-label">Duration:</span>
-                  <span className="summary-value">{(routeSummary.duration / 60).toFixed(0)} min</span>
-                </div>
-                <div className="route-summary-item">
-                  <FaCar className="summary-icon" />
-                  <span className="summary-label">Transport:</span>
-                  <span className="summary-value">{routeSummary.vehicle}</span>
-                </div>
-                {routeSummary.roadInfo && routeSummary.roadInfo.length > 0 && (
-                  <div className="route-summary-item">
-                    <FaMapMarkerAlt className="summary-icon" />
-                    <span className="summary-label">Main Roads:</span>
-                    <span className="summary-value">
-                      {routeSummary.roadInfo
-                        .filter(road => road.road && road.road !== 'Unknown Road')
-                        .slice(0, 3)
-                        .map(road => road.road)
-                        .join(', ') || 'Various roads'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+ {isLoading ? (
+  <div className="loading-message">Calculating route...</div>
+) : routeSummary ? (
+  <div className="route-summary-container">
+    <div className="route-summary-header">
+      <FaMapMarkerAlt className="section-icon" />
+      <h4>Route Summary</h4>
+    </div>
+    <div className="route-summary-item">
+      <FaMapMarkerAlt className="summary-icon-lsb" />
+      <span className="summary-label">Distance:</span>
+      <span className="summary-value">{(routeSummary.distance / 1000).toFixed(2)} km</span>
+    </div>
+    <div className="route-summary-item">
+      <FaClock className="summary-icon-lsb" />
+      <span className="summary-label">Duration:</span>
+      <span className="summary-value">{formatDuration(routeSummary.duration)}</span>
+    </div>
+    <div className="route-summary-item">
+      <FaCar className="summary-icon-lsb" />
+      <span className="summary-label">Transport:</span>
+      <span className="summary-value">{routeSummary.vehicle}</span>
+    </div>
+    {routeSummary.roadInfo && routeSummary.roadInfo.length > 0 && (
+      <div className="route-summary-item">
+        <FaMapMarkerAlt className="summary-icon-lsb" />
+        <span className="summary-label">Main Roads:</span>
+        <span className="summary-value">
+          {routeSummary.roadInfo
+            .filter(road => road.road && road.road !== 'Unknown Road')
+            .slice(0, 3)
+            .map(road => road.road)
+            .join(', ') || 'Various roads'}
+        </span>
+      </div>
+    )}
+  </div>
+) : null}
 
 {isLoading ? (
             <div className="loading-message">Loading nearby places...</div>
@@ -1635,11 +1651,6 @@ useEffect(() => {
                           <FaMapPin className="place-type-icon" />
                           {place.type}
                         </div>
-                        {place.rating && (
-                          <div className="place-rating100">
-                            ⭐ {place.rating} ({place.user_ratings_total || 0} reviews)
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -1756,6 +1767,14 @@ useEffect(() => {
               onItemClick={handleRecentLocationClick}
               onDeleteItems={handleDeleteRecentItems}
               onClearAll={handleClearAllRecent}
+            />
+          )}
+
+          {showLoginModal && (
+            <LoginModal 
+              isOpen={showLoginModal}
+              onClose={() => setShowLoginModal(false)}
+              // Add any other props your LoginModal needs
             />
           )}
 

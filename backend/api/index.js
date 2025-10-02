@@ -81,6 +81,31 @@ app.use("/api/graphhopper", graphHopperRouter);
 import geoapifyRouter from "../routes/geoapifyRoutes.js";
 app.use("/api/geoapify", geoapifyRouter);
 
+// In your backend routes
+app.get('/api/nominatim/search', async (req, res) => {
+  try {
+    const { q, limit, countrycodes, bounded, viewbox } = req.query;
+    
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}&countrycodes=${countrycodes}&bounded=${bounded}&viewbox=${viewbox}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'SarawakTourismApp/1.0'
+      }
+    });
+    
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Nominatim API error' });
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Nominatim proxy error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start the express server on this port
 app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);

@@ -1178,6 +1178,7 @@ input:focus:invalid {
   font-weight: 700;
   color: #1e293b;
   margin: 0;
+  text-align: center;
 }
 
 .modal-title-section {
@@ -1224,6 +1225,7 @@ input:focus:invalid {
 
 .modal-section {
   margin-bottom: 24px;
+  text-align: left;
 }
 
 .modal-section h3 {
@@ -1233,6 +1235,7 @@ input:focus:invalid {
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid #e2e8f0;
+  text-align: center;
 }
 
 .modal-section p {
@@ -1246,6 +1249,7 @@ input:focus:invalid {
   color: #4b5563;
   font-size: 15px;
   margin: 0;
+  text-align: center;
 }
 
 .modal-details-grid {
@@ -1270,8 +1274,9 @@ input:focus:invalid {
 
 .modal-detail-item {
   display: flex;
-  margin-bottom: 12px;
-  justify-content: flex-start !important;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .modal-detail-row {
@@ -1287,11 +1292,12 @@ input:focus:invalid {
 }
 
 .modal-detail-label {
-  min-width: 100px;
+  min-width: 140px;
   font-weight: 600;
   color: #374151;
   text-align: left;
   padding-right: 16px;
+  flex-shrink: 0;
 }
 
 .modal-detail strong {
@@ -1306,6 +1312,7 @@ input:focus:invalid {
   font-size: 15px;
   text-align: left;
   flex: 1;
+  word-break: break-word;
 }
 
 .modal-detail p {

@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import "../styles/RecentSection.css";
-import { FaArrowLeft, FaMap, FaClock } from "react-icons/fa";
+import { FaArrowLeft, FaMap, FaClock, FaTrashAlt } from "react-icons/fa";
 import fallbackImage from "../assets/Kuching.png";
 import { toast } from "sonner";
 
@@ -14,6 +14,14 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
         ? prev.filter(i => i !== item)
         : [...prev, item]
     );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedItems([...history]);
+    } else {
+      setSelectedItems([]);
+    }
   };
   
   const handleDelete = () => {
@@ -41,71 +49,94 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
     }
     closeConfirm();
   };
-  
 
   return (
     <div className={`recent-slide-container ${isOpen ? "show" : ""}`}>
+      {/* Header */}
       <div className="recent-header">
         <FaClock className="recent-icon"/>
-        <span>Recents</span>
+        <span>Recent Locations</span>
         <FaArrowLeft className="back-icon3" onClick={onClose} />
       </div>
 
-      <div className="recent-filters">
-        <button className="filter-button2 active"><FaMap /> All</button>
-        {selectedItems.length > 0 && (
-          <button className="delete-button33" onClick={handleDelete}>
-            Delete Selected
+      {/* Actions Bar - Only show when items are selected */}
+      {selectedItems.length > 0 && (
+        <div className="recent-actions">
+          <label className="select-all-label">
+            <input
+              type="checkbox"
+              checked={selectedItems.length === history.length && history.length > 0}
+              onChange={handleSelectAll}
+            />
+            Select All
+          </label>
+          <button className="recent-delete-btn" onClick={handleDelete}>
+            <FaTrashAlt /> Delete
           </button>
-        )}
-        {history.length > 0 && (
           <button className="clear-all-button" onClick={handleClearAll}>
             Clear All
           </button>
+        </div>
+      )}
+
+      {/* Scrollable Content */}
+      <div className="recent-list-container">
+        {history.length > 0 ? (
+          <div className="recent-list">
+            {history.map((item, index) => (
+              <div
+                key={index}
+                className="recent-item"
+                onClick={() => onItemClick(item)}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(item)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => toggleSelectItem(item)}
+                  className="recent-checkbox"
+                />
+                <img 
+                  src={(item && item.image) ? item.image : fallbackImage} 
+                  alt={item.name} 
+                  className="recent-item-image"
+                  onError={(e) => {
+                    e.target.src = fallbackImage;
+                  }}
+                />
+                <div className="recent-item-info">
+                  <span className="recent-item-name">{item.name}</span>
+                  <span className="recent-item-type">{item.type || 'Location'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="recent-empty-state">
+            <div className="recent-empty-message">
+              You have no recent locations yet.
+            </div>
+          </div>
         )}
       </div>
 
-      {history.length > 0 ? (
-        <div className="recent-group">
-          <p className="group-title">Recent Searches</p>
-          {history.map((item, index) => (
-            <div
-              key={index}
-              className="recent-item"
-              onClick={() => onItemClick(item)} // Click on item to trigger search
-            >
-              <input
-                type="checkbox"
-                checked={selectedItems.includes(item)}
-                onClick={(e) => e.stopPropagation()}
-                onChange={() => toggleSelectItem(item)}
-              />
-              <img src={(item && item.image) ? item.image : fallbackImage} alt={item.name} />
-              <div className="item-info">
-                <span className="title">{item.name}</span>
-                <span className="category">{item.type || 'Search'}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="no-recent">No recent searches yet.</p>
-      )}
-
+      {/* Confirmation Modal */}
       {confirmState.open && (
         <div className="recent-modal-overlay" onClick={closeConfirm}>
           <div className="recent-modal" onClick={(e) => e.stopPropagation()}>
             <div className="recent-modal-title">
-              {confirmState.kind === 'delete' ? 'Delete selected?' : 'Clear all recents?'}
+              {confirmState.kind === 'delete' ? 'Delete selected locations?' : 'Clear all recent locations?'}
             </div>
             <div className="recent-modal-body">
               {confirmState.kind === 'delete'
-                ? `This will remove ${selectedItems.length} selected item(s) from your recent history.`
-                : 'This will remove all items from your recent history.'}
+                ? `This will remove ${selectedItems.length} selected location(s) from your recent history.`
+                : 'This will remove all locations from your recent history.'}
             </div>
             <div className="recent-modal-actions">
               <button className="btn-secondary" onClick={closeConfirm}>Cancel</button>
-              <button className="btn-danger" onClick={confirmAction}>Confirm</button>
+              <button className="btn-danger" onClick={confirmAction}>
+                {confirmState.kind === 'delete' ? 'Delete' : 'Clear All'}
+              </button>
             </div>
           </div>
         </div>

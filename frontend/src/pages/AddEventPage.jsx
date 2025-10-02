@@ -304,7 +304,8 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
         return formatDateForInput(tomorrow);
       };
 
-      setEditForm({
+      // Create initial form data object
+      const initialFormData = {
         name: event.name,
         description: event.description,
         eventType: event.eventType,
@@ -319,7 +320,15 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
         longitude: event.coordinates?.longitude || 110.3592,
         eventOrganizers: event.eventOrganizers || '',
         eventHashtags: event.eventHashtags || ''
-      });
+      };
+
+      // For past events, store the original image URL
+      if (isPastEvent) {
+        initialFormData.originalImageUrl = event.imageUrl;
+      }
+
+      // Set the form data and uploaded image
+      setEditForm(initialFormData);
       setUploadedImage(event.imageUrl);
     } else {
       setIsEditMode(false);
@@ -388,9 +397,9 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
           <>
             <div className="modal-header">
               <h2>Edit Event</h2>
-              <button className="modal-close" onClick={onClose}>
+              {/* <button className="modal-close" onClick={onClose}>
                 <FaTimes />
-              </button>
+              </button> */}
             </div>
             <div className="modal-body edit-modal-body">
               <div className="event-form-container edit-event-form">
@@ -770,8 +779,15 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                                 ? editForm.eventHashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
                                 : editForm.eventHashtags || [],
                               imageFile: imageFile,
-                              originalImageUrl: event.imageUrl
+                              originalImageUrl: editForm.originalImageUrl || event.imageUrl
                             };
+
+                            // Check if we have an image (either new upload or existing)
+                            if (!imageFile && !editForm.originalImageUrl && !event.imageUrl) {
+                              toast.error('Event image is required');
+                              return;
+                            }
+
                             onSave(newEventData, true); // true indicates creating new event from past
                           } else {
                             // This is an upcoming event - update normally
@@ -840,6 +856,25 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                   </div>
                 </div>
               </div>
+
+              <div className="modal-section">
+                <h3>Organizers Details</h3>
+                <div className="modal-detail-list">
+                  <div className="modal-detail-item">
+                    <span className="modal-detail-label">Event Organizers</span>
+                    <span className="modal-detail-value">
+                      {event.eventOrganizers || 'Not specified'}
+                    </span>
+                  </div>
+                  
+                  <div className="modal-detail-item">
+                    <span className="modal-detail-label">Event Hashtags</span>
+                    <span className="modal-detail-value">
+                      {event.eventHashtags || 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+              </div>
               
               <div className="modal-section">
                 <h3>Description</h3>
@@ -875,7 +910,10 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
 const AddEventPage = () => {
   // State for Add Event Form
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('Add Event');
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem('addEventPageActiveTab');
+    return savedTab || 'Add Event';
+  });
   const [eventName, setEventName] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
@@ -939,6 +977,10 @@ const AddEventPage = () => {
   const eventTypes = ['Festival', 'Workshop & Seminars', 'Community & Seasonal Bazaars', 'Music, Arts & Performance', 'Food & Culinary', 'Sporting', 'Art & Performance'];
 
   const { accessToken } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem('addEventPageActiveTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     const currentImage = uploadedImage;
@@ -1208,7 +1250,6 @@ const AddEventPage = () => {
       // If end date is before new start date, reset end date
       if (endDate && endDate < date) {
         setEndDate(null);
-        setEndTime('');
       }
     } else {
       setEndDate(date);
@@ -1544,9 +1585,8 @@ const AddEventPage = () => {
         // User uploaded a new image
         formData.append('image', eventData.imageFile);
       } else if (eventData.originalImageUrl) {
-        // Use the original image from the past event
-        // We need to convert the image URL to a File object
         try {
+          // Convert the original image URL to a File object
           const imageFile = await urlToFile(eventData.originalImageUrl, 'event-image.jpg');
           formData.append('image', imageFile);
         } catch (error) {
@@ -1606,6 +1646,17 @@ const AddEventPage = () => {
     } catch (error) {
       console.error('Error deleting event:', error);
       toast.error('Failed to delete event');
+    }
+  };
+
+  const urlToFile = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new File([blob], filename, { type: blob.type });
+    } catch (error) {
+      console.error('Error converting image URL to file:', error);
+      throw error;
     }
   };
 
