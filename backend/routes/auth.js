@@ -22,9 +22,9 @@
 //       // Validate request body
 //       const errors = validationResult(req);
 //       if (!errors.isEmpty()) {
-//         return res.status(400).json({ 
+//         return res.status(400).json({
 //           success: false,
-//           errors: errors.array() 
+//           errors: errors.array()
 //         });
 //       }
 
@@ -37,7 +37,7 @@
 //       const firebaseUser = await admin.auth().getUser(decodedToken.uid);
 
 //       // Find or create user in database
-//       let user = await User.findOne({ 
+//       let user = await User.findOne({
 //         $or: [
 //           { firebaseUid: decodedToken.uid },
 //           { phoneNumber: firebaseUser.phoneNumber }
@@ -57,10 +57,10 @@
 
 //       // Create JWT for session management
 //       const appToken = jwt.sign(
-//         { 
+//         {
 //           userId: user._id,
 //           role: user.role,
-//           phone: user.phoneNumber 
+//           phone: user.phoneNumber
 //         },
 //         process.env.JWT_SECRET,
 //         { expiresIn: '7d' }
@@ -110,9 +110,9 @@
 //     try {
 //       const errors = validationResult(req);
 //       if (!errors.isEmpty()) {
-//         return res.status(400).json({ 
+//         return res.status(400).json({
 //           success: false,
-//           errors: errors.array() 
+//           errors: errors.array()
 //         });
 //       }
 
@@ -162,3 +162,4 @@
 // );
 
 // export default router;
+// Test
