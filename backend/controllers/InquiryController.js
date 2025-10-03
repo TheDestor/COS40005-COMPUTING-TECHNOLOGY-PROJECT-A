@@ -22,23 +22,63 @@ export const getAllInquiries = async (req, res) => {
 export const updateInquiry = async (req, res) => {
     try {
         const { inquiryId, action } = req.body;
-        const inquiry = await contactUsModel.findById(inquiryId);
         
-        if (action === "Resolve") {
-            inquiry.status = "Resolved"
-            await inquiry.save();
-
-            return res.status(200).json({ message: "Successfully marked inquiry as resolved", success: true });
-        } else if (action === "Delete") {
-            return res.status(200).json({ message: "Test" });
-        } else {
-            return res.status(404).json({ message: "Test" });
+        if (!inquiryId || !action) {
+            return res.status(400).json({ 
+                message: "Missing required fields: inquiryId and action", 
+                success: false 
+            });
         }
         
-    }
-    catch (error) {
+        if (action === "Resolve") {
+            // Use findByIdAndUpdate to bypass validation on other fields
+            const inquiry = await contactUsModel.findByIdAndUpdate(
+                inquiryId,
+                { status: "Resolved" },
+                { new: true, runValidators: false } // Don't run validators on unchanged fields
+            );
+
+            if (!inquiry) {
+                return res.status(404).json({ 
+                    message: "Inquiry not found", 
+                    success: false 
+                });
+            }
+
+            return res.status(200).json({ 
+                message: "Successfully marked inquiry as resolved", 
+                success: true 
+            });
+        } else if (action === "Delete") {
+            const inquiry = await contactUsModel.findByIdAndDelete(inquiryId);
+            
+            if (!inquiry) {
+                return res.status(404).json({ 
+                    message: "Inquiry not found", 
+                    success: false 
+                });
+            }
+            
+            return res.status(200).json({ 
+                message: "Inquiry deleted successfully", 
+                success: true 
+            });
+        } else {
+            return res.status(400).json({ 
+                message: "Invalid action. Must be 'Resolve' or 'Delete'", 
+                success: false 
+            });
+        }
+        
+    } catch (error) {
         console.error("Error updating inquiry:", error);
-        return res.status(500).json({ message: "An error occured while updating inquiry", success: false });
+        console.error("Inquiry ID:", req.body.inquiryId);
+        console.error("Error details:", error.message);
+        
+        return res.status(500).json({ 
+            message: "An error occurred while updating inquiry", 
+            success: false 
+        });
     }
 }
 

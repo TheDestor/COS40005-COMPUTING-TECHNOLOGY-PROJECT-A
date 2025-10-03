@@ -318,11 +318,18 @@ const ViewInquiry = () => {
   };
 
   const handleMarkResolved = async (id) => {
+    console.log("=== Mark Resolved Debug ===");
+    console.log("Inquiry ID:", id);
+    console.log("Access Token exists:", !!accessToken);
+    
     try {
       const payload = {
         inquiryId: id,
         action: "Resolve"
-      }
+      };
+      
+      console.log("Payload:", payload);
+      
       const response = await ky.post(
         "/api/inquiry/updateInquiry",
         {
@@ -330,30 +337,52 @@ const ViewInquiry = () => {
           json: payload
         }
       ).json();
-
+  
+      console.log("API Response:", response);
+  
       if (response.success) {
-        toast.success("Inquiry marked as resolved");
+        const updatedInquiries = inquiries.map(item => {
+          if (item.id === id) {
+            return { ...item, status: 'Resolved' };
+          }
+          return item;
+        });
+  
+        setInquiries(updatedInquiries);
+  
+        if (selectedInquiry && selectedInquiry.id === id) {
+          setSelectedInquiry({ ...selectedInquiry, status: 'Resolved' });
+        }
+  
         const inquiry = inquiries.find(i => i.id === id);
         if (inquiry) {
           addNotification(`Inquiry from "${inquiry.name}" marked as resolved`, 'success');
         }
+        
+        toast.success("Inquiry marked as resolved");
       } else {
-        toast.error("An error occured while trying to mark inquiry as resolved");
+        console.log("Response not successful:", response);
+        toast.error(response.message || "An error occurred while trying to mark inquiry as resolved");
       }
     } catch (error) {
-      toast.error("Error updating inquiry status:", error);
-    }
-    const updatedInquiries = inquiries.map(item => {
-      if (item.id === id) {
-        return { ...item, status: 'Resolved' };
+      console.error("=== Error Details ===");
+      console.error("Error object:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      
+      // Try to get the response body if available
+      if (error.response) {
+        try {
+          const errorBody = await error.response.json();
+          console.error("Error response body:", errorBody);
+          toast.error(errorBody.message || "Failed to update inquiry status");
+        } catch (e) {
+          console.error("Could not parse error response");
+          toast.error("Failed to update inquiry status. Please try again.");
+        }
+      } else {
+        toast.error("Network error. Please check your connection.");
       }
-      return item;
-    });
-
-    setInquiries(updatedInquiries);
-
-    if (selectedInquiry && selectedInquiry.id === id) {
-      setSelectedInquiry({ ...selectedInquiry, status: 'Resolved' });
     }
   };
 
