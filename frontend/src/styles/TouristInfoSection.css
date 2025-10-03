@@ -531,4 +531,87 @@
     order: -1;
     width: 100%;
   }
+
+  .tourist-info-container {
+    width: 280px !important;
+    bottom: 150px !important;
+    border-radius: 12px;
+  }
+
+  .scroll-down-indicator {
+    bottom: 0;
+    padding: 0;
+    margin: 20px 0;
+  }
+
+  .collapse-toggle {
+    top: 10rem;
+    right: 280px !important;
+  }
+
+  .tourist-info-wrapper.collapsed .collapse-toggle {
+    right: 0 !important;
+  }
+
+  .react-player iframe {
+    height: 100% !important;
+  }
+
+  .reel-item { 
+  height: auto;
+    display:flex;
+    flex-direction: column;
+  }
+
+  .scroll-down-indicator p {
+    font-size: 16px; /* 👈 increase font size here */
+  }
+}
+
+@media (max-width: 992px) {
+  .tourist-info-container {
+    top: 130px !important;
+    width: 300px;
+  }
+
+  .collapse-toggle {
+    top: 10.5rem;
+    right: 300px;
+  }
+
+  .scroll-down-indicator p {
+    font-size: 18px; /* 👈 increase font size here */
+  }
+}
+/* Mobile: clean stacked layout for video + info */
+@media (max-width: 768px) {
+  .video-container {
+    height: 200px;
+    padding: 0;
+    padding-top: 0; /* override earlier aspect-ratio padding */
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+  }
+  .video-container .react-player {
+    position: relative !important; /* let container determine height */
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .scroll-down-indicator p {
+    font-size: 14px; /* 👈 increase font size here */
+  }
+
+  .tourist-info-container {
+    top: 130px !important;
+    width: 260px !important;
+  }
+
+  .collapse-toggle {
+    top: 10.5rem;
+    right: 300px;
+  }
 }

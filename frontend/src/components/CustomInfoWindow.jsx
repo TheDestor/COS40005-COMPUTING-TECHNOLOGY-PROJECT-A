@@ -376,7 +376,7 @@ const CustomInfoWindow = ({
     return process.env.REACT_APP_BACKEND_URL || 'http://localhost:5050';
   };
 
-  // Fixed image URL handler
+  // Enhanced image URL handler for route markers
   const getImageUrl = () => {
     console.log('Location data for image:', {
       name: location.name,
@@ -390,7 +390,10 @@ const CustomInfoWindow = ({
     // Priority order for images based on location type
     let imageSource;
     
-    if (locationType === 'business') {
+    if (locationType === 'routeMarker') {
+      // For route markers, try to use enhanced business image or default
+      imageSource = location.businessImage || location.image || defaultImage;
+    } else if (locationType === 'business') {
       // For businesses, prioritize businessImage
       imageSource = location.businessImage || location.image || defaultImage;
     } else if (locationType === 'event') {
@@ -399,42 +402,18 @@ const CustomInfoWindow = ({
       // For major towns, use image if available, otherwise default
       imageSource = location.image || location.imageUrl || defaultImage;
     } else {
-      imageSource = location.image || location.businessImage || location.imageUrl || defaultImage;
+      // For other locations, use any available image
+      imageSource = location.image || location.imageUrl || location.businessImage || defaultImage;
     }
     
-    // If no image source or empty string, return default
-    if (!imageSource || imageSource === 'undefined' || imageSource === 'null' || imageSource.trim() === '') {
-      console.log('No valid image source found, using default');
-      return defaultImage;
-    }
-
-    // If it's already a full URL, use it as is
-    if (imageSource.startsWith('http')) {
-      console.log('Using full URL:', imageSource);
-      return imageSource;
-    }
-
-    // For relative paths that start with /uploads (like business images)
-    if (imageSource.startsWith('/uploads')) {
+    // Handle relative URLs from backend
+    if (imageSource && imageSource !== defaultImage && !imageSource.startsWith('http') && !imageSource.startsWith('data:')) {
       const backendUrl = getBackendUrl();
-      // Remove any leading slashes that might cause double slashes
-      const cleanPath = imageSource.startsWith('/') ? imageSource : `/${imageSource}`;
-      const fullImageUrl = `${backendUrl}${cleanPath}`;
-      console.log('Constructed uploads URL for business:', fullImageUrl);
-      return fullImageUrl;
+      imageSource = `${backendUrl}${imageSource.startsWith('/') ? '' : '/'}${imageSource}`;
     }
-
-    // For other relative paths or direct image names
-    if (!imageSource.startsWith('http') && !imageSource.startsWith('/')) {
-      const backendUrl = getBackendUrl();
-      const fullImageUrl = `${backendUrl}/uploads/${imageSource}`;
-      console.log('Constructed relative path URL:', fullImageUrl);
-      return fullImageUrl;
-    }
-
-    // For other cases, return the image source as is
-    console.log('Using direct image path:', imageSource);
-    return imageSource;
+    
+    console.log('Final image URL:', imageSource);
+    return imageSource || defaultImage;
   };
 
   // Handle image load errors
@@ -454,9 +433,10 @@ const CustomInfoWindow = ({
 
   const imageUrl = getImageUrl();
 
+  // Enhanced renderRouteMarkerDetails function
   const renderRouteMarkerDetails = () => (
     <>
-      {/* Show coordinates */}
+      {/* Show coordinates for route markers */}
       <div className="info-row">
         <span className="info-row-icon"><FaMapMarkerAlt /></span>
         <span className="info-row-text">
@@ -464,7 +444,7 @@ const CustomInfoWindow = ({
         </span>
       </div>
 
-      {/* Show address if available */}
+      {/* Show address if available from reverse geocoding */}
       {location.address && (
         <div className="info-row">
           <span className="info-row-icon"><FaMapMarkerAlt /></span>
@@ -484,22 +464,59 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {/* Show phone if available */}
-      {location.phone && (
+      {/* Show enhanced POI details from Overpass API */}
+      {location.amenity && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Amenity:</strong> {location.amenity}
+          </span>
+        </div>
+      )}
+
+      {location.tourism && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Tourism:</strong> {location.tourism}
+          </span>
+        </div>
+      )}
+
+      {location.shop && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Shop:</strong> {location.shop}
+          </span>
+        </div>
+      )}
+
+      {location.leisure && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Leisure:</strong> {location.leisure}
+          </span>
+        </div>
+      )}
+
+      {/* Show phone number if available */}
+      {/* {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
             className="info-row-link phone-link"
             onClick={handlePhoneCall}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer'}}
           >
-            {formatPhoneNumber(location.phone) || location.phone}
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Show website if available */}
-      {location.website && (
+      {getWebsiteUrl() && (
         <div className="info-row">
           <span className="info-row-icon"><FaGlobe /></span>
           <a
@@ -513,40 +530,41 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {/* Show email if available */}
-      {location.ownerEmail && (
-        <div className="info-row">
-          <span className="info-row-icon"><FaEnvelope /></span>
-          <span className="info-row-text">{location.ownerEmail}</span>
-        </div>
-      )}
-
       {/* Show opening hours if available */}
       {location.openingHours && (
         <div className="info-row">
           <span className="info-row-icon"><FaClock /></span>
           <span className="info-row-text">
-            <strong>Opening Hours:</strong> {location.openingHours}
+            <strong>Hours:</strong> {location.openingHours}
           </span>
         </div>
       )}
 
-      {/* Show event dates if available */}
-      {(location.startDate || location.endDate) && (
+      {/* Show owner email if available */}
+      {location.ownerEmail && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaEnvelope /></span>
+          <span className="info-row-text">
+            <strong>Contact:</strong> {location.ownerEmail}
+          </span>
+        </div>
+      )}
+
+      {/* Show event details if this is an event destination */}
+      {location.startDate && (
         <div className="info-row">
           <span className="info-row-icon"><FaCalendar /></span>
           <span className="info-row-text">
-            <strong>Event Date:</strong> {formatDateRange()}
+            <strong>Date:</strong> {formatDateRange()}
           </span>
         </div>
       )}
 
-      {/* Show event times if available */}
       {(location.startTime || location.endTime) && (
         <div className="info-row">
           <span className="info-row-icon"><FaClock /></span>
           <span className="info-row-text">
-            <strong>Event Time:</strong> {formatTimePeriod()}
+            <strong>Time:</strong> {formatTimePeriod()}
           </span>
         </div>
       )}
@@ -567,6 +585,26 @@ const CustomInfoWindow = ({
           <span className="info-row-icon"><FaEnvelope /></span>
           <span className="info-row-text">
             <strong>Registration:</strong> {location.registrationRequired}
+          </span>
+        </div>
+      )}
+
+      {/* Show rating if available from backend */}
+      {location.rating && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Rating:</strong> {location.rating.toFixed(1)} ⭐
+          </span>
+        </div>
+      )}
+
+      {/* Show data source for debugging */}
+      {location.dataEnhanced && (
+        <div className="info-row" style={{ fontSize: '0.8em', color: '#666' }}>
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Data Source:</strong> {location.source || 'Enhanced'}
           </span>
         </div>
       )}
@@ -597,7 +635,7 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {getPhoneNumber() && (
+      {/* {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
@@ -608,7 +646,7 @@ const CustomInfoWindow = ({
             {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )}
+      )} */}
 
       {getWebsiteUrl() && (
         <div className="info-row">
@@ -664,7 +702,7 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {getPhoneNumber() && (
+      {/* {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
@@ -675,7 +713,7 @@ const CustomInfoWindow = ({
             {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )}
+      )} */}
     </>
   );
 
@@ -689,7 +727,7 @@ const CustomInfoWindow = ({
         </span>
       </div>
 
-      {getPhoneNumber() && (
+      {/* {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
@@ -700,7 +738,7 @@ const CustomInfoWindow = ({
             {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Show website if available */}
       {getWebsiteUrl() && (
@@ -721,7 +759,7 @@ const CustomInfoWindow = ({
 
   const renderLocationDetails = () => (
     <>
-      {getPhoneNumber() && (
+      {/* {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
@@ -732,7 +770,7 @@ const CustomInfoWindow = ({
             {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )}
+      )} */}
 
       {getWebsiteUrl() && (
         <div className="info-row">

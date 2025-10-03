@@ -47,7 +47,7 @@ const useCurrentPosition = () => {
 };
 
 // Memoized component
-const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting }) => {
+const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting, isSearchActive = false }) => {
   // Cache references
   const overpassCacheRef = useRef(new Map());
   const lastFetchRef = useRef({});
@@ -623,19 +623,19 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
   // Effect for active option changes
   useEffect(() => {
-    if (activeOption === null && isRoutingActive) {
-      // Routing mode - clear visual selection but allow interaction
+    if (activeOption === null && (isRoutingActive || isSearchActive)) {
+      // In routing mode or search mode, keep menu visually inactive
       setSelectedMenu('');
       setSelectedMobileMenuItem({ name: 'Select Category', icon: <FaLocationDot /> });
     } else if (!activeOption) {
-      // No active option but not routing mode - default to Major Town
+      // No active option and not in routing/search mode → default to Major Town
       const defaultItem = menuItems.find(item => item.name === 'Major Town');
       if (defaultItem) handleMenuItemClick(defaultItem);
     } else {
       setSelectedMenu(activeOption);
       setSelectedMobileMenuItem(menuItems.find(item => item.name === activeOption) || menuItems[0]);
     }
-  }, [activeOption, isRoutingActive, handleMenuItemClick]);
+  }, [activeOption, isRoutingActive, isSearchActive, handleMenuItemClick]);
 
   // Clear temporary selection when routing ends
   useEffect(() => {

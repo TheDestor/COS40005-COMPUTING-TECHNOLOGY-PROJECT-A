@@ -367,6 +367,13 @@ function MapComponentTesting({  }) {
   const handlePlaceSelect = (place) => {
     closeInfoWindow();
     setLocations([]);
+    // Keep MapViewMenu inactive during search
+    setActiveOption(null);
+    // Clear any existing routing (polyline, markers, and sidebar state)
+    clearAllRoutingData();
+    if (leftSidebarRef.current && leftSidebarRef.current.clearAllRouting) {
+      leftSidebarRef.current.clearAllRouting();
+    }
     setSelectedSearchBarPlace({ ...place });
   };
 
@@ -533,64 +540,288 @@ function MapComponentTesting({  }) {
     setIsRoutingActive(routingActive);
   }, [osrmRouteCoords, osrmWaypoints]);
 
-  // Enhanced createRouteMarkerLocation function with reverse geocoding
+  // Enhanced createRouteMarkerLocation function with prioritized data fetching sequence
   const createRouteMarkerLocation = async (position, type, name, description, routeInfo = {}) => {
     let detailedDescription = description;
     let address = '';
     let division = '';
+    let enhancedData = {};
+    let dataFound = false;
     
-    // Try to get address and division from coordinates using reverse geocoding
+    // Use Vite environment variable syntax
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5050';
+    
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}&addressdetails=1`, {
-        headers: {
-          'User-Agent': 'SarawakTourismApp/1.0'
+      // Step 1: Check backend location data first
+      try {
+        const locationResponse = await fetch(`${backendUrl}/api/locations?category=All`);
+        if (locationResponse.ok) {
+          const locationData = await locationResponse.json();
+          
+          // Find closest location within 100m radius
+          const closestLocation = locationData.find(location => {
+            if (!location.latitude || !location.longitude) return false;
+            
+            const distance = calculateDistance(
+              position[0], position[1],
+              location.latitude, location.longitude
+            );
+            return distance <= 0.1; // 100m in kilometers
+          });
+          
+          if (closestLocation) {
+            enhancedData = {
+              name: closestLocation.name || name,
+              category: closestLocation.category || type,
+              description: closestLocation.description || description,
+              division: closestLocation.division || '',
+              website: closestLocation.url || routeInfo.website || '',
+              image: closestLocation.image || null,
+              source: 'backend_location'
+            };
+            
+            address = closestLocation.description || '';
+            division = closestLocation.division || '';
+            dataFound = true;
+            
+            console.log('Found matching backend location data');
+          }
         }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data && data.display_name) {
-          address = data.display_name;
-          detailedDescription = `${description}\n\nAddress: ${address}`;
-        }
-        
-        // Extract division/state information
-        if (data.address) {
-          division = data.address.state || data.address.region || data.address.county || '';
-        }
-        console.log('Reverse geocoding result:', data);
+      } catch (locationError) {
+        console.log('Backend location API not available');
       }
+
+      // Step 2: If no location data found, check business locations
+      if (!dataFound) {
+        try {
+          const businessResponse = await fetch(`${backendUrl}/api/businesses/approved`);
+          if (businessResponse.ok) {
+            const businessData = await businessResponse.json();
+            
+            if (businessData.success && businessData.data) {
+              // Find closest business within 100m radius
+              const closestBusiness = businessData.data.find(business => {
+                if (!business.latitude || !business.longitude) return false;
+                
+                const distance = calculateDistance(
+                  position[0], position[1],
+                  business.latitude, business.longitude
+                );
+                return distance <= 0.1; // 100m in kilometers
+              });
+              
+              if (closestBusiness) {
+                enhancedData = {
+                  name: closestBusiness.name || name,
+                  category: closestBusiness.category || type,
+                  description: closestBusiness.description || description,
+                  division: closestBusiness.division || '',
+                  website: closestBusiness.website || routeInfo.website || '',
+                  phone: closestBusiness.phone || routeInfo.phone || '',
+                  ownerEmail: closestBusiness.ownerEmail || routeInfo.ownerEmail || '',
+                  openingHours: closestBusiness.openingHours || routeInfo.openingHours || '',
+                  businessImage: closestBusiness.businessImage || null,
+                  rating: closestBusiness.rating || null,
+                  source: 'backend_business'
+                };
+                
+                address = closestBusiness.address || '';
+                division = closestBusiness.division || '';
+                dataFound = true;
+                
+                console.log('Found matching business data');
+              }
+            }
+          }
+        } catch (businessError) {
+          console.log('Backend business API not available');
+        }
+      }
+
+      // Step 3: If still no data found, check event locations
+      if (!dataFound) {
+        try {
+          const eventResponse = await fetch(`${backendUrl}/api/event/getAllEvents`);
+          if (eventResponse.ok) {
+            const eventData = await eventResponse.json();
+            
+            if (eventData.success && eventData.data) {
+              // Find closest event within 100m radius
+              const closestEvent = eventData.data.find(event => {
+                if (!event.latitude || !event.longitude) return false;
+                
+                const distance = calculateDistance(
+                  position[0], position[1],
+                  event.latitude, event.longitude
+                );
+                return distance <= 0.1; // 100m in kilometers
+              });
+              
+              if (closestEvent) {
+                enhancedData = {
+                  name: closestEvent.name || name,
+                  category: 'Events',
+                  description: closestEvent.description || description,
+                  division: closestEvent.division || '',
+                  website: closestEvent.website || routeInfo.website || '',
+                  phone: closestEvent.phone || routeInfo.phone || '',
+                  ownerEmail: closestEvent.ownerEmail || routeInfo.ownerEmail || '',
+                  image: closestEvent.imageUrl || null,
+                  
+                  // Event-specific details
+                  startDate: closestEvent.startDate || routeInfo.startDate || '',
+                  endDate: closestEvent.endDate || routeInfo.endDate || '',
+                  startTime: closestEvent.startTime || routeInfo.startTime || '',
+                  endTime: closestEvent.endTime || routeInfo.endTime || '',
+                  eventType: closestEvent.eventType || routeInfo.eventType || '',
+                  registrationRequired: closestEvent.registrationRequired || routeInfo.registrationRequired || '',
+                  
+                  source: 'backend_event'
+                };
+                
+                address = closestEvent.address || '';
+                division = closestEvent.division || '';
+                dataFound = true;
+                
+                console.log('Found matching event data');
+              }
+            }
+          }
+        } catch (eventError) {
+          console.log('Backend event API not available');
+        }
+      }
+
+      // Step 4: Only perform reverse geocoding as fallback if no data found
+      if (!dataFound) {
+        console.log('No backend data found, performing reverse geocoding as fallback');
+        
+        const nominatimResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}&addressdetails=1`, {
+          headers: {
+            'User-Agent': 'SarawakTourismApp/1.0'
+          }
+        });
+        
+        if (nominatimResponse.ok) {
+          const nominatimData = await nominatimResponse.json();
+          
+          if (nominatimData && nominatimData.display_name) {
+            address = nominatimData.display_name;
+            detailedDescription = `${description}\n\nAddress: ${address}`;
+          }
+          
+          // Extract division/state information
+          if (nominatimData.address) {
+            division = nominatimData.address.state || nominatimData.address.region || nominatimData.address.county || '';
+          }
+        }
+
+        // Try Overpass API for POI details as additional fallback
+        try {
+          const overpassQuery = `
+            [out:json][timeout:25];
+            (
+              node["amenity"](around:100,${position[0]},${position[1]});
+              node["tourism"](around:100,${position[0]},${position[1]});
+              node["shop"](around:100,${position[0]},${position[1]});
+              node["leisure"](around:100,${position[0]},${position[1]});
+            );
+            out geom;
+          `;
+          
+          const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: overpassQuery,
+            headers: {
+              'Content-Type': 'text/plain'
+            }
+          });
+
+          if (overpassResponse.ok) {
+            const overpassData = await overpassResponse.json();
+            if (overpassData.elements && overpassData.elements.length > 0) {
+              const poi = overpassData.elements[0];
+              if (poi.tags) {
+                enhancedData = {
+                  ...enhancedData,
+                  name: poi.tags.name || name,
+                  phone: poi.tags.phone || poi.tags['contact:phone'] || routeInfo.phone || '',
+                  website: poi.tags.website || poi.tags['contact:website'] || routeInfo.website || '',
+                  openingHours: poi.tags.opening_hours || routeInfo.openingHours || '',
+                  amenity: poi.tags.amenity,
+                  tourism: poi.tags.tourism,
+                  shop: poi.tags.shop,
+                  leisure: poi.tags.leisure,
+                  source: 'overpass_fallback'
+                };
+              }
+            }
+          }
+        } catch (overpassError) {
+          console.log('Overpass API not available');
+        }
+      }
+
     } catch (error) {
-      console.log('Reverse geocoding failed, using coordinates only');
+      console.log('Enhanced data fetching failed, using coordinates only');
     }
     
     return {
-      name: name,
+      name: enhancedData.name || name,
       latitude: position[0],
       longitude: position[1],
-      description: detailedDescription,
+      description: enhancedData.description || detailedDescription,
       type: type,
       coordinates: {
         latitude: position[0],
         longitude: position[1]
       },
-      // Include all possible location details
+      // Enhanced location details from prioritized sources
       address: address,
       division: division,
-      website: routeInfo.website || '',
-      phone: routeInfo.phone || '',
-      ownerEmail: routeInfo.ownerEmail || '',
-      openingHours: routeInfo.openingHours || '',
-      startDate: routeInfo.startDate || '',
-      endDate: routeInfo.endDate || '',
-      startTime: routeInfo.startTime || '',
-      endTime: routeInfo.endTime || '',
-      eventType: routeInfo.eventType || '',
-      registrationRequired: routeInfo.registrationRequired || '',
-      category: type,
-      source: 'route_marker'
+      website: enhancedData.website || routeInfo.website || '',
+      phone: enhancedData.phone || routeInfo.phone || '',
+      ownerEmail: enhancedData.ownerEmail || routeInfo.ownerEmail || '',
+      openingHours: enhancedData.openingHours || routeInfo.openingHours || '',
+      
+      // Event details (for destination markers that might be events)
+      startDate: enhancedData.startDate || routeInfo.startDate || '',
+      endDate: enhancedData.endDate || routeInfo.endDate || '',
+      startTime: enhancedData.startTime || routeInfo.startTime || '',
+      endTime: enhancedData.endTime || routeInfo.endTime || '',
+      eventType: enhancedData.eventType || routeInfo.eventType || '',
+      registrationRequired: enhancedData.registrationRequired || routeInfo.registrationRequired || '',
+      
+      // Business details
+      category: enhancedData.category || type,
+      rating: enhancedData.rating || null,
+      // businessImage: enhancedData.businessImage || null,
+      image: enhancedData.image || routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage || null,
+      
+      // POI details from Overpass (only as fallback)
+      amenity: enhancedData.amenity || '',
+      tourism: enhancedData.tourism || '',
+      shop: enhancedData.shop || '',
+      leisure: enhancedData.leisure || '',
+      
+      // Source tracking for debugging
+      source: enhancedData.source || 'route_marker',
+      dataEnhanced: dataFound
     };
+  };
+
+  // Helper function to calculate distance between two coordinates
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
   };
 
   return (
@@ -647,6 +878,8 @@ function MapComponentTesting({  }) {
               onZoomToPlace={handleZoomToPlace}
               isRoutingActive={isRoutingActive}
               onClearRouting={clearAllRoutingData}
+              // NEW: keep menu inactive whenever a search selection exists
+              isSearchActive={!!selectedSearchBarPlace}
             />
           </div>
           <div className="weather-profile-group">
@@ -718,15 +951,20 @@ function MapComponentTesting({  }) {
                 click: async () => {
                   const startLocation = await createRouteMarkerLocation(
                     osrmRouteCoords[0], 
-                    'Starting Point',
-                    routeInfo.startingPoint || 'Starting Point',
-                    `Starting location for your journey`,
+                    routeInfo.name,
+                    routeInfo.name || 'Starting Point',
+                    routeInfo.description,
                     {
-                      website: routeInfo.startingPointWebsite,
-                      phone: routeInfo.startingPointPhone,
-                      ownerEmail: routeInfo.startingPointEmail,
-                      address: routeInfo.startingPointAddress,
-                      openingHours: routeInfo.startingPointHours
+                      website: routeInfo.website,
+                      phone: routeInfo.phone,
+                      ownerEmail: routeInfo.email,
+                      address: routeInfo.address,
+                      openingHours: routeInfo.openingHours,
+                      startDate: routeInfo.startDate,
+                      endDate: routeInfo.endDate,
+                      eventType: routeInfo.eventType,
+                      registrationRequired: routeInfo.registrationRequired,
+                      image: routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage
                     }
                   );
                   handleMarkerClick(startLocation);
@@ -765,20 +1003,21 @@ function MapComponentTesting({  }) {
                   const endLocation = await createRouteMarkerLocation(
                     osrmRouteCoords[osrmRouteCoords.length - 1],
                     routeInfo.name,
-                    routeInfo.destination || 'Destination',
-                    `Your destination location`,
+                    routeInfo.name || 'Destination',
+                    routeInfo.description || 'Destination',
                     {
                       website: routeInfo.website,
-                      phone: routeInfo.destinationPhone,
-                      ownerEmail: routeInfo.destinationEmail,
-                      address: routeInfo.destinationAddress,
-                      openingHours: routeInfo.destinationHours,
+                      phone: routeInfo.phone,
+                      ownerEmail: routeInfo.email,
+                      address: routeInfo.address,
+                      openingHours: routeInfo.openingHours,
                       startDate: routeInfo.startDate,
                       endDate: routeInfo.endDate,
                       startTime: routeInfo.startTime,
                       endTime: routeInfo.endTime,
                       eventType: routeInfo.eventType,
-                      registrationRequired: routeInfo.registrationRequired
+                      registrationRequired: routeInfo.registrationRequired,
+                      image: routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage
                     }
                   );
                   handleMarkerClick(endLocation);
@@ -815,7 +1054,7 @@ function MapComponentTesting({  }) {
             zIndex: 1000
           }}
         >
-          <CustomInfoWindow
+          {/* <CustomInfoWindow
             location={selectedLocation}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}
@@ -824,14 +1063,14 @@ function MapComponentTesting({  }) {
             // Add custom props for route markers
             isRouteMarker={selectedLocation.type === 'Starting Point' || selectedLocation.type === 'Destination' || selectedLocation.type === 'Waypoint'}
             routeMarkerType={selectedLocation.type}
-          />
+          /> */}
         </div>
       )}
 
       {/* Tourist Info Section (YouTube Reels) - Only show for non-route markers */}
-      {selectedLocation && selectedLocation.type !== 'Starting Point' && selectedLocation.type !== 'Destination' && selectedLocation.type !== 'Waypoint' && (
+      {selectedLocation &&
         <TouristInfoSection selectedLocation={selectedLocation} />
-      )}
+      } 
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

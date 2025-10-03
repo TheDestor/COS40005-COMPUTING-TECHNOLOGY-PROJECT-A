@@ -4,7 +4,7 @@ import { FaArrowLeft, FaMap, FaClock, FaTrashAlt } from "react-icons/fa";
 import fallbackImage from "../assets/Kuching.png";
 import { toast } from "sonner";
 
-const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) => {
+function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, kind: null });
 
@@ -54,12 +54,18 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
     <div className={`recent-slide-container ${isOpen ? "show" : ""}`}>
       {/* Header */}
       <div className="recent-header">
-        <FaClock className="recent-icon"/>
+        <FaClock className="recent-icon" />
         <span>Recent Locations</span>
-        <FaArrowLeft className="back-icon3" onClick={onClose} />
+        <FaArrowLeft
+          className="back-icon3"
+          onClick={onClose}
+          aria-label="Close recent locations"
+          role="button"
+          tabIndex={0}
+        />
       </div>
 
-      {/* Actions Bar - Only show when items are selected */}
+      {/* Actions Bar - shown when items selected */}
       {selectedItems.length > 0 && (
         <div className="recent-actions">
           <label className="select-all-label">
@@ -70,10 +76,10 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
             />
             Select All
           </label>
-          <button className="recent-delete-btn" onClick={handleDelete}>
+          <button type="button" className="recent-delete-btn" onClick={handleDelete}>
             <FaTrashAlt /> Delete
           </button>
-          <button className="clear-all-button" onClick={handleClearAll}>
+          <button type="button" className="clear-all-button" onClick={handleClearAll}>
             Clear All
           </button>
         </div>
@@ -124,10 +130,10 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
       {confirmState.open && (
         <div className="recent-modal-overlay" onClick={closeConfirm}>
           <div className="recent-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="recent-modal-title">
+            <div className="bookmark-modal-title">
               {confirmState.kind === 'delete' ? 'Delete selected locations?' : 'Clear all recent locations?'}
             </div>
-            <div className="recent-modal-body">
+            <div className="bookmark-modal-body">
               {confirmState.kind === 'delete'
                 ? `This will remove ${selectedItems.length} selected location(s) from your recent history.`
                 : 'This will remove all locations from your recent history.'}
@@ -143,6 +149,6 @@ const RecentSection = ({ isOpen, onClose, history = [], onItemClick, onDeleteIte
       )}
     </div>
   );
-};
+}
 
 export default RecentSection;

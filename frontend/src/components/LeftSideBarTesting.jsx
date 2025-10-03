@@ -12,7 +12,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
 import { BiCurrentLocation } from "react-icons/bi";
 
-function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
+function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef();
@@ -55,6 +55,13 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
       <input
         value={value}
         onChange={handleInput}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onManualSubmit) {
+            e.preventDefault();
+            onManualSubmit(e.target.value);
+            setShowDropdown(false);
+          }
+        }}
         placeholder={placeholder}
         autoComplete="off"
       />
@@ -865,56 +872,67 @@ const LeftSidebarTesting = forwardRef(({
   };
 
   // Function to generate directions link
-  const generateDirectionsLink = () => {
-    if (!startingPointCoords || !destinationCoords) {
+  const generateDirectionsLink = async () => {
+    let startCoords = startingPointCoords;
+    let endCoords = destinationCoords;
+
+    // Fallback geocoding for manual text entry (no autocomplete selection)
+    if (!startCoords && startingPoint?.trim()) {
+      try {
+        startCoords = await geocodeAddressNominatim(startingPoint);
+      } catch (error) {
+        console.error('Failed to geocode starting point:', error);
+      }
+    }
+    if (!endCoords && (currentDestinationInput?.trim() || destination?.trim())) {
+      try {
+        const addressText = currentDestinationInput?.trim() || destination?.trim();
+        endCoords = await geocodeAddressNominatim(addressText);
+      } catch (error) {
+        console.error('Failed to geocode destination:', error);
+      }
+    }
+
+    if (!startCoords || !endCoords) {
       toast.error('Please set both starting point and destination');
       return null;
     }
 
-    const start = `${startingPointCoords.lat},${startingPointCoords.lng}`;
-    const end = `${destinationCoords.lat},${destinationCoords.lng}`;
-    
-    // Create a Google Maps directions link
+    const start = `${startCoords.lat},${startCoords.lng}`;
+    const end = `${endCoords.lat},${endCoords.lng}`;
+
     const googleMapsLink = `https://www.google.com/maps/dir/${start}/${end}`;
-    
-    // Create a custom app link with route data
     const appLink = `${window.location.origin}?route=true&start=${start}&end=${end}&vehicle=${selectedVehicle}`;
-    
     return { googleMapsLink, appLink };
   };
 
   // Function to copy directions link
   const copyDirectionsLink = async () => {
-    const links = generateDirectionsLink();
+    const links = await generateDirectionsLink();
     if (!links) return;
-
     try {
-      // Copy the Google Maps link to clipboard
       await navigator.clipboard.writeText(links.googleMapsLink);
       toast.success('Directions link copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy:', error);
       toast.error('Failed to copy link. Please try again.');
-    }
+     }
   };
 
   // Function to share directions
   const shareDirections = async () => {
-    const links = generateDirectionsLink();
+    const links = await generateDirectionsLink();
     if (!links) return;
-
     const shareData = {
       title: 'Directions',
       text: `Directions from ${startingPoint} to ${destination}`,
-      url: links.googleMapsLink
+      url: links.googleMapsLink,
     };
-
     try {
       if (navigator.share) {
         await navigator.share(shareData);
         toast.success('Directions shared successfully!');
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(links.googleMapsLink);
         toast.success('Directions link copied to clipboard!');
       }
@@ -1218,26 +1236,29 @@ const handleVehicleClick = async (vehicle) => {
     let startCoords = startingPointCoords;
     let endCoords = destinationCoords;
 
-    // Fallback to geocoding if user didn't select from autocomplete
-    if (!startCoords && startingPoint) {
+    // Fallback geocode starting point if coords missing
+    if (!(startCoords?.lat && startCoords?.lng) && startingPoint?.trim()) {
       try {
-        const geo = await geocodeAddressNominatim(startingPoint);
+        const geo = await geocodeAddressNominatim(startingPoint.trim());
         startCoords = geo;
       } catch (error) {
         console.error('Failed to geocode starting point:', error);
       }
     }
-    if (!endCoords && destination) {
+
+    // Fallback geocode destination using displayed input
+    const destinationText = (currentDestinationInput ?? destination)?.trim();
+    if (!(endCoords?.lat && endCoords?.lng) && destinationText) {
       try {
-        const geo = await geocodeAddressNominatim(destination);
+        const geo = await geocodeAddressNominatim(destinationText);
         endCoords = geo;
       } catch (error) {
         console.error('Failed to geocode destination:', error);
       }
     }
 
-    // Check if we have both coordinates
-    if (!startCoords || !endCoords) {
+    // Strict coordinate presence check
+    if (!(startCoords?.lat && startCoords?.lng) || !(endCoords?.lat && endCoords?.lng)) {
       toast.error('Please set both starting point and destination');
       setIsLoading(false);
       return;
@@ -1435,9 +1456,41 @@ useEffect(() => {
     }
   }, [startingPointCoords]);
 
-  // Function to set destination from external sources (like Directions button)
-  const setDestinationFromExternal = useCallback((name, coords) => {
-    console.log('Setting destination from external:', name, coords);
+  const handleManualDestinationSubmit = useCallback(async (text) => {
+    try {
+      const results = await geocodeAddressNominatim(text);
+      if (Array.isArray(results) && results.length > 0) {
+        const res = results[0];
+        const name = res.display_name || text;
+        const lat = parseFloat(res.lat);
+        const lon = parseFloat(res.lon);
+        setCurrentDestinationInput(name);
+        setDestinationCoords({ lat, lng: lon });
+        addToRecentLocations({
+          name,
+          latitude: lat,
+          longitude: lon,
+          type: 'Location',
+          source: 'manual'
+        });
+        if (startingPointCoords) {
+          autoCalculatedRef.current = false;
+        }
+      } else {
+        setCurrentDestinationInput(text);
+        setDestinationCoords(null);
+        toast.error('No matching address found.');
+      }
+    } catch (err) {
+      setCurrentDestinationInput(text);
+      setDestinationCoords(null);
+      toast.error('Failed to look up address.');
+    }
+  }, [startingPointCoords]);
+
+  // Enhanced function to set destination from external sources with detailed data fetching
+  const setDestinationFromExternal = useCallback(async (name, coords, additionalData = {}) => {
+    console.log('Setting destination from external:', name, coords, additionalData);
     
     // Set both the destination input field and coordinates
     setCurrentDestinationInput(name || 'Selected Location');
@@ -1448,16 +1501,25 @@ useEffect(() => {
         lng: coords.lng
       });
       
-      // Add to recent locations
-      addToRecentLocations({
+      // Enhanced recent location entry with additional data
+      const enhancedLocationData = {
         name: name || 'Selected Location',
         latitude: coords.lat,
         longitude: coords.lng,
-        type: 'Location',
-        source: 'directions'
-      });
+        type: additionalData.type || 'Location',
+        source: additionalData.source || 'directions',
+        description: additionalData.description || '',
+        address: additionalData.address || '',
+        website: additionalData.website || '',
+        phone: additionalData.phone || '',
+        category: additionalData.category || '',
+        ...additionalData
+      };
       
-      console.log('Destination coordinates set:', coords);
+      // Add to recent locations with enhanced data
+      addToRecentLocations(enhancedLocationData);
+      
+      console.log('Enhanced destination coordinates set:', coords);
       
       // If starting point is also set, reset auto-calculate flag to trigger route calculation
       if (startingPointCoords) {
@@ -1482,6 +1544,10 @@ useEffect(() => {
     },
     setDestinationName: (name) => {
       setCurrentDestinationInput(name);
+    },
+    // NEW: clear all routing programmatically (inputs, coords, and map state via props)
+    clearAllRouting: () => {
+      handleClearAllRouting();
     }
   }));
 
@@ -1675,12 +1741,13 @@ useEffect(() => {
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon-lsb red" />
               <PhotonAutocompleteInput
-                value={currentDestinationInput} // Use the current destination input
+                value={currentDestinationInput}
                 onChange={setCurrentDestinationInput}
                 onSelect={handleDestinationSelect}
+                onManualSubmit={handleManualDestinationSubmit}
                 placeholder="Enter destination..."
               />
-              {destination && (
+              {currentDestinationInput && (
                 <button 
                   className="clear-button2" 
                   onClick={handleClearDestination}
@@ -1940,7 +2007,7 @@ useEffect(() => {
             <RecentSection
               isOpen={showRecentSection}
               onClose={() => {
-                setShowRecentSection(false);
+                setShowRecentSection(false);                
                 setActiveMenu('');
               }}
               history={recentLocations}
