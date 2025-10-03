@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  FaSearch,
-  FaBell,
-  FaEnvelope,
   FaMapMarkerAlt,
   FaChartLine,
   FaEnvelopeOpen,
@@ -18,7 +15,6 @@ import profile4 from "../assets/profile4.png";
 import profile5 from "../assets/profile5.png";
 
 const DashboardPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const businessParticipationChartRef = useRef(null);
   const userEngagementChartRef = useRef(null);
 
@@ -901,27 +897,6 @@ const renderStarRating = (rating) => {
           <div className="greeting">
             <h3>Hi, CBT Admin!</h3>
             <p>Welcome back to your dashboard</p>
-          </div>
-          <div className="dashboard-actions">
-            <div className="search-bar">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
-              </div>
-            </div>
           </div>
         </div>
 
