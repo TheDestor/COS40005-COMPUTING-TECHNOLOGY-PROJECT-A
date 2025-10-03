@@ -607,11 +607,19 @@
 
   .tourist-info-container {
     top: 130px !important;
-    width: 260px !important;
+    width: 200px !important;
   }
 
   .collapse-toggle {
     top: 10.5rem;
-    right: 300px;
+    right: 200px !important;
+  }
+  
+  .tourist-info-container {
+    bottom: 170px !important;
+  }
+
+  .channel, .caption {
+    text-align: left;
   }
 }

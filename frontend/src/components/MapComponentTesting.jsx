@@ -1054,7 +1054,7 @@ function MapComponentTesting({  }) {
             zIndex: 1000
           }}
         >
-          {/* <CustomInfoWindow
+          <CustomInfoWindow
             location={selectedLocation}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}
@@ -1063,7 +1063,7 @@ function MapComponentTesting({  }) {
             // Add custom props for route markers
             isRouteMarker={selectedLocation.type === 'Starting Point' || selectedLocation.type === 'Destination' || selectedLocation.type === 'Waypoint'}
             routeMarkerType={selectedLocation.type}
-          /> */}
+          />
         </div>
       )}
 
