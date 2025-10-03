@@ -78,7 +78,6 @@ function getChartDisplayName(chartKey) {
 }
 
 export default function ViewAnalyticsOverview() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [visibleCharts, setVisibleCharts] = useState({
     userEngagement: true,
     businessParticipation: true,
