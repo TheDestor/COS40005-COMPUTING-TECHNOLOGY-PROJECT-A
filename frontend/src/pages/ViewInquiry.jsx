@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   FaSearch,
   FaBell,
-  FaEnvelope,
   FaFilter,
   FaPrint,
   FaTrash,
@@ -13,7 +12,8 @@ import {
   FaClock,
   FaArrowLeft,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaSync
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -45,11 +45,17 @@ const ViewInquiry = () => {
   const [showInquiryDetail, setShowInquiryDetail] = useState(false);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
   
+  // Notification states
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lastInquiryCount, setLastInquiryCount] = useState(0);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   
   const printOptionsRef = useRef(null);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,14 +69,18 @@ const ViewInquiry = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [showInquiryDetail]);
 
+  // Click outside handlers
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (printOptionsRef.current && !printOptionsRef.current.contains(event.target)) {
         setShowPrintOptions(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
     };
 
-    if (showPrintOptions) {
+    if (showPrintOptions || showNotifications) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -79,21 +89,61 @@ const ViewInquiry = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showPrintOptions]);
+  }, [showPrintOptions, showNotifications]);
+
+  // Add notification when new inquiry is detected
+  const addNotification = (message, type = 'info') => {
+    const newNotification = {
+      id: Date.now(),
+      message,
+      type,
+      time: new Date().toLocaleString(),
+      read: false,
+      timestamp: Date.now()
+    };
+    
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
+  };
+
+  // Mark notification as read
+  const markNotificationRead = (id) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  };
+
+  // Mark all notifications as read
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+  };
+
+  // Get notification type styling
+  const getNotificationTypeClass = (type) => {
+    switch (type) {
+      case 'success': return 'notification-success';
+      case 'warning': return 'notification-warning';
+      case 'error': return 'notification-error';
+      default: return 'notification-info';
+    }
+  };
 
   // This will consistently assign avatar based on email
   const getAvatarForEmail = (email) => {
     const avatars = [profile1, profile2, profile3, profile4, profile5, profile6, profile7, profile8];
     
-    // simple hash from email
     let hash = 0;
     for (let i = 0; i < email.length; i++) {
       const char = email.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     
-    // Use absolute value and modulo to get index
     const avatarIndex = Math.abs(hash) % avatars.length;
     return avatars[avatarIndex];
   };
@@ -112,62 +162,125 @@ const ViewInquiry = () => {
     return priorityMap[category?.toLowerCase()] || 'medium';
   };
 
-  useEffect(() => {
-    const fetchInquiries = async () => {
-      try {
-        const response = await ky.get(
-          "/api/inquiry/getAllInquiries",
-          {
-            headers: { 'Authorization': `Bearer ${accessToken}` },
+  const fetchInquiries = async (showRefreshNotification = false) => {
+    try {
+      const response = await ky.get(
+        "/api/inquiry/getAllInquiries",
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        }
+      ).json();
+
+      if (response && response.success) {
+        const fetchedInquiries = response.inquiries;
+
+        const mappedInquiries = fetchedInquiries.map((inquiry) => ({
+          id: inquiry._id,
+          name: inquiry.name || inquiry.email.split('@')[0],
+          email: inquiry.email,
+          subject: inquiry.topic,
+          message: inquiry.message,
+          date: inquiry.createdAt,
+          status: inquiry.status || "Unread",
+          priority: getPriorityByCategory(inquiry.category),
+          avatar: getAvatarForEmail(inquiry.email),
+          category: inquiry.category
+        }));
+
+        mappedInquiries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Check for new inquiries (notifications)
+        if (lastInquiryCount > 0 && mappedInquiries.length > lastInquiryCount) {
+          const newInquiryCount = mappedInquiries.length - lastInquiryCount;
+          const newInquiries = mappedInquiries.slice(0, newInquiryCount);
+          
+          // Add notifications for new inquiries
+          newInquiries.forEach(inquiry => {
+            addNotification(
+              `New inquiry from "${inquiry.name}": ${inquiry.subject}`,
+              'info'
+            );
+          });
+          
+          // Add summary notification if multiple new inquiries
+          if (newInquiryCount > 1) {
+            addNotification(
+              `${newInquiryCount} new inquiries received`,
+              'info'
+            );
           }
-        ).json();
+        }
+        
+        // Update inquiry count for future notifications
+        setLastInquiryCount(mappedInquiries.length);
 
-        if (response && response.success) {
-          const fetchedInquiries = response.inquiries;
-
-          const mappedInquiries = fetchedInquiries.map((inquiry) => ({
-            id: inquiry._id,
-            name: inquiry.name || inquiry.email.split('@')[0], // Use real name if available, fallback to email-derived
-            email: inquiry.email,
-            subject: inquiry.topic,
-            message: inquiry.message,
-            date: inquiry.createdAt,
-            status: inquiry.status || "Unread",
-            priority: getPriorityByCategory(inquiry.category),
-            avatar: getAvatarForEmail(inquiry.email),
-            category: inquiry.category
-          }));
-
-          mappedInquiries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-          if (mappedInquiries.length > 0) {
-            const firstInquiry = mappedInquiries[0];
-            if (firstInquiry.status === "Unread") {
-              firstInquiry.status = "in-progress";
-              const updatedMappedInquiries = mappedInquiries.map(item => item.id === firstInquiry.id ? firstInquiry : item);
-              setInquiries(updatedMappedInquiries);
-              setSelectedInquiry(firstInquiry);
-            } else {
-              setInquiries(mappedInquiries);
-              setSelectedInquiry(firstInquiry);
-            }
-            if (isMobile) {
-              setShowInquiryDetail(false);
-            }
+        if (mappedInquiries.length > 0) {
+          const firstInquiry = mappedInquiries[0];
+          if (firstInquiry.status === "Unread") {
+            firstInquiry.status = "in-progress";
+            const updatedMappedInquiries = mappedInquiries.map(item => item.id === firstInquiry.id ? firstInquiry : item);
+            setInquiries(updatedMappedInquiries);
+            setSelectedInquiry(firstInquiry);
           } else {
-            setInquiries([]);
-            setSelectedInquiry(null);
+            setInquiries(mappedInquiries);
+            setSelectedInquiry(firstInquiry);
+          }
+          if (isMobile) {
+            setShowInquiryDetail(false);
           }
         } else {
           setInquiries([]);
+          setSelectedInquiry(null);
         }
-      } catch (error) {
-        console.error(error);
-      }
-    }
 
+        // Show refresh notification if manually refreshed
+        if (showRefreshNotification) {
+          addNotification('Inquiry data refreshed successfully', 'success');
+        }
+      } else {
+        setInquiries([]);
+      }
+    } catch (error) {
+      console.error(error);
+      addNotification('Failed to load inquiries', 'error');
+    }
+  };
+
+  useEffect(() => {
     fetchInquiries();
   }, [accessToken, isMobile]);
+
+  // Auto-refresh inquiries every 30 seconds to check for new submissions
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const intervalId = setInterval(() => {
+      fetchInquiries(false); // Silent refresh without notification
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [accessToken]);
+
+  // Initialize notifications with welcome message
+  useEffect(() => {
+    if (notifications.length === 0) {
+      setNotifications([
+        {
+          id: 1,
+          message: "Welcome to Inquiries Management Dashboard",
+          type: "info",
+          time: new Date().toLocaleString(),
+          read: false,
+          timestamp: Date.now()
+        }
+      ]);
+    }
+  }, []);
+
+  // Manual refresh handler
+  const handleRefresh = () => {
+    fetchInquiries(true);
+  };
 
   const formatDate = (dateString) => {
     const options = {
@@ -220,6 +333,10 @@ const ViewInquiry = () => {
 
       if (response.success) {
         toast.success("Inquiry marked as resolved");
+        const inquiry = inquiries.find(i => i.id === id);
+        if (inquiry) {
+          addNotification(`Inquiry from "${inquiry.name}" marked as resolved`, 'success');
+        }
       } else {
         toast.error("An error occured while trying to mark inquiry as resolved");
       }
@@ -241,6 +358,7 @@ const ViewInquiry = () => {
   };
 
   const handleDeleteInquiry = async (id) => {
+    const inquiry = inquiries.find(i => i.id === id);
     const updatedInquiries = inquiries.filter(item => item.id !== id);
     setInquiries(updatedInquiries);
 
@@ -262,6 +380,9 @@ const ViewInquiry = () => {
 
       if (response.success) {
         toast.success("Inquiry deleted");
+        if (inquiry) {
+          addNotification(`Inquiry from "${inquiry.name}" deleted successfully`, 'success');
+        }
       } else {
         toast.error("An error occured while trying to delete inquiry");
       }
@@ -466,6 +587,9 @@ const ViewInquiry = () => {
     }
   };
 
+  // Get unread notification count
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <div className="dashboard-container">
       <Sidebar />
@@ -486,13 +610,59 @@ const ViewInquiry = () => {
               />
             </div>
             <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
+              <button 
+                className="refresh-btn"
+                onClick={handleRefresh}
+                title="Refresh data"
+              >
+                <FaSync />
+              </button>
+              <div className="notification-wrapper" ref={notificationRef}>
+                <div 
+                  className="icon-wrapper notification-icon"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <FaBell className="action-icon" />
+                  {unreadCount > 0 && (
+                    <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                  )}
+                </div>
+                {showNotifications && (
+                  <div className="notification-dropdown">
+                    <div className="dropdown-header">
+                      <h4>Notifications</h4>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllNotificationsRead}
+                          className="mark-all-read"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="notification-list">
+                      {notifications.length > 0 ? (
+                        notifications.map(notification => (
+                          <div 
+                            key={notification.id} 
+                            className={`notification-item ${notification.read ? 'read' : 'unread'} ${getNotificationTypeClass(notification.type)}`}
+                            onClick={() => markNotificationRead(notification.id)}
+                          >
+                            <div className="notification-content">
+                              <p className="notification-message">{notification.message}</p>
+                              <span className="notification-time">{notification.time}</span>
+                            </div>
+                            <div className="notification-type-indicator"></div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-notifications">
+                          <p>No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -785,6 +955,242 @@ const ViewInquiry = () => {
       </div>
 
       <style jsx>{`
+        /* Notification Styles */
+        .notification-wrapper {
+          position: relative;
+        }
+
+        .notification-icon {
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .notification-icon:hover .action-icon {
+          color: #3b82f6;
+          transform: scale(1.1);
+        }
+
+        .notification-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          width: 380px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          z-index: 1000;
+          max-height: 500px;
+          overflow: hidden;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .dropdown-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid #e5e7eb;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          border-radius: 12px 12px 0 0;
+        }
+
+        .dropdown-header h4 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .mark-all-read {
+          background: none;
+          border: none;
+          color: #3b82f6;
+          cursor: pointer;
+          font-size: 0.85rem;
+          font-weight: 500;
+          padding: 4px 8px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+
+        .mark-all-read:hover {
+          color: #2563eb;
+          background: #eff6ff;
+        }
+
+        .notification-list {
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .notification-item {
+          display: flex;
+          align-items: flex-start;
+          padding: 14px 20px;
+          border-bottom: 1px solid #f3f4f6;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .notification-item:hover {
+          background: #f9fafb;
+        }
+
+        .notification-item:last-child {
+          border-bottom: none;
+        }
+
+        .notification-item.unread {
+          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+          border-left: 4px solid #3b82f6;
+        }
+
+        .notification-item.unread:hover {
+          background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+        }
+
+        .notification-content {
+          flex: 1;
+        }
+
+        .notification-message {
+          margin: 0 0 6px 0;
+          font-size: 0.9rem;
+          line-height: 1.4;
+          color: #374151;
+          font-weight: 500;
+        }
+
+        .notification-time {
+          font-size: 0.8rem;
+          color: #6b7280;
+          font-weight: 400;
+        }
+
+        .notification-type-indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-left: 12px;
+          margin-top: 6px;
+          flex-shrink: 0;
+        }
+
+        .notification-info .notification-type-indicator {
+          background: #3b82f6;
+        }
+
+        .notification-success .notification-type-indicator {
+          background: #10b981;
+        }
+
+        .notification-warning .notification-type-indicator {
+          background: #f59e0b;
+        }
+
+        .notification-error .notification-type-indicator {
+          background: #ef4444;
+        }
+
+        .notification-item.read .notification-type-indicator {
+          background: #d1d5db;
+        }
+
+        .no-notifications {
+          padding: 40px 20px;
+          text-align: center;
+          color: #6b7280;
+        }
+
+        .no-notifications p {
+          margin: 0;
+          font-size: 0.9rem;
+        }
+
+        /* Refresh Button Styles */
+        .refresh-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #059669;
+          font-size: 0.9rem;
+          margin-right: 8px;
+        }
+
+        .refresh-btn:hover {
+          background: #f0fdf4;
+          border-color: #059669;
+          transform: translateY(-1px);
+        }
+
+        /* Enhanced badge styles */
+        .badge {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          border-radius: 12px;
+          padding: 2px 6px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          min-width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          }
+          50% {
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+          }
+          100% {
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+          }
+        }
+
+        .icon-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .action-icon {
+          font-size: 1.2rem;
+          color: #6b7280;
+          transition: all 0.2s ease;
+        }
+
         /* Compact Layout Styles for No-Scroll Design */
         .dashboard-content {
           height: 100vh;
@@ -841,7 +1247,7 @@ const ViewInquiry = () => {
           flex: 1;
           display: flex;
           overflow: hidden;
-          // margin: 0 20px 20px 20px;
+          margin: 0 20px 20px 20px;
           border-radius: 8px;
           border: 1px solid #e5e7eb;
         }
@@ -1198,32 +1604,100 @@ const ViewInquiry = () => {
           .pagination-info {
             font-size: 0.75rem;
           }
+
+          .notification-dropdown {
+            width: 320px;
+            left: -280px;
+          }
+
+          .action-icons {
+            flex-direction: row;
+            gap: 4px;
+          }
         }
 
         /* Scrollbar styling for better appearance */
         .compact-list::-webkit-scrollbar,
         .compact-detail-content::-webkit-scrollbar,
-        .compact-message-body::-webkit-scrollbar {
+        .compact-message-body::-webkit-scrollbar,
+        .notification-list::-webkit-scrollbar {
           width: 4px;
         }
 
         .compact-list::-webkit-scrollbar-track,
         .compact-detail-content::-webkit-scrollbar-track,
-        .compact-message-body::-webkit-scrollbar-track {
+        .compact-message-body::-webkit-scrollbar-track,
+        .notification-list::-webkit-scrollbar-track {
           background: #f1f1f1;
         }
 
         .compact-list::-webkit-scrollbar-thumb,
         .compact-detail-content::-webkit-scrollbar-thumb,
-        .compact-message-body::-webkit-scrollbar-thumb {
+        .compact-message-body::-webkit-scrollbar-thumb,
+        .notification-list::-webkit-scrollbar-thumb {
           background: #c1c1c1;
           border-radius: 2px;
         }
 
         .compact-list::-webkit-scrollbar-thumb:hover,
         .compact-detail-content::-webkit-scrollbar-thumb:hover,
-        .compact-message-body::-webkit-scrollbar-thumb:hover {
+        .compact-message-body::-webkit-scrollbar-thumb:hover,
+        .notification-list::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
+        }
+
+        /* Enhanced notification animations */
+        .notification-item.unread {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .notification-item.unread::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% {
+            left: -100%;
+          }
+          100% {
+            left: 100%;
+          }
+        }
+
+        /* Better focus states for accessibility */
+        .notification-item:focus,
+        .refresh-btn:focus,
+        .mark-all-read:focus,
+        .pagination-btn:focus,
+        .page-number:focus {
+          outline: 2px solid #3b82f6;
+          outline-offset: 2px;
+        }
+
+        /* Enhanced hover effects */
+        .notification-item:hover .notification-message {
+          color: #1f2937;
+        }
+
+        .inquiry-item.unread {
+          animation: subtle-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes subtle-glow {
+          from {
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.1);
+          }
+          to {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+          }
         }
       `}</style>
     </div>
