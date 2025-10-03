@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import Sidebar from '../components/Sidebar';
-import { FaSearch, FaBell, FaEnvelope, FaMapMarkerAlt, FaChartLine, FaEnvelopeOpen, FaFileAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaChartLine, FaFileAlt } from 'react-icons/fa';
 import html2canvas from 'html2canvas'; // install this package if not already
 import '../styles/ViewAnalytics.css';
 import { FaRegEye, FaFileExport, FaTrash } from "react-icons/fa";
@@ -120,27 +120,6 @@ export default function ViewAnalyticsOverview() {
           <div className="greeting">
             <h3>Analytics</h3>
             <p>View different interactive analytics chart</p>
-          </div>
-          <div className="dashboard-actions">
-            <div className="search-bar">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
-              </div>
-            </div>
           </div>
         </div>
 
