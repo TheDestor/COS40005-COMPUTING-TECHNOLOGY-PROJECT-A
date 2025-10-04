@@ -34,6 +34,7 @@ const baseOptions = {
 }
 
 // Base user schema
+// userSchema (add provider flag)
 const userSchema = new mongoose.Schema({
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
@@ -50,11 +51,13 @@ const userSchema = new mongoose.Schema({
         },
         required: [true, "Email required"]
     },
-    phoneNumber: { type: String, required: true, trim: true }, // Haven't done for phone number yet
+    // phoneNumber: { type: String, required: true, trim: true }, 
+    phoneNumber: { type: String, trim: true, default: null },
     password: { type: String, required: true, trim: true },
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
     nationality: { type: String, required: true, default: 'N/A' },
-    avatarUrl: { type: String, default: null}
+    avatarUrl: { type: String, default: null},
+    authProvider: { type: String, enum: ['password','google'], default: 'password' }
 }, baseOptions);
 
 userSchema.pre('save', async function (next) {

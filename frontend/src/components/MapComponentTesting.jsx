@@ -421,6 +421,26 @@ function MapComponentTesting({  }) {
     setShowLoginModal(true);
   };
 
+  // Show login modal ONCE when redirected from profile settings after logout
+  useEffect(() => {
+    const showOnce = location.state?.showLoginOnce;
+    const dismissed = localStorage.getItem('profileLoginModalDismissed') === 'true';
+    if (showOnce) {
+      if (!dismissed) {
+        setShowLoginModal(true);
+      } else {
+        setShowLoginModal(false);
+      }
+      // Clear navigation state to avoid re-triggering
+      window.history.replaceState({}, '', location.pathname + location.search);
+    }
+  }, [location.state, location.pathname, location.search]);
+
+  const handleLoginModalClose = () => {
+    localStorage.setItem('profileLoginModalDismissed', 'true');
+    setShowLoginModal(false);
+  };
+
   // Handle navigation state for bookmark toggle
   useEffect(() => {
     if (location.state?.openBookmark && toggleBookmarkRef.current) {
@@ -1073,7 +1093,7 @@ function MapComponentTesting({  }) {
       } 
 
       {/* Login Modal */}
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      {showLoginModal && <LoginModal onClose={handleLoginModalClose} />}
 
       {/* Ai Chatbot */}
       <AiChatbot />

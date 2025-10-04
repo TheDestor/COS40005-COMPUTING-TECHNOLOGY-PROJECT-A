@@ -20,8 +20,8 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/';
-    // navigate('/');
+    // window.location.href = '/';
+    navigate('/');
     setIsOpen(false);
     handleSuccess("Logged out successfully!");
   };

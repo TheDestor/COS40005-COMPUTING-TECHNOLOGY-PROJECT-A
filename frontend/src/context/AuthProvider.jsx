@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     // Processes a JWT token to update the authentication state
+    // AuthProvider.processToken: include provider in user state
     const processToken = useCallback((token) => {
         // If no token is provided reset auth state to logged out
         if (!token) {
@@ -49,7 +50,8 @@ export const AuthProvider = ({ children }) => {
                 phoneNumber: userInfo.phoneNumber,
                 role: userInfo.role,
                 nationality: userInfo.nationality,
-                avatarUrl: userInfo.avatarUrl
+                avatarUrl: userInfo.avatarUrl,
+                authProvider: userInfo.authProvider
             });
             // Store the valid access token
             setAccessToken(token);
@@ -150,33 +152,26 @@ export const AuthProvider = ({ children }) => {
      * @param {string} password - User's password.
      * @returns {Promise<object>} - A promise resolving to { success: true } or { success: false, message: string }.
      */
-    const login = async (identifier, password) => {
+    const login = async (identifier, password, recaptchaToken) => {
         setIsLoading(true);
         try {
             const response = await ky.post(
                 "/api/auth/login",
                 {
                     credentials: 'include',
-                    json: {identifier, password}
+                    json: { identifier, password, recaptchaToken }
                 }
             ).json();
             if (response.success) {
                 processToken(response.accessToken);
                 const decoded = jwtDecode(response.accessToken);
                 const userInfo = decoded.UserInfo;
-
                 let redirectTo = '/';
-                if (userInfo.role === "cbt_admin") {
-                    redirectTo = '/dashboard';
-                } else if (userInfo.role === "system_admin") {
-                    redirectTo = '/admin-dashboard';
-                }
-                
-                console.log("AuthProvider: Login successful.");
+                if (userInfo.role === "cbt_admin") redirectTo = '/dashboard';
+                else if (userInfo.role === "system_admin") redirectTo = '/admin-dashboard';
                 setIsLoading(false);
-                return { success: true, user: userInfo, redirectTo: redirectTo };
+                return { success: true, user: userInfo, redirectTo };
             } else {
-                console.log("AuthProvider: Login failed - API success false or no token.");
                 setIsLoading(false);
                 return { success: false, message: response.message || "Login failed" };
             }
@@ -185,12 +180,15 @@ export const AuthProvider = ({ children }) => {
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
-            console.error(error);
             if (error.response) {
-                const errorJson = await error.response.json();
-                console.error(error);
-                return errorJson.message;
+                try {
+                    const errorJson = await error.response.json();
+                    return { success: false, message: errorJson.message || 'Login failed' };
+                } catch (_) {
+                    return { success: false, message: 'Login failed' };
+                }
             }
+            return { success: false, message: 'Login failed' };
         }
     };
 

@@ -215,6 +215,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
   );
 };
 
+// ProfileSettingsPage component (security section wiring)
 const ProfileSettingsPage = () => {
   const [activeSection, setActiveSection] = useState('account');
   const [selectedCountry, setSelectedCountry] = useState(naCountryObject);
@@ -227,6 +228,7 @@ const ProfileSettingsPage = () => {
     phoneNumber: ''
   });
   const { user, accessToken, updateUserContext } = useAuth();
+  const isGoogleUser = user?.authProvider === 'google';
 
   const handleSectionChange = (section) => {
     setActiveSection(section);
@@ -450,7 +452,7 @@ const ProfileSettingsPage = () => {
         );
 
       case 'security':
-        return <ChangeNewPassword />;
+        return <ChangeNewPassword showProviderNote={isGoogleUser} />;
       case 'notifications':
         return <PushNotificationPage />;
       case 'subscriptions':

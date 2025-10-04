@@ -12,7 +12,8 @@ const getPasswordStrength = (password) => {
   return "weak";
 };
 
-const ChangeNewPassword = () => {
+// ChangeNewPassword component
+const ChangeNewPassword = ({ showProviderNote }) => {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -23,9 +24,8 @@ const ChangeNewPassword = () => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  const strength = getPasswordStrength(newPassword);
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+  const isGoogleUser = showProviderNote ?? !user?.phoneNumber;
 
   const passwordsMatch = newPassword === confirmPassword;
   const isFormValid = currentPassword && newPassword && confirmPassword && passwordsMatch;
@@ -81,6 +81,11 @@ const ChangeNewPassword = () => {
   
   return (
     <div className="change-password-container">
+      {isGoogleUser && (
+        <div className="auth-provider-note">
+          There is no password associated with this email address as you've signed up to Metaverse Trails 2.0 using another service (Google).
+        </div>
+      )}
       <h2><MdSecurity size={20} /> Sign In & Security</h2>
 
       <div className="form-group2">
