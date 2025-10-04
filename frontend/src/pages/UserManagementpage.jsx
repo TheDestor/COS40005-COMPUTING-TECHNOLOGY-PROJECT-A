@@ -6,6 +6,7 @@ import AddUserForm from '../components/AddUserForm.jsx';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import ky from 'ky';
 import { useAuth } from '../context/AuthProvider';
+import { toast } from 'sonner';
 
 const UserManagementPage = () => {
   const usersPerPage = 7;
@@ -24,7 +25,7 @@ const UserManagementPage = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await ky.get('/api/userManagement', { headers: { 'Authorization': `Bearer ${accessToken}` }}).json();
+        const response = await ky.get('/api/userManagement/users', { headers: { 'Authorization': `Bearer ${accessToken}` }}).json();
 
         if (response.success) {
           const formattedUsers = response.users.map(user => ({
@@ -59,7 +60,12 @@ const UserManagementPage = () => {
     };
   }, []);
 
-  const roleOptions = ["System Admin", "CBT Admin", "Business User", "User"];
+  const roleOptions = [
+    { label: "System Admin", value: "System_admin" },
+    { label: "CBT Admin", value: "Cbt_admin" },
+    { label: "Business User", value: "Business" },
+    { label: "User", value: "Tourist" },
+  ];
   const statusOptions = ["Active", "Inactive"];
 
   const handleSearchChange = (e) => {
@@ -111,13 +117,24 @@ const UserManagementPage = () => {
   };
 
   // Confirmation on Delete
-  const handleDeleteClick = (userId) => {
+  const handleDeleteClick = async (userId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this user?"
     );
     if (confirmDelete) {
-      console.log("User ID", userId, "deleted");
-      // Implement your delete logic here
+      try {
+        const response = await ky.delete(`/api/userManagement/users/${userId}`, { headers: { 'Authorization': `Bearer ${accessToken}` } }).json();
+
+        if (response.success) {
+          toast.success(response.message);
+
+          setAllUsers(currentUsers => currentUsers.filter(user => user.id !== userId));
+        } else {
+          toast.error(response.message);
+        }
+      } catch (error) {
+        toast.error(error);
+      }
     }
   };
 
@@ -162,19 +179,19 @@ const UserManagementPage = () => {
                     <h4>Role</h4>
                     <div className="filter-options-admin">
                       {roleOptions.map((role) => (
-                        <label key={role} className="filter-checkbox">
+                        <label key={role.value} className="filter-checkbox">
                           <input
                             type="checkbox"
-                            checked={selectedRoles.includes(role)}
+                            checked={selectedRoles.includes(role.value)}
                             onChange={() =>
                               toggleOption(
-                                role,
+                                role.value,
                                 selectedRoles,
                                 setSelectedRoles
                               )
                             }
                           />
-                          {role}
+                          {role.label}
                         </label>
                       ))}
                     </div>

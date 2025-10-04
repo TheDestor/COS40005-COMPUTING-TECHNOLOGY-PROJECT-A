@@ -5,6 +5,8 @@ import { AiOutlineFundView } from "react-icons/ai";
 import { IoIosTrendingUp } from "react-icons/io";
 import * as d3 from 'd3';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
+import { useAuth } from '../context/AuthProvider';
+import ky from 'ky';
 
 // Import profile images - you'll need to add these to your assets folder
 import profile1 from '../assets/profile1.png';
@@ -12,9 +14,12 @@ import profile2 from '../assets/profile2.png';
 import profile3 from '../assets/profile3.png';
 import profile4 from '../assets/profile4.png';
 import profile5 from '../assets/profile5.png';
+import { useState } from 'react';
 
 const SystemAdminDashboard = () => {
   const chartRef = useRef(null);
+  const [usersList, setUsersList] = useState([]);
+  const { accessToken } = useAuth();
 
   const summaryData = [
     {
@@ -81,15 +86,6 @@ const SystemAdminDashboard = () => {
     { month: 'Dec', users: 7200 }
   ];
 
-  // Dummy Data for Users List (moved from CBT Dashboard)
-  const usersList = [
-    { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
-    { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
-    { id: 3, name: "Alvin", email: "alvin@gmail.com", status: "Active", lastLogin: "5 minutes ago", image: profile3 },
-    { id: 4, name: "Gary", email: "gary@gmail.com", status: "Active", lastLogin: "1 day ago", image: profile4 },
-    { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
-  ];
-
   // Sample data for reviews pending approval (moved from CBT Dashboard)
   const pendingReviews = [
     {
@@ -148,6 +144,34 @@ const SystemAdminDashboard = () => {
     }
     return <div className="star-rating">{stars}</div>;
   };
+
+  // Fetch data from backend
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await ky.get('/api/userManagement/users?sort=createdAt_desc&limit=5', { headers: { 'Authorization': `Bearer ${accessToken}` } }).json();
+
+        if (response.success) {
+          const placeholderImages = [profile1, profile2, profile3, profile4, profile5];
+          const formattedUsers = response.users.map((user, index) => ({
+            id: user._id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+            status: 'Active',
+            lastLogin: 'N/A',
+            image: placeholderImages[index % placeholderImages.length]
+          }));
+          setUsersList(formattedUsers);
+        } else {
+          console.error(response.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users: ", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     // Add a small delay to ensure the container is fully rendered with correct dimensions
