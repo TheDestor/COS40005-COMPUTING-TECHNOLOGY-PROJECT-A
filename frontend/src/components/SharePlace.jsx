@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import "../styles/SharePlace.css";
-import { FaFacebookF, FaInstagram, FaXTwitter } from "react-icons/fa6";
+import { FaFacebookF, FaInstagram, FaXTwitter, FaWhatsapp } from "react-icons/fa6";
 import { FaTelegram } from "react-icons/fa";
+import { toast } from "sonner";
 import defaultImage from "../assets/default.png";
 
 const SharePlace = ({ visible, onClose, location }) => {
@@ -14,6 +15,67 @@ const SharePlace = ({ visible, onClose, location }) => {
 
   // SAFE embed URL without API key
   const safeEmbedUrl = `https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;
+
+  // Share message text
+  const shareText = `Check out ${name} on Sarawak Tourism!\n${description || ''}\n${url}`;
+  const encodedShareText = encodeURIComponent(shareText);
+  const encodedUrl = encodeURIComponent(url);
+  const encodedName = encodeURIComponent(name);
+
+  // Social media share functions
+  const shareOnFacebook = () => {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    window.open(facebookUrl, '_blank', 'width=600,height=400');
+  };
+
+  const shareOnTwitter = () => {
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedName}&url=${encodedUrl}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  };
+
+  const shareOnWhatsApp = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodedShareText}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const shareOnTelegram = () => {
+    const telegramUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedName}`;
+    window.open(telegramUrl, '_blank');
+  };
+
+  const shareOnInstagram = () => {
+    // Instagram doesn't support web sharing, so copy link for user to paste
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        toast.success("Link copied! Paste it in Instagram DM or Story");
+      })
+      .catch(() => {
+        toast.error("Failed to copy link");
+      });
+  };
+
+  // Copy link function with toast notification
+  const copyLink = () => {
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        toast.success("Link copied to clipboard!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy link");
+      });
+  };
+
+  // Copy embed code function
+  const copyEmbedCode = () => {
+    const embedCode = `<iframe width="600" height="450" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${latitude},${longitude}&output=embed" allowfullscreen></iframe>`;
+    navigator.clipboard.writeText(embedCode)
+      .then(() => {
+        toast.success("Embed code copied!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy embed code");
+      });
+  };
 
   return ReactDOM.createPortal(
     <div className="share-container">
@@ -78,12 +140,7 @@ const SharePlace = ({ visible, onClose, location }) => {
               />
               <button
                 className="copy-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `<iframe width="600" height="450" frameborder="0" style="border:0" src="https://www.google.com/maps?q=${latitude},${longitude}&output=embed" allowfullscreen></iframe>`
-                  );
-                  alert("Embed code copied!");
-                }}
+                onClick={copyEmbedCode}
               >
                 COPY EMBED CODE
               </button>
@@ -96,10 +153,7 @@ const SharePlace = ({ visible, onClose, location }) => {
             <input className="share-link-input" value={url} readOnly />
             <button
               className="copy-btn"
-              onClick={() => {
-                navigator.clipboard.writeText(url);
-                alert("Link copied!");
-              }}
+              onClick={copyLink}
             >
               COPY LINK
             </button>
@@ -107,10 +161,31 @@ const SharePlace = ({ visible, onClose, location }) => {
         )}
 
         <div className="share-social-icons">
-          <FaFacebookF className="social-icon fb" />
-          <FaInstagram className="social-icon ig" />
-          <FaXTwitter className="social-icon x" />
-          <FaTelegram className="social-icon tg" />
+          <FaFacebookF 
+            className="social-icon fb" 
+            onClick={shareOnFacebook}
+            title="Share on Facebook"
+          />
+          <FaInstagram 
+            className="social-icon ig" 
+            onClick={shareOnInstagram}
+            title="Copy link for Instagram"
+          />
+          <FaWhatsapp 
+            className="social-icon wa" 
+            onClick={shareOnWhatsApp}
+            title="Share on WhatsApp"
+          />
+          <FaXTwitter 
+            className="social-icon x" 
+            onClick={shareOnTwitter}
+            title="Share on X (Twitter)"
+          />
+          <FaTelegram 
+            className="social-icon tg" 
+            onClick={shareOnTelegram}
+            title="Share on Telegram"
+          />
         </div>
       </div>
     </div>,
