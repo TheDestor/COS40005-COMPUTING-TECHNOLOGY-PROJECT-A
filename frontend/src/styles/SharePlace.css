@@ -175,6 +175,11 @@
   color: #229ED9;
 }
 
+/* WhatsApp styling */
+.wa {
+  color: #25D366;
+}
+
 .map-embed {
   padding: 10px 0;
 }
@@ -200,4 +205,3 @@
   background: #f9f9f9;
   margin-bottom: 8px;
 }
-
