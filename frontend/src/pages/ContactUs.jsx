@@ -17,6 +17,10 @@ export default function ContactUs() {
     message: ''
   });
   
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  
   const { name, email, topic, message } = formData;
   const [showLogin, setShowLogin] = useState(false);
     
@@ -118,6 +122,58 @@ export default function ContactUs() {
       }
     }
   }
+
+  // Newsletter subscription handler
+  const handleNewsletterSubscribe = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!newsletterEmail.trim()) {
+      handleError("Please enter your email address");
+      return;
+    }
+
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newsletterEmail)) {
+      handleError("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubscribing(true);
+
+    try {
+      const response = await ky.post(
+        "/api/user/newsletter/subscribe",
+        {
+          json: { email: newsletterEmail }
+        }
+      ).json();
+
+      const { success, message } = response;
+
+      if (success) {
+        handleSuccess(message || "You are subscribed to our newsletter!");
+        setNewsletterEmail('');
+      } else {
+        handleError(response.message || "Failed to subscribe. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        try {
+          const errorJson = await error.response.json();
+          handleError(errorJson.message || "Failed to subscribe. Please try again.");
+        } catch {
+          handleError("Failed to subscribe. Please try again.");
+        }
+      } else {
+        handleError("Network error. Please check your connection and try again.");
+      }
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   return (
     <>
@@ -369,18 +425,24 @@ export default function ContactUs() {
             </svg>
             Join our newsletter to keep up to date with us!
           </p>
-          <div className="newsletter">
+          <form className="newsletter" onSubmit={handleNewsletterSubscribe}>
             <div className="input-wrapper">
-              <input type="email" placeholder="Enter your email" />
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                disabled={isSubscribing}
+              />
             </div>
-            <button>
+            <button type="submit" disabled={isSubscribing}>
               <svg className="button-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
-              Subscribe
+              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
             </button>
-          </div>
+          </form>
         </div>
       </footer>
       {showLogin && <LoginPage onClose={closeLogin} />}

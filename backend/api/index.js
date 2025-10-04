@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import aiRouter from "../routes/AiRoutes.js";
 import graphHopperRouter from "../routes/GraphHopperRoutes.js";
 // import geoapifyRouter from "../routes/geoapifyRoutes.js";
+import newsletterRouter from "../routes/newsletterRoutes.js";
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -77,6 +78,7 @@ app.use("/api/businesses", businessRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/graphhopper", graphHopperRouter);
 app.use("/api/userManagement", UserManagementRouter);
+app.use("/api/user/newsletter", newsletterRouter);
 
 // Import and use geoapify routes
 import geoapifyRouter from "../routes/geoapifyRoutes.js";
