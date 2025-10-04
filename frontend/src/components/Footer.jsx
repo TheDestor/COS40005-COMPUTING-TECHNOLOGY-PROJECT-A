@@ -2,24 +2,72 @@ import React, { useState } from 'react';
 import { FaFacebookF, FaInstagram, FaPinterest } from 'react-icons/fa';
 import { FaXTwitter, FaYoutube, FaTiktok } from 'react-icons/fa6';
 import { toast } from 'sonner';
+import ky from 'ky';
 import '../styles/Footer.css';
 import LogoImage from '../assets/logo.png';
 import LegalModal from './LegalModal';
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const [openLegal, setOpenLegal] = useState(null); // 'terms', 'privacy', 'cookies', or null
 
-  const handleSubscribe = () => {
-    if (!email) {
-      toast.error("Please enter a valid email!");
-    } else {
-      toast.success("Thanks for subscribing!");
-      setEmail("");
+  const handleSubscribe = async () => {
+    // Validation
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubscribing(true);
+
+    try {
+      const response = await ky.post(
+        "/api/user/newsletter/subscribe",
+        {
+          json: { email: email }
+        }
+      ).json();
+
+      const { success, message } = response;
+
+      if (success) {
+        toast.success(message || "You are subscribed to our newsletter!");
+        setEmail('');
+      } else {
+        toast.error(message || "Failed to subscribe. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        try {
+          const errorJson = await error.response.json();
+          toast.error(errorJson.message || "Failed to subscribe. Please try again.");
+        } catch {
+          toast.error("Failed to subscribe. Please try again.");
+        }
+      } else {
+        toast.error("Network error. Please check your connection and try again.");
+      }
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
-  // Footer link structure based on actual site
+  // Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubscribe();
+    }
+  };
+
   return (
     <footer className="footer">
       {/* Top: Newsletter */}
@@ -34,14 +82,21 @@ const Footer = () => {
           </p>
           <div className="newsletter">
             <div className="input-wrapper">
-              <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isSubscribing}
+              />
             </div>
-            <button onClick={handleSubscribe}>
+            <button onClick={handleSubscribe} disabled={isSubscribing}>
               <svg className="button-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
-              Subscribe
+              {isSubscribing ? 'Subscribing...' : 'Subscribe'}
             </button>
           </div>
         </div>
@@ -53,7 +108,7 @@ const Footer = () => {
         <div className="hornbill-social">
           <img src={LogoImage} alt="Sarawak Tourism" className="hornbill-img" />
           <div className="icons">
-            <a href ="https://www.instagram.com/sarawaktravel/" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+            <a href="https://www.instagram.com/sarawaktravel/" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
             <a href="https://www.facebook.com/visitsarawak" target="_blank" rel="noopener noreferrer"><FaFacebookF /></a>
             <a href="https://x.com/SarawakTravel" target="_blank" rel="noopener noreferrer"><FaXTwitter /></a>
             <a href="https://www.youtube.com/@SarawakTourismBoard" target="_blank" rel="noopener noreferrer"><FaYoutube /></a>
@@ -77,13 +132,11 @@ const Footer = () => {
             <ul>
               <li><a href="/business-submission">Submit Business</a></li>
               <li><a href="/manage-business">Manage Business</a></li>
-              {/* <li><a href="/">List Your Business</a></li> */}
             </ul>
           </div>
           <div className="links-column">
             <h4>Community</h4>
             <ul>
-              {/* <li><a href="/">Testimonials</a></li> */}
               <li><a href="https://www.sarawaktourism.com/web/stories/story-view/sarawak-the-mystical-gateway-to-borneo" target="_blank" rel="noopener noreferrer">Campaigns</a></li>
               <li><a href="https://www.sarawaktourism.com/web/stories/stories-list/" target="_blank" rel="noopener noreferrer">Community</a></li>
             </ul>
@@ -117,7 +170,6 @@ const Footer = () => {
         onClose={() => setOpenLegal(null)}
         title="Terms of Service"
       >
-        {/* <h4>Terms of Service</h4> */}
         <p>
           By using this website, you agree to comply with all applicable laws and regulations. You may not use the site for any unlawful or prohibited purpose. All content is provided for informational purposes only and may be updated or changed at any time.
         </p>
@@ -130,7 +182,6 @@ const Footer = () => {
         onClose={() => setOpenLegal(null)}
         title="Privacy Policy"
       >
-        {/* <h4>Privacy Policy</h4> */}
         <p>
           We respect your privacy. Any personal information collected (such as email for newsletter) will be used solely for communication purposes and will not be shared with third parties without your consent. Cookies may be used to enhance your experience.
         </p>
@@ -143,7 +194,6 @@ const Footer = () => {
         onClose={() => setOpenLegal(null)}
         title="Cookies Policy"
       >
-        {/* <h4>Cookies Policy</h4> */}
         <p>
           This website uses cookies to improve your browsing experience and to analyze site traffic. By continuing to use this site, you consent to our use of cookies. You can disable cookies in your browser settings at any time.
         </p>
