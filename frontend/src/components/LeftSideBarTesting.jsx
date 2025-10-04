@@ -1,24 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaExclamationTriangle, FaTools, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
-import { MdManageAccounts } from 'react-icons/md';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
+import { MdManageAccounts, MdAddLocationAlt } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
 import RecentSection from './RecentSection';
 import BookmarkPage from '../pages/Bookmarkpage';
 import MapLayer from './MapLayers';
-// import MapComponentTesting from './MapComponentTesting';
 import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
-// import { APIProvider } from '@vis.gl/react-google-maps';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
 import { BiCurrentLocation } from "react-icons/bi";
-import { IoMdAdd } from "react-icons/io";
-import { MdAdd, MdAddLocationAlt } from "react-icons/md";
-// import MapZoomController from './MapZoomController';
-import { Polyline } from 'react-leaflet';
 
-function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
+function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef();
@@ -61,6 +55,13 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, placeholder }) {
       <input
         value={value}
         onChange={handleInput}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onManualSubmit) {
+            e.preventDefault();
+            onManualSubmit(e.target.value);
+            setShowDropdown(false);
+          }
+        }}
         placeholder={placeholder}
         autoComplete="off"
       />
@@ -543,7 +544,16 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
 
 
 
-const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef, onSetToggleBookmarkRef }) => {
+const LeftSidebarTesting = forwardRef(({ 
+  onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, 
+  setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, 
+  setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, 
+  onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef, 
+  onSetToggleBookmarkRef, isExpand, setIsExpand, destinationInput, setDestinationInput,
+  // New props for auto-opening and setting destination
+  autoOpen = false,
+  autoDestination = null
+}, ref) => {
   const { user, isLoggedIn } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
@@ -563,24 +573,101 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
       return [];
     }
   });
-  const [mapType, setMapType] = useState('roadmap');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [addDestinations, setAddDestinations] = useState([]);
-  const [waypointCoords, setWaypointCoords] = useState([]); // Array of {lat, lng} or null
-  const [routeAlternatives, setRouteAlternatives] = useState([]); // Local state for route alternatives
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0); // Local state for selected route
-  const [nearbyPlaces, setNearbyPlaces] = useState([]); // Local state for nearby places
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const { openRecent } = useAuth();
-  const [currentLocation, setCurrentLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
-  const [isLocationFetching, setIsLocationFetching] = useState(false);
-  // const [selectedLocation, setSelectedLocation] = useState(null);
+  const [waypointCoords, setWaypointCoords] = useState([]);
+  const [routeAlternatives, setRouteAlternatives] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [activeMenu, setActiveMenu] = useState('');
   const [routeSummary, setRouteSummary] = useState(null);
   const autoCalculatedRef = useRef(false);
-//   const [osrmRouteCoords, setOsrmRouteCoords] = useState([]);
+  const [isLocationFetching, setIsLocationFetching] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+
+  // Use external expand state if provided, otherwise use internal state
+  const sidebarExpanded = isExpand !== undefined ? isExpand : isExpanded;
+  const setSidebarExpanded = setIsExpand || setIsExpanded;
+  
+  // Use external destination input if provided, otherwise use internal state
+  const currentDestinationInput = destinationInput !== undefined ? destinationInput : destination;
+  const setCurrentDestinationInput = setDestinationInput || setDestination;
+
+  // NEW: Auto-open sidebar and set destination when component mounts or props change
+  useEffect(() => {
+    if (autoOpen) {
+      console.log('Auto-opening sidebar and setting destination:', autoDestination);
+      // Open the sidebar
+      setSidebarExpanded(true);
+      
+      // Set the destination if provided
+      if (autoDestination) {
+        const { name, coordinates } = autoDestination;
+        setCurrentDestinationInput(name || 'Selected Location');
+        setDestinationCoords({
+          lat: coordinates.lat,
+          lng: coordinates.lng
+        });
+        
+        // Add to recent locations
+        addToRecentLocations({
+          name: name || 'Selected Location',
+          latitude: coordinates.lat,
+          longitude: coordinates.lng,
+          type: 'Location',
+          source: 'auto'
+        });
+      }
+    }
+  }, [autoOpen, autoDestination]);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    setDestinationFromExternal: (name, coords) => {
+      console.log('Setting destination from external:', name, coords);
+      setCurrentDestinationInput(name);
+      setDestinationCoords(coords);
+      
+      // Also open the sidebar when destination is set externally
+      setSidebarExpanded(true);
+      
+      // If coordinates are provided, we can immediately use them for routing
+      if (coords && coords.lat && coords.lng) {
+        console.log('Destination coordinates set:', coords);
+        // This will trigger the auto-calculation if starting point is also set
+      }
+    },
+    // NEW: Method to open sidebar programmatically
+    openSidebar: () => {
+      setSidebarExpanded(true);
+    },
+    // NEW: Method to close sidebar programmatically
+    closeSidebar: () => {
+      setSidebarExpanded(false);
+    },
+    // NEW: Method to set both destination and open sidebar
+    setDestinationAndOpen: (name, coords) => {
+      setCurrentDestinationInput(name);
+      setDestinationCoords(coords);
+      setSidebarExpanded(true);
+      
+      // Add to recent locations
+      if (name && coords) {
+        addToRecentLocations({
+          name: name,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          type: 'Location',
+          source: 'external'
+        });
+      }
+    },
+    // NEW: Method to set destination name in the input field
+    setDestinationName: (name) => {
+      setCurrentDestinationInput(name);
+    }
+  }));
 
   // Load recent locations from localStorage on component mount
   useEffect(() => {
@@ -626,52 +713,52 @@ const LeftSidebarTesting = ({ onSearch, history, setHistory, showRecent, setShow
       });
     }
   }, [onSetToggleBookmarkRef]);
-  
-const handleClearStartingPoint = () => {
-  setStartingPoint('');
-  setStartingPointCoords(null);
-  setOsrmRouteCoords([]);
-  setOsrmWaypoints([]);
-  setAddDestinations([]);
-  setWaypointCoords([]);
-  setRouteAlternatives([]);
-  setSelectedRouteIndex(0);
-  setNearbyPlaces([]); // Clear nearby places
-  autoCalculatedRef.current = false; // Reset auto-calculation flag
-};
 
-const handleClearDestination = () => {
-  setDestination('');
-  setDestinationCoords(null);
-  setOsrmRouteCoords([]);
-  setOsrmWaypoints([]);
-  setAddDestinations([]);
-  setWaypointCoords([]);
-  setRouteAlternatives([]);
-  setSelectedRouteIndex(0);
-  setNearbyPlaces([]); // Clear nearby places
-  autoCalculatedRef.current = false; // Reset auto-calculation flag
-};
+  // Clear functions
+  const handleClearStartingPoint = () => {
+    setStartingPoint('');
+    setStartingPointCoords(null);
+    if (setOsrmRouteCoords) setOsrmRouteCoords([]);
+    if (setOsrmWaypoints) setOsrmWaypoints([]);
+    setAddDestinations([]);
+    setWaypointCoords([]);
+    setRouteAlternatives([]);
+    setSelectedRouteIndex(0);
+    setNearbyPlaces([]);
+    autoCalculatedRef.current = false;
+  };
 
-const handleClearAllRouting = () => {
-  setStartingPoint('');
-  setDestination('');
-  setStartingPointCoords(null);
-  setDestinationCoords(null);
-  setOsrmRouteCoords([]);
-  setOsrmWaypoints([]);
-  setAddDestinations([]);
-  setWaypointCoords([]);
-  setRouteAlternatives([]);
-  setSelectedRouteIndex(0);
-  setNearbyPlaces([]);
-  autoCalculatedRef.current = false; // Reset auto-calculation flag
-  
-  // Also call the parent's clearing function if provided
-  if (onClearAllRouting) {
-    onClearAllRouting();
-  }
-};
+  const handleClearDestination = () => {
+    setCurrentDestinationInput('');
+    setDestinationCoords(null);
+    if (setOsrmRouteCoords) setOsrmRouteCoords([]);
+    if (setOsrmWaypoints) setOsrmWaypoints([]);
+    setAddDestinations([]);
+    setWaypointCoords([]);
+    setRouteAlternatives([]);
+    setSelectedRouteIndex(0);
+    setNearbyPlaces([]);
+    autoCalculatedRef.current = false;
+  };
+
+  const handleClearAllRouting = () => {
+    setStartingPoint('');
+    setCurrentDestinationInput('');
+    setStartingPointCoords(null);
+    setDestinationCoords(null);
+    if (setOsrmRouteCoords) setOsrmRouteCoords([]);
+    if (setOsrmWaypoints) setOsrmWaypoints([]);
+    setAddDestinations([]);
+    setWaypointCoords([]);
+    setRouteAlternatives([]);
+    setSelectedRouteIndex(0);
+    setNearbyPlaces([]);
+    autoCalculatedRef.current = false;
+    
+    if (onClearAllRouting) {
+      onClearAllRouting();
+    }
+  };
 
   const handleAddCurrentLocation = async () => {
     if (!navigator.geolocation) {
@@ -785,56 +872,67 @@ const handleClearAllRouting = () => {
   };
 
   // Function to generate directions link
-  const generateDirectionsLink = () => {
-    if (!startingPointCoords || !destinationCoords) {
+  const generateDirectionsLink = async () => {
+    let startCoords = startingPointCoords;
+    let endCoords = destinationCoords;
+
+    // Fallback geocoding for manual text entry (no autocomplete selection)
+    if (!startCoords && startingPoint?.trim()) {
+      try {
+        startCoords = await geocodeAddressNominatim(startingPoint);
+      } catch (error) {
+        console.error('Failed to geocode starting point:', error);
+      }
+    }
+    if (!endCoords && (currentDestinationInput?.trim() || destination?.trim())) {
+      try {
+        const addressText = currentDestinationInput?.trim() || destination?.trim();
+        endCoords = await geocodeAddressNominatim(addressText);
+      } catch (error) {
+        console.error('Failed to geocode destination:', error);
+      }
+    }
+
+    if (!startCoords || !endCoords) {
       toast.error('Please set both starting point and destination');
       return null;
     }
 
-    const start = `${startingPointCoords.lat},${startingPointCoords.lng}`;
-    const end = `${destinationCoords.lat},${destinationCoords.lng}`;
-    
-    // Create a Google Maps directions link
+    const start = `${startCoords.lat},${startCoords.lng}`;
+    const end = `${endCoords.lat},${endCoords.lng}`;
+
     const googleMapsLink = `https://www.google.com/maps/dir/${start}/${end}`;
-    
-    // Create a custom app link with route data
     const appLink = `${window.location.origin}?route=true&start=${start}&end=${end}&vehicle=${selectedVehicle}`;
-    
     return { googleMapsLink, appLink };
   };
 
   // Function to copy directions link
   const copyDirectionsLink = async () => {
-    const links = generateDirectionsLink();
+    const links = await generateDirectionsLink();
     if (!links) return;
-
     try {
-      // Copy the Google Maps link to clipboard
       await navigator.clipboard.writeText(links.googleMapsLink);
       toast.success('Directions link copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy:', error);
       toast.error('Failed to copy link. Please try again.');
-    }
+     }
   };
 
   // Function to share directions
   const shareDirections = async () => {
-    const links = generateDirectionsLink();
+    const links = await generateDirectionsLink();
     if (!links) return;
-
     const shareData = {
       title: 'Directions',
       text: `Directions from ${startingPoint} to ${destination}`,
-      url: links.googleMapsLink
+      url: links.googleMapsLink,
     };
-
     try {
       if (navigator.share) {
         await navigator.share(shareData);
         toast.success('Directions shared successfully!');
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(links.googleMapsLink);
         toast.success('Directions link copied to clipboard!');
       }
@@ -861,8 +959,17 @@ const handleClearAllRouting = () => {
     }
   }
 
+   const toggleSidebar = () => {
+    if (showRecent && setShowRecent) setShowRecent(false);
+    if (showBusiness) setShowBusiness(false);
+    if (showBookmarkpage) setShowBookmarkpage(false);
+    if (showRecentSection) setShowRecentSection(false);
+    setActiveMenu('');
+    setSidebarExpanded((prev) => !prev);
+  };
+
   const toggleRecentSection = () => {
-    if (isExpanded) setIsExpanded(false);
+    if (sidebarExpanded) setSidebarExpanded(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showLayersPanel) setShowLayersPanel(false);
@@ -873,18 +980,9 @@ const handleClearAllRouting = () => {
     });
   };
 
-  const toggleSidebar = () => {
-    if (showRecent) setShowRecent(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-    if (showRecentSection) setShowRecentSection(false);
-    setActiveMenu('');
-    setIsExpanded((prev) => !prev);
-  };
-
   const toggleBusinessPanel = () => {
     if (isExpanded) setIsExpanded(false);
-    if (showRecent) setShowRecent(false);
+    if (showRecent && setShowRecent) setShowRecent(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showLayersPanel) setShowLayersPanel(false);
     if (showRecentSection) setShowRecentSection(false);
@@ -904,7 +1002,7 @@ const handleClearAllRouting = () => {
     
     console.log('User is logged in, toggling bookmark panel');
     if (isExpanded) setIsExpanded(false);
-    if (showRecent) setShowRecent(false);
+    if (showRecent && setShowRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
     if (showRecentSection) setShowRecentSection(false);
     setShowBookmarkpage((prev) => !prev);
@@ -912,7 +1010,7 @@ const handleClearAllRouting = () => {
 
   const toggleLayersPanel = () => {
     if (isExpanded) setIsExpanded(false);
-    if (showRecent) setShowRecent(false);
+    if (showRecent && setShowRecent) setShowRecent(false);
     if (showBusiness) setShowBusiness(false);
     if (showBookmarkpage) setShowBookmarkpage(false);
     if (showRecentSection) setShowRecentSection(false);
@@ -924,7 +1022,9 @@ const handleClearAllRouting = () => {
   };
 
   const handleDeleteItems = (itemsToDelete) => {
-    setHistory(prev => prev.filter(item => !itemsToDelete.includes(item)));
+    if (setHistory) {
+      setHistory(prev => prev.filter(item => !itemsToDelete.includes(item)));
+    }
   };
 
   // Function to add a location to recent locations
@@ -944,14 +1044,11 @@ const handleClearAllRouting = () => {
     };
 
     setRecentLocations(prev => {
-      // Remove if already exists (to avoid duplicates)
       const filtered = prev.filter(item => 
         !(item.name === locationData.name && 
           Math.abs(item.latitude - locationData.latitude) < 0.0001 &&
           Math.abs(item.longitude - locationData.longitude) < 0.0001)
       );
-      
-      // Add to beginning and limit to 20 items
       return [locationData, ...filtered].slice(0, 20);
     });
   };
@@ -959,13 +1056,15 @@ const handleClearAllRouting = () => {
   // Function to handle recent location click
   const handleRecentLocationClick = (location) => {
     // Plot the location on the map by setting it as selected search bar place
-    setSelectedSearchBarPlace({
-      name: location.name,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      description: location.description,
-      type: location.type
-    });
+    if (setSelectedSearchBarPlace) {
+      setSelectedSearchBarPlace({
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        description: location.description,
+        type: location.type
+      });
+    }
 
     // Close the recent section
     setShowRecentSection(false);
@@ -1001,10 +1100,10 @@ const handleClearAllRouting = () => {
 
   const handleRoutesCalculated = (routesData) => {
     if (routesData && routesData.routes) {
-      setRoutes(routesData.routes || []);
+      // setRoutes(routesData.routes || []);
       // setSelectedRouteIndex(0);
     } else {
-      setRoutes([]);
+      // setRoutes([]);
     }
   };
 
@@ -1018,15 +1117,6 @@ const handleClearAllRouting = () => {
     newDestinations[index] = value;
     setAddDestinations(newDestinations);
   };
-
-  // const geocodeAddress = (address, callback) => {
-  //   const geocoder = new window.google.maps.Geocoder();
-  //   geocoder.geocode({ address }, (results, status) => {
-  //     if (status === 'OK' && results[0]) {
-  //       callback(results[0].geometry.location);
-  //     }
-  //   });
-  // };
 
   const handleNearbyPlaceClick = (place) => {
     if (!place.geometry?.location) return;
@@ -1050,16 +1140,20 @@ const handleClearAllRouting = () => {
       description: place.vicinity || place.type || 'Nearby place'
     };
     
-    setSelectedPlace(placeData);
+    if (setSelectedPlace) {
+      setSelectedPlace(placeData);
+    }
     
     // Also set this as a selected search bar place to show on map
-    setSelectedSearchBarPlace({
-      name: place.name,
-      latitude: location.lat,
-      longitude: location.lng,
-      description: place.vicinity || place.type || 'Nearby place',
-      type: place.type || 'Nearby Place'
-    });
+    if (setSelectedSearchBarPlace) {
+      setSelectedSearchBarPlace({
+        name: place.name,
+        latitude: location.lat,
+        longitude: location.lng,
+        description: place.vicinity || place.type || 'Nearby place',
+        type: place.type || 'Nearby Place'
+      });
+    }
 
     // Trigger a custom event to notify the map component to zoom and show info window
     const customEvent = new CustomEvent('nearbyPlaceSelected', {
@@ -1142,14 +1236,32 @@ const handleVehicleClick = async (vehicle) => {
     let startCoords = startingPointCoords;
     let endCoords = destinationCoords;
 
-    // Fallback to geocoding if user didn't select from autocomplete
-    if (!startCoords) {
-      const geo = await geocodeAddressNominatim(startingPoint);
-      startCoords = geo;
+    // Fallback geocode starting point if coords missing
+    if (!(startCoords?.lat && startCoords?.lng) && startingPoint?.trim()) {
+      try {
+        const geo = await geocodeAddressNominatim(startingPoint.trim());
+        startCoords = geo;
+      } catch (error) {
+        console.error('Failed to geocode starting point:', error);
+      }
     }
-    if (!endCoords) {
-      const geo = await geocodeAddressNominatim(destination);
-      endCoords = geo;
+
+    // Fallback geocode destination using displayed input
+    const destinationText = (currentDestinationInput ?? destination)?.trim();
+    if (!(endCoords?.lat && endCoords?.lng) && destinationText) {
+      try {
+        const geo = await geocodeAddressNominatim(destinationText);
+        endCoords = geo;
+      } catch (error) {
+        console.error('Failed to geocode destination:', error);
+      }
+    }
+
+    // Strict coordinate presence check
+    if (!(startCoords?.lat && startCoords?.lng) || !(endCoords?.lat && endCoords?.lng)) {
+      toast.error('Please set both starting point and destination');
+      setIsLoading(false);
+      return;
     }
 
     // Use waypointCoords for waypoints that have a value, otherwise geocode
@@ -1157,7 +1269,12 @@ const handleVehicleClick = async (vehicle) => {
       addDestinations.map(async (dest, idx) => {
         if (!dest?.trim()) return null;
         if (waypointCoords[idx]) return waypointCoords[idx];
-        return await geocodeAddressNominatim(dest);
+        try {
+          return await geocodeAddressNominatim(dest);
+        } catch (error) {
+          console.error(`Failed to geocode waypoint ${idx}:`, error);
+          return null;
+        }
       })
     ).then(arr => arr.filter(Boolean));
 
@@ -1188,7 +1305,9 @@ const handleVehicleClick = async (vehicle) => {
       
       // Ensure we have valid coordinates
       if (firstRoute.coords && firstRoute.coords.length > 0) {
-        setOsrmRouteCoords(firstRoute.coords);
+        if (setOsrmRouteCoords) {
+          setOsrmRouteCoords(firstRoute.coords);
+        }
         setRouteSummary({ 
           distance: firstRoute.distance, 
           duration: firstRoute.duration,
@@ -1217,7 +1336,7 @@ const handleVehicleClick = async (vehicle) => {
     } else {
       console.error('No routes found in routeData:', routeData);
       setRouteSummary(null);
-      setOsrmRouteCoords([]);
+      if (setOsrmRouteCoords) setOsrmRouteCoords([]);
       setRouteAlternatives([]);
       setSelectedRouteIndex(0);
       setNearbyPlaces([]);
@@ -1227,17 +1346,17 @@ const handleVehicleClick = async (vehicle) => {
     console.error('Routing error:', error);
     
     // Create a fallback straight-line route if we have start and end coordinates
-    if (startCoords && endCoords) {
+    if (startingPointCoords && destinationCoords) {
       console.log('Creating fallback straight-line route');
       const fallbackCoords = [
-        [startCoords.lat, startCoords.lng],
-        [endCoords.lat, endCoords.lng]
+        [startingPointCoords.lat, startingPointCoords.lng],
+        [destinationCoords.lat, destinationCoords.lng]
       ];
       
       // Calculate straight-line distance
       const distance = Math.sqrt(
-        Math.pow(endCoords.lat - startCoords.lat, 2) + 
-        Math.pow(endCoords.lng - startCoords.lng, 2)
+        Math.pow(destinationCoords.lat - startingPointCoords.lat, 2) + 
+        Math.pow(destinationCoords.lng - startingPointCoords.lng, 2)
       ) * 111000; // Convert to meters (rough approximation)
       
       const fallbackRoute = {
@@ -1250,7 +1369,7 @@ const handleVehicleClick = async (vehicle) => {
       
       setRouteAlternatives([fallbackRoute]);
       setSelectedRouteIndex(0);
-      setOsrmRouteCoords(fallbackCoords);
+      if (setOsrmRouteCoords) setOsrmRouteCoords(fallbackCoords);
       setRouteSummary({ 
         distance: fallbackRoute.distance, 
         duration: fallbackRoute.duration,
@@ -1260,7 +1379,7 @@ const handleVehicleClick = async (vehicle) => {
       toast.warning(`Using fallback route for ${vehicle}. API routing failed: ${error.message}`);
     } else {
       setRouteSummary(null);
-      setOsrmRouteCoords([]);
+      if (setOsrmRouteCoords) setOsrmRouteCoords([]);
       setRouteAlternatives([]);
       setSelectedRouteIndex(0);
       setNearbyPlaces([]);
@@ -1281,25 +1400,156 @@ const handleVehicleClick = async (vehicle) => {
 
 // Auto-calculate Car route when both start and destination coordinates are available
 useEffect(() => {
-  const shouldAutoCalculate = 
-    startingPointCoords && 
-    destinationCoords && 
-    !isLoading &&
-    routeAlternatives.length === 0 && // Only if no route is already calculated
-    selectedVehicle === 'Car' && // Only auto-calculate for Car
-    !autoCalculatedRef.current; // Prevent multiple auto-calculations
+    const shouldAutoCalculate = 
+      startingPointCoords && 
+      destinationCoords && 
+      !isLoading &&
+      routeAlternatives.length === 0 && // Only if no route is already calculated
+      selectedVehicle === 'Car' && // Only auto-calculate for Car
+      !autoCalculatedRef.current; // Prevent multiple auto-calculations
 
-  if (shouldAutoCalculate) {
-    autoCalculatedRef.current = true;
-    // Auto-select Car and calculate route
-    handleVehicleClick('Car');
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
+    if (shouldAutoCalculate) {
+      autoCalculatedRef.current = true;
+      // Auto-select Car and calculate route
+      handleVehicleClick('Car');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
 
-useEffect(() => {
-  setOsrmWaypoints(waypointCoords.filter(Boolean));
-}, [waypointCoords]);
+  // Handle starting point selection from search
+  const handleStartingPointSelect = useCallback((place) => {
+    if (place && place.lat !== undefined && place.lon !== undefined) {
+      setStartingPoint(place.name || place.display_name || 'Selected Location');
+      setStartingPointCoords({ lat: place.lat, lng: place.lon });
+      
+      // Add to recent locations
+      addToRecentLocations({
+        name: place.name || place.display_name,
+        latitude: place.lat,
+        longitude: place.lon,
+        type: 'Location',
+        source: 'search'
+      });
+    }
+  }, []);
+
+  // Handle destination selection from search - UPDATED to set both name and coordinates
+  const handleDestinationSelect = useCallback((place) => {
+    if (place && place.lat !== undefined && place.lon !== undefined) {
+      const placeName = place.name || place.display_name || 'Selected Location';
+      setCurrentDestinationInput(placeName);
+      setDestinationCoords({ lat: place.lat, lng: place.lon });
+      
+      // Add to recent locations
+      addToRecentLocations({
+        name: placeName,
+        latitude: place.lat,
+        longitude: place.lon,
+        type: 'Location',
+        source: 'search'
+      });
+      
+      // If starting point is also set, reset auto-calculate flag to trigger route calculation
+      if (startingPointCoords) {
+        autoCalculatedRef.current = false;
+      }
+    }
+  }, [startingPointCoords]);
+
+  const handleManualDestinationSubmit = useCallback(async (text) => {
+    try {
+      const results = await geocodeAddressNominatim(text);
+      if (Array.isArray(results) && results.length > 0) {
+        const res = results[0];
+        const name = res.display_name || text;
+        const lat = parseFloat(res.lat);
+        const lon = parseFloat(res.lon);
+        setCurrentDestinationInput(name);
+        setDestinationCoords({ lat, lng: lon });
+        addToRecentLocations({
+          name,
+          latitude: lat,
+          longitude: lon,
+          type: 'Location',
+          source: 'manual'
+        });
+        if (startingPointCoords) {
+          autoCalculatedRef.current = false;
+        }
+      } else {
+        setCurrentDestinationInput(text);
+        setDestinationCoords(null);
+        toast.error('No matching address found.');
+      }
+    } catch (err) {
+      setCurrentDestinationInput(text);
+      setDestinationCoords(null);
+      toast.error('Failed to look up address.');
+    }
+  }, [startingPointCoords]);
+
+  // Enhanced function to set destination from external sources with detailed data fetching
+  const setDestinationFromExternal = useCallback(async (name, coords, additionalData = {}) => {
+    console.log('Setting destination from external:', name, coords, additionalData);
+    
+    // Set both the destination input field and coordinates
+    setCurrentDestinationInput(name || 'Selected Location');
+    
+    if (coords && coords.lat && coords.lng) {
+      setDestinationCoords({
+        lat: coords.lat,
+        lng: coords.lng
+      });
+      
+      // Enhanced recent location entry with additional data
+      const enhancedLocationData = {
+        name: name || 'Selected Location',
+        latitude: coords.lat,
+        longitude: coords.lng,
+        type: additionalData.type || 'Location',
+        source: additionalData.source || 'directions',
+        description: additionalData.description || '',
+        address: additionalData.address || '',
+        website: additionalData.website || '',
+        phone: additionalData.phone || '',
+        category: additionalData.category || '',
+        ...additionalData
+      };
+      
+      // Add to recent locations with enhanced data
+      addToRecentLocations(enhancedLocationData);
+      
+      console.log('Enhanced destination coordinates set:', coords);
+      
+      // If starting point is also set, reset auto-calculate flag to trigger route calculation
+      if (startingPointCoords) {
+        autoCalculatedRef.current = false;
+      }
+    }
+  }, [startingPointCoords]);
+
+  // Update the useImperativeHandle to use the new function
+  useImperativeHandle(ref, () => ({
+    setDestinationFromExternal: setDestinationFromExternal,
+    // ... other methods
+    openSidebar: () => {
+      setSidebarExpanded(true);
+    },
+    closeSidebar: () => {
+      setSidebarExpanded(false);
+    },
+    setDestinationAndOpen: (name, coords) => {
+      setDestinationFromExternal(name, coords);
+      setSidebarExpanded(true);
+    },
+    setDestinationName: (name) => {
+      setCurrentDestinationInput(name);
+    },
+    // NEW: clear all routing programmatically (inputs, coords, and map state via props)
+    clearAllRouting: () => {
+      handleClearAllRouting();
+    }
+  }));
 
 useEffect(() => {
     // Routing is active if both start and end are set (and valid), or if there are any waypoints
@@ -1307,8 +1557,10 @@ useEffect(() => {
       !!startingPointCoords &&
       !!destinationCoords &&
       (addDestinations.length === 0 || waypointCoords.some(Boolean));
-    setIsRoutingActive(routingActive);
-  }, [startingPointCoords, destinationCoords, addDestinations, waypointCoords]);
+    if (setIsRoutingActive) {
+      setIsRoutingActive(routingActive);
+    }
+  }, [startingPointCoords, destinationCoords, addDestinations, waypointCoords, setIsRoutingActive]);
 
   // Notify parent component when route alternatives change
   useEffect(() => {
@@ -1427,7 +1679,7 @@ useEffect(() => {
         </div>
       </div>
     
-      <div className={`side-panel100 ${isExpanded ? 'expanded' : ''}`}>
+      <div className={`side-panel100 ${sidebarExpanded ? 'expanded' : ''}`}>
         <div className="transport-section">
             <div className="section-label">
               <FaMapMarkerAlt className="section-icon" />
@@ -1489,18 +1741,13 @@ useEffect(() => {
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon-lsb red" />
               <PhotonAutocompleteInput
-                value={destination}
-                onChange={setDestination}
-                onSelect={feature => {
-                  setDestination(feature.properties.name);
-                  setDestinationCoords({
-                    lat: feature.geometry.coordinates[1],
-                    lng: feature.geometry.coordinates[0]
-                  });
-                }}
+                value={currentDestinationInput}
+                onChange={setCurrentDestinationInput}
+                onSelect={handleDestinationSelect}
+                onManualSubmit={handleManualDestinationSubmit}
                 placeholder="Enter destination..."
               />
-              {destination && (
+              {currentDestinationInput && (
                 <button 
                   className="clear-button2" 
                   onClick={handleClearDestination}
@@ -1589,43 +1836,43 @@ useEffect(() => {
           </div>
 
  {isLoading ? (
-  <div className="loading-message">Calculating route...</div>
-) : routeSummary ? (
-  <div className="route-summary-container">
-    <div className="route-summary-header">
-      <FaMapMarkerAlt className="section-icon" />
-      <h4>Route Summary</h4>
-    </div>
-    <div className="route-summary-item">
-      <FaMapMarkerAlt className="summary-icon-lsb" />
-      <span className="summary-label">Distance:</span>
-      <span className="summary-value">{(routeSummary.distance / 1000).toFixed(2)} km</span>
-    </div>
-    <div className="route-summary-item">
-      <FaClock className="summary-icon-lsb" />
-      <span className="summary-label">Duration:</span>
-      <span className="summary-value">{formatDuration(routeSummary.duration)}</span>
-    </div>
-    <div className="route-summary-item">
-      <FaCar className="summary-icon-lsb" />
-      <span className="summary-label">Transport:</span>
-      <span className="summary-value">{routeSummary.vehicle}</span>
-    </div>
-    {routeSummary.roadInfo && routeSummary.roadInfo.length > 0 && (
-      <div className="route-summary-item">
-        <FaMapMarkerAlt className="summary-icon-lsb" />
-        <span className="summary-label">Main Roads:</span>
-        <span className="summary-value">
-          {routeSummary.roadInfo
-            .filter(road => road.road && road.road !== 'Unknown Road')
-            .slice(0, 3)
-            .map(road => road.road)
-            .join(', ') || 'Various roads'}
-        </span>
-      </div>
-    )}
-  </div>
-) : null}
+            <div className="loading-message">Calculating route...</div>
+          ) : routeSummary ? (
+            <div className="route-summary-container">
+              <div className="route-summary-header">
+                <FaMapMarkerAlt className="section-icon" />
+                <h4>Route Summary</h4>
+              </div>
+              <div className="route-summary-item">
+                <FaMapMarkerAlt className="summary-icon-lsb" />
+                <span className="summary-label">Distance:</span>
+                <span className="summary-value">{(routeSummary.distance / 1000).toFixed(2)} km</span>
+              </div>
+              <div className="route-summary-item">
+                <FaClock className="summary-icon-lsb" />
+                <span className="summary-label">Duration:</span>
+                <span className="summary-value">{formatDuration(routeSummary.duration)}</span>
+              </div>
+              <div className="route-summary-item">
+                <FaCar className="summary-icon-lsb" />
+                <span className="summary-label">Transport:</span>
+                <span className="summary-value">{routeSummary.vehicle}</span>
+              </div>
+              {routeSummary.roadInfo && routeSummary.roadInfo.length > 0 && (
+                <div className="route-summary-item">
+                  <FaMapMarkerAlt className="summary-icon-lsb" />
+                  <span className="summary-label">Main Roads:</span>
+                  <span className="summary-value">
+                    {routeSummary.roadInfo
+                      .filter(road => road.road && road.road !== 'Unknown Road')
+                      .slice(0, 3)
+                      .map(road => road.road)
+                      .join(', ') || 'Various roads'}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
 
 {isLoading ? (
             <div className="loading-message">Loading nearby places...</div>
@@ -1706,7 +1953,7 @@ useEffect(() => {
                     className={`route-alternative-item ${index === selectedRouteIndex ? 'active' : ''}`}
                     onClick={() => {
                       setSelectedRouteIndex(index);
-                      setOsrmRouteCoords(route.coords);
+                      if (setOsrmRouteCoords) setOsrmRouteCoords(route.coords);
                       setRouteSummary({ 
                         distance: route.distance, 
                         duration: route.duration,
@@ -1760,7 +2007,7 @@ useEffect(() => {
             <RecentSection
               isOpen={showRecentSection}
               onClose={() => {
-                setShowRecentSection(false);
+                setShowRecentSection(false);                
                 setActiveMenu('');
               }}
               history={recentLocations}
@@ -1789,8 +2036,8 @@ useEffect(() => {
               showLoginOverlay={openLoginOverlay}
               onBookmarkClick={(bookmarkData) => {
                 // Use the data directly as provided by BookmarkPage
-                setSelectedPlace(bookmarkData);
-                setSelectedSearchBarPlace(bookmarkData);
+                if (setSelectedPlace) setSelectedPlace(bookmarkData);
+                if (setSelectedSearchBarPlace) setSelectedSearchBarPlace(bookmarkData);
                 
                 // Close the bookmark panel
                 setShowBookmarkpage(false);
@@ -1798,10 +2045,8 @@ useEffect(() => {
               }}
             />
           )}
-
-          {/* <MapZoomController selectedPlace={selectedPlace} /> */}
           </>
   );
-};
+});
 
 export default LeftSidebarTesting;

@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import carIcon from '../assets/car.gif';
 import homestayIcon from '../assets/homestay.gif';
@@ -81,38 +82,38 @@ const createIcon = (iconUrl) =>
     className: 'custom-leaflet-icon'
   });
 
-  const searchPlaceIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Or use your own pin image
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
-    className: 'custom-leaflet-icon'
-  });
-  
-  // Route markers with different colors
-  const startMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
-  
-  const endMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
-  
-  const waypointMarkerIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className: 'custom-leaflet-icon'
-  });
+const searchPlaceIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+  className: 'custom-leaflet-icon'
+});
+
+// Route markers with different colors
+const startMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+
+const endMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+
+const waypointMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
 
 const categoryIcons = {
   'Major Town': createIcon(townIcon),
@@ -126,21 +127,18 @@ const categoryIcons = {
   'Tour Guides': createIcon(tourIcon),
   'Events': createIcon(eventIcon),
   'Restaurant': createIcon(restaurantIcon),
+  'Starting Point': startMarkerIcon,
+  'Destination': endMarkerIcon,
+  'Waypoint': waypointMarkerIcon,
 };
 
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
-    // Normalize the type for Events
-    const locationType = location.type || 'Major Town';
-    
     if (categoryIcons[location.type]) {
-      // console.log('Found icon for type:', location.type);
       return categoryIcons[location.type];
     }
-    
-    // console.log('No icon found for type:', location.type, '- using default');
     return categoryIcons['Major Town'];
   };
 
@@ -163,14 +161,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
             eventHandlers={{
               click: () => onMarkerClick(selectedSearchBarPlace)
             }}
-            // riseOnHover={false}
-            // autoPan={false}
-          >
-            {/* <Popup>
-              <strong>{selectedSearchBarPlace.name || 'Selected Place'}</strong>
-              {selectedSearchBarPlace.description && <div>{selectedSearchBarPlace.description}</div>}
-            </Popup> */}
-          </Marker>
+          />
           <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
             {nearbyPlaces.map((loc, idx) => (
               <Marker
@@ -180,11 +171,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                 eventHandlers={{
                   click: () => onMarkerClick(loc)
                 }}
-                // riseOnHover={false} 
-                // autoPan={false}
-              >
-                {/* <Popup>{loc.name}</Popup> */}
-              </Marker>
+              />
             ))}
           </MarkerClusterGroup>
         </>
@@ -205,26 +192,7 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                         click: () => onMarkerClick(loc)
                       }}
                       className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
-                      // riseOnHover={false}
-                      // autoPan={false}
                     />
-                    //   <Popup>
-                    //     <div style={{ textAlign: 'center' }}>
-                    //       <img
-                    //         src={icon.options.iconUrl}
-                    //         alt={loc.type}
-                    //         style={{ width: 30, height: 30, marginBottom: 8 }}
-                    //       />
-                    //       <div>
-                    //         <strong>{loc.name}</strong>
-                    //         <br />
-                    //         <small>Type: {loc.type}</small>
-                    //         <br />
-                    //         {loc.description || 'No description'}
-                    //       </div>
-                    //     </div>
-                    //   </Popup>
-                    // </Marker>
                   );
                 })}
               </MarkerClusterGroup>
@@ -241,23 +209,6 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
                     }}
                     className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
                   />
-                  //   <Popup>
-                  //     <div style={{ textAlign: 'center' }}>
-                  //       <img
-                  //         src={icon.options.iconUrl}
-                  //         alt={loc.type}
-                  //         style={{ width: 30, height: 30, marginBottom: 8 }}
-                  //       />
-                  //       <div>
-                  //         <strong>{loc.name}</strong>
-                  //         <br />
-                  //         <small>Type: {loc.type}</small>
-                  //         <br />
-                  //         {loc.description || 'No description'}
-                  //       </div>
-                  //     </div>
-                  //   </Popup>
-                  // </Marker>
                 );
               })
             )
@@ -267,6 +218,11 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
     </>
   );
 }
+
+// Create a ref-forwarded version of LeftSideBarTesting
+const LeftSideBarTestingWithRef = forwardRef((props, ref) => {
+  return <LeftSideBarTesting {...props} ref={ref} />;
+});
 
 function MapComponentTesting({  }) {
   const mapRef = useRef();
@@ -288,6 +244,10 @@ function MapComponentTesting({  }) {
   const [routeAlternatives, setRouteAlternatives] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
+
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [destinationInput, setDestinationInput] = useState('');
+
   const [routeInfo, setRouteInfo] = useState({
     startingPoint: '',
     destination: '',
@@ -315,6 +275,30 @@ function MapComponentTesting({  }) {
     setSelectedLocation(null);
     setShowReviewPage(false);
   };
+
+  // Updated handleDirectionsClick function
+  const handleDirectionsClick = (locationData) => {
+  console.log('Directions clicked for:', locationData);
+  
+  // Use the ref to call LeftSideBarTesting's internal method
+  if (leftSidebarRef.current && leftSidebarRef.current.setDestinationFromExternal) {
+    leftSidebarRef.current.setDestinationFromExternal(
+      locationData.name, 
+      { 
+        lat: locationData.latitude || locationData.coordinates?.latitude, 
+        lng: locationData.longitude || locationData.coordinates?.longitude 
+      }
+    );
+  }
+  
+  // Open the sidebar
+  setIsSidebarExpanded(true);
+  
+  // Close the info window
+  setSelectedLocation(null);
+  
+  // toast.success(`"${locationData.name}" set as destination`);
+};
 
   // Function to clear all routing data
   const clearAllRoutingData = () => {
@@ -371,73 +355,65 @@ function MapComponentTesting({  }) {
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
-    closeInfoWindow(); // Close info window when menu category changes
+    closeInfoWindow();
     setSelectedSearchBarPlace(null);
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
-    
-    // Clear routing data when category is selected
     clearAllRoutingData();
   };
 
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
-    closeInfoWindow(); // Close info window when new place is searched
+    closeInfoWindow();
     setLocations([]);
+    // Keep MapViewMenu inactive during search
+    setActiveOption(null);
+    // Clear any existing routing (polyline, markers, and sidebar state)
+    clearAllRoutingData();
+    if (leftSidebarRef.current && leftSidebarRef.current.clearAllRouting) {
+      leftSidebarRef.current.clearAllRouting();
+    }
     setSelectedSearchBarPlace({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
   const handleZoomToPlace = (place) => {
-    closeInfoWindow(); // Close info window when zooming to place
+    closeInfoWindow();
     setSelectedSearchPlace(place);
   };
 
-  // Handler for marker clicks
-  const handleMarkerClick = (location) => {
-    // Normalize the location data to handle both formats
-    const normalizedLocation = {
-      ...location,
-      // If coordinates exist, use them, otherwise use direct lat/lng
-      latitude: location.coordinates?.latitude || location.latitude,
-      longitude: location.coordinates?.longitude || location.longitude,
-      // Ensure we have the original coordinates object if it exists
-      coordinates: location.coordinates
-    };
-
-    // If clicking the same marker, toggle the info window
-    if (selectedLocation && selectedLocation.name === location.name) {
-      closeInfoWindow();
-    } else {
-      setSelectedLocation(location);
-      
-      // Fly to the marker with smooth animation
-      if (mapRef.current) {
-        const map = mapRef.current;
-        const markerPosition = [location.latitude, location.longitude];
-        
-        // Calculate optimal zoom level for a good view
-        const currentZoom = map.getZoom();
-        const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
-        
-        // Fly to the marker position with smooth animation
-        map.flyTo(markerPosition, optimalZoom, {
-          duration: 1.8, // Smooth animation duration
-          easeLinearity: 0.25
-        });
-      }
-    }
+  // Handler for marker clicks - UPDATED to handle route markers
+  const handleMarkerClick = async (location) => {
+  const normalizedLocation = {
+    ...location,
+    latitude: location.coordinates?.latitude || location.latitude,
+    longitude: location.coordinates?.longitude || location.longitude,
+    coordinates: location.coordinates
   };
+
+  if (selectedLocation && selectedLocation.name === location.name) {
+    closeInfoWindow();
+  } else {
+    setSelectedLocation(normalizedLocation);
+    
+    if (mapRef.current) {
+      const map = mapRef.current;
+      const markerPosition = [normalizedLocation.latitude, normalizedLocation.longitude];
+      const currentZoom = map.getZoom();
+      const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
+      
+      map.flyTo(markerPosition, optimalZoom, {
+        duration: 1.8,
+        easeLinearity: 0.25
+      });
+    }
+  }
+};
 
   // Handler for closing the info window
   const handleCloseInfoWindow = () => {
     closeInfoWindow();
-  };
-
-  // Handler for showing review page
-  const handleShowReview = () => {
-    setShowReviewPage(true);
   };
 
   // Handler for opening login modal
@@ -448,7 +424,6 @@ function MapComponentTesting({  }) {
   // Handle navigation state for bookmark toggle
   useEffect(() => {
     if (location.state?.openBookmark && toggleBookmarkRef.current) {
-      // Small delay to ensure the component is fully mounted
       setTimeout(() => {
         toggleBookmarkRef.current();
       }, 100);
@@ -458,12 +433,10 @@ function MapComponentTesting({  }) {
   // Fetch Major Town data on component mount
   useEffect(() => {
     const loadInitialMajorTowns = async () => {
-      // Only fetch if we don't have any locations yet and no search bar place is selected
       if (locations.length === 0 && !selectedSearchBarPlace) {
         const majorTowns = await fetchMajorTowns();
         if (majorTowns.length > 0) {
           setLocations(majorTowns);
-          // Optionally fit the map bounds to show all major towns
           if (mapRef.current) {
             const bounds = L.latLngBounds(
               majorTowns.map(loc => [loc.latitude, loc.longitude])
@@ -490,7 +463,6 @@ function MapComponentTesting({  }) {
   // Close info window when map is clicked
   useEffect(() => {
     const handleMapClick = (e) => {
-      // Check if the click target is actually the map (not a marker or control)
       const target = e.target;
       const isMarker = target.closest('.leaflet-marker-icon') || 
                       target.closest('.leaflet-popup') ||
@@ -521,18 +493,6 @@ function MapComponentTesting({  }) {
     }
   }, [isRoutingActive]);
 
-  // Close info window when weather/town changes
-  useEffect(() => {
-    if (shouldZoom) {
-      closeInfoWindow();
-    }
-  }, [shouldZoom, currentTown]);
-
-  // Close info window when base layer changes
-  useEffect(() => {
-    closeInfoWindow();
-  }, [baseLayer]);
-
   // Memoize callback functions to prevent infinite re-renders
   const handleRouteAlternativesChange = useCallback((alternatives, selectedIndex) => {
     setRouteAlternatives(alternatives);
@@ -551,47 +511,324 @@ function MapComponentTesting({  }) {
   useEffect(() => {
     const handleNearbyPlaceSelected = (event) => {
       const placeData = event.detail;
-      
-      // Set the selected location to show the info window
       setSelectedLocation(placeData);
       
-      // Fly to the marker with smooth animation
       if (mapRef.current) {
         const map = mapRef.current;
         const markerPosition = [placeData.latitude, placeData.longitude];
-        
-        // Calculate optimal zoom level for a good view
         const currentZoom = map.getZoom();
         const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
         
-        // Fly to the marker position with smooth animation
         map.flyTo(markerPosition, optimalZoom, {
-          duration: 1.8, // Smooth animation duration
+          duration: 1.8,
           easeLinearity: 0.25
         });
       }
     };
 
     window.addEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
-
     return () => {
       window.removeEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
     };
   }, []);
 
   useEffect(() => {
-    // Routing is active if both start and end are set (and valid), or if there are any waypoints
     const routingActive =
-      !!osrmRouteCoords[0] && // Assuming osrmRouteCoords[0] is the start
-      !!osrmRouteCoords[osrmRouteCoords.length - 1] && // Assuming osrmRouteCoords[osrmRouteCoords.length - 1] is the end
+      !!osrmRouteCoords[0] &&
+      !!osrmRouteCoords[osrmRouteCoords.length - 1] &&
       (osrmWaypoints.length === 0 || osrmWaypoints.some(Boolean));
     setIsRoutingActive(routingActive);
   }, [osrmRouteCoords, osrmWaypoints]);
 
+  // Enhanced createRouteMarkerLocation function with prioritized data fetching sequence
+  const createRouteMarkerLocation = async (position, type, name, description, routeInfo = {}) => {
+    let detailedDescription = description;
+    let address = '';
+    let division = '';
+    let enhancedData = {};
+    let dataFound = false;
+    
+    // Use Vite environment variable syntax
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5050';
+    
+    try {
+      // Step 1: Check backend location data first
+      try {
+        const locationResponse = await fetch(`${backendUrl}/api/locations?category=All`);
+        if (locationResponse.ok) {
+          const locationData = await locationResponse.json();
+          
+          // Find closest location within 100m radius
+          const closestLocation = locationData.find(location => {
+            if (!location.latitude || !location.longitude) return false;
+            
+            const distance = calculateDistance(
+              position[0], position[1],
+              location.latitude, location.longitude
+            );
+            return distance <= 0.1; // 100m in kilometers
+          });
+          
+          if (closestLocation) {
+            enhancedData = {
+              name: closestLocation.name || name,
+              category: closestLocation.category || type,
+              description: closestLocation.description || description,
+              division: closestLocation.division || '',
+              website: closestLocation.url || routeInfo.website || '',
+              image: closestLocation.image || null,
+              source: 'backend_location'
+            };
+            
+            address = closestLocation.description || '';
+            division = closestLocation.division || '';
+            dataFound = true;
+            
+            console.log('Found matching backend location data');
+          }
+        }
+      } catch (locationError) {
+        console.log('Backend location API not available');
+      }
+
+      // Step 2: If no location data found, check business locations
+      if (!dataFound) {
+        try {
+          const businessResponse = await fetch(`${backendUrl}/api/businesses/approved`);
+          if (businessResponse.ok) {
+            const businessData = await businessResponse.json();
+            
+            if (businessData.success && businessData.data) {
+              // Find closest business within 100m radius
+              const closestBusiness = businessData.data.find(business => {
+                if (!business.latitude || !business.longitude) return false;
+                
+                const distance = calculateDistance(
+                  position[0], position[1],
+                  business.latitude, business.longitude
+                );
+                return distance <= 0.1; // 100m in kilometers
+              });
+              
+              if (closestBusiness) {
+                enhancedData = {
+                  name: closestBusiness.name || name,
+                  category: closestBusiness.category || type,
+                  description: closestBusiness.description || description,
+                  division: closestBusiness.division || '',
+                  website: closestBusiness.website || routeInfo.website || '',
+                  phone: closestBusiness.phone || routeInfo.phone || '',
+                  ownerEmail: closestBusiness.ownerEmail || routeInfo.ownerEmail || '',
+                  openingHours: closestBusiness.openingHours || routeInfo.openingHours || '',
+                  businessImage: closestBusiness.businessImage || null,
+                  rating: closestBusiness.rating || null,
+                  source: 'backend_business'
+                };
+                
+                address = closestBusiness.address || '';
+                division = closestBusiness.division || '';
+                dataFound = true;
+                
+                console.log('Found matching business data');
+              }
+            }
+          }
+        } catch (businessError) {
+          console.log('Backend business API not available');
+        }
+      }
+
+      // Step 3: If still no data found, check event locations
+      if (!dataFound) {
+        try {
+          const eventResponse = await fetch(`${backendUrl}/api/event/getAllEvents`);
+          if (eventResponse.ok) {
+            const eventData = await eventResponse.json();
+            
+            if (eventData.success && eventData.data) {
+              // Find closest event within 100m radius
+              const closestEvent = eventData.data.find(event => {
+                if (!event.latitude || !event.longitude) return false;
+                
+                const distance = calculateDistance(
+                  position[0], position[1],
+                  event.latitude, event.longitude
+                );
+                return distance <= 0.1; // 100m in kilometers
+              });
+              
+              if (closestEvent) {
+                enhancedData = {
+                  name: closestEvent.name || name,
+                  category: 'Events',
+                  description: closestEvent.description || description,
+                  division: closestEvent.division || '',
+                  website: closestEvent.website || routeInfo.website || '',
+                  phone: closestEvent.phone || routeInfo.phone || '',
+                  ownerEmail: closestEvent.ownerEmail || routeInfo.ownerEmail || '',
+                  image: closestEvent.imageUrl || null,
+                  
+                  // Event-specific details
+                  startDate: closestEvent.startDate || routeInfo.startDate || '',
+                  endDate: closestEvent.endDate || routeInfo.endDate || '',
+                  startTime: closestEvent.startTime || routeInfo.startTime || '',
+                  endTime: closestEvent.endTime || routeInfo.endTime || '',
+                  eventType: closestEvent.eventType || routeInfo.eventType || '',
+                  registrationRequired: closestEvent.registrationRequired || routeInfo.registrationRequired || '',
+                  
+                  source: 'backend_event'
+                };
+                
+                address = closestEvent.address || '';
+                division = closestEvent.division || '';
+                dataFound = true;
+                
+                console.log('Found matching event data');
+              }
+            }
+          }
+        } catch (eventError) {
+          console.log('Backend event API not available');
+        }
+      }
+
+      // Step 4: Only perform reverse geocoding as fallback if no data found
+      if (!dataFound) {
+        console.log('No backend data found, performing reverse geocoding as fallback');
+        
+        const nominatimResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}&addressdetails=1`, {
+          headers: {
+            'User-Agent': 'SarawakTourismApp/1.0'
+          }
+        });
+        
+        if (nominatimResponse.ok) {
+          const nominatimData = await nominatimResponse.json();
+          
+          if (nominatimData && nominatimData.display_name) {
+            address = nominatimData.display_name;
+            detailedDescription = `${description}\n\nAddress: ${address}`;
+          }
+          
+          // Extract division/state information
+          if (nominatimData.address) {
+            division = nominatimData.address.state || nominatimData.address.region || nominatimData.address.county || '';
+          }
+        }
+
+        // Try Overpass API for POI details as additional fallback
+        try {
+          const overpassQuery = `
+            [out:json][timeout:25];
+            (
+              node["amenity"](around:100,${position[0]},${position[1]});
+              node["tourism"](around:100,${position[0]},${position[1]});
+              node["shop"](around:100,${position[0]},${position[1]});
+              node["leisure"](around:100,${position[0]},${position[1]});
+            );
+            out geom;
+          `;
+          
+          const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: overpassQuery,
+            headers: {
+              'Content-Type': 'text/plain'
+            }
+          });
+
+          if (overpassResponse.ok) {
+            const overpassData = await overpassResponse.json();
+            if (overpassData.elements && overpassData.elements.length > 0) {
+              const poi = overpassData.elements[0];
+              if (poi.tags) {
+                enhancedData = {
+                  ...enhancedData,
+                  name: poi.tags.name || name,
+                  phone: poi.tags.phone || poi.tags['contact:phone'] || routeInfo.phone || '',
+                  website: poi.tags.website || poi.tags['contact:website'] || routeInfo.website || '',
+                  openingHours: poi.tags.opening_hours || routeInfo.openingHours || '',
+                  amenity: poi.tags.amenity,
+                  tourism: poi.tags.tourism,
+                  shop: poi.tags.shop,
+                  leisure: poi.tags.leisure,
+                  source: 'overpass_fallback'
+                };
+              }
+            }
+          }
+        } catch (overpassError) {
+          console.log('Overpass API not available');
+        }
+      }
+
+    } catch (error) {
+      console.log('Enhanced data fetching failed, using coordinates only');
+    }
+    
+    return {
+      name: enhancedData.name || name,
+      latitude: position[0],
+      longitude: position[1],
+      description: enhancedData.description || detailedDescription,
+      type: type,
+      coordinates: {
+        latitude: position[0],
+        longitude: position[1]
+      },
+      // Enhanced location details from prioritized sources
+      address: address,
+      division: division,
+      website: enhancedData.website || routeInfo.website || '',
+      phone: enhancedData.phone || routeInfo.phone || '',
+      ownerEmail: enhancedData.ownerEmail || routeInfo.ownerEmail || '',
+      openingHours: enhancedData.openingHours || routeInfo.openingHours || '',
+      
+      // Event details (for destination markers that might be events)
+      startDate: enhancedData.startDate || routeInfo.startDate || '',
+      endDate: enhancedData.endDate || routeInfo.endDate || '',
+      startTime: enhancedData.startTime || routeInfo.startTime || '',
+      endTime: enhancedData.endTime || routeInfo.endTime || '',
+      eventType: enhancedData.eventType || routeInfo.eventType || '',
+      registrationRequired: enhancedData.registrationRequired || routeInfo.registrationRequired || '',
+      
+      // Business details
+      category: enhancedData.category || type,
+      rating: enhancedData.rating || null,
+      // businessImage: enhancedData.businessImage || null,
+      image: enhancedData.image || routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage || null,
+      
+      // POI details from Overpass (only as fallback)
+      amenity: enhancedData.amenity || '',
+      tourism: enhancedData.tourism || '',
+      shop: enhancedData.shop || '',
+      leisure: enhancedData.leisure || '',
+      
+      // Source tracking for debugging
+      source: enhancedData.source || 'route_marker',
+      dataEnhanced: dataFound
+    };
+  };
+
+  // Helper function to calculate distance between two coordinates
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* Left Sidebar */}
-      <LeftSideBarTesting 
+      {/* Left Sidebar with ref */}
+      <LeftSideBarTestingWithRef 
+        ref={leftSidebarRef}
         setOsrmRouteCoords={setOsrmRouteCoords}
         setOsrmWaypoints={setOsrmWaypoints}
         setIsRoutingActive={setIsRoutingActive}
@@ -612,6 +849,10 @@ function MapComponentTesting({  }) {
         onSetToggleBookmarkRef={(func) => {
           toggleBookmarkRef.current = func;
         }}
+        isExpand={isSidebarExpanded}
+        setIsExpand={setIsSidebarExpanded}
+        destinationInput={destinationInput}
+        setDestinationInput={setDestinationInput}
       />
 
       {/* Top Header Container */}
@@ -637,6 +878,8 @@ function MapComponentTesting({  }) {
               onZoomToPlace={handleZoomToPlace}
               isRoutingActive={isRoutingActive}
               onClearRouting={clearAllRoutingData}
+              // NEW: keep menu inactive whenever a search selection exists
+              isSearchActive={!!selectedSearchBarPlace}
             />
           </div>
           <div className="weather-profile-group">
@@ -698,26 +941,37 @@ function MapComponentTesting({  }) {
           selectedCategory={activeOption}
           zoomTrigger={zoomTrigger}
         />
-                {osrmRouteCoords.length > 0 && (
+        {osrmRouteCoords.length > 0 && (
           <>
             {/* Start marker - Green */}
             <Marker 
               position={osrmRouteCoords[0]} 
               icon={startMarkerIcon}
               eventHandlers={{
-                click: () => {
-                  const startLocation = {
-                    name: routeInfo.startingPoint || 'Starting Point',
-                    latitude: osrmRouteCoords[0][0],
-                    longitude: osrmRouteCoords[0][1],
-                    description: routeInfo.startingPoint ? `Starting location: ${routeInfo.startingPoint}` : 'Your journey begins here',
-                    type: 'Starting Point'
-                  };
+                click: async () => {
+                  const startLocation = await createRouteMarkerLocation(
+                    osrmRouteCoords[0], 
+                    routeInfo.name,
+                    routeInfo.name || 'Starting Point',
+                    routeInfo.description,
+                    {
+                      website: routeInfo.website,
+                      phone: routeInfo.phone,
+                      ownerEmail: routeInfo.email,
+                      address: routeInfo.address,
+                      openingHours: routeInfo.openingHours,
+                      startDate: routeInfo.startDate,
+                      endDate: routeInfo.endDate,
+                      eventType: routeInfo.eventType,
+                      registrationRequired: routeInfo.registrationRequired,
+                      image: routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage
+                    }
+                  );
                   handleMarkerClick(startLocation);
                 }
               }}
             />
-            
+
             {/* Waypoint markers - Custom numbered */}
             {osrmWaypoints && osrmWaypoints.length > 0 && osrmWaypoints.map((pos, idx) => (
               <Marker 
@@ -725,33 +979,47 @@ function MapComponentTesting({  }) {
                 position={[pos.lat, pos.lng]} 
                 icon={createWaypointMarkerIcon(idx + 1)}
                 eventHandlers={{
-                  click: () => {
-                    const waypointLocation = {
-                      name: `Waypoint ${idx + 1}`,
-                      latitude: pos.lat,
-                      longitude: pos.lng,
-                      description: `Stop ${idx + 1} on your route`,
-                      type: 'Waypoint'
-                    };
+                  click: async () => {
+                    const waypointInfo = routeInfo.waypoints?.[idx] || {};
+                    const waypointLocation = await createRouteMarkerLocation(
+                      [pos.lat, pos.lng],
+                      'Waypoint',
+                      waypointInfo.name || `Waypoint ${idx + 1}`,
+                      `Stop ${idx + 1} on your route`,
+                      waypointInfo
+                    );
                     handleMarkerClick(waypointLocation);
                   }
                 }}
               />
             ))}
-            
+
             {/* End marker - Red */}
             <Marker 
               position={osrmRouteCoords[osrmRouteCoords.length - 1]} 
               icon={endMarkerIcon}
               eventHandlers={{
-                click: () => {
-                  const endLocation = {
-                    name: routeInfo.destination || 'Destination',
-                    latitude: osrmRouteCoords[osrmRouteCoords.length - 1][0],
-                    longitude: osrmRouteCoords[osrmRouteCoords.length - 1][1],
-                    description: routeInfo.destination ? `Destination: ${routeInfo.destination}` : 'You have arrived!',
-                    type: 'Destination'
-                  };
+                click: async () => {
+                  const endLocation = await createRouteMarkerLocation(
+                    osrmRouteCoords[osrmRouteCoords.length - 1],
+                    routeInfo.name,
+                    routeInfo.name || 'Destination',
+                    routeInfo.description || 'Destination',
+                    {
+                      website: routeInfo.website,
+                      phone: routeInfo.phone,
+                      ownerEmail: routeInfo.email,
+                      address: routeInfo.address,
+                      openingHours: routeInfo.openingHours,
+                      startDate: routeInfo.startDate,
+                      endDate: routeInfo.endDate,
+                      startTime: routeInfo.startTime,
+                      endTime: routeInfo.endTime,
+                      eventType: routeInfo.eventType,
+                      registrationRequired: routeInfo.registrationRequired,
+                      image: routeInfo.image || routeInfo.imageUrl || routeInfo.businessImage
+                    }
+                  );
                   handleMarkerClick(endLocation);
                 }
               }}
@@ -769,53 +1037,40 @@ function MapComponentTesting({  }) {
                 />
               );
             })}
-            
-
             <MapZoomControllerTesting routeCoords={osrmRouteCoords} />
           </>
         )}
-        
-        {/* Nearby Places - No markers, only zoom functionality handled by sidebar */}
       </MapContainer>
 
-      {/* Custom Info Window */}
+      {/* Custom Info Window - UPDATED to show route markers */}
       {selectedLocation && !showReviewPage && (
         <div className="custom-info-window-container"
           onClick={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: '50%',
-            left: '350px', // Fixed distance from left edge
+            left: '350px',
             transform: 'translateY(-50%)',
             zIndex: 1000
           }}
         >
           <CustomInfoWindow
-            location={{
-              // name: selectedLocation.name,
-              // image: selectedLocation.image || 'default-image.jpg',
-              // description: selectedLocation.description || "No description available.",
-              // latitude: selectedLocation.latitude || "N/A",
-              // longitude: selectedLocation.longitude || "N/A",
-              // url: selectedLocation.url || 'No URL provided',
-              // rating: selectedLocation.rating,
-              // openNowText: selectedLocation.openNowText,
-              // open24Hours: selectedLocation.open24Hours,
-              // type: selectedLocation.type
-              ...selectedLocation
-            }}
+            location={selectedLocation}
             addBookmark={addBookmark}
             onCloseClick={handleCloseInfoWindow}
-            // onShowReview={handleShowReview}
             onOpenLoginModal={handleOpenLoginModal}
+            onDirectionsClick={handleDirectionsClick}
+            // Add custom props for route markers
+            isRouteMarker={selectedLocation.type === 'Starting Point' || selectedLocation.type === 'Destination' || selectedLocation.type === 'Waypoint'}
+            routeMarkerType={selectedLocation.type}
           />
         </div>
       )}
 
-      {/* Tourist Info Section (YouTube Reels) */}
-      {selectedLocation && (
+      {/* Tourist Info Section (YouTube Reels) - Only show for non-route markers */}
+      {selectedLocation &&
         <TouristInfoSection selectedLocation={selectedLocation} />
-      )}
+      } 
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

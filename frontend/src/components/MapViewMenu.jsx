@@ -9,6 +9,7 @@ import { IoFastFood } from "react-icons/io5";
 import '../styles/MapViewMenu.css';
 import defaultImage from '../assets/default.png';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useAuth } from '../context/AuthProvider'; // Import auth context
 
 const RADIUS_KM = 10;
 const DEFAULT_CENTER = { lat: 1.5533, lng: 110.3592 };
@@ -46,7 +47,7 @@ const useCurrentPosition = () => {
 };
 
 // Memoized component
-const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting }) => {
+const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZoomToPlace, isRoutingActive = false, onClearRouting, isSearchActive = false }) => {
   // Cache references
   const overpassCacheRef = useRef(new Map());
   const lastFetchRef = useRef({});
@@ -61,6 +62,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
   const [temporarySelection, setTemporarySelection] = useState(null);
 
   const currentPos = useCurrentPosition();
+  const { user } = useAuth(); // Get user from auth context
 
   // Memoized mobile menu state
   const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState(
@@ -327,8 +329,10 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     }
   }, [menuToBusinessCategory]);
 
+  // Fixed fetchBackendEvents with user-based filtering - no infinite loop
   const fetchBackendEvents = useCallback(async () => {
-    const cacheKey = 'events';
+    const userKey = user ? `${user.role}_${user.userType}` : 'tourist';
+    const cacheKey = `events_${userKey}`;
     const now = Date.now();
     const cached = categoryDataCacheRef.current.get(cacheKey);
     
@@ -349,35 +353,62 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       if (!res.ok) return [];
       const json = await res.json();
       const list = (json.events || []).filter(Boolean);
-      const result = list
-        .filter(e => e?.coordinates?.latitude != null && e?.coordinates?.longitude != null)
+
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+
+      // Process the data with user-based filtering
+      const processedData = list
+        .filter(item => {
+          // Filter out past events - only show events where endDate is today or in the future
+          const eventEndDate = item.endDate ? new Date(item.endDate) : null;
+          if (!eventEndDate) return false;
+          
+          eventEndDate.setHours(0, 0, 0, 0);
+          return eventEndDate >= currentDate;
+        })
+        .filter(item => {
+          // Filter by target audience based on user type - SAME LOGIC AS EVENT PAGE
+          const userType = user?.userType || 'tourist'; // Default to tourist if not logged in
+          const userRole = user?.role; // Check for admin roles
+          const eventAudiences = item.targetAudience || [];
+          
+          // System admin, CBT admin, and business users can see all events
+          if (userRole === 'system_admin' || userRole === 'cbt_admin' || userRole === 'business') {
+            return true;
+          } else {
+            // Tourist users (including non-logged in) can only see tourist events
+            return eventAudiences.includes('Tourist');
+          }
+        })
+        .filter(item => item?.coordinates?.latitude != null && item?.coordinates?.longitude != null)
         .slice(0, 300)
-        .map(e => ({
-          name: e.name,
-          latitude: Number(e.coordinates.latitude),
-          longitude: Number(e.coordinates.longitude),
-          image: e.imageUrl || defaultImage,
-          description: e.description || 'Event',
+        .map(item => ({
+          name: item.name,
+          latitude: Number(item.coordinates.latitude),
+          longitude: Number(item.coordinates.longitude),
+          image: item.imageUrl || defaultImage,
+          description: item.description || 'Event',
           type: 'Events',
           source: 'events',
-          startDate: e.startDate,
-
-          // Include additional event data if needed
-          endDate: e.endDate,
-          startTime: e.startTime,
-          endTime: e.endTime,
-          eventType: e.eventType,
-          registrationRequired: e.registrationRequired
+          startDate: item.startDate,
+          endDate: item.endDate,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          eventType: item.eventType,
+          registrationRequired: item.registrationRequired,
+          targetAudience: item.targetAudience || [],
+          eventOrganizers: item.eventOrganizers || '',
+          eventHashtags: item.eventHashtags || []
         }));
 
-      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: result });
-      console.log('Fetched events:', result);
-      return result;
+      categoryDataCacheRef.current.set(cacheKey, { timestamp: now, data: processedData });
+      return processedData;
     } catch (e) {
       console.error('Events fetch error:', e);
       return [];
     }
-  }, []);
+  }, [user]); // Only depend on user
 
   const fetchBackendData = useCallback(async (categoryName) => {
     // Skip for Major Town since we have a dedicated function for it
@@ -455,7 +486,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         return;
       }
 
-      // Special case: backend Events
+      // Special case: backend Events - now with user-based filtering
       if ((categoryName || '').toLowerCase() === 'events') {
         const events = await fetchBackendEvents();
         setLocationsData(events);
@@ -468,7 +499,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         return;
       }
 
-      // Use cached data if available
+      // Use cached data if available for other categories
       const cacheKey = `category_${categoryName}_${currentPos ? `${currentPos.lat}_${currentPos.lng}` : 'default'}`;
       const now = Date.now();
       const cached = categoryDataCacheRef.current.get(cacheKey);
@@ -517,7 +548,16 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     } finally {
       setLoadingStates(prev => ({ ...prev, [categoryName]: false }));
     }
-  }, [currentPos, fetchBackendData, fetchApprovedBusinesses, fetchOverpassPlaces, fetchBackendEvents, fetchMajorTowns, onSelect, onSelectCategory]);
+  }, [
+    currentPos, 
+    fetchBackendData, 
+    fetchApprovedBusinesses, 
+    fetchOverpassPlaces, 
+    fetchBackendEvents, 
+    fetchMajorTowns, 
+    onSelect, 
+    onSelectCategory
+  ]);
 
   // Menu item click handler
   const handleMenuItemClick = useCallback((item) => {
@@ -565,7 +605,17 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         onZoomToPlace({ latitude: currentPos.lat, longitude: currentPos.lng, category: item.name });
       }
     }
-  }, [isRoutingActive, activeOption, onClearRouting, isMobileMenu, currentPos, onSelect, onSelectCategory, onZoomToPlace, fetchPlacesByCategory]);
+  }, [
+    isRoutingActive, 
+    activeOption, 
+    onClearRouting, 
+    isMobileMenu, 
+    currentPos, 
+    onSelect, 
+    onSelectCategory, 
+    onZoomToPlace, 
+    fetchPlacesByCategory
+  ]);
 
   const handleDropdownToggle = useCallback(() => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -573,19 +623,19 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
   // Effect for active option changes
   useEffect(() => {
-    if (activeOption === null && isRoutingActive) {
-      // Routing mode - clear visual selection but allow interaction
+    if (activeOption === null && (isRoutingActive || isSearchActive)) {
+      // In routing mode or search mode, keep menu visually inactive
       setSelectedMenu('');
       setSelectedMobileMenuItem({ name: 'Select Category', icon: <FaLocationDot /> });
     } else if (!activeOption) {
-      // No active option but not routing mode - default to Major Town
+      // No active option and not in routing/search mode → default to Major Town
       const defaultItem = menuItems.find(item => item.name === 'Major Town');
       if (defaultItem) handleMenuItemClick(defaultItem);
     } else {
       setSelectedMenu(activeOption);
       setSelectedMobileMenuItem(menuItems.find(item => item.name === activeOption) || menuItems[0]);
     }
-  }, [activeOption, isRoutingActive, handleMenuItemClick]);
+  }, [activeOption, isRoutingActive, isSearchActive, handleMenuItemClick]);
 
   // Clear temporary selection when routing ends
   useEffect(() => {

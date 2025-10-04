@@ -136,11 +136,11 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
       return;
     }
     
-    if (!isBusinessEmail(email)) {
-      handleError("Please use a business email address (e.g., not Gmail, Yahoo, etc.).");
-      resetSubmitState();
-      return;
-    }
+    // if (!isBusinessEmail(email)) {
+    //   handleError("Please use a business email address (e.g., not Gmail, Yahoo, etc.).");
+    //   resetSubmitState();
+    //   return;
+    // }
     
 
     const fullPhoneNumber = `${phonePrefix}${phoneNumber}`;

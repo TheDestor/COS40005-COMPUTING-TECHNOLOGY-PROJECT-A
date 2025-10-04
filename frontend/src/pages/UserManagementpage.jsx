@@ -16,7 +16,7 @@ const UserManagementPage = () => {
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const { accessToken } = useAuth();
 
   const filterRef = useRef(null);
@@ -53,14 +53,14 @@ const UserManagementPage = () => {
         setShowFilters(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const roleOptions = ['System Admin', 'CBT Admin', 'Business User', 'User'];
-  const statusOptions = ['Active', 'Inactive'];
+  const roleOptions = ["System Admin", "CBT Admin", "Business User", "User"];
+  const statusOptions = ["Active", "Inactive"];
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -80,12 +80,13 @@ const UserManagementPage = () => {
     setCurrentPage(1);
   };
 
-  const filteredUsers = allUsers.filter(user =>
-    (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedRoles.length === 0 || selectedRoles.includes(user.role)) &&
-    (selectedStatuses.length === 0 || selectedStatuses.includes(user.status))
+  const filteredUsers = allUsers.filter(
+    (user) =>
+      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (selectedRoles.length === 0 || selectedRoles.includes(user.role)) &&
+      (selectedStatuses.length === 0 || selectedStatuses.includes(user.status))
   );
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -100,18 +101,22 @@ const UserManagementPage = () => {
 
   // Confirmation on Edit
   const handleEditClick = (userId) => {
-    const confirmEdit = window.confirm('Are you sure you want to edit this user?');
+    const confirmEdit = window.confirm(
+      "Are you sure you want to edit this user?"
+    );
     if (confirmEdit) {
-      console.log('User ID', userId, 'edited');
+      console.log("User ID", userId, "edited");
       // Implement your edit logic here
     }
   };
 
   // Confirmation on Delete
   const handleDeleteClick = (userId) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this user?');
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this user?"
+    );
     if (confirmDelete) {
-      console.log('User ID', userId, 'deleted');
+      console.log("User ID", userId, "deleted");
       // Implement your delete logic here
     }
   };
@@ -119,84 +124,99 @@ const UserManagementPage = () => {
   return (
     <div className="admin-container">
       <SystemAdminSidebar />
-    <div className="content-section2">
-      <h2><FaUsersCog /> User Management</h2>
-      <div className="user-management">
-        <div className="user-controls">
-          <div className="search-container51">
-            <FaSearch className="search-icon51" />
-            <input
-              className="search-input"
-              placeholder="Search user..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
-          <button className="add-user-button" onClick={() => setShowAddUserForm(true)}>
+      <div className="content-section2">
+        <h2>
+          <FaUsersCog /> User Management
+        </h2>
+        <div className="user-management">
+          <div className="user-controls">
+            <div className="search-container51">
+              <FaSearch className="search-icon51" />
+              <input
+                className="search-input"
+                placeholder="Search user..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </div>
+            {/*<button className="add-user-button" onClick={() => setShowAddUserForm(true)}>
             <RiUserAddLine className="add-user-icon" /> Add New User
           </button>
-        </div>
-
-        {showAddUserForm && (
-          <div className="add-user-overlay">
-            <AddUserForm onClose={() => setShowAddUserForm(false)} />
+          */}
           </div>
-        )}
 
-        <div className="user-controls">
-          <div className="filter-wrapper-admin" ref={filterRef}>
-            <button className="filter-button-admin" onClick={toggleFilter}>
-              <FaFilter className="add-user-icon" /> Filter
-            </button>
-            {showFilters && (
-              <div className="filter-dropdown-user">
-                <div className="filter-group-user">
-                  <h4>Role</h4>
-                  <div className="filter-options-admin">
-                    {roleOptions.map((role) => (
-                      <label key={role} className="filter-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedRoles.includes(role)}
-                          onChange={() => toggleOption(role, selectedRoles, setSelectedRoles)}
-                        />
-                        {role}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="filter-group-user">
-                  <h4>Status</h4>
-                  <div className="filter-options-admin">
-                    {statusOptions.map((status) => (
-                      <label key={status} className="filter-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedStatuses.includes(status)}
-                          onChange={() => toggleOption(status, selectedStatuses, setSelectedStatuses)}
-                        />
-                        {status}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="pagination">
-            <button onClick={() => changePage(currentPage - 1)}>{'<'}</button>
-            {[...Array(totalPages)].map((_, idx) => (
-              <button
-                key={idx}
-                className={currentPage === idx + 1 ? 'active' : ''}
-                onClick={() => changePage(idx + 1)}
-              >
-                {idx + 1}
+          {showAddUserForm && (
+            <div className="add-user-overlay">
+              <AddUserForm onClose={() => setShowAddUserForm(false)} />
+            </div>
+          )}
+
+          <div className="user-controls">
+            <div className="filter-wrapper-admin" ref={filterRef}>
+              <button className="filter-button-admin" onClick={toggleFilter}>
+                <FaFilter className="add-user-icon" /> Filter
               </button>
-            ))}
-            <button onClick={() => changePage(currentPage + 1)}>{'>'}</button>
+              {showFilters && (
+                <div className="filter-dropdown-user">
+                  <div className="filter-group-user">
+                    <h4>Role</h4>
+                    <div className="filter-options-admin">
+                      {roleOptions.map((role) => (
+                        <label key={role} className="filter-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role)}
+                            onChange={() =>
+                              toggleOption(
+                                role,
+                                selectedRoles,
+                                setSelectedRoles
+                              )
+                            }
+                          />
+                          {role}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="filter-group-user">
+                    <h4>Status</h4>
+                    <div className="filter-options-admin">
+                      {statusOptions.map((status) => (
+                        <label key={status} className="filter-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedStatuses.includes(status)}
+                            onChange={() =>
+                              toggleOption(
+                                status,
+                                selectedStatuses,
+                                setSelectedStatuses
+                              )
+                            }
+                          />
+                          {status}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="pagination">
+              <button onClick={() => changePage(currentPage - 1)}>{"<"}</button>
+              {[...Array(totalPages)].map((_, idx) => (
+                <button
+                  key={idx}
+                  className={currentPage === idx + 1 ? "active" : ""}
+                  onClick={() => changePage(idx + 1)}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+              <button onClick={() => changePage(currentPage + 1)}>{">"}</button>
+            </div>
           </div>
-        </div>
 
         <div className="table-scroll-wrapper">
           <table className="user-table">

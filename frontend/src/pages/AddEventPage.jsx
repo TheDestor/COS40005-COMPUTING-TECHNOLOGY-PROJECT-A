@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaSearch, FaBell, FaEnvelope, FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -2009,27 +2009,6 @@ const AddEventPage = () => {
           <div className="heading">
             <h2>Add Event</h2>
             <p>Create and publish new event</p>
-          </div>
-          <div className="add-event-actions">
-            <div className="search-bar">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
-              </div>
-            </div>
           </div>
         </div>
 

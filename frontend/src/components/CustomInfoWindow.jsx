@@ -23,7 +23,14 @@ const majorTowns = [
   'Betong'
 ];
 
-const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, onOpenLoginModal }) => {
+const CustomInfoWindow = ({ 
+  location, 
+  onCloseClick, 
+  onShowReview, 
+  addBookmark, 
+  onOpenLoginModal,
+  onDirectionsClick // Add this new prop
+}) => {
   const [activeFooter, setActiveFooter] = useState('');
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [isFooterDisabled, setIsFooterDisabled] = useState(false);
@@ -38,23 +45,28 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
   // Determine the type of location based on available fields
   const getLocationType = () => {
-  // Check for business fields first
-  if (location.ownerEmail || location.owner || location.category === 'Accommodation' || location.category === 'Food & Beverages' || location.category === 'Tour Guides' || location.category === 'Transportation' || location.category === 'Shoppings & Leisures') {
-    return 'business';
-  } 
-  // Check for event fields
-  else if (location.startDate || location.eventType || location.registrationRequired || location.type === 'Events') {
-    return 'event';
-  } 
-  // Check for major town
-  else if (location.type === 'Major Town' || majorTowns.includes(location.name) || location.division) {
-    return 'majorTown';
-  } 
-  // Default to location
-  else {
-    return 'location';
-  }
-};
+    // Check if it's a route marker first
+    if (location.type === 'Starting Point' || location.type === 'Destination' || location.type === 'Waypoint') {
+      return 'routeMarker';
+    }
+    
+    // Check for business fields first
+    if (location.ownerEmail || location.owner || location.category === 'Accommodation' || location.category === 'Food & Beverages' || location.category === 'Tour Guides' || location.category === 'Transportation' || location.category === 'Shoppings & Leisures') {
+      return 'business';
+    } 
+    // Check for event fields
+    else if (location.startDate || location.eventType || location.registrationRequired || location.type === 'Events') {
+      return 'event';
+    } 
+    // Check for major town
+    else if (location.type === 'Major Town' || majorTowns.includes(location.name) || location.division) {
+      return 'majorTown';
+    } 
+    // Default to location
+    else {
+      return 'location';
+    }
+  };
 
   const locationType = getLocationType();
 
@@ -96,6 +108,82 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     });
   };
 
+  // Get phone number from location
+  const getPhoneNumber = () => {
+    return location.phone || location.contact || location.telephone || location.mobile;
+  };
+
+  // Format phone number for display
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return null;
+    
+    // Remove all non-numeric characters
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Format based on length
+    if (cleaned.length === 10) {
+      return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    } else if (cleaned.length === 11) {
+      return cleaned.replace(/(\d{4})(\d{3})(\d{4})/, '$1-$2-$3');
+    } else if (cleaned.length === 7) {
+      return cleaned.replace(/(\d{3})(\d{4})/, '$1-$2');
+    }
+    
+    // Return original if no specific format matches
+    return phone;
+  };
+
+  // Better mobile detection that excludes desktop
+  const isTrueMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && 
+           !/Windows|Macintosh|Linux/.test(navigator.userAgent);
+  };
+
+  // Handle phone call
+  const handlePhoneCall = () => {
+    const phoneNumber = getPhoneNumber();
+    
+    if (!phoneNumber) {
+      toast.error('No phone number available for this location');
+      return;
+    }
+
+    const formattedNumber = formatPhoneNumber(phoneNumber) || phoneNumber;
+    const cleanPhoneNumber = phoneNumber.replace(/\D/g, '');
+    
+    // Only use tel: protocol for true mobile devices
+    if (isTrueMobileDevice()) {
+      // On true mobile devices, initiate phone call
+      window.location.href = `tel:${cleanPhoneNumber}`;
+      toast.success(`Calling ${formattedNumber}`);
+    } else {
+      // On desktop/tablet, always copy to clipboard
+      navigator.clipboard.writeText(formattedNumber).then(() => {
+        toast.success(`Phone number ${formattedNumber} copied to clipboard!`);
+      }).catch((err) => {
+        console.error('Failed to copy phone number:', err);
+        // Fallback: show the number in a toast
+        toast.info(`Phone: ${formattedNumber}`);
+      });
+    }
+  };
+
+  // Handle directions click
+  const handleDirectionsClick = () => {
+    if (onDirectionsClick) {
+      onDirectionsClick({
+        name: location.name,
+        latitude: location.latitude || location.lat,
+        longitude: location.longitude || location.lng,
+        address: location.address,
+        description: location.description
+      });
+      toast.success(`"${location.name}" set as destination`);
+    } else {
+      toast.info('Directions feature is available');
+    }
+  };
+
   const footerItems = [
     { icon: <FaMapMarkerAlt />, label: 'Directions' },
     { icon: <FaBookmark />, label: isBookmarked ? 'Saved' : 'Save' },
@@ -113,6 +201,18 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     
     if (label === "Share") {
       setIsShareModalOpen(true);
+      setActiveFooter('');
+      return;
+    }
+
+    if (label === "Phone") {
+      handlePhoneCall();
+      setActiveFooter('');
+      return;
+    }
+
+    if (label === "Directions") {
+      handleDirectionsClick();
       setActiveFooter('');
       return;
     }
@@ -276,7 +376,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     return process.env.REACT_APP_BACKEND_URL || 'http://localhost:5050';
   };
 
-  // Fixed image URL handler
+  // Enhanced image URL handler for route markers
   const getImageUrl = () => {
     console.log('Location data for image:', {
       name: location.name,
@@ -290,7 +390,10 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
     // Priority order for images based on location type
     let imageSource;
     
-    if (locationType === 'business') {
+    if (locationType === 'routeMarker') {
+      // For route markers, try to use enhanced business image or default
+      imageSource = location.businessImage || location.image || defaultImage;
+    } else if (locationType === 'business') {
       // For businesses, prioritize businessImage
       imageSource = location.businessImage || location.image || defaultImage;
     } else if (locationType === 'event') {
@@ -299,42 +402,18 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
       // For major towns, use image if available, otherwise default
       imageSource = location.image || location.imageUrl || defaultImage;
     } else {
-      imageSource = location.image || location.businessImage || location.imageUrl || defaultImage;
+      // For other locations, use any available image
+      imageSource = location.image || location.imageUrl || location.businessImage || defaultImage;
     }
     
-    // If no image source or empty string, return default
-    if (!imageSource || imageSource === 'undefined' || imageSource === 'null' || imageSource.trim() === '') {
-      console.log('No valid image source found, using default');
-      return defaultImage;
-    }
-
-    // If it's already a full URL, use it as is
-    if (imageSource.startsWith('http')) {
-      console.log('Using full URL:', imageSource);
-      return imageSource;
-    }
-
-    // For relative paths that start with /uploads (like business images)
-    if (imageSource.startsWith('/uploads')) {
+    // Handle relative URLs from backend
+    if (imageSource && imageSource !== defaultImage && !imageSource.startsWith('http') && !imageSource.startsWith('data:')) {
       const backendUrl = getBackendUrl();
-      // Remove any leading slashes that might cause double slashes
-      const cleanPath = imageSource.startsWith('/') ? imageSource : `/${imageSource}`;
-      const fullImageUrl = `${backendUrl}${cleanPath}`;
-      console.log('Constructed uploads URL for business:', fullImageUrl);
-      return fullImageUrl;
+      imageSource = `${backendUrl}${imageSource.startsWith('/') ? '' : '/'}${imageSource}`;
     }
-
-    // For other relative paths or direct image names
-    if (!imageSource.startsWith('http') && !imageSource.startsWith('/')) {
-      const backendUrl = getBackendUrl();
-      const fullImageUrl = `${backendUrl}/uploads/${imageSource}`;
-      console.log('Constructed relative path URL:', fullImageUrl);
-      return fullImageUrl;
-    }
-
-    // For other cases, return the image source as is
-    console.log('Using direct image path:', imageSource);
-    return imageSource;
+    
+    console.log('Final image URL:', imageSource);
+    return imageSource || defaultImage;
   };
 
   // Handle image load errors
@@ -353,6 +432,184 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
   };
 
   const imageUrl = getImageUrl();
+
+  // Enhanced renderRouteMarkerDetails function
+  const renderRouteMarkerDetails = () => (
+    <>
+      {/* Show coordinates for route markers */}
+      <div className="info-row">
+        <span className="info-row-icon"><FaMapMarkerAlt /></span>
+        <span className="info-row-text">
+          <strong>Coordinates:</strong> {location.latitude?.toFixed(6)}, {location.longitude?.toFixed(6)}
+        </span>
+      </div>
+
+      {/* Show address if available from reverse geocoding */}
+      {location.address && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaMapMarkerAlt /></span>
+          <span className="info-row-text">
+            <strong>Address:</strong> {location.address}
+          </span>
+        </div>
+      )}
+
+      {/* Show division if available */}
+      {location.division && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaMapMarkerAlt /></span>
+          <span className="info-row-text">
+            <strong>Division:</strong> {location.division}
+          </span>
+        </div>
+      )}
+
+      {/* Show enhanced POI details from Overpass API */}
+      {location.amenity && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Amenity:</strong> {location.amenity}
+          </span>
+        </div>
+      )}
+
+      {location.tourism && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Tourism:</strong> {location.tourism}
+          </span>
+        </div>
+      )}
+
+      {location.shop && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Shop:</strong> {location.shop}
+          </span>
+        </div>
+      )}
+
+      {location.leisure && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Leisure:</strong> {location.leisure}
+          </span>
+        </div>
+      )}
+
+      {/* Show phone number if available */}
+      {/* {getPhoneNumber() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaPhoneAlt /></span>
+          <span 
+            className="info-row-link phone-link"
+            onClick={handlePhoneCall}
+            style={{ cursor: 'pointer'}}
+          >
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
+          </span>
+        </div>
+      )} */}
+
+      {/* Show website if available */}
+      {getWebsiteUrl() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaGlobe /></span>
+          <a
+            href={getWebsiteUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="info-row-link"
+          >
+            {getWebsiteHostname() || 'Visit Website'}
+          </a>
+        </div>
+      )}
+
+      {/* Show opening hours if available */}
+      {location.openingHours && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaClock /></span>
+          <span className="info-row-text">
+            <strong>Hours:</strong> {location.openingHours}
+          </span>
+        </div>
+      )}
+
+      {/* Show owner email if available */}
+      {location.ownerEmail && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaEnvelope /></span>
+          <span className="info-row-text">
+            <strong>Contact:</strong> {location.ownerEmail}
+          </span>
+        </div>
+      )}
+
+      {/* Show event details if this is an event destination */}
+      {location.startDate && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaCalendar /></span>
+          <span className="info-row-text">
+            <strong>Date:</strong> {formatDateRange()}
+          </span>
+        </div>
+      )}
+
+      {(location.startTime || location.endTime) && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaClock /></span>
+          <span className="info-row-text">
+            <strong>Time:</strong> {formatTimePeriod()}
+          </span>
+        </div>
+      )}
+
+      {/* Show event type if available */}
+      {location.eventType && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Event Type:</strong> {location.eventType}
+          </span>
+        </div>
+      )}
+
+      {/* Show registration info if available */}
+      {location.registrationRequired && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaEnvelope /></span>
+          <span className="info-row-text">
+            <strong>Registration:</strong> {location.registrationRequired}
+          </span>
+        </div>
+      )}
+
+      {/* Show rating if available from backend */}
+      {location.rating && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Rating:</strong> {location.rating.toFixed(1)} ⭐
+          </span>
+        </div>
+      )}
+
+      {/* Show data source for debugging */}
+      {location.dataEnhanced && (
+        <div className="info-row" style={{ fontSize: '0.8em', color: '#666' }}>
+          <span className="info-row-icon"><FaStar /></span>
+          <span className="info-row-text">
+            <strong>Data Source:</strong> {location.source || 'Enhanced'}
+          </span>
+        </div>
+      )}
+    </>
+  );
 
   // Render different content based on location type
   const renderBusinessDetails = () => (
@@ -377,6 +634,19 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
           <span className="info-row-text">{location.openingHours}</span>
         </div>
       )}
+
+      {/* {getPhoneNumber() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaPhoneAlt /></span>
+          <span 
+            className="info-row-link phone-link"
+            onClick={handlePhoneCall}
+            style={{ cursor: 'pointer' }}
+          >
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
+          </span>
+        </div>
+      )} */}
 
       {getWebsiteUrl() && (
         <div className="info-row">
@@ -431,6 +701,19 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
           </span>
         </div>
       )}
+
+      {/* {getPhoneNumber() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaPhoneAlt /></span>
+          <span 
+            className="info-row-link phone-link"
+            onClick={handlePhoneCall}
+            style={{ cursor: 'pointer' }}
+          >
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
+          </span>
+        </div>
+      )} */}
     </>
   );
 
@@ -443,6 +726,19 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
           <strong>Division:</strong> {getDivisionInfo()}
         </span>
       </div>
+
+      {/* {getPhoneNumber() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaPhoneAlt /></span>
+          <span 
+            className="info-row-link phone-link"
+            onClick={handlePhoneCall}
+            style={{ cursor: 'pointer' }}
+          >
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
+          </span>
+        </div>
+      )} */}
 
       {/* Show website if available */}
       {getWebsiteUrl() && (
@@ -463,6 +759,19 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
 
   const renderLocationDetails = () => (
     <>
+      {/* {getPhoneNumber() && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaPhoneAlt /></span>
+          <span 
+            className="info-row-link phone-link"
+            onClick={handlePhoneCall}
+            style={{ cursor: 'pointer'}}
+          >
+            {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
+          </span>
+        </div>
+      )} */}
+
       {getWebsiteUrl() && (
         <div className="info-row">
           <span className="info-row-icon"><FaGlobe /></span>
@@ -533,6 +842,7 @@ const CustomInfoWindow = ({ location, onCloseClick, onShowReview, addBookmark, o
         {locationType === 'event' && renderEventDetails()}
         {locationType === 'majorTown' && renderMajorTownDetails()}
         {locationType === 'location' && renderLocationDetails()}
+        {locationType === 'routeMarker' && renderRouteMarkerDetails()}
 
         <div className="info-actions info-actions-right">
           <button className="book-btn" onClick={handleExploreClick}>Explore Now!</button>
