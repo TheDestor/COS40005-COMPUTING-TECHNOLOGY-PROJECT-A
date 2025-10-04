@@ -1,22 +1,51 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
 import { RiUserAddLine } from "react-icons/ri";
 import AddUserForm from '../components/AddUserForm.jsx';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
+import ky from 'ky';
+import { useAuth } from '../context/AuthProvider';
 
 const UserManagementPage = () => {
-  const usersPerPage = 2;
+  const usersPerPage = 7;
 
+  const [allUsers, setAllUsers] = useState([]);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
-
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const { accessToken } = useAuth();
 
   const filterRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await ky.get('/api/userManagement', { headers: { 'Authorization': `Bearer ${accessToken}` }}).json();
+
+        if (response.success) {
+          const formattedUsers = response.users.map(user => ({
+            id: user._id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+            role: user.role.charAt(0).toUpperCase() + user.role.slice(1),
+            status: 'Active',
+            lastActive: 'N/A'
+          }));
+          setAllUsers(formattedUsers);
+        } else {
+          console.error(response.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users: ", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,13 +58,6 @@ const UserManagementPage = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  const allUsers = [
-    { id: 1, name: 'Alvin Tan', email: 'at@example.com', role: 'CBT Admin', status: 'Active', lastActive: 'Today, 10:45 AM' },
-    { id: 2, name: 'Kenneth Kuan', email: 'kk@example.com', role: 'User', status: 'Inactive', lastActive: 'Yesterday, 5:22 PM' },
-    { id: 3, name: 'Sophia Lim', email: 'sl@example.com', role: 'Business User', status: 'Inactive', lastActive: '2 days ago' },
-    { id: 4, name: 'Daniel Lee', email: 'dl@example.com', role: 'System Admin', status: 'Inactive', lastActive: 'Yesterday, 11:00 AM' },
-  ];
 
   const roleOptions = ['System Admin', 'CBT Admin', 'Business User', 'User'];
   const statusOptions = ['Active', 'Inactive'];
@@ -195,8 +217,8 @@ const UserManagementPage = () => {
                 <tr><td colSpan="8" style={{ textAlign: 'center' }}>No users found.</td></tr>
               ) : (
                 currentUsers.map((user, index) => (
-                  <tr key={index}>
-                    <td>{user.id}</td>
+                  <tr key={user.id}>
+                    <td>{indexOfFirstUser + index + 1}</td>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
                     <td>{user.role}</td>

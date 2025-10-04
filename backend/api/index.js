@@ -76,9 +76,11 @@ app.use("/api/event", eventRouter);
 app.use("/api/businesses", businessRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/graphhopper", graphHopperRouter);
+app.use("/api/userManagement", UserManagementRouter);
 
 // Import and use geoapify routes
 import geoapifyRouter from "../routes/geoapifyRoutes.js";
+import UserManagementRouter from "../routes/UserManagementRoutes.js";
 app.use("/api/geoapify", geoapifyRouter);
 
 // In your backend routes
