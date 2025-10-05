@@ -16,7 +16,7 @@ import profile4 from '../assets/profile4.png';
 import profile5 from '../assets/profile5.png';
 import { useState } from 'react';
 
-const SystemAdminDashboard = () => {
+function SystemAdminDashboard() {
   const chartRef = useRef(null);
   const [usersList, setUsersList] = useState([]);
   const { accessToken } = useAuth();
@@ -58,17 +58,7 @@ const SystemAdminDashboard = () => {
       trend: 'Today 2am',
       trendType: 'positive'
     },
-  ];
-
-  const adminActivities = [
-    { admin: 'aty@outlook.com', action: 'Delete user account', date: '31/3/2025', status: 'Completed' },
-    { admin: 'kkys@outlook.com', action: 'Add user account', date: '31/3/2025', status: 'Incomplete' },
-  ];
-
-  const systemAlerts = [
-    { alert: 'Security', message: 'Unauthorized access attempt', date: '31/3/2025', status: 'Investigated' },
-    { alert: 'Performance', message: 'High server load', date: '31/3/2025', status: 'Monitoring' },
-  ];
+  ]
 
   // User usage data for the bar chart
   const monthlyUsageData = [
@@ -86,65 +76,6 @@ const SystemAdminDashboard = () => {
     { month: 'Dec', users: 7200 }
   ];
 
-  // Sample data for reviews pending approval (moved from CBT Dashboard)
-  const pendingReviews = [
-    {
-      id: 1,
-      author: "Gokul",
-      business: "Damai Beach Resort",
-      rating: 4,
-      content: "Beautiful location and friendly staff. The rooms were clean but a little outdated. Would recommend for a peaceful getaway.",
-      date: "2025-04-30",
-      userImage: profile3
-    },
-    {
-      id: 2,
-      author: "Kenneth",
-      business: "Bangoh Dam",
-      rating: 5,
-      content: "Absolutely incredible experience! Our guide was knowledgeable and safety-conscious. The views were breathtaking and the equipment was top-notch.",
-      date: "2025-05-01",
-      userImage: profile1
-    },
-    {
-      id: 3, 
-      author: "Alvin",
-      business: "Korean Cafe",
-      rating: 2,
-      content: "Disappointing experience. Long wait times and food was served cold. The ambiance was nice but doesn't make up for poor service.",
-      date: "2025-05-01",
-      userImage: profile4
-    },
-    {
-      id: 4,
-      author: "Daniel",
-      business: "Meditation Center",
-      rating: 5,
-      content: "Transformative experience! The instructor was attentive and provided great modifications for all skill levels. Studio was clean and peaceful.",
-      date: "2025-05-02",
-      userImage: profile2
-    }
-  ];
-
-  // Review management functions (moved from CBT Dashboard)
-  const handleReviewAction = (reviewId, action) => {
-    console.log(`Review ${reviewId} ${action}`);
-    // This Part can use to handle the API call to approve/reject the review
-    // For now, we'll just log the action
-  };
-
-  const renderStarRating = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      if (i <= rating) {
-        stars.push(<span key={i} className="star filled">★</span>);
-      } else {
-        stars.push(<span key={i} className="star">☆</span>);
-      }
-    }
-    return <div className="star-rating">{stars}</div>;
-  };
-
   // Fetch data from backend
   useEffect(() => {
     const fetchUsers = async () => {
@@ -157,7 +88,7 @@ const SystemAdminDashboard = () => {
             id: user._id,
             name: `${user.firstName} ${user.lastName}`,
             email: user.email,
-            status: 'Active',
+            role: user.role,
             lastLogin: 'N/A',
             image: placeholderImages[index % placeholderImages.length]
           }));
@@ -390,44 +321,42 @@ const SystemAdminDashboard = () => {
         ></div>
       </div>
 
-      {/* Users List Section - Moved from CBT Dashboard */}
-      <div className="dashboard-section">
-        <div className="table-section">
-          <div className="table-header-admin">
+      {/* Users List Section - System Admin Table */}
+      <div className="dashboard-section-sa">
+        <div className="table-section-sa">
+          <div className="table-header-sa">
             <h3>
-              <span className="header-icon-admin"><FaUser /></span>
-              Recent Users
+              <span className="header-icon-sa"><FaUser /></span>
+              New Recent Users
             </h3>
-            <button className="view-all">View All</button>
+            <button className="view-all-sa">View All</button>
           </div>
-          <div className="users-list-container">
-            <table className="users-table data-table">
+          <div className="users-list-container-sa">
+            <table className="users-table-sa data-table-sa">
               <thead>
                 <tr>
                   <th>User</th>
                   <th>Email</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
+                  <th>Role</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {usersList.map(user => (
                   <tr key={user.id}>
-                    <td className="user-cell">
-                      <img src={user.image} alt={user.name} className="user-avatar" />
+                    <td className="user-cell-sa">
+                      <img src={user.image} alt={user.name} className="user-avatar-sa" />
                       <span>{user.name}</span>
                     </td>
                     <td>{user.email}</td>
                     <td>
-                      <span className={`status-badge ${user.status.toLowerCase()}`}>
-                        {user.status}
+                      <span className={`status-badge-sa ${user.role.toLowerCase()}-sa`}>
+                        {user.role}
                       </span>
                     </td>
-                    <td>{user.lastLogin}</td>
-                    <td className="actions-cell">
-                      <button className="action-btn view-btn">View</button>
-                      <button className="action-btn edit-btn">Edit</button>
+                    <td className="actions-cell-sa">
+                      <button className="action-btn-sa view-btn-sa">View</button>
+                      <button className="action-btn-sa edit-btn-sa">Edit</button>
                     </td>
                   </tr>
                 ))}

@@ -68,7 +68,7 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
   };
 
   return (
-    <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+    <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px', zIndex: '1' }}>
       <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
         Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
       </div>
@@ -564,7 +564,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                         <span className="custom-checkbox"></span>
                         Local Business
                       </label>
-                      <label className="checkbox-label">
+                      {/* <label className="checkbox-label">
                         <input
                           type="checkbox"
                           checked={
@@ -598,7 +598,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                         />
                         <span className="custom-checkbox"></span>
                         Other
-                      </label>
+                      </label> */}
                     </div>
                     {editForm.targetAudience?.split(', ').some(a => 
                       a && !['Tourist', 'Local Business'].includes(a)
@@ -1834,7 +1834,7 @@ const AddEventPage = () => {
                   <span className="custom-checkbox"></span>
                   Local Business
                 </label>
-                <label className="checkbox-label">
+                {/* <label className="checkbox-label">
                   <input
                     type="checkbox"
                     checked={targetAudience.other}
@@ -1842,7 +1842,7 @@ const AddEventPage = () => {
                   />
                   <span className="custom-checkbox"></span>
                   Other
-                </label>
+                </label> */}
               </div>
               {targetAudience.other && (
                 <input

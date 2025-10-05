@@ -446,7 +446,7 @@ svg {
 
 .users-table td {
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  /* border-bottom: 1px solid #e5e7eb; */
   font-size: 14px;
   color: #1e293b;
 }

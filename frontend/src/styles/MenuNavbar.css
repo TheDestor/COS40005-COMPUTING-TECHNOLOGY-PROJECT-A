@@ -52,7 +52,7 @@
   margin: 0 6px;
   overflow-x: auto;
   white-space: nowrap;
-  height: 60px;
+  height: 55px;
   width: auto;
   box-sizing: border-box;
   scrollbar-width: none;
@@ -73,7 +73,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px 12px;
+  padding: 0px 8px;
   cursor: pointer;
   font-size: 13px;
   color: #555;
@@ -124,7 +124,7 @@
 
 .menu-item3:hover .menu-icon2 {
   transform: scale(1.2);
-  color: #007AFF;
+  color: white;
 }
 
 /* ============================
@@ -143,7 +143,7 @@
 
 .menu-item3:hover .menu-text3 {
   color: #007AFF;
-  animation: marquee 2s linear infinite; 
+  animation: marquee 1.5s linear infinite; 
   padding-left: 20%; 
 }
 
@@ -237,6 +237,11 @@
   z-index: 1000;
   padding: 8px 0;
   animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(10%); }
+  100% { transform: translateX(-100%); }
 }
 
 @keyframes dropdownFadeIn {

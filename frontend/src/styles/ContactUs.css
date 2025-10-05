@@ -472,6 +472,7 @@ footer::before {
   .help-section > p {
     font-size: 1em; /* Smaller help section paragraph */
     margin-bottom: 20px;
+    text-align: left;
   }
 
   .help-options {
@@ -553,6 +554,7 @@ footer::before {
 
   .help-section h2 {
     font-size: 1.5em; /* Smaller help section heading */
+
   }
 
   .help-section > p {

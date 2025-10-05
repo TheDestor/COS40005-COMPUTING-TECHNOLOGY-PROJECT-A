@@ -139,12 +139,13 @@ const MajorTownPage = () => {
 
       <div className="search-section">
         <div className="search-container">
-          <div className="search-bar">
+          <div className="search-bar-mj">
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input-mj"
             />
           </div>
           <button

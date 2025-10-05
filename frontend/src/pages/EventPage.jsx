@@ -264,7 +264,7 @@ const EventPage = () => {
       )}
 
       {/* Add user type indicator */}
-      <div className="user-type-indicator" style={{ 
+      {/* <div className="user-type-indicator" style={{ 
         textAlign: 'center', 
         margin: '10px 0', 
         padding: '8px',
@@ -272,7 +272,7 @@ const EventPage = () => {
         borderRadius: '4px'
       }}>
         <span>{getViewingDescription()}</span>
-      </div>
+      </div> */}
 
       {/* Tabs Section */}
       <div className="events-tabs-container" style={{
@@ -333,13 +333,13 @@ const EventPage = () => {
 
       <div className="search-section">
         <div className="search-container">
-          <div className="search-bar">
+          <div className="search-bar-mj">
             <input
               type="text"
               placeholder={`Search ${activeTab === 'ongoing' ? 'On-going' : 'Upcoming'} Events...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              className="search-input-mj"
             />
           </div>
 

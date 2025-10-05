@@ -6,7 +6,7 @@ import { FaTelegram } from "react-icons/fa";
 import { toast } from "sonner";
 import defaultImage from "../assets/default.png";
 
-const SharePlace = ({ visible, onClose, location }) => {
+export default function SharePlace({ visible, onClose, location }) {
   const [activeTab, setActiveTab] = useState("link");
 
   if (!visible || !location) return null;
@@ -191,6 +191,4 @@ const SharePlace = ({ visible, onClose, location }) => {
     </div>,
     document.body
   );
-};
-
-export default SharePlace;
+}

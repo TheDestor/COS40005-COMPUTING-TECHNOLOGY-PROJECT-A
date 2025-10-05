@@ -191,6 +191,15 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
+.dashboard-section-sa {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  /* padding: 20px; */
+  margin-top: 24px;
+}
+
 /* Top colored bar */
 .summary-box::before {
     content: '';
@@ -404,6 +413,7 @@
 ============================= */
 .data-table {
     width: 100%;
+    /* Professional blue/white theme for admin data tables */
     border-collapse: separate;
     border-spacing: 0 10px;
     font-size: 14px;
@@ -411,82 +421,111 @@
     transition: all 0.3s ease;
 }
 
-.data-table th {
-    background-color: #f4f7fc; /* Light blue already */
-    color: #555;
+.data-table thead th {
+    background: #f5f9ff;
+    color: #1f2937; /* slate-800 */
     font-weight: 600;
     padding: 14px;
     text-align: left;
-    border-bottom: 2px solid #e6e6e6;
+    border-bottom: 2px solid #dbeafe; /* blue-100 */
+}
+
+.data-table tbody tr {
+    background: #ffffff;
+    border: 1px solid #eef2ff; /* indigo-50 */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.data-table tbody tr:hover {
+    background: #f8fbff; /* very light blue */
+    border-color: #dbeafe;
 }
 
 .data-table td {
-    background-color: #fff;
     padding: 14px;
-    /* border-bottom: 1px solid #f1f1f1; */
+    color: #374151; /* slate-700 */
     vertical-align: middle;
-    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.data-table tbody tr:nth-child(even) td {
-    background-color: #f9fbff; /* Very light blue already */
+/* User cell and avatar alignment */
+.users-table .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.data-table .status {
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #e6effb;
+}
+
+/* Status badges (match JSX: status-badge) */
+.status-badge {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 9999px;
     font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    white-space: nowrap;
+    font-weight: 600;
+    border: 1px solid transparent;
 }
 
-.data-table .status.success {
-    background-color: #d4f8e8;
-    color: #28a745;
+.status-badge.tourist,
+.status-badge.success {
+    background-color: #e7f1ff; /* soft blue */
+    color: #0b5ed7; /* primary blue text */
+    border-color: #cfe2ff;
 }
 
-.data-table .status.warning {
+.status-badge.business {
     background-color: #fff3cd;
     color: #856404;
+    border-color: #ffe69c;
 }
 
-.data-table .status.danger {
+.status-badge.cbt_admin,
+.status-badge.system_admin {
     background-color: #f8d7da;
     color: #dc3545;
+    border-color: #f5c2c7;
 }
 
-.data-table .status.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-}
-
-/* ==========================
-   Details Button Styles
-============================= */
-.details-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
+/* Actions cell buttons */
+.actions-cell .action-btn-sa {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    color: #1f3b78;
     padding: 6px 12px;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 13px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.details-button:hover {
-    background-color: #005ecb;
+.actions-cell .action-btn-sa:hover {
+    background: #f5f9ff;
+    border-color: #bcd3ff;
 }
 
-.details-button:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+.actions-cell .action-btn-sa.view-btn {
+    background: #007bff;
+    border-color: #007bff;
+    color: #ffffff;
 }
 
-.details-button:active {
-    transform: scale(0.97);
+.actions-cell .action-btn-sa.view-btn:hover {
+    background: #0065d8;
+}
+
+.actions-cell .action-btn-sa.edit-btn {
+    background: #ffffff;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.actions-cell .action-btn-sa.edit-btn:hover {
+    background: #e7f1ff;
 }
 
 
@@ -565,3 +604,166 @@
       font-size: 1rem;
     }
   }
+
+/* System Admin (-sa) scoped table styles */
+/* Container and header */
+.table-section-sa {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.table-header-sa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.table-header-sa h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  color: #333;
+}
+
+.header-icon-sa {
+  font-size: 18px;
+  color: #007bff;
+  display: flex;
+  align-items: center;
+}
+
+.view-all-sa {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-all-sa:hover { background-color: #0065d8; }
+.view-all-sa:focus { outline: none; box-shadow: 0 0 0 3px rgba(0,123,255,0.3); }
+.view-all-sa:active { transform: scale(0.97); }
+
+/* Scrollable list container with sticky header support */
+.users-list-container-sa {
+  /* max-height: 380px; */
+  overflow: auto;
+  border: 1px solid #eef2ff;
+  border-radius: 10px;
+}
+
+/* Table base */
+.users-table-sa {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table-sa thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f9ff;
+  color: #1f2937; /* slate-800 */
+  font-weight: 600;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 2px solid #dbeafe;
+}
+
+/* Column sizing for readability */
+/* .data-table-sa thead th:nth-child(1),
+.data-table-sa tbody td:nth-child(1) { width: 32%; } */
+/* .data-table-sa thead th:nth-child(2),
+.data-table-sa tbody td:nth-child(2) { width: 36%; }
+.data-table-sa thead th:nth-child(3),
+.data-table-sa tbody td:nth-child(3) { width: 14%; }
+.data-table-sa thead th:nth-child(4),
+.data-table-sa tbody td:nth-child(4) { width: 18%; } */
+
+/* Rows */
+.data-table-sa tbody tr { background: #ffffff; }
+.data-table-sa tbody tr + tr { border-top: 1px solid #eef2ff; }
+.data-table-sa tbody tr:hover { background: #f8fbff; }
+
+.data-table-sa td {
+  padding: 12px 14px;
+  color: #374151; /* slate-700 */
+  vertical-align: middle;
+}
+
+/* User cell alignment */
+.user-cell-sa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-sa {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e6effb;
+}
+
+/* Status badges */
+.status-badge-sa {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-badge-sa.tourist-sa { background-color: #e7f1ff; color: #0b5ed7; border-color: #cfe2ff; }
+.status-badge-sa.business-sa { background-color: #fff3cd; color: #856404; border-color: #ffe69c; }
+.status-badge-sa.cbt_admin-sa { background-color: #f8d7da; color: #dc3545; border-color: #f5c2c7; }
+.status-badge-sa.system_admin-sa { background-color: #f8d7da; color: #dc3545; border-color: #f5c2c7; }
+
+/* Actions */
+.actions-cell-sa { display: flex; gap: 8px; }
+
+.action-btn-sa {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  color: #1f3b78;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn-sa:hover { background: #f5f9ff; border-color: #bcd3ff; }
+
+.action-btn-sa.view-btn-sa { background: #007bff; border-color: #007bff; color: #ffffff; }
+.action-btn-sa.view-btn-sa:hover { background: #0065d8; }
+
+.action-btn-sa.edit-btn-sa { background: #ffffff; border-color: #007bff; color: #007bff; }
+.action-btn-sa.edit-btn-sa:hover { background: #e7f1ff; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .users-list-container-sa { max-height: 320px; }
+  .data-table-sa thead th, .data-table-sa td { padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .data-table-sa thead th:nth-child(1),
+  .data-table-sa tbody td:nth-child(1) { width: 44%; }
+  .data-table-sa thead th:nth-child(2),
+  .data-table-sa tbody td:nth-child(2) { width: 32%; }
+  .data-table-sa thead th:nth-child(3),
+  .data-table-sa tbody td:nth-child(3) { width: 10%; }
+  .data-table-sa thead th:nth-child(4),
+  .data-table-sa tbody td:nth-child(4) { width: 14%; }
+}

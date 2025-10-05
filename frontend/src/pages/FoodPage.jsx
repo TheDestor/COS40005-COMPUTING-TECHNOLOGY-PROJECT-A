@@ -42,7 +42,7 @@ const FoodBeveragePage = () => {
         slug: business.name?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown-business',
         image: business.businessImage || defaultImage,
         type: 'Business',
-        division: business.division || 'Unknown',
+        division: business.division || 'N/A',
         latitude: business.latitude || 0,
         longitude: business.longitude || 0,
         url: business.website || '',
@@ -612,13 +612,13 @@ const FoodBeveragePage = () => {
 
       <div className="search-section">
         <div className="search-container">
-          <div className="search-bar">
+          <div className="search-bar-mj">
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              className="search-input-mj"
             />
           </div>
 

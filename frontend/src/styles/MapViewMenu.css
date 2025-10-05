@@ -117,10 +117,13 @@
   max-width: 100%;
   color: #555;
   position: relative;
+
 }
 
 .menu-item2:hover .menu-text2 {
   color: #007AFF;
+  animation: marquee 1.5s linear infinite; 
+  padding-left: 10%; 
 }
 
 /* ============================

@@ -58,7 +58,7 @@ const AttractionsPage = () => {
         slug: (item.name || item.Name)?.toLowerCase()?.replace(/\s+/g, '-') || 'unknown',
         image: item.image || defaultImage,
         type: item.type || 'Other',
-        division: item.division || 'Unknown',
+        division: item.division || 'N/A',
         latitude: item.latitude || item.lat || 0,
         longitude: item.longitude || item.lng || 0,
         url: item.url || '',
@@ -321,13 +321,13 @@ const AttractionsPage = () => {
 
       <div className="search-section">
         <div className="search-container">
-          <div className="search-bar">
+          <div className="search-bar-mj">
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              className="search-input-mj"
             />
           </div>
 
