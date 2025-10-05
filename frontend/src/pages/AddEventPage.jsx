@@ -914,6 +914,8 @@ const AddEventPage = () => {
     const savedTab = localStorage.getItem('addEventPageActiveTab');
     return savedTab || 'Add Event';
   });
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // 'clear' | 'publish'
   const [eventName, setEventName] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
@@ -1372,31 +1374,72 @@ const AddEventPage = () => {
     );
   };
 
-  const publishEvent = async () => {
-    // Validation checks
-    if (!startDate || !endDate || !startTime || !endTime) {
-      toast.error('Please select all date and time fields');
-      return;
+  const validateEventForm = () => {
+    const errors = [];
+
+    if (!eventName?.trim()) errors.push('Event name is required.');
+    if (!eventDescription?.trim()) errors.push('Event description is required.');
+    if (!selectedEventType) errors.push('Event type is required.');
+
+    if (!startDate || !(startDate instanceof Date)) errors.push('Start date is required.');
+    if (!endDate || !(endDate instanceof Date)) errors.push('End date is required.');
+    if (!startTime) errors.push('Start time is required.');
+    if (!endTime) errors.push('End time is required.');
+
+    const timeRegex = /^\d{2}:\d{2}$/;
+    if (startTime && !timeRegex.test(startTime)) errors.push('Start time must be HH:MM.');
+    if (endTime && !timeRegex.test(endTime)) errors.push('End time must be HH:MM.');
+
+    if (endDate && startDate && endDate < startDate) {
+      errors.push('End date cannot be before start date.');
     }
-    if (!eventName || !eventDescription || !selectedEventType) {
-      toast.error('Please fill in name, description and event type');
-      return;
+    if (
+      startDate && endDate && startDate.getTime() === endDate.getTime() &&
+      startTime && endTime && endTime < startTime
+    ) {
+      errors.push('End time cannot be before start time on the same day.');
     }
+
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+      errors.push('Valid coordinates are required.');
+    } else {
+      const ll = L.latLng(latitude, longitude);
+      if (!SARAWAK_BOUNDS.contains(ll)) {
+        errors.push('Coordinates must be within Sarawak bounds.');
+      }
+    }
+
+    const audienceSelected = (
+      !!targetAudience.tourist ||
+      !!targetAudience.localBusiness ||
+      (!!targetAudience.other && !!otherAudience.trim())
+    );
+    if (!audienceSelected) errors.push('Select at least one target audience.');
+
+    if (!['Yes', 'No'].includes(registrationRequired)) {
+      errors.push('Registration required must be Yes or No.');
+    }
+
     if (!imageFile) {
-      toast.error('Please upload an event image (JPEG/PNG, max 4.5MB)');
-      return;
+      errors.push('Event image is required.');
+    } else {
+      const maxSize = 4.5 * 1024 * 1024; // 4.5MB
+      if (!imageFile.type?.startsWith('image/')) {
+        errors.push('Event image must be an image file.');
+      }
+      if (imageFile.size > maxSize) {
+        errors.push('Event image must be 4.5MB or less.');
+      }
     }
 
-    // Check if end date is before start date
-    if (endDate < startDate) {
-      toast.error('End date cannot be before start date');
-      return;
-    }
+    return errors;
+  };
 
-    // Check if end time is before start time when dates are the same
-    if (startDate.getTime() === endDate.getTime() && endTime < startTime) {
-      toast.error('End time cannot be before start time on the same day');
-      return;
+  const publishEvent = async () => {
+    const errors = validateEventForm();
+    if (errors.length) {
+      toast.error(`Form not completed:\n- ${errors.join('\n- ')}`);
+      return false;
     }
 
     const formData = new FormData();
@@ -1406,46 +1449,37 @@ const AddEventPage = () => {
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
     formData.append('eventOrganizers', eventOrganizers);
-    formData.append('eventHashtags', eventHashtags); // comma-separated string
-    
+    formData.append('eventHashtags', eventHashtags);
+
     const selectedAudiences = [];
-    if (targetAudience.tourist) {
-      selectedAudiences.push('Tourist');
-    }
-    if (targetAudience.localBusiness) {
-      selectedAudiences.push('Local Business');
-    }
-    if (targetAudience.other && otherAudience.trim() !== '') {
-      selectedAudiences.push(otherAudience.trim());
-    }
+    if (targetAudience.tourist) selectedAudiences.push('Tourist');
+    if (targetAudience.localBusiness) selectedAudiences.push('Local Business');
+    if (targetAudience.other && otherAudience.trim() !== '') selectedAudiences.push(otherAudience.trim());
     formData.append('targetAudience', JSON.stringify(selectedAudiences));
+
     formData.append('registrationRequired', registrationRequired);
     formData.append('startDate', startDate.toISOString());
     formData.append('endDate', endDate.toISOString());
     formData.append('startTime', startTime);
     formData.append('endTime', endTime);
     formData.append('image', imageFile);
-    
+
     try {
       const response = await ky.post(
-        "/api/event/addEvent",
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-          body: formData
-        }
+        '/api/event/addEvent',
+        { headers: { Authorization: `Bearer ${accessToken}` }, body: formData }
       ).json();
 
-      console.log(response);
       clearForm();
-      toast.success('Event published successfully!');
+      return true;
     } catch (error) {
       let msg = 'Error publishing event.';
       try {
-        const data = await error.response.json();
+        const data = await error.response?.json();
         if (data?.message) msg = data.message;
       } catch {}
-      console.error('Publish error:', error);
       toast.error(msg);
+      return false;
     }
   };
 
@@ -1472,6 +1506,30 @@ const AddEventPage = () => {
     setEditForm({});
     setUploadedImage(null);
     setImageFile(null);
+  };
+
+  const openConfirm = (action) => {
+    setConfirmAction(action);
+    setIsConfirmOpen(true);
+  };
+
+  const closeConfirm = () => {
+    setIsConfirmOpen(false);
+    setConfirmAction(null);
+  };
+
+  const handleConfirm = async () => {
+    const action = confirmAction;
+    closeConfirm();
+    if (action === 'clear') {
+      await clearForm();
+      toast.success('Form cleared successfully', { className: 'confirm-toast-success', duration: 2500 });
+    } else if (action === 'publish') {
+      const ok = await publishEvent();
+      if (ok) {
+        toast.success('Event published successfully', { className: 'confirm-toast-success', duration: 2500 });
+      }
+    }
   };
 
   const updateEvent = async (eventId) => {
@@ -1947,20 +2005,8 @@ const AddEventPage = () => {
 
             <div className="form-actions">
               <button 
-                className="preview-button"
-                onClick={previewEvent}
-              >
-                Live Preview
-              </button>
-              <button 
-                className="draft-button"
-                onClick={saveAsDraft}
-              >
-                Save as draft
-              </button>
-              <button 
                 className="clear-button"
-                onClick={clearForm}
+                onClick={() => openConfirm('clear')}
               >
                 Clear
               </button>
@@ -2029,10 +2075,38 @@ const AddEventPage = () => {
         {activeTab === 'Add Event' && (
           <button 
             className="publish-button"
-            onClick={publishEvent}
+            onClick={() => openConfirm('publish')}
           >
             Publish Now
           </button>
+        )}
+
+        {isConfirmOpen && (
+          <div
+            className="confirm-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            onClick={closeConfirm}
+          >
+            <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 className="confirm-modal-title">
+                {confirmAction === 'publish' ? 'Publish event?' : 'Clear all fields?'}
+              </h3>
+              <p className="confirm-modal-body">
+                {confirmAction === 'publish'
+                  ? 'This will publish your event to the platform. Continue?'
+                  : 'This will remove all input from the form. Continue?'}
+              </p>
+              <div className="confirm-modal-actions">
+                <button type="button" className="modal-cancel-btn" onClick={closeConfirm}>
+                  Cancel
+                </button>
+                <button type="button" className="modal-confirm-btn" onClick={handleConfirm}>
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {isModalOpen && selectedEvent && (

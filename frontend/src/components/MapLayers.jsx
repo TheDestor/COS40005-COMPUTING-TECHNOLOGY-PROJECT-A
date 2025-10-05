@@ -14,25 +14,11 @@ const basemaps = [
     attribution: '&copy; OpenStreetMap contributors'
   },
   {
-    id: 'carto-positron',
-    name: 'Streets',
-    image: hybrid,
-    url: 'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap, &copy; CARTO'
-  },
-  {
     id: 'esri-imagery',
     name: 'Satellite',
     image: satellite,
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png',
     attribution: 'Tiles &copy; Esri'
-  },
-  {
-    id: 'stamen-terrain',
-    name: 'Terrain',
-    image: terrain,
-    url: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; Stadia Maps, &copy; OpenMapTiles, &copy; OpenStreetMap'
   },
 ];
 

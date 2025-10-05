@@ -70,7 +70,6 @@ const CacheDebugPanel = () => {
 };
 
 const TouristInfoSection = ({ selectedLocation }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [reels, setReels] = useState([]);
   const [containerStyle, setContainerStyle] = useState({ top: '60px' });
   const [loading, setLoading] = useState(false);
@@ -79,6 +78,8 @@ const TouristInfoSection = ({ selectedLocation }) => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDebug, setShowDebug] = useState(false); // Toggle debug panel
+  const [isCollapsed, setIsCollapsed] = useState(() => window.innerWidth <= 660);
+  const [hasUserToggled, setHasUserToggled] = useState(false);
 
   // Enhanced Cache management functions
   const getCache = () => {
@@ -311,8 +312,25 @@ const TouristInfoSection = ({ selectedLocation }) => {
     return () => window.removeEventListener('resize', updatePosition);
   }, []);
 
-  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  useEffect(() => {
+    const handleResponsiveCollapse = () => {
+      const isMobile = window.innerWidth <= 660;
+      // Only auto-adjust if user hasn’t manually toggled
+      if (!hasUserToggled) {
+        setIsCollapsed(isMobile);
+      }
+    };
+
+    handleResponsiveCollapse();
+    window.addEventListener('resize', handleResponsiveCollapse);
+    return () => window.removeEventListener('resize', handleResponsiveCollapse);
+  }, [hasUserToggled]);
   const toggleDebug = () => setShowDebug(!showDebug);
+
+  const toggleCollapse = () => {
+    setHasUserToggled(true);
+    setIsCollapsed((prev) => !prev);
+  };
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], { 

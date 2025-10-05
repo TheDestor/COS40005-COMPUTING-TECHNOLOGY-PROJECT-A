@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// Top-level imports
+import React, { useState, useRef, useEffect } from 'react';
 import { FaStar, FaMapMarkerAlt, FaPhoneAlt, FaShareAlt, FaBookmark, FaTimes, FaGlobe, FaClock, FaEnvelope, FaCalendar } from 'react-icons/fa';
 import '../styles/CustomInfoWindow.css';
 import { toast } from 'sonner';
@@ -373,7 +374,7 @@ const CustomInfoWindow = ({
 
   // Get backend URL
   const getBackendUrl = () => {
-    return process.env.REACT_APP_BACKEND_URL || 'http://localhost:5050';
+    return process.env.VITE_DEPLOYMENT_BACKEND || process.env.VITE_BACKEND_URL || 'http://localhost:5050';
   };
 
   // Enhanced image URL handler for route markers

@@ -994,6 +994,7 @@
   }
 
   .side-panel100.expanded {
+    margin-bottom: 60px;
     transform: translateY(0);
     left: 0;
     animation: slideInFromBottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);

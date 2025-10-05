@@ -114,8 +114,10 @@ async function reverseGeocodeNominatim(lat, lng) {
 
 // Nominatim geocoding helper
 async function geocodeAddressNominatim(address) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-  const response = await fetch(url);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1&countrycodes=my&viewbox=109.5,0.8,115.5,5.5&bounded=1`;
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'SarawakTourismApp/1.0' }
+  });
   const data = await response.json();
   if (data && data[0]) {
     return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -123,12 +125,33 @@ async function geocodeAddressNominatim(address) {
   throw new Error('Address not found');
 }
 
+// helper: snap to road
+async function snapToRoadOSRM(lng, lat, profile = 'driving') {
+  const url = `https://router.project-osrm.org/nearest/v1/${profile}/${lng},${lat}?number=1`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    return { lng, lat }; // fall back to original
+  }
+  const data = await res.json();
+  const loc = data?.waypoints?.[0]?.location;
+  if (Array.isArray(loc) && loc.length === 2) {
+    return { lng: loc[0], lat: loc[1] };
+  }
+  return { lng, lat };
+}
+
 // OSRM routing helper (existing)
 async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
+  const snappedStart = await snapToRoadOSRM(start.lng, start.lat, profile);
+  const snappedEnd = await snapToRoadOSRM(end.lng, end.lat, profile);
+  const snappedWaypoints = await Promise.all(
+    waypoints.map(wp => snapToRoadOSRM(wp.lng, wp.lat, profile))
+  );
+
   const coords = [
-    `${start.lng},${start.lat}`,
-    ...waypoints.map(wp => `${wp.lng},${wp.lat}`),
-    `${end.lng},${end.lat}`
+    `${snappedStart.lng},${snappedStart.lat}`,
+    ...snappedWaypoints.map(wp => `${wp.lng},${wp.lat}`),
+    `${snappedEnd.lng},${snappedEnd.lat}`
   ].join(';');
   
   // Don't encode coordinates for OSRM - it expects them as-is
@@ -154,10 +177,16 @@ async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
 
 // OSRM routing helper with multiple alternatives
 async function fetchOSRMRouteAlternatives(start, end, waypoints = [], profile = 'driving', alternatives = 3) {
+  const snappedStart = await snapToRoadOSRM(start.lng, start.lat, profile);
+  const snappedEnd = await snapToRoadOSRM(end.lng, end.lat, profile);
+  const snappedWaypoints = await Promise.all(
+    waypoints.map(wp => snapToRoadOSRM(wp.lng, wp.lat, profile))
+  );
+
   const coords = [
-    `${start.lng},${start.lat}`,
-    ...waypoints.map(wp => `${wp.lng},${wp.lat}`),
-    `${end.lng},${end.lat}`
+    `${snappedStart.lng},${snappedStart.lat}`,
+    ...snappedWaypoints.map(wp => `${wp.lng},${wp.lat}`),
+    `${snappedEnd.lng},${snappedEnd.lat}`
   ].join(';');
   
   // For walking and cycling, don't use alternatives parameter as it may not be supported
@@ -556,7 +585,7 @@ const LeftSidebarTesting = forwardRef(({
 }, ref) => {
   const { user, isLoggedIn } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState('Car');
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
   const [startingPointCoords, setStartingPointCoords] = useState(null);
@@ -1055,18 +1084,35 @@ const LeftSidebarTesting = forwardRef(({
 
   // Function to handle recent location click
   const handleRecentLocationClick = (location) => {
-    // Plot the location on the map by setting it as selected search bar place
+    // Clear any existing search selection and route directions (sidebar + map)
+    handleClearAllRouting();
+
+    // Derive coordinates from location flexible shape
+    const latitude = location.latitude ?? location.coordinates?.latitude;
+    const longitude = location.longitude ?? location.coordinates?.longitude;
+
+    // Reset current search selection before plotting the new recent location
     if (setSelectedSearchBarPlace) {
+      setSelectedSearchBarPlace(null);
       setSelectedSearchBarPlace({
         name: location.name,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude,
+        longitude,
         description: location.description,
-        type: location.type
+        type: location.type || 'Recent'
       });
     }
 
-    // Close the recent section
+    // Reflect the selection for info window and other UI consumers
+    if (setSelectedPlace) {
+      setSelectedPlace({
+        ...location,
+        latitude,
+        longitude
+      });
+    }
+
+    // Close Recent panel for a smooth transition
     setShowRecentSection(false);
     setActiveMenu('');
   };
@@ -1398,23 +1444,31 @@ const handleVehicleClick = async (vehicle) => {
   }
 };
 
-// Auto-calculate Car route when both start and destination coordinates are available
+// Coordinate-based auto-calc: keep guard; no default vehicle means it won't run
 useEffect(() => {
-    const shouldAutoCalculate = 
-      startingPointCoords && 
-      destinationCoords && 
-      !isLoading &&
-      routeAlternatives.length === 0 && // Only if no route is already calculated
-      selectedVehicle === 'Car' && // Only auto-calculate for Car
-      !autoCalculatedRef.current; // Prevent multiple auto-calculations
+  const shouldAutoCalculate = 
+    startingPointCoords &&
+    destinationCoords &&
+    !isLoading &&
+    routeAlternatives.length === 0 &&
+    selectedVehicle === 'Car' &&
+    !autoCalculatedRef.current;
 
-    if (shouldAutoCalculate) {
-      autoCalculatedRef.current = true;
-      // Auto-select Car and calculate route
-      handleVehicleClick('Car');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
+  if (shouldAutoCalculate) {
+    autoCalculatedRef.current = true;
+    handleVehicleClick('Car');
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
+
+// Input-based auto-calc effect: disable unless a vehicle is selected
+useEffect(() => {
+  const hasInputs = Boolean(startingPoint?.trim()) && Boolean(currentDestinationInput?.trim());
+  if (!hasInputs || !selectedVehicle || isLoading || routeAlternatives.length > 0) {
+    return;
+  }
+  // No auto-trigger here; user must click a transport option
+}, [startingPoint, currentDestinationInput, selectedVehicle, isLoading, routeAlternatives.length]);
 
   // Handle starting point selection from search
   const handleStartingPointSelect = useCallback((place) => {
@@ -2035,11 +2089,29 @@ useEffect(() => {
               }}
               showLoginOverlay={openLoginOverlay}
               onBookmarkClick={(bookmarkData) => {
-                // Use the data directly as provided by BookmarkPage
-                if (setSelectedPlace) setSelectedPlace(bookmarkData);
-                if (setSelectedSearchBarPlace) setSelectedSearchBarPlace(bookmarkData);
-                
-                // Close the bookmark panel
+                // Clear any existing search selection and route directions (sidebar + map)
+                handleClearAllRouting();
+
+                // Reset current search selection before plotting the new bookmark
+                if (setSelectedSearchBarPlace) {
+                  setSelectedSearchBarPlace(null);
+                  const latitude = bookmarkData.latitude ?? bookmarkData.coordinates?.latitude;
+                  const longitude = bookmarkData.longitude ?? bookmarkData.coordinates?.longitude;
+                  setSelectedSearchBarPlace({
+                    name: bookmarkData.name,
+                    latitude,
+                    longitude,
+                    description: bookmarkData.description,
+                    type: bookmarkData.type || 'Bookmark'
+                  });
+                }
+
+                // Optionally reflect the selection in the info window state
+                if (setSelectedPlace) {
+                  setSelectedPlace(bookmarkData);
+                }
+
+                // Close the bookmark panel for a smooth transition
                 setShowBookmarkpage(false);
                 setActiveMenu('');
               }}

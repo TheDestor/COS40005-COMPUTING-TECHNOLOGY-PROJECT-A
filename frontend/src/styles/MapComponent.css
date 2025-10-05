@@ -288,33 +288,3 @@
   border: 3px solid #ffeb3b !important;
 }
 
-/* Arrow pointer from info window to marker */
-.custom-info-window-container::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: -15px; /* Increased distance for better visibility */
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  border-left: 15px solid white; /* Larger, more visible arrow */
-  z-index: 10;
-  filter: drop-shadow(1px 0 2px rgba(0, 0, 0, 0.2)); /* Add shadow to arrow */
-}
-
-/* Optional: Add a shadow to the arrow */
-.custom-info-window-container::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: -16px;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 13px solid transparent;
-  border-bottom: 13px solid transparent;
-  border-left: 16px solid rgba(0, 0, 0, 0.15);
-  z-index: 9;
-}
