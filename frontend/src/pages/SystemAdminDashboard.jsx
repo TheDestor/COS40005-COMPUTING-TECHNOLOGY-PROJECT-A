@@ -7,6 +7,7 @@ import * as d3 from 'd3';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 import ky from 'ky';
+import EditUserForm from '../components/EditUserForm';
 
 // Import profile images - you'll need to add these to your assets folder
 import profile1 from '../assets/profile1.png';
@@ -20,6 +21,8 @@ function SystemAdminDashboard() {
   const chartRef = useRef(null);
   const [usersList, setUsersList] = useState([]);
   const { accessToken } = useAuth();
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
 
   const summaryData = [
     {
@@ -276,6 +279,25 @@ function SystemAdminDashboard() {
     };
   }, []);
 
+  const handleEditClick = (user) => {
+    setCurrentUserToEdit(user);
+    setIsEditFormOpen(true);
+  };
+
+  // Closes the form
+  const handleCloseForm = () => {
+    setIsEditFormOpen(false);
+    setCurrentUserToEdit(null);
+  };
+
+  const handleUserUpdate = (updatedUserId, updatedUserData) => {
+    setUsersList(prevUsers =>
+      prevUsers.map(user =>
+        user.id === updatedUserId ? { ...user, ...updatedUserData } : user
+      )
+    );
+  };
+
   return (
     <div className="admin-container">
     <SystemAdminSidebar />
@@ -356,7 +378,7 @@ function SystemAdminDashboard() {
                     </td>
                     <td className="actions-cell-sa">
                       <button className="action-btn-sa view-btn-sa">View</button>
-                      <button className="action-btn-sa edit-btn-sa">Edit</button>
+                      <button className="action-btn-sa edit-btn-sa" onClick={() => handleEditClick(user)}>Edit</button>
                     </td>
                   </tr>
                 ))}
@@ -365,7 +387,15 @@ function SystemAdminDashboard() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      
+      {isEditFormOpen && (
+        <EditUserForm
+          user={currentUserToEdit}
+          onClose={handleCloseForm}
+          onUserUpdate={handleUserUpdate}
+        />
+      )}
     </div>
   );
 };

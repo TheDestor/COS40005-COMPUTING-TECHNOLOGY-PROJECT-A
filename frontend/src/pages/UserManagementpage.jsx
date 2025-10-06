@@ -3,6 +3,7 @@ import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
 import { RiUserAddLine } from "react-icons/ri";
 import AddUserForm from '../components/AddUserForm.jsx';
+import EditUserForm from '../components/EditUserForm.jsx'; // Import EditUserForm
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import ky from 'ky';
 import { useAuth } from '../context/AuthProvider';
@@ -13,6 +14,8 @@ const UserManagementPage = () => {
 
   const [allUsers, setAllUsers] = useState([]);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [showEditUserForm, setShowEditUserForm] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
@@ -46,7 +49,7 @@ const UserManagementPage = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -89,8 +92,8 @@ const UserManagementPage = () => {
   const filteredUsers = allUsers.filter(
     (user) =>
       (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (selectedRoles.length === 0 || selectedRoles.includes(user.role)) &&
       (selectedStatuses.length === 0 || selectedStatuses.includes(user.status))
   );
@@ -105,16 +108,20 @@ const UserManagementPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  // Confirmation on Edit
+  // Open edit popup
   const handleEditClick = (userId) => {
-    const confirmEdit = window.confirm(
-      "Are you sure you want to edit this user?"
-    );
-    if (confirmEdit) {
-      console.log("User ID", userId, "edited");
-      // Implement your edit logic here
+    const userToEdit = allUsers.find(user => user.id === userId);
+    if (userToEdit) {
+      setEditingUser(userToEdit);
+      setShowEditUserForm(true);
     }
   };
+  
+  // Update user in state
+  const handleUserUpdate = (userId, updatedData) => {
+    setAllUsers(allUsers.map(user => user.id === userId ? { ...user, ...updatedData } : user));
+  };
+
 
   // Confirmation on Delete
   const handleDeleteClick = async (userId) => {
@@ -127,7 +134,6 @@ const UserManagementPage = () => {
 
         if (response.success) {
           toast.success(response.message);
-
           setAllUsers(currentUsers => currentUsers.filter(user => user.id !== userId));
         } else {
           toast.error(response.message);
@@ -156,16 +162,20 @@ const UserManagementPage = () => {
                 onChange={handleSearchChange}
               />
             </div>
-            {/*<button className="add-user-button" onClick={() => setShowAddUserForm(true)}>
-            <RiUserAddLine className="add-user-icon" /> Add New User
-          </button>
-          */}
           </div>
 
           {showAddUserForm && (
             <div className="add-user-overlay">
               <AddUserForm onClose={() => setShowAddUserForm(false)} />
             </div>
+          )}
+
+          {showEditUserForm && (
+            <EditUserForm
+              user={editingUser}
+              onClose={() => setShowEditUserForm(false)}
+              onUserUpdate={handleUserUpdate}
+            />
           )}
 
           <div className="user-controls">
@@ -235,61 +245,61 @@ const UserManagementPage = () => {
             </div>
           </div>
 
-        <div className="table-scroll-wrapper">
-          <table className="user-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Last Active</th>
-                <th>Badge</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentUsers.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center' }}>No users found.</td></tr>
-              ) : (
-                currentUsers.map((user, index) => (
-                  <tr key={user.id}>
-                    <td>{indexOfFirstUser + index + 1}</td>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      <span className={`status-badge ${user.status.toLowerCase()}`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td>{user.lastActive}</td>
-                    <td>
-                      <span className={`status-badge ${user.role.toLowerCase().replace(/\s+/g, '-')}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="action-icons">
-                      <i
-                        className="fas fa-edit"
-                        title="Edit"
-                        onClick={() => handleEditClick(user.id)}
-                      ></i>
-                      <i
-                        className="fas fa-trash-alt"
-                        title="Delete"
-                        onClick={() => handleDeleteClick(user.id)}
-                      ></i>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="table-scroll-wrapper">
+            <table className="user-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last Active</th>
+                  <th>Badge</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentUsers.length === 0 ? (
+                  <tr><td colSpan="8" style={{ textAlign: 'center' }}>No users found.</td></tr>
+                ) : (
+                  currentUsers.map((user, index) => (
+                    <tr key={user.id}>
+                      <td>{indexOfFirstUser + index + 1}</td>
+                      <td>{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>{user.role}</td>
+                      <td>
+                        <span className={`status-badge ${user.status.toLowerCase()}`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td>{user.lastActive}</td>
+                      <td>
+                        <span className={`status-badge ${user.role.toLowerCase().replace(/\s+/g, '-')}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="action-icons">
+                        <i
+                          className="fas fa-edit"
+                          title="Edit"
+                          onClick={() => handleEditClick(user.id)}
+                        ></i>
+                        <i
+                          className="fas fa-trash-alt"
+                          title="Delete"
+                          onClick={() => handleDeleteClick(user.id)}
+                        ></i>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };
