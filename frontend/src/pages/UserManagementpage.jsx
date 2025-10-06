@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
 
 const UserManagementPage = () => {
-  const usersPerPage = 7;
+  const usersPerPage = 10;
 
   const [allUsers, setAllUsers] = useState([]);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -18,7 +18,6 @@ const UserManagementPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
-  const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const { accessToken } = useAuth();
@@ -36,8 +35,6 @@ const UserManagementPage = () => {
             name: `${user.firstName} ${user.lastName}`,
             email: user.email,
             role: user.role.charAt(0).toUpperCase() + user.role.slice(1),
-            status: 'Active',
-            lastActive: 'N/A'
           }));
           setAllUsers(formattedUsers);
         } else {
@@ -69,7 +66,6 @@ const UserManagementPage = () => {
     { label: "Business User", value: "Business" },
     { label: "User", value: "Tourist" },
   ];
-  const statusOptions = ["Active", "Inactive"];
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -94,8 +90,7 @@ const UserManagementPage = () => {
       (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedRoles.length === 0 || selectedRoles.includes(user.role)) &&
-      (selectedStatuses.length === 0 || selectedStatuses.includes(user.status))
+      (selectedRoles.length === 0 || selectedRoles.includes(user.role))
   );
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -206,27 +201,6 @@ const UserManagementPage = () => {
                       ))}
                     </div>
                   </div>
-                  <div className="filter-group-user">
-                    <h4>Status</h4>
-                    <div className="filter-options-admin">
-                      {statusOptions.map((status) => (
-                        <label key={status} className="filter-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={selectedStatuses.includes(status)}
-                            onChange={() =>
-                              toggleOption(
-                                status,
-                                selectedStatuses,
-                                setSelectedStatuses
-                              )
-                            }
-                          />
-                          {status}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -253,8 +227,6 @@ const UserManagementPage = () => {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
-                  <th>Status</th>
-                  <th>Last Active</th>
                   <th>Badge</th>
                   <th>Actions</th>
                 </tr>
@@ -269,12 +241,6 @@ const UserManagementPage = () => {
                       <td>{user.name}</td>
                       <td>{user.email}</td>
                       <td>{user.role}</td>
-                      <td>
-                        <span className={`status-badge ${user.status.toLowerCase()}`}>
-                          {user.status}
-                        </span>
-                      </td>
-                      <td>{user.lastActive}</td>
                       <td>
                         <span className={`status-badge ${user.role.toLowerCase().replace(/\s+/g, '-')}`}>
                           {user.role}

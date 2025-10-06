@@ -8,6 +8,7 @@ import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 import ky from 'ky';
 import EditUserForm from '../components/EditUserForm';
+import { Link } from 'react-router-dom';
 
 // Import profile images - you'll need to add these to your assets folder
 import profile1 from '../assets/profile1.png';
@@ -351,7 +352,7 @@ function SystemAdminDashboard() {
               <span className="header-icon-sa"><FaUser /></span>
               New Recent Users
             </h3>
-            <button className="view-all-sa">View All</button>
+            <Link to="/user-management" className="view-all-sa">View All</Link>
           </div>
           <div className="users-list-container-sa">
             <table className="users-table-sa data-table-sa">
@@ -377,7 +378,6 @@ function SystemAdminDashboard() {
                       </span>
                     </td>
                     <td className="actions-cell-sa">
-                      <button className="action-btn-sa view-btn-sa">View</button>
                       <button className="action-btn-sa edit-btn-sa" onClick={() => handleEditClick(user)}>Edit</button>
                     </td>
                   </tr>
