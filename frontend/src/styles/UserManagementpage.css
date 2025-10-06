@@ -2,399 +2,501 @@
    Animations
 ============================= */
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ==========================
    User Profile Styles
 ============================= */
 .user-profile2 {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 25px;
-    padding: 12px 10px;
-    border-bottom: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  padding: 12px 10px;
+  border-bottom: 2px solid #ccc;
 }
 
 .profile-icon2 {
-    background-color: #e0edff;
-    color: #fff;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background-color: #e0edff;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .username {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
 }
 
 /* ==========================
    Enhanced User Controls
 ============================= */
 .user-management {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 .user-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
 }
 
 .user-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-    color: #333;
-    margin-top: 20px;
-    border-spacing: 0;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #333;
+  margin-top: 20px;
+  border-spacing: 0;
 }
 
-.user-table th, .user-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+.user-table th,
+.user-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
 .user-table th {
-    background-color: #e0edff;
-    font-weight: 600;
+  background-color: #e0edff;
+  font-weight: 600;
 }
 
 .user-table tr:hover {
-    background-color: #f9fbff;
+  background-color: #f9fbff;
 }
 
 .search-container51 {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 1;
-    max-width: 400px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 400px;
 }
 
 .search-icon51 {
-    position: absolute;
-    left: 12px;
-    color: #888;
-    font-size: 16px;
+  position: absolute;
+  left: 12px;
+  color: #888;
+  font-size: 16px;
 }
 
 .search-input {
-    width: 100%;
-    padding: 10px 10px 10px 36px; /* left padding for the icon */
-    border: 1px solid #ccc;
-    border-radius: 999px;
-    font-size: 14px;
-    color: #000000;
-    background-color: #ffffff;
+  width: 100%;
+  padding: 10px 10px 10px 36px;
+  /* left padding for the icon */
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #000000;
+  background-color: #ffffff;
 }
 
 .search-input:focus {
-    border-color: #007bff;
+  border-color: #007bff;
 }
 
 .add-user-button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 16px;
-    font-size: 14px;
-    border: none;
-    border-radius: 999px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
+  background-color: #007bff;
+  color: white;
+  padding: 10px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 999px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
 }
 
 .filter-button-admin {
-    background-color: #fff;
-    color: #007bff;
-    padding: 10px 16px;
-    font-size: 14px;
-    border: 2px solid #007bff;
-    border-radius: 999px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #fff;
+  color: #007bff;
+  padding: 10px 16px;
+  font-size: 14px;
+  border: 2px solid #007bff;
+  border-radius: 999px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .add-user-button:hover {
-    background-color: #218838;
-    transform: translateY(-2px);
+  background-color: #218838;
+  transform: translateY(-2px);
 }
 
 .filter-button-admin:hover {
-    background-color: #007bff;
-    color: white;
-    transform: translateY(-2px);
-    border: none;
+  background-color: #007bff;
+  color: white;
+  transform: translateY(-2px);
+  border: none;
 }
 
 .filter-button-admin:active,
 .add-user-button:active {
-    transform: scale(0.96);
+  transform: scale(0.96);
 }
 
 .add-user-icon {
-   font-size: 18px;
+  font-size: 18px;
 }
 
 /* ==========================
    Status Badges & Actions
 ============================= */
 .status-badge-user {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 16px;
-    font-size: 12px;
-    font-weight: 500;
-    text-align: center;
-    color: #fff;
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: #fff;
 }
 
 .status-badge-user.system-admin {
-    background-color: #6a1b9a; /* purple */
-    color: white;
-  }
-  
-  .status-badge-user.cbt-admin {
-    background-color: #1976d2; /* blue */
-    color: white;
-  }
-  
-  .status-badge-user.business-user {
-    background-color: #ef6c00; /* orange */
-    color: white;
-  }
-  
-  .status-badge-user.user {
-    background-color: #43a047; /* green */
-    color: white;
-  }
-  
-  .status-badge-user.active {
-    background-color: #4caf50; /* green */
-    color: white;
-  }
-  
-  .status-badge-user.inactive {
-    background-color: #f44336; /* red */
-    color: white;
-  }  
+  background-color: #6a1b9a;
+  /* purple */
+  color: white;
+}
+
+.status-badge-user.cbt-admin {
+  background-color: #1976d2;
+  /* blue */
+  color: white;
+}
+
+.status-badge-user.business-user {
+  background-color: #ef6c00;
+  /* orange */
+  color: white;
+}
+
+.status-badge-user.user {
+  background-color: #43a047;
+  /* green */
+  color: white;
+}
+
+.status-badge-user.active {
+  background-color: #4caf50;
+  /* green */
+  color: white;
+}
+
+.status-badge-user.inactive {
+  background-color: #f44336;
+  /* red */
+  color: white;
+}
 
 .action-icons {
-    display: flex;
-    gap: 20px;
-    justify-content: flex-start;
-    align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .action-icons i {
-    font-size: 16px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-    color: #555;
-    cursor: pointer;
-    transition: color 0.3s ease;
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  color: #555;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 .action-icons i:hover {
-    color: #ff0000;
+  color: #ff0000;
 }
 
 .pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px; /* spacing between each button */
-    margin-top: 20px;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  /* spacing between each button */
+  margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .pagination button {
-    padding: 8px 14px;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    color: #333;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .pagination button:hover {
-    background-color: #f0f4ff;
-    color: #007bff;
-    transform: translateY(-2px);
+  background-color: #f0f4ff;
+  color: #007bff;
+  transform: translateY(-2px);
 }
 
 .pagination button:active {
-    transform: scale(0.96);
+  transform: scale(0.96);
 }
 
 .pagination button.active {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
 }
 
 .filter-box-admin {
-    display: flex;
-    gap: 4rem;
-    padding: 1.5rem;
-    margin: 1rem 0;
-    border: 2px solid #007bff;
-    border-radius: 10px;
-    background-color: #fff;
-    width: fit-content;
-    flex-wrap: wrap;
-  }
-  
-  .filter-column-admin {
-    display: flex;
+  display: flex;
+  gap: 4rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  background-color: #fff;
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
+.filter-column-admin {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-column-admin h4 {
+  color: #007bff;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .filter-box-admin {
     flex-direction: column;
+    gap: 2rem;
   }
-  
-  .filter-column-admin h4 {
-    color: #007bff;
-    margin-bottom: 1rem;
-    font-weight: 600;
-  }
-  
-  @media (max-width: 600px) {
-    .filter-box-admin {
-      flex-direction: column;
-      gap: 2rem;
-    }
-  }
+}
 
-  .filter-wrapper-admin {
-    position: relative;
-  }
-  
-  .filter-dropdown-user {
-    position: absolute;
-    top: 110%;
-    right: 0;
-    left: 0;
-    background: #fff;
-    padding: 1rem;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    z-index: 10;
-    border-radius: 25px;
-    width: max-content; /* allows it to grow as needed */
-    display: flex; /* lay items side by side */
-    gap: 2rem; /* space between filter groups */
-    flex-wrap: wrap; /* wrap if not enough space */
-  }
-  
-  .filter-group-user {
-    margin-right: 2rem;
-    margin-bottom: 0; /* remove bottom margin if displayed inline */
-  }
-  
-  .filter-group-user h4 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    color: #007bff;
-  }
+.filter-wrapper-admin {
+  position: relative;
+}
 
-  .filter-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1rem;
-    font-size: 14px;
-  }
-  
-  .filter-checkbox input[type="checkbox"] {
-    transform: scale(1.1);
-    cursor: pointer;
-  }
-  
-  .confirmation-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    z-index: 1000;
-    width: 300px;
-  }
-  
-  .confirmation-popup h4 {
-    margin-bottom: 20px;
-  }
-  
-  .confirmation-popup .confirmation-buttons {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .confirmation-popup .confirmation-buttons button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .confirmation-popup .confirmation-buttons button.confirm {
-    background-color: #dc3545;
-    color: #fff;
-  }
-  
-  .confirmation-popup .confirmation-buttons button.cancel {
-    background-color: #ccc;
-    color: #000;
-  }
-  
-  .confirmation-popup .confirmation-buttons button:hover {
-    opacity: 0.8;
-  }
-  
-  .confirmation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
+.filter-dropdown-user {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  left: 0;
+  background: #fff;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  border-radius: 25px;
+  width: max-content;
+  /* allows it to grow as needed */
+  display: flex;
+  /* lay items side by side */
+  gap: 2rem;
+  /* space between filter groups */
+  flex-wrap: wrap;
+  /* wrap if not enough space */
+}
+
+.filter-group-user {
+  margin-right: 2rem;
+  margin-bottom: 0;
+  /* remove bottom margin if displayed inline */
+}
+
+.filter-group-user h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #007bff;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  font-size: 14px;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.confirmation-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  z-index: 1000;
+  width: 300px;
+}
+
+.confirmation-popup h4 {
+  margin-bottom: 20px;
+}
+
+.confirmation-popup .confirmation-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.confirmation-popup .confirmation-buttons button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirmation-popup .confirmation-buttons button.confirm {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.confirmation-popup .confirmation-buttons button.cancel {
+  background-color: #ccc;
+  color: #000;
+}
+
+.confirmation-popup .confirmation-buttons button:hover {
+  opacity: 0.8;
+}
+
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Edit user popup menu */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.popup-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  animation: fadeInUp 0.3s ease;
+}
+
+.popup-content h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
