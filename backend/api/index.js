@@ -15,6 +15,10 @@ import graphHopperRouter from "../routes/GraphHopperRoutes.js";
 // import geoapifyRouter from "../routes/geoapifyRoutes.js";
 import newsletterRouter from "../routes/newsletterRoutes.js";
 import dashboardRouter from "../routes/DashboardRoutes.js";
+import metricsRouter from "../routes/MetricsRoutes.js";
+import adminMetricsRouter from "../routes/AdminMetricsRoutes.js";
+import backupRouter from "../routes/BackupRoutes.js";
+import UserManagementRouter from "../routes/UserManagementRoutes.js";
 
 
 // Get directory name (required for ES modules)
