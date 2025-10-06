@@ -7,13 +7,7 @@ import * as d3 from 'd3';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 import ky from 'ky';
-
-// Import profile images - you'll need to add these to your assets folder
-import profile1 from '../assets/profile1.png';
-import profile2 from '../assets/profile2.png';
-import profile3 from '../assets/profile3.png';
-import profile4 from '../assets/profile4.png';
-import profile5 from '../assets/profile5.png';
+import defaultImage from '../assets/avatar1.png';
 import { useState } from 'react';
 
 function SystemAdminDashboard() {
@@ -21,44 +15,73 @@ function SystemAdminDashboard() {
   const [usersList, setUsersList] = useState([]);
   const { accessToken } = useAuth();
 
+  // New: dashboard KPI stats state
+  const [dashboardStats, setDashboardStats] = useState({
+    totalUsers: 0,
+    recaptchaBlocked: 0,
+    dbStoragePercent: 0,
+    totalPageViews: 0,
+    statusBreakdown: { active: 0, inactive: 0, suspended: 0 },
+  });
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const res = await ky.get('/api/admin/metrics/stats', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }).json();
+        if (res?.success) {
+          const d = res.data;
+          setDashboardStats({
+            totalUsers: d.totalUsers || 0,
+            recaptchaBlocked: d.recaptchaBlocked || 0,
+            dbStoragePercent: d.dbStoragePercent || 0,
+            totalPageViews: d.totalPageViews || 0,
+            statusBreakdown: d.statusBreakdown || { active: 0, inactive: 0, suspended: 0 },
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch admin metrics:', e);
+      }
+    };
+    fetchMetrics();
+
+    // Light real-time polling (30s)
+    const t = setInterval(fetchMetrics, 30000);
+    return () => clearInterval(t);
+  }, [accessToken]);
+
+  // New: derive summary boxes from real stats
   const summaryData = [
     {
-      title: 'Today Page Views',
-      value: '45',
+      title: 'Total Page Views',
+      value: dashboardStats.totalPageViews.toLocaleString(),
       icon: <AiOutlineFundView />,
-      cardClass: 'purple-theme',
-      iconBgClass: 'purple-bg',
-      trend: '15.8%',
-      trendType: 'positive'
-    },
-    {
-      title: 'Destination Trending',
-      value: '12',
-      icon: <IoIosTrendingUp />,
-      cardClass: 'blue-theme',
-      iconBgClass: 'blue-bg',
-      trend: '5.2%',
-      trendType: 'positive'
-    },
-    {
-      title: 'System Performance',
-      value: '98%',
-      icon: <MdSpeed />,
-      cardClass: 'green-theme',
-      iconBgClass: 'green-bg',
-      trend: '1%',
-      trendType: 'negative'
-    },
-    {
-      title: 'Data Integrity',
-      value: 'Backup up to date',
-      icon: <FaRegSave />,
       cardClass: 'teal-theme',
       iconBgClass: 'teal-bg',
-      trend: 'Today 2am',
-      trendType: 'positive'
     },
-  ]
+    {
+      title: 'Total Users',
+      value: dashboardStats.totalUsers.toLocaleString(),
+      icon: <FaUser />,
+      cardClass: 'blue-theme',
+      iconBgClass: 'blue-bg',
+    },
+    {
+      title: 'Database Storage',
+      value: `${Math.round(dashboardStats.dbStoragePercent)}%`,
+      icon: <FaRegSave />,
+      cardClass: 'green-theme',
+      iconBgClass: 'green-bg',
+    },
+    {
+      title: 'reCAPTCHA Blocked',
+      value: dashboardStats.recaptchaBlocked.toLocaleString(),
+      icon: <FaExclamationTriangle />,
+      cardClass: 'purple-theme',
+      iconBgClass: 'purple-bg',
+    },
+  ];
 
   // User usage data for the bar chart
   const monthlyUsageData = [
@@ -83,15 +106,19 @@ function SystemAdminDashboard() {
         const response = await ky.get('/api/userManagement/users?sort=createdAt_desc&limit=5', { headers: { 'Authorization': `Bearer ${accessToken}` } }).json();
 
         if (response.success) {
-          const placeholderImages = [profile1, profile2, profile3, profile4, profile5];
-          const formattedUsers = response.users.map((user, index) => ({
-            id: user._id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-            role: user.role,
-            lastLogin: 'N/A',
-            image: placeholderImages[index % placeholderImages.length]
-          }));
+          const formattedUsers = response.users.map((user) => {
+            const createdAt = user.createdAt ? new Date(user.createdAt) : null;
+            const isNew = createdAt ? (Date.now() - createdAt.getTime()) <= 24 * 60 * 60 * 1000 : false;
+            return {
+              id: user._id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+              role: user.role,
+              lastLogin: user.lastLogin || 'N/A',
+              image: user.avatarUrl && user.avatarUrl.trim() ? user.avatarUrl : defaultImage,
+              isNew,
+            };
+          });
           setUsersList(formattedUsers);
         } else {
           console.error(response.message);
@@ -343,9 +370,17 @@ function SystemAdminDashboard() {
               </thead>
               <tbody>
                 {usersList.map(user => (
-                  <tr key={user.id}>
+                  <tr key={user.id} className={user.isNew ? 'new-user-row-sa' : ''}>
                     <td className="user-cell-sa">
-                      <img src={user.image} alt={user.name} className="user-avatar-sa" />
+                      <img
+                        src={user.image}
+                        alt={user.name}
+                        className="user-avatar-sa"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null; // prevent infinite loop
+                          e.currentTarget.src = defaultImage;
+                        }}
+                      />
                       <span>{user.name}</span>
                     </td>
                     <td>{user.email}</td>

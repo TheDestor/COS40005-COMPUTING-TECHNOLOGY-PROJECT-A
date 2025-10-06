@@ -12,9 +12,9 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
   };
 
   return (
-    <div className="backup-config-overlay">
+    <div className="backup-config-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-config-title">
       <div className="backup-config-modal">
-        <h3>Backup configuration</h3>
+        <h3 id="backup-config-title">Backup configuration</h3>
 
         <label>Backup frequency</label>
         <select value={frequency} onChange={(e) => setFrequency(e.target.value)}>
@@ -39,7 +39,7 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
         />
 
         <div className="buttons">
-          <button className="cancel" onClick={onClose}>Cancel</button>
+          <button className="cancel-dm" onClick={onClose}>Cancel</button>
           <button className="save" onClick={handleSave}>Save Configuration</button>
         </div>
       </div>

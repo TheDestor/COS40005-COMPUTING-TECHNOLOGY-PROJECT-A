@@ -1,9 +1,10 @@
+// imports
 import React, { useState, useEffect } from "react";
 import '../styles/DataManagementpage.css';
 import BackupConfigurationModal from "../components/BackupConfigmodal.jsx";
-import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaClock } from "react-icons/fa";
-import { FaDownload, FaTrash, FaCog, FaPlay } from "react-icons/fa";
+import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaClock, FaDownload, FaPlay, FaCog } from "react-icons/fa";
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
+import { useAuth } from '../context/AuthProvider.jsx';
 
 const initialBackups = [
   {
@@ -45,11 +46,53 @@ const DetailModal = ({ children, onClose }) => {
 
 const DataManagementPage = () => {
   const [showConfig, setShowConfig] = useState(false);
+  const { accessToken } = useAuth();
+  const [backups, setBackups] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadBackups = async () => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const r = await fetch('/api/admin/backup/list', { headers });
+      if (!r.ok) return;
+      const list = await r.json();
+      setBackups(Array.isArray(list) ? list : []);
+    } catch {}
+  };
+
+  const runBackup = async () => {
+    try {
+      setLoading(true);
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const r = await fetch('/api/admin/backup/run', { method: 'POST', headers });
+      if (r.ok) {
+        await loadBackups();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadBackup = (filename) => {
+    const headers = new Headers({
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+    });
+    const url = `/api/admin/backup/download/${encodeURIComponent(filename)}`;
+    // open in new tab for simple download
+    window.open(url, '_blank');
+  };
+
+  useEffect(() => { loadBackups(); }, [accessToken]);
   const [databaseSize, setDatabaseSize] = useState("15.3 GB");
   const [uploadsStorage, setUploadsStorage] = useState("24.9 GB");
   const [dataHealth, setDataHealth] = useState("Healthy");
   const [modalType, setModalType] = useState(null); // null, 'database', 'storage', or 'health'
-  const [backups, setBackups] = useState(initialBackups);
 
   // The useEffect for simulating user data can be removed or repurposed later
   // for real data metrics.
@@ -169,58 +212,101 @@ const DataManagementPage = () => {
   return (
     <div className="admin-container">
       <SystemAdminSidebar />
-    <div className="content-section2">
-      <h2><FaDatabase /> Data Management</h2>
-      
-      {/* Data Statistics Cards */}
-      <div className="user-stats-container">
-        <div className="stat-card clickable" onClick={() => setModalType('database')}>
-          <div className="stat-icon database-size">
-            <FaDatabase />
+      <div className="content-section2">
+        <h2><FaDatabase /> Data Management</h2>
+        {/* Data Statistics Cards */}
+        <div className="user-stats-container">
+          <div className="stat-card clickable" onClick={() => setModalType('database')}>
+            <div className="stat-icon database-size">
+              <FaDatabase />
+            </div>
+            <div className="stat-content">
+              <h3>Database Size</h3>
+              <p className="stat-number">{databaseSize}</p>
+              <p className="stat-description">Total size of collections</p>
+            </div>
           </div>
-          <div className="stat-content">
-            <h3>Database Size</h3>
-            <p className="stat-number">{databaseSize}</p>
-            <p className="stat-description">Total size of collections</p>
+          
+          <div className="stat-card clickable" onClick={() => setModalType('storage')}>
+            <div className="stat-icon storage-usage">
+              <FaHdd />
+            </div>
+            <div className="stat-content">
+              <h3>Uploads Storage</h3>
+              <p className="stat-number">{uploadsStorage}</p>
+              <p className="stat-description">User-uploaded content</p>
+            </div>
+          </div>
+          
+          <div className="stat-card clickable" onClick={() => setModalType('health')}>
+            <div className="stat-icon data-health">
+              <FaShieldAlt />
+            </div>
+            <div className="stat-content">
+              <h3>Data Integrity</h3>
+              <p className="stat-number">{dataHealth}</p>
+              <p className="stat-description">Last check: 2h ago</p>
+            </div>
           </div>
         </div>
-        
-        <div className="stat-card clickable" onClick={() => setModalType('storage')}>
-          <div className="stat-icon storage-usage">
-            <FaHdd />
+
+        {/* Backup Table Panel */}
+        <div className="backup-table">
+          <div className="panel-header">
+            <h3>Backup Files</h3>
+            <p className="muted">Latest server backups</p>
           </div>
-          <div className="stat-content">
-            <h3>Uploads Storage</h3>
-            <p className="stat-number">{uploadsStorage}</p>
-            <p className="stat-description">User-uploaded content</p>
+          <div className="backup-controls">
+            <button className="run-backup" onClick={runBackup} disabled={loading}>
+              {loading ? 'Running…' : 'Run Backup'}
+            </button>
+            <button className="configure" onClick={() => setShowConfig(true)}>Configure</button>
           </div>
+          {backups.length === 0 ? (
+            <div className="empty-state">No backups yet. Run a backup to create one.</div>
+          ) : (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Created</th>
+                    <th>Size</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {backups.map(b => (
+                    <tr key={b.name}>
+                      <td className="filename">{b.name}</td>
+                      <td>{new Date(b.createdAt).toLocaleString()}</td>
+                      <td className="size">{(b.size / 1024).toFixed(1)} KB</td>
+                      <td className="actions">
+                        <button className="action-btn-dm download" onClick={() => downloadBackup(b.name)}>
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-        
-        <div className="stat-card clickable" onClick={() => setModalType('health')}>
-          <div className="stat-icon data-health">
-            <FaShieldAlt />
-          </div>
-          <div className="stat-content">
-            <h3>Data Integrity</h3>
-            <p className="stat-number">{dataHealth}</p>
-            <p className="stat-description">Last check: 2h ago</p>
-          </div>
-        </div>
+
+        {showConfig && (
+          <BackupConfigurationModal
+            onClose={() => setShowConfig(false)}
+            onSave={handleSaveConfig}
+          />
+        )}
+
+        {modalType && (
+          <DetailModal onClose={() => setModalType(null)}>
+            {renderModalContent()}
+          </DetailModal>
+        )}
       </div>
-
-      {showConfig && (
-        <BackupConfigurationModal
-          onClose={() => setShowConfig(false)}
-          onSave={handleSaveConfig}
-        />
-      )}
-
-      {modalType && (
-        <DetailModal onClose={() => setModalType(null)}>
-          {renderModalContent()}
-        </DetailModal>
-      )}
-    </div>
     </div>
   );
 };

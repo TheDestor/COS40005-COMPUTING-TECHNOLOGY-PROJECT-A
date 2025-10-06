@@ -4,7 +4,7 @@ export const getAllUsers = async (req, res) => {
     try {
         const { limit, sort } = req.query;
 
-        let query = userModel.find().select("firstName lastName email role avatarUrl");
+        let query = userModel.find().select("firstName lastName email role avatarUrl createdAt");
 
         if (sort) {
             const [sortField, sortOrder] = sort.split('_');

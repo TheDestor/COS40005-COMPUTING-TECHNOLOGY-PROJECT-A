@@ -15,6 +15,9 @@ import graphHopperRouter from "../routes/GraphHopperRoutes.js";
 // import geoapifyRouter from "../routes/geoapifyRoutes.js";
 import newsletterRouter from "../routes/newsletterRoutes.js";
 import dashboardRouter from "../routes/DashboardRoutes.js";
+import metricsRouter from "../routes/MetricsRoutes.js";
+import adminMetricsRouter from "../routes/AdminMetricsRoutes.js";
+import backupRouter from "../routes/BackupRoutes.js";
 
 
 // Get directory name (required for ES modules)
@@ -82,6 +85,9 @@ app.use("/api/graphhopper", graphHopperRouter);
 app.use("/api/userManagement", UserManagementRouter);
 app.use("/api/user/newsletter", newsletterRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/metrics", metricsRouter);
+app.use("/api/admin/metrics", adminMetricsRouter);
+app.use("/api/admin/backup", backupRouter);
 
 
 // Import and use geoapify routes

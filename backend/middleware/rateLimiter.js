@@ -23,3 +23,11 @@ export const refreshLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many token refreshes.' },
 });
+
+export const uniqueVisitorLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many unique visitor session events.' },
+});

@@ -57,7 +57,9 @@ const userSchema = new mongoose.Schema({
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
     nationality: { type: String, required: true, default: 'N/A' },
     avatarUrl: { type: String, default: null},
-    authProvider: { type: String, enum: ['password','google'], default: 'password' }
+    authProvider: { type: String, enum: ['password','google'], default: 'password' },
+    // Add account status for admin breakdowns
+    accountStatus: { type: String, enum: ['active','inactive','suspended'], default: 'active' }
 }, baseOptions);
 
 userSchema.pre('save', async function (next) {

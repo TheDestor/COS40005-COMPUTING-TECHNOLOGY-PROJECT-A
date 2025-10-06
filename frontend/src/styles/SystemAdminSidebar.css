@@ -767,3 +767,28 @@
   .data-table-sa thead th:nth-child(4),
   .data-table-sa tbody td:nth-child(4) { width: 14%; }
 }
+
+/* New user highlight (System Admin) */
+.data-table-sa tbody tr.new-user-row-sa {
+  background: #e9f7ff; /* soft blue highlight */
+  border-top: 1px solid #bcd9ff;
+  border-bottom: 1px solid #bcd9ff;
+  position: relative; /* enable pseudo-element stripe */
+}
+
+.data-table-sa tbody tr.new-user-row-sa:hover {
+  background: #dff2ff;
+  border-color: #9fc8ff;
+}
+
+.data-table-sa tbody tr.new-user-row-sa::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px; /* slightly subtle width */
+  background: #5aa8ff; /* subtle blue */
+  border-radius: 2px; /* soften edge */
+  pointer-events: none;
+}
