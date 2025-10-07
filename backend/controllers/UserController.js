@@ -169,3 +169,54 @@ export const contactUs = async (req, res) => {
         res.status(500).json({ message: "An internal server error occured during login.", success: false });
     }
 }
+
+export const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // Prevent deletion of protected admin accounts
+        if (["system_admin","cbt_admin"].includes(user.role)) {
+            return res.status(403).json({ success: false, message: "Deleting admin accounts is not allowed" });
+        }
+
+        // Require password confirmation for password-auth users
+        if (user.authProvider === 'password') {
+            const { password } = req.body || {};
+            if (!password) {
+                return res.status(400).json({ success: false, message: "Current password is required to delete account" });
+            }
+            const isValid = await user.isValidPassword(password);
+            if (!isValid) {
+                return res.status(401).json({ success: false, message: "Incorrect current password" });
+            }
+        }
+
+        await userModel.findByIdAndDelete(userId);
+
+        // Clear refresh cookies similar to logout
+        res.clearCookie('jwt', {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/api/auth/refresh',
+        });
+        res.clearCookie('jwt', {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+        });
+
+        return res.status(200).json({ success: true, message: "Account deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: "An internal server error occurred while deleting account" });
+    }
+};

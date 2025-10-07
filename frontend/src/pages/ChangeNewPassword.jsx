@@ -1,10 +1,13 @@
+// ChangeNewPassword component
 import React, { useState } from "react";
+import ky from "ky";
+import { useAuth } from "../context/AuthProvider.jsx";
 import "../styles/ChangeNewPassword.css";
-import Switch from "react-switch";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
-import { useAuth } from "../context/AuthProvider.jsx";
-import ky from "ky";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { BiError } from "react-icons/bi";
 
 const getPasswordStrength = (password) => {
   if (password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password)) return "strong";
@@ -20,20 +23,25 @@ const ChangeNewPassword = ({ showProviderNote }) => {
     confirmPassword: ''
   });
   const { currentPassword, newPassword, confirmPassword } = formData;
+  const strength = getPasswordStrength(newPassword);
   const [enableMFA, setEnableMFA] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, logout } = useAuth();
   const isGoogleUser = showProviderNote ?? !user?.phoneNumber;
-
+  const navigate = useNavigate();
   const passwordsMatch = newPassword === confirmPassword;
   const isFormValid = currentPassword && newPassword && confirmPassword && passwordsMatch;
 
+  // ADD: modal state for delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // ADD: input/update helpers back in scope
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
     }));
   };
@@ -44,7 +52,7 @@ const ChangeNewPassword = ({ showProviderNote }) => {
       newPassword: '',
       confirmPassword: ''
     });
-  }
+  };
 
   const handleUpdatePassword = async () => {
     if (!isFormValid) {
@@ -77,8 +85,39 @@ const ChangeNewPassword = ({ showProviderNote }) => {
         console.log(errorJson.message);
       }
     }
-  }
-  
+  };
+
+  // ADD: delete account handler (invoked from modal confirm)
+  const handleDeleteAccount = async () => {
+    try {
+      if (!user?.authProvider || user.authProvider === "password") {
+        if (!formData?.currentPassword || formData.currentPassword.trim() === "") {
+          toast.error("Please enter your current password to delete your account.");
+          return;
+        }
+      }
+
+      const payload = {
+        password: user?.authProvider === "google" ? undefined : formData.currentPassword,
+      };
+
+      await ky
+        .delete("/api/user/deleteAccount", {
+          json: payload,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        .json();
+
+      toast.success("Your account has been deleted.");
+      setShowDeleteConfirm(false);
+      await logout();
+      navigate("/");
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to delete account.";
+      toast.error(msg);
+    }
+  };
+
   return (
     <div className="change-password-container">
       {isGoogleUser && (
@@ -87,7 +126,7 @@ const ChangeNewPassword = ({ showProviderNote }) => {
         </div>
       )}
       <h2><MdSecurity size={20} /> Sign In & Security</h2>
-
+  
       <div className="form-group2">
         <label htmlFor="currentPassword">Current password</label>
         <div className="input-with-icon4">
@@ -104,7 +143,7 @@ const ChangeNewPassword = ({ showProviderNote }) => {
           </button>
         </div>
       </div>
-
+  
       <div className="form-group2">
         <label htmlFor="newPassword">New password</label>
         <div className="input-with-icon4">
@@ -124,7 +163,7 @@ const ChangeNewPassword = ({ showProviderNote }) => {
           <div className={`strength-meter ${strength}`}>Strength: {strength}</div>
         )}
       </div>
-
+  
       <div className="form-group2">
         <label htmlFor="confirmPassword">Confirm new password</label>
         <div className="input-with-icon4">
@@ -148,37 +187,37 @@ const ChangeNewPassword = ({ showProviderNote }) => {
           )
         )}
         </div>
-
-
+  
+        {(currentPassword || newPassword || confirmPassword) && (
+          <div className="action-buttons3 left-align">
+            <button type="button" className="cancel-btn3" onClick={handleClearForm}>Cancel</button>
+            <button type="button" className="update-btn3" onClick={handleUpdatePassword} disabled={!isFormValid}>Update</button>
+          </div>
+        )}
+  
         <div className="mfa-toggle-wrapper">
-        <div className="mfa-toggle">
-            <label>Enable MFA via Google Authenticator</label>
-            <Switch
-            checked={enableMFA}
-            onChange={setEnableMFA}
-            onColor="#2563eb"
-            offColor="#ccc"
-            onHandleColor="#ffffff"
-            offHandleColor="#ffffff"
-            handleDiameter={22}
-            uncheckedIcon={false}
-            checkedIcon={false}
-            height={26}
-            width={48}
-            className="mfa-react-switch"
-            />
+          <div className="delete-account-section">
+            <label><BiError size={25} className="delete-icon" /> Danger Zone</label>
+            <button type="button" onClick={() => setShowDeleteConfirm(true)}>
+              Delete Account
+            </button>
+          </div>
         </div>
-        </div>
-
-
-      {(currentPassword || newPassword || confirmPassword) && (
-        <div className="action-buttons3 left-align">
-          <button type="button" className="cancel-btn3" onClick={handleClearForm}>Cancel</button>
-          <button type="button" className="update-btn3" onClick={handleUpdatePassword} disabled={!isFormValid}>Update</button>
-        </div>
-      )}
-    </div>
-  );
-};
+  
+        {showDeleteConfirm && (
+          <div className="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+            <div className="popup-content" style={{ maxWidth: "520px" }}>
+              <h3 id="delete-account-title">Confirm Account Deletion</h3>
+              <p>This will permanently remove your account and cannot be undone.</p>
+              <div className="action-buttons3" style={{ justifyContent: "center", marginTop: "1rem" }}>
+                <button className="cancel-btn3" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                <button className="update-btn123" onClick={handleDeleteAccount}>Confirm Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
 export default ChangeNewPassword;

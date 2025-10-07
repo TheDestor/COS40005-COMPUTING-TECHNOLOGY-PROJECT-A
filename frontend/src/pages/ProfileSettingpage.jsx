@@ -6,7 +6,7 @@ import UserImage from "../assets/Kuching.png";
 import Select from 'react-select';
 import ChangeNewPassword from './ChangeNewPassword.jsx';
 import PushNotificationPage from './PushNotificationpage.jsx';
-import PushSubscriptionPage from './PushSuscriptionpage.jsx';
+// import PushSubscriptionPage from './PushSuscriptionpage.jsx';
 import { useAuth } from '../context/AuthProvider.jsx';
 import ky from 'ky';
 
@@ -455,8 +455,8 @@ const ProfileSettingsPage = () => {
         return <ChangeNewPassword showProviderNote={isGoogleUser} />;
       case 'notifications':
         return <PushNotificationPage />;
-      case 'subscriptions':
-        return <PushSubscriptionPage />;
+      // case 'subscriptions':
+      //   return <PushSubscriptionPage />;
       default:
         return null;
     }
@@ -489,13 +489,13 @@ const ProfileSettingsPage = () => {
             <MdNotificationsNone className="sidebar-icon123" />
             <span>Notifications</span>
           </div>
-          <div
+          {/* <div
             className={`sidebar-item123 ${activeSection === 'subscriptions' ? 'active' : ''}`}
             onClick={() => handleSectionChange('subscriptions')}
           >
             <MdSubscriptions className="sidebar-icon123" />
             <span>Subscriptions</span>
-          </div>
+          </div> */}
         </div>
 
         <div className="main-content">

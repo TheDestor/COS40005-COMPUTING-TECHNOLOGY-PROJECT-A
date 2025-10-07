@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { contactUs, removeAvatar, updateAvatar, updatePassword, updateUserProfile } from "../controllers/UserController.js";
+import { contactUs, removeAvatar, updateAvatar, updatePassword, updateUserProfile, deleteAccount } from "../controllers/UserController.js";
 import { verifyJWT } from "../middleware/AuthMiddleware.js";
 import multer from "multer";
 
@@ -22,5 +22,6 @@ userRouter.post("/updatePassword", verifyJWT, updatePassword);
 userRouter.post("/updateAvatar", verifyJWT, upload.single('avatar'), updateAvatar);
 userRouter.post("/removeAvatar", verifyJWT, removeAvatar);
 userRouter.post("/contactUs", contactUs);
+userRouter.delete("/deleteAccount", verifyJWT, deleteAccount);
 
 export default userRouter;

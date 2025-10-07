@@ -8,16 +8,9 @@ import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 import ky from 'ky';
 import { Link } from 'react-router-dom';
-import defaultImage from '../assets/avatar1.png';
-// import { useState } from 'react';
+import defaultImage from '../assets/Kuching.png';
 import EditUserForm from '../components/EditUserForm';
 
-// Import profile images - you'll need to add these to your assets folder
-import profile1 from '../assets/profile1.png';
-import profile2 from '../assets/profile2.png';
-import profile3 from '../assets/profile3.png';
-import profile4 from '../assets/profile4.png';
-import profile5 from '../assets/profile5.png';
 import { useState } from 'react';
 
 function SystemAdminDashboard() {
