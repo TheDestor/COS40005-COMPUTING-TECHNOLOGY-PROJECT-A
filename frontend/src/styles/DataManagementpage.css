@@ -297,7 +297,7 @@ transition: all 0.5s ease;
   align-items: baseline;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #eee;
+  /* border-bottom: 1px solid #eee; */
 }
 .backup-table .panel-header h3 {
   margin: 0;
@@ -996,6 +996,7 @@ border-radius: 8px;
 display: grid;
 grid-template-columns: 1.6fr 1fr 1fr; /* name | size | % */
 gap: 8px;
+color: var(--text);
 }
 
 /* Progress bar variant with blue tint */
@@ -1250,8 +1251,8 @@ margin: 8px 0 14px;
   grid-template-columns: 2fr 2fr;
   gap: 8px;
 }
-.grid-item-label { display: flex; align-items: center; gap: 8px; }
-.grid-item-value { text-align: right; }
+.grid-item-label { display: flex; align-items: center; gap: 8px; color: var(--text); }
+.grid-item-value { text-align: right; color: var(--text); }
 .grid-item-percentage { text-align: right; color: var(--muted); }
 .legend-color { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .modal-total { margin: 0 0 8px 0; color: #334155; }
