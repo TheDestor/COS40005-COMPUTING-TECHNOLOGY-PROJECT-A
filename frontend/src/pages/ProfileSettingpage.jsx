@@ -84,7 +84,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const avatars = Array.from({ length: 15 }, (_, i) => `src/assets/avatar${i + 1}.png`);
+  const avatars = Array.from({ length: 15 }, (_, i) => `/avatar${i + 1}.png`);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -180,9 +180,6 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
               ))}
             </div>
           )}
-          {/* {activeTab === 'camera' && (
-            <p>Camera input goes here.</p>
-          )} */}
           {activeTab === 'photo' && (
             <div className="upload-section">
               <input
