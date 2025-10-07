@@ -206,6 +206,16 @@
   }
 }
 
+@media (max-width: 400px) {
+  .search-mapview-group {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    gap: 5px; 
+  }
+}
+
 /* Make all custom leaflet icons round */
 .leaflet-marker-icon.custom-leaflet-icon {
   border-radius: 50% !important;

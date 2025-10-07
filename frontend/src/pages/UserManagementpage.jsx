@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
-import { RiUserAddLine } from "react-icons/ri";
 import AddUserForm from '../components/AddUserForm.jsx';
 import EditUserForm from '../components/EditUserForm.jsx'; // Import EditUserForm
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
@@ -9,8 +8,8 @@ import ky from 'ky';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
 
-const UserManagementPage = () => {
-  const usersPerPage = 10;
+function UserManagementPage() {
+  const usersPerPage = 5;
 
   const [allUsers, setAllUsers] = useState([]);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -22,26 +21,32 @@ const UserManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { accessToken } = useAuth();
 
+  // Define delete confirmation state hooks (fixes undefined error)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetUser, setDeleteTargetUser] = useState(null);
   const filterRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await ky.get('/api/userManagement/users', { headers: { 'Authorization': `Bearer ${accessToken}` }}).json();
+        const response = await ky
+          .get('/api/userManagement/users', { headers: { Authorization: `Bearer ${accessToken}` } })
+          .json();
 
         if (response.success) {
-          const formattedUsers = response.users.map(user => ({
+          const formattedUsers = response.users.map((user) => ({
             id: user._id,
             name: `${user.firstName} ${user.lastName}`,
             email: user.email,
-            role: user.role.charAt(0).toUpperCase() + user.role.slice(1),
+            role: user.role, // display label
+            roleKey: user.role, // canonical key for filtering
           }));
           setAllUsers(formattedUsers);
         } else {
           console.error(response.message);
         }
       } catch (error) {
-        console.error("Failed to fetch users: ", error);
+        console.error('Failed to fetch users: ', error);
       }
     };
 
@@ -61,11 +66,17 @@ const UserManagementPage = () => {
   }, []);
 
   const roleOptions = [
-    { label: "System Admin", value: "System_admin" },
-    { label: "CBT Admin", value: "Cbt_admin" },
-    { label: "Business User", value: "Business" },
-    { label: "User", value: "Tourist" },
+    { label: "System Admin", value: "system_admin" },
+    { label: "CBT Admin", value: "cbt_admin" },
+    { label: "Business User", value: "business" },
+    { label: "User", value: "tourist" },
   ];
+  
+  // Guard: system/cbt admins cannot be edited or deleted
+  const isProtectedRole = (role) => {
+    const norm = (role || '').toLowerCase().replace(/[^a-z]/g, '');
+    return norm === 'systemadmin' || norm === 'cbtadmin';
+  };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -85,13 +96,18 @@ const UserManagementPage = () => {
     setCurrentPage(1);
   };
 
-  const filteredUsers = allUsers.filter(
-    (user) =>
-      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedRoles.length === 0 || selectedRoles.includes(user.role))
-  );
+  const filteredUsers = allUsers.filter((user) => {
+    const q = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      user.name.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q) ||
+      user.role.toLowerCase().includes(q);
+
+    const matchesRole =
+      selectedRoles.length === 0 || selectedRoles.includes(user.roleKey);
+
+    return matchesSearch && matchesRole;
+  });
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
@@ -103,9 +119,13 @@ const UserManagementPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  // Open edit popup
+  // Open edit popup (blocked for protected roles)
   const handleEditClick = (userId) => {
     const userToEdit = allUsers.find(user => user.id === userId);
+    if (userToEdit && isProtectedRole(userToEdit.role)) {
+      toast.error('Editing System Admin or CBT Admin is not allowed.');
+      return;
+    }
     if (userToEdit) {
       setEditingUser(userToEdit);
       setShowEditUserForm(true);
@@ -117,53 +137,67 @@ const UserManagementPage = () => {
     setAllUsers(allUsers.map(user => user.id === userId ? { ...user, ...updatedData } : user));
   };
 
-
-  // Confirmation on Delete
-  const handleDeleteClick = async (userId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this user?"
-    );
-    if (confirmDelete) {
-      try {
-        const response = await ky.delete(`/api/userManagement/users/${userId}`, { headers: { 'Authorization': `Bearer ${accessToken}` } }).json();
-
-        if (response.success) {
-          toast.success(response.message);
-          setAllUsers(currentUsers => currentUsers.filter(user => user.id !== userId));
-        } else {
-          toast.error(response.message);
-        }
-      } catch (error) {
-        toast.error(error);
-      }
+  // Request delete (open confirmation modal)
+  const requestDeleteUser = (user) => {
+    if (user && isProtectedRole(user.role)) {
+      toast.error('Deleting System Admin or CBT Admin is not allowed.');
+      return;
     }
+    setDeleteTargetUser(user);
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm delete action
+  const confirmDeleteUser = async () => {
+    if (!deleteTargetUser) return;
+    try {
+      const response = await ky
+        .delete(`/api/userManagement/users/${deleteTargetUser.id}`, { headers: { 'Authorization': `Bearer ${accessToken}` } })
+        .json();
+      if (response.success) {
+        toast.success(response.message);
+        setAllUsers(current => current.filter(user => user.id !== deleteTargetUser.id));
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error?.message || 'Failed to delete user');
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeleteTargetUser(null);
+    }
+  };
+
+  // Cancel delete
+  const cancelDeleteUser = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTargetUser(null);
   };
 
   return (
     <div className="admin-container">
       <SystemAdminSidebar />
       <div className="content-section2">
-        <h2>
-          <FaUsersCog /> User Management
-        </h2>
+        <div  className="page-title">
+          <h2>
+            <FaUsersCog aria-hidden="true" /> User Management
+          </h2>
+          <p>Manage user accounts, roles, and permissions.</p>
+        </div>
         <div className="user-management">
           <div className="user-controls">
             <div className="search-container51">
               <FaSearch className="search-icon51" />
               <input
-                className="search-input"
-                placeholder="Search user..."
+                type="text"
+                className="search-input-um"
+                placeholder="Search users..."
+                aria-label="Search users"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
             </div>
           </div>
-
-          {showAddUserForm && (
-            <div className="add-user-overlay">
-              <AddUserForm onClose={() => setShowAddUserForm(false)} />
-            </div>
-          )}
 
           {showEditUserForm && (
             <EditUserForm
@@ -173,13 +207,34 @@ const UserManagementPage = () => {
             />
           )}
 
+        {showDeleteConfirm && (
+          <div className="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <div className="popup-content" style={{ maxWidth: '480px' }}>
+              <h3 id="delete-modal-title" className="form-section-title">Confirm Delete</h3>
+              <p>
+                Are you sure you want to delete <strong>{deleteTargetUser?.name}</strong>
+                {deleteTargetUser?.email ? ` (${deleteTargetUser.email})` : ''}?
+              </p>
+              <div className="popup-actions">
+                <button className="btn-secondary" onClick={cancelDeleteUser}>Cancel</button>
+                <button className="btn-primary" onClick={confirmDeleteUser}>Delete</button>
+              </div>
+            </div>
+            </div>
+          )}
+
           <div className="user-controls">
             <div className="filter-wrapper-admin" ref={filterRef}>
-              <button className="filter-button-admin" onClick={toggleFilter}>
-                <FaFilter className="add-user-icon" /> Filter
+              <button
+                className="filter-button-admin"
+                onClick={toggleFilter}
+                aria-expanded={showFilters}
+                aria-controls="user-filter-dropdown"
+              >
+                <FaFilter className="add-user-icon" aria-hidden="true" /> Filter
               </button>
               {showFilters && (
-                <div className="filter-dropdown-user">
+                <div id="user-filter-dropdown" className="filter-dropdown-user">
                   <div className="filter-group-user">
                     <h4>Role</h4>
                     <div className="filter-options-admin">
@@ -204,62 +259,109 @@ const UserManagementPage = () => {
                 </div>
               )}
             </div>
-            <div className="pagination">
-              <button onClick={() => changePage(currentPage - 1)}>{"<"}</button>
-              {[...Array(totalPages)].map((_, idx) => (
-                <button
-                  key={idx}
-                  className={currentPage === idx + 1 ? "active" : ""}
-                  onClick={() => changePage(idx + 1)}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-              <button onClick={() => changePage(currentPage + 1)}>{">"}</button>
+            <div className="pagination" role="navigation" aria-label="User pages">
+              <button
+                onClick={() => changePage(1)}
+                aria-label="First page"
+                disabled={currentPage === 1}
+              >
+                «
+              </button>
+              <button
+                onClick={() => changePage(currentPage - 1)}
+                aria-label="Previous page"
+                disabled={currentPage === 1}
+              >
+                ‹
+              </button>
+
+              {buildPageList(totalPages, currentPage).map((item, idx) =>
+                item === 'ellipsis' ? (
+                  <button key={`el-${idx}`} className="ellipsis" aria-hidden="true" disabled>
+                    ...
+                  </button>
+                ) : (
+                  <button
+                    key={item}
+                    className={currentPage === item ? 'active' : ''}
+                    onClick={() => changePage(item)}
+                    aria-label={`Go to page ${item}`}
+                    aria-current={currentPage === item ? 'page' : undefined}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => changePage(currentPage + 1)}
+                aria-label="Next page"
+                disabled={currentPage === totalPages}
+              >
+                ›
+              </button>
+              <button
+                onClick={() => changePage(totalPages)}
+                aria-label="Last page"
+                disabled={currentPage === totalPages}
+              >
+                »
+              </button>
             </div>
           </div>
 
           <div className="table-scroll-wrapper">
-            <table className="user-table">
+            <table className="user-table" aria-label="Users">
               <thead>
                 <tr>
                   <th>ID</th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Role</th>
                   <th>Badge</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {currentUsers.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center' }}>No users found.</td></tr>
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center' }}>No users found.</td>
+                  </tr>
                 ) : (
-                  currentUsers.map((user, index) => (
-                    <tr key={user.id}>
-                      <td>{indexOfFirstUser + index + 1}</td>
-                      <td>{user.name}</td>
-                      <td>{user.email}</td>
-                      <td>{user.role}</td>
-                      <td>
-                        <span className={`status-badge ${user.role.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="action-icons">
-                        <i
-                          className="fas fa-edit"
-                          title="Edit"
-                          onClick={() => handleEditClick(user.id)}
-                        ></i>
-                        <i
-                          className="fas fa-trash-alt"
-                          title="Delete"
-                          onClick={() => handleDeleteClick(user.id)}
-                        ></i>
-                      </td>
-                    </tr>
-                  ))
+                  currentUsers.map((user, index) => {
+                    const protectedUser = isProtectedRole(user.role);
+                    return (
+                      <tr key={user.id}>
+                        <td>{indexOfFirstUser + index + 1}</td>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>
+                          <span
+                            className={`status-badge ${user.role
+                              .toLowerCase()
+                              .replace(/\s+/g, '-')}`}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="action-icons">
+                          <i
+                            className={`fas fa-edit ${protectedUser ? 'disabled' : ''}`}
+                            title={protectedUser ? 'Protected role' : 'Edit'}
+                            onClick={() => !protectedUser && handleEditClick(user.id)}
+                            aria-disabled={protectedUser}
+                            style={protectedUser ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                          ></i>
+                          <i
+                            className={`fas fa-trash-alt ${protectedUser ? 'disabled' : ''}`}
+                            title={protectedUser ? 'Protected role' : 'Delete'}
+                            onClick={() => !protectedUser && requestDeleteUser(user)}
+                            aria-disabled={protectedUser}
+                            style={protectedUser ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                          ></i>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -268,6 +370,34 @@ const UserManagementPage = () => {
       </div>
     </div>
   );
-};
+}
+
+function buildPageList(total, current) {
+  const pages = [];
+  // If few pages, show all
+  if (total <= 7) {
+    const pages = [];
+    for (let i = 1; i <= total; i++) pages.push(i);
+    return pages;
+  }
+  
+  // Default near start: 1 2 3 ... last
+  if (current <= 2) {
+    return [1, 2, 3, 'ellipsis', total];
+  }
+  
+  // When clicking 3: show 2 3 4 ... last
+  if (current === 3) {
+    return [2, 3, 4, 'ellipsis', total];
+  }
+  
+  // Near end: 1 ... last-2 last-1 last
+  if (current >= total - 2) {
+    return [1, 'ellipsis', total - 2, total - 1, total];
+  }
+  
+  // Middle: 1 ... current-1 current current+1 ... last
+  return [1, 'ellipsis', current - 1, current, current + 1, 'ellipsis', total];
+}
 
 export default UserManagementPage;

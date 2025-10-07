@@ -316,6 +316,20 @@
   }
 }
 
+@media (max-width: 400px) {
+  .dropdown-menu {
+    z-index: 10060; /* above searchbar and its dropdowns */
+    pointer-events: auto;
+    position: absolute;
+  }
+
+  .profile-dropdown {
+    z-index: 10050; /* above searchbar and its dropdowns */
+    position: relative;
+    pointer-events: auto;
+  }
+}
+
 /* Small Mobile Phones (320px and below) */
 @media (max-width: 320px) {
   .profile-button {

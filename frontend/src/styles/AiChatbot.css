@@ -42,6 +42,7 @@
 	justify-content: center;
 	animation: pulseFloat 2.2s ease-in-out infinite;
 	overflow: visible;
+	z-index: 100;
 }
 .ai-toggle-btn.burst::after {
 	content: '';
@@ -869,7 +870,7 @@
   .ai-panel {
     left: 2.4vw;
     right: 2.4vw;
-    bottom: 10vh;
+    bottom: 11vh;
     top: auto;
     width: auto;
     height: min(78vh, 520px);

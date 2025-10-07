@@ -2,41 +2,17 @@
 import React, { useState, useEffect } from "react";
 import '../styles/DataManagementpage.css';
 import BackupConfigurationModal from "../components/BackupConfigmodal.jsx";
-import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaClock, FaDownload, FaPlay, FaCog } from "react-icons/fa";
+import { FaDatabase, FaHdd, FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaClock, FaDownload, FaTrash } from "react-icons/fa";
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider.jsx';
+import { toast } from "sonner";
 
-const initialBackups = [
-  {
-    id: 1,
-    name: "Backup version 1.0",
-    date: "2024-11-24",
-    size: "40.2 GB",
-    type: "Full",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    name: "Backup version 1.1",
-    date: "2024-11-22",
-    size: "37.1 GB",
-    type: "Increment",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    name: "Backup version 2.0",
-    date: "2023-12-22",
-    size: "35.2 GB",
-    type: "Full",
-    status: "Expiring Soon",
-  },
-];
-
-const DetailModal = ({ children, onClose }) => {
+// DetailModal uses `variant` to switch classes
+const DetailModal = ({ children, onClose, variant }) => {
+  const isDatabase = variant === 'database';
   return (
-    <div className="data-modal-overlay" onClick={onClose}>
-      <div className="data-modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className={isDatabase ? 'data-modal-overlay' : 'data-modal-overlay'} onClick={onClose}>
+      <div className={isDatabase ? 'data-modal-content' : 'data-modal-content'} onClick={(e) => e.stopPropagation()}>
         <button className="data-modal-close" onClick={onClose}>&times;</button>
         {children}
       </div>
@@ -44,11 +20,41 @@ const DetailModal = ({ children, onClose }) => {
   );
 };
 
+// DataManagementPage component
 const DataManagementPage = () => {
   const [showConfig, setShowConfig] = useState(false);
   const { accessToken } = useAuth();
   const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [dbTotalBytes, setDbTotalBytes] = useState(null);
+  const [collectionStats, setCollectionStats] = useState([]);
+  const [backupStatus, setBackupStatus] = useState(null);
+  const [dataHealth, setDataHealth] = useState('Unknown');
+  const [modalType, setModalType] = useState(null);
+
+  // Helper: format timestamp using Malaysia timezone from backup filename
+  const formatMalaysiaTimeFromFilename = (name) => {
+    try {
+      const m = name.match(/^backup-(.+)\.json$/);
+      if (!m) return null;
+      let iso = m[1];
+      iso = iso.replace(/T(\d{2})-(\d{2})-(\d{2})/, (s, h, mi, se) => `T${h}:${mi}:${se}`);
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString('en-MY', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+      });
+    } catch {
+      return null;
+    }
+  };
 
   const loadBackups = async () => {
     try {
@@ -60,10 +66,76 @@ const DataManagementPage = () => {
       if (!r.ok) return;
       const list = await r.json();
       setBackups(Array.isArray(list) ? list : []);
+      setCurrentPage(1); // reset to first page on refresh
     } catch {}
   };
 
-  const runBackup = async () => {
+  // Robust download: saves JSON directly to the device
+  const downloadBackup = async (filename) => {
+    try {
+      const headers = {
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const url = `/api/admin/backup/download/${encodeURIComponent(filename)}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        toast.error('Download failed.');
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      toast.success('Download started.');
+    } catch (e) {
+      toast.error('Download error. Please try again.');
+    }
+  };
+
+  // Delete backup (client-side removal with UI feedback)
+  const deleteBackupFile = async (filename) => {
+    try {
+      setLoading(true);
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const url = `/api/admin/backup/delete/${encodeURIComponent(filename)}`;
+      let ok = false;
+      try {
+        const r = await fetch(url, { method: 'DELETE', headers });
+        ok = r.ok;
+      } catch {
+        ok = false;
+      }
+
+      if (ok) {
+        toast.success('Backup deleted.');
+        await Promise.all([
+          loadBackups(),
+          loadBackupStatus(),
+          loadAdminMetrics(),
+        ]);
+      } else {
+        setBackups(prev => prev.filter(b => b.name !== filename));
+        toast.success('Removed from list. Server delete not available.');
+      }
+    } catch (e) {
+      toast.error('Delete failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Derived: current page items and total pages
+  const totalPages = Math.max(1, Math.ceil(backups.length / pageSize));
+  const paginatedBackups = backups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const confirmRunBackup = async () => {
     try {
       setLoading(true);
       const headers = {
@@ -72,136 +144,127 @@ const DataManagementPage = () => {
       };
       const r = await fetch('/api/admin/backup/run', { method: 'POST', headers });
       if (r.ok) {
-        await loadBackups();
+        toast.success('Backup completed successfully.');
+        await Promise.all([
+          loadBackups(),
+          loadBackupStatus(),
+          loadAdminMetrics(),
+        ]);
+      } else {
+        toast.error('Backup failed. Please try again.');
       }
+    } catch (e) {
+      toast.error('Backup failed. Please check your connection.');
     } finally {
       setLoading(false);
+      setShowConfirmModal(false);
     }
   };
-
-  const downloadBackup = (filename) => {
-    const headers = new Headers({
-      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
-    });
-    const url = `/api/admin/backup/download/${encodeURIComponent(filename)}`;
-    // open in new tab for simple download
-    window.open(url, '_blank');
-  };
-
-  useEffect(() => { loadBackups(); }, [accessToken]);
-  const [databaseSize, setDatabaseSize] = useState("15.3 GB");
-  const [uploadsStorage, setUploadsStorage] = useState("24.9 GB");
-  const [dataHealth, setDataHealth] = useState("Healthy");
-  const [modalType, setModalType] = useState(null); // null, 'database', 'storage', or 'health'
-
-  // The useEffect for simulating user data can be removed or repurposed later
-  // for real data metrics.
 
   const handleSaveConfig = (config) => {
     console.log("Backup Config Saved:", config);
-    // Save config to server or state
   };
 
-  const handleDeleteBackup = (backupId) => {
-    // Show confirmation dialog
-    if (window.confirm("Are you sure you want to delete this backup? This action cannot be undone.")) {
-      // Remove backup from state
-      setBackups(prevBackups => prevBackups.filter(backup => backup.id !== backupId));
-      
-      // Here you would typically also make an API call to delete from server
-      // Example: await deleteBackupFromServer(backupId);
-      
-      console.log(`Backup with ID ${backupId} deleted`);
-    }
+  const formatBytes = (bytes) => {
+    if (bytes == null) return '—';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0; let val = Number(bytes);
+    while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
+    return `${val.toFixed(1)} ${units[i]}`;
   };
 
-  const handleDownloadBackup = (backup) => {
-    // Implement download functionality
-    console.log(`Downloading backup: ${backup.name}`);
-    // Here you would typically trigger a download or redirect to download URL
-    // Example: window.location.href = `/api/backups/${backup.id}/download`;
+  const loadAdminMetrics = async () => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const r = await fetch('/api/admin/metrics/stats', { headers });
+      if (!r.ok) return;
+      const json = await r.json();
+      const d = json?.data || {};
+      setDbTotalBytes(Number(d.totalDataSizeBytes || 0));
+      setCollectionStats(Array.isArray(d.collections) ? d.collections : []);
+    } catch {}
+  };
+
+  const loadBackupStatus = async () => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+      };
+      const r = await fetch('/api/admin/backup/status', { headers });
+      if (!r.ok) return;
+      const s = await r.json();
+      setBackupStatus(s);
+      setDataHealth(s?.isOutdated ? 'Unhealthy' : 'Healthy');
+    } catch {}
   };
 
   const renderModalContent = () => {
     switch (modalType) {
-      case 'database':
-        const dbItems = [
-          { label: 'Businesses', size: '7.1 GB', percentage: '46.4%', color: '#007bff' },
-          { label: 'Users', size: '5.2 GB', percentage: '34.0%', color: '#28a745' },
-          { label: 'Reviews', size: '3.0 GB', percentage: '19.6%', color: '#ffc107' },
-        ];
+      case 'database': {
+        const total = collectionStats.reduce((sum, c) => sum + Number(c.sizeBytes || 0), 0) || 0;
         return (
           <>
             <h2><FaDatabase /> Database Size Details</h2>
-            <p className="modal-total">Total Size: <strong>{databaseSize}</strong></p>
-            <div className="progress-bar-container">
-              {dbItems.map(item => (
-                <div key={item.label} className="progress-bar-stack" style={{ width: item.percentage, backgroundColor: item.color }} title={`${item.label}: ${item.size} (${item.percentage})`}></div>
-              ))}
+            <p className="dbsize-total">Total Size: <strong>{formatBytes(dbTotalBytes)}</strong></p>
+            <div className="dbsize-progress-bar-container">
+              {collectionStats.map((c, idx) => {
+                const pct = total > 0 ? (Number(c.sizeBytes || 0) / total) * 100 : 0;
+                const colors = ['#0ea5e9', '#10b981', '#fb923c', '#6366f1', '#f43f5e', '#14b8a6'];
+                const color = colors[idx % colors.length];
+                return (
+                  <div
+                    key={c.name}
+                    className="dbsize-progress-bar-stack"
+                    style={{ width: `${pct.toFixed(1)}%`, backgroundColor: color }}
+                    title={`${c.name}: ${formatBytes(c.sizeBytes)} (${pct.toFixed(1)}%)`}
+                  />
+                );
+              })}
             </div>
-            <div className="details-grid">
-              {dbItems.map(item => (
-                <React.Fragment key={item.label}>
-                  <div className="grid-item-label">
-                    <span className="legend-color" style={{ backgroundColor: item.color }}></span>
-                    {item.label}
-                  </div>
-                  <div className="grid-item-value">{item.size}</div>
-                  <div className="grid-item-percentage">{item.percentage}</div>
-                </React.Fragment>
-              ))}
+            <div className="dbsize-details-grid">
+              {collectionStats.map((c, idx) => {
+                const pct = total > 0 ? (Number(c.sizeBytes || 0) / total) * 100 : 0;
+                const colors = ['#0ea5e9', '#10b981', '#fb923c', '#6366f1', '#f43f5e', '#14b8a6'];
+                const color = colors[idx % colors.length];
+                return (
+                  <React.Fragment key={c.name}>
+                    <div className="grid-item-label">
+                      <span className="dbsize-legend-color" style={{ backgroundColor: color }}></span>
+                      {c.name}
+                    </div>
+                    <div className="grid-item-value">{formatBytes(c.sizeBytes)}</div>
+                    <div className="grid-item-percentage">{pct.toFixed(1)}%</div>
+                  </React.Fragment>
+                );
+              })}
             </div>
           </>
         );
-      case 'storage':
-        const storageItems = [
-          { label: 'Business Images', size: '18.5 GB', percentage: 74.3, color: '#17a2b8' },
-          { label: 'User Avatars', size: '6.4 GB', percentage: 25.7, color: '#fd7e14' },
-        ];
-        return (
-          <>
-            <h2><FaHdd /> Uploads Storage Details</h2>
-            <p className="modal-total">Total Usage: <strong>{uploadsStorage}</strong></p>
-            {storageItems.map(item => (
-              <div key={item.label} className="progress-item">
-                <div className="progress-label">
-                  <span>{item.label}</span>
-                  <strong>{item.size}</strong>
-                </div>
-                <div className="progress-bar-wrapper">
-                  <div className="progress-bar" style={{ width: `${item.percentage}%`, backgroundColor: item.color }}></div>
-                </div>
-              </div>
-            ))}
-          </>
-        );
+      }
       case 'health':
         return (
           <>
             <h2><FaShieldAlt /> Data Integrity Report</h2>
             <div className="details-grid health-grid">
-              <div className="grid-item-label status-healthy">
+              <div className={`grid-item-label ${dataHealth === 'Healthy' ? 'status-healthy' : 'status-unhealthy'}`}>
                 <FaCheckCircle /> Status
               </div>
-              <div className="grid-item-value status-healthy">
+              <div className={`grid-item-value ${dataHealth === 'Healthy' ? 'status-healthy' : 'status-unhealthy'}`}>
                 <strong>{dataHealth}</strong>
               </div>
 
               <div className="grid-item-label">
-                <FaClock /> Last Check
+                <FaClock /> Last Backup
               </div>
               <div className="grid-item-value">
-                July 28, 2024, 10:00 AM UTC
-              </div>
-
-              <div className="grid-item-label">
-                <FaExclamationTriangle /> Orphaned Records
-              </div>
-              <div className="grid-item-value">
-                0 Found
+                {backupStatus?.lastBackupAtMYT || 'No backups yet'}
               </div>
             </div>
-            <p className="modal-footer-note">Next scheduled check: July 29, 2024, 12:00 PM UTC</p>
+            <p className="modal-footer-note">Backups older than 24 hours are flagged as Unhealthy.</p>
           </>
         );
       default:
@@ -209,43 +272,42 @@ const DataManagementPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (!accessToken) return;
+    loadBackups();
+    loadAdminMetrics();
+    loadBackupStatus();
+  }, [accessToken]);
+
   return (
     <div className="admin-container">
       <SystemAdminSidebar />
       <div className="content-section2">
+        <div className="page-title">
         <h2><FaDatabase /> Data Management</h2>
+        <p>Manage your database collections and backups.</p>
+        </div>
         {/* Data Statistics Cards */}
         <div className="user-stats-container">
           <div className="stat-card clickable" onClick={() => setModalType('database')}>
-            <div className="stat-icon database-size">
+            <div className="stat-icon-dm database-size">
               <FaDatabase />
             </div>
             <div className="stat-content">
               <h3>Database Size</h3>
-              <p className="stat-number">{databaseSize}</p>
+              <p className="stat-number">{formatBytes(dbTotalBytes)}</p>
               <p className="stat-description">Total size of collections</p>
             </div>
           </div>
-          
-          <div className="stat-card clickable" onClick={() => setModalType('storage')}>
-            <div className="stat-icon storage-usage">
-              <FaHdd />
-            </div>
-            <div className="stat-content">
-              <h3>Uploads Storage</h3>
-              <p className="stat-number">{uploadsStorage}</p>
-              <p className="stat-description">User-uploaded content</p>
-            </div>
-          </div>
-          
+
           <div className="stat-card clickable" onClick={() => setModalType('health')}>
-            <div className="stat-icon data-health">
+            <div className="stat-icon-dm data-health">
               <FaShieldAlt />
             </div>
             <div className="stat-content">
               <h3>Data Integrity</h3>
               <p className="stat-number">{dataHealth}</p>
-              <p className="stat-description">Last check: 2h ago</p>
+              <p className="stat-description">Last backup: {backupStatus?.lastBackupAtMYT || '—'}</p>
             </div>
           </div>
         </div>
@@ -254,43 +316,75 @@ const DataManagementPage = () => {
         <div className="backup-table">
           <div className="panel-header">
             <h3>Backup Files</h3>
-            <p className="muted">Latest server backups</p>
-          </div>
-          <div className="backup-controls">
-            <button className="run-backup" onClick={runBackup} disabled={loading}>
-              {loading ? 'Running…' : 'Run Backup'}
-            </button>
-            <button className="configure" onClick={() => setShowConfig(true)}>Configure</button>
+            <div className="backup-controls">
+              <button className="run-backup" onClick={() => setShowConfirmModal(true)} disabled={loading}>
+                {loading ? 'Running…' : 'Run Backup'}
+              </button>
+              <button className="configure" onClick={() => setShowConfig(true)}>Configure</button>
+            </div>
           </div>
           {backups.length === 0 ? (
             <div className="empty-state">No backups yet. Run a backup to create one.</div>
           ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Filename</th>
-                    <th>Created</th>
-                    <th>Size</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {backups.map(b => (
-                    <tr key={b.name}>
-                      <td className="filename">{b.name}</td>
-                      <td>{new Date(b.createdAt).toLocaleString()}</td>
-                      <td className="size">{(b.size / 1024).toFixed(1)} KB</td>
-                      <td className="actions">
-                        <button className="action-btn-dm download" onClick={() => downloadBackup(b.name)}>
-                          Download
-                        </button>
-                      </td>
+            <>
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Filename</th>
+                      <th>Created At</th>
+                      <th>Size</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {paginatedBackups.map(b => (
+                      <tr key={b.name}>
+                        <td className="filename">{b.name}</td>
+                        <td>{
+                          formatMalaysiaTimeFromFilename(b.name) ||
+                          b.createdMYT ||
+                          (b.createdAt ? new Date(b.createdAt).toLocaleString('en-MY', {
+                            timeZone: 'Asia/Kuala_Lumpur',
+                            year: 'numeric', month: 'long', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit',
+                            hour12: false,
+                          }) : '-')
+                        }</td>
+                        <td className="size">{(b.size / 1024).toFixed(1)} KB</td>
+
+                        {/* actions cell inside the table body row */}
+                        <td className="actions-dm">
+                          <button
+                            className="action-btn-dm icon-btn download"
+                            aria-label="Download"
+                            title="Download"
+                            onClick={() => setConfirmAction({ type: 'download', filename: b.name })}
+                          >
+                            <FaDownload />
+                          </button>
+                          <button
+                            className="action-btn-dm icon-btn delete"
+                            aria-label="Delete"
+                            title="Delete"
+                            onClick={() => setConfirmAction({ type: 'delete', filename: b.name })}
+                          >
+                            <FaTrash />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination controls */}
+              <div className="backup-pagination" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 16px' }}>
+                <button className="action-btn-dm" disabled={currentPage === 1 || loading} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>Prev</button>
+                <span style={{ alignSelf: 'center' }}>{currentPage} / {totalPages}</span>
+                <button className="action-btn-dm" disabled={currentPage === totalPages || loading} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>Next</button>
+              </div>
+            </>
           )}
         </div>
 
@@ -301,10 +395,62 @@ const DataManagementPage = () => {
           />
         )}
 
+        {/* Detail Modal */}
         {modalType && (
-          <DetailModal onClose={() => setModalType(null)}>
+          <DetailModal onClose={() => setModalType(null)} variant={modalType === 'database' ? 'database' : 'data'}>
             {renderModalContent()}
           </DetailModal>
+        )}
+
+        {/* Confirmation modal before manual backup */}
+        {showConfirmModal && (
+          <div className="confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+            <div className="confirm-modal">
+              <h4 id="confirm-title">Run backup?</h4>
+              <p>This will export database collections and create a server backup file.</p>
+              <div className="confirm-actions-dm">
+                <button className="modal-cancel-btn" onClick={() => setShowConfirmModal(false)} disabled={loading}>Cancel</button>
+                <button className="modal-confirm-btn" onClick={confirmRunBackup} disabled={loading}>
+                  {loading ? 'Running…' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation modal before download/delete */}
+        {confirmAction && (
+          <div className="confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-action-title">
+            <div className="confirm-modal">
+              <h4 id="confirm-action-title">
+                {confirmAction.type === 'download' ? 'Download backup?' : 'Delete backup?'}
+              </h4>
+              <p>
+                {confirmAction.type === 'download'
+                  ? 'This will download the selected backup file to your device.'
+                  : 'This will permanently delete the selected backup file.'}
+              </p>
+              <div className="confirm-actions-dm">
+                <button className="modal-cancel-btn" onClick={() => setConfirmAction(null)} disabled={loading}>Cancel</button>
+                <button
+                  className="modal-confirm-btn"
+                  onClick={async () => {
+                    const name = confirmAction?.filename;
+                    if (!name) return;
+                    if (confirmAction.type === 'download') {
+                      await downloadBackup(name); 
+                    } else {
+                      await deleteBackupFile(name); 
+                    }
+                    setConfirmAction(null);
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? 'Working…' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

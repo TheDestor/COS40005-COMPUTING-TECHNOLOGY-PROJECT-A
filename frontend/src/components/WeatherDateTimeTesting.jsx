@@ -4,7 +4,8 @@ import '../styles/Navbar.css';
 import { townCoordinates } from '../townCoordinates';
 import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
 
-const API_KEY = '8be72b9eaf2d1c81e052f4fc2c58ad0c';
+const OPENWEATHER_BASE_URL = import.meta.env.VITE_OPENWEATHER_BASE_URL || 'https://api.openweathermap.org/data/2.5';
+const OPENWEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
 const WeatherDateTime = ({
   currentTown,
@@ -18,27 +19,30 @@ const WeatherDateTime = ({
 
   const towns = Object.keys(townCoordinates);
 
-  // ✅ Time updater
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000); // 🔁 Updates every second
+    }, 1000); 
   
-    return () => clearInterval(interval); // Cleanup on unmount
+    return () => clearInterval(interval); 
   }, []);  
 
-  // ✅ Weather fetch
   useEffect(() => {
     const fetchWeather = async () => {
       const coordinates = townCoordinates[currentTown];
-
       if (!coordinates) return;
 
       const { lat, lon } = coordinates;
 
+      // Guard: require API key present (frontend embed only; prefer backend proxy for true secrecy)
+      if (!OPENWEATHER_API_KEY) {
+        console.error('Missing VITE_OPENWEATHER_API_KEY. Define it in frontend/.env');
+        return;
+      }
+
       try {
         const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+          `${OPENWEATHER_BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=metric`
         );
         const data = await response.json();
         setWeatherData(data);

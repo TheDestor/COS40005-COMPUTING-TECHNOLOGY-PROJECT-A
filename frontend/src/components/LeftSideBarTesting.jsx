@@ -571,8 +571,6 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
   }
 }
 
-
-
 const LeftSidebarTesting = forwardRef(({ 
   onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, 
   setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, 
@@ -622,6 +620,28 @@ const LeftSidebarTesting = forwardRef(({
   // Use external destination input if provided, otherwise use internal state
   const currentDestinationInput = destinationInput !== undefined ? destinationInput : destination;
   const setCurrentDestinationInput = setDestinationInput || setDestination;
+
+  const handleRouteAlternativeSelect = async (route, index) => {
+    setSelectedRouteIndex(index);
+    if (setOsrmRouteCoords) setOsrmRouteCoords(route.coords);
+    setRouteSummary({
+      distance: route.distance,
+      duration: route.duration,
+      vehicle: route.vehicle,
+      roadInfo: route.roadInfo,
+    });
+
+    // Refresh nearby places around the current destination
+    try {
+      if (destinationCoords) {
+        const places = await fetchNearbyPlaces(destinationCoords, 5000);
+        setNearbyPlaces(places || []);
+      }
+    } catch (err) {
+      console.warn('Failed to refresh nearby places:', err);
+      setNearbyPlaces([]);
+    }
+  };
 
   // NEW: Auto-open sidebar and set destination when component mounts or props change
   useEffect(() => {
@@ -1961,15 +1981,50 @@ useEffect(() => {
                   </div>
                 )}
               </div>
+
+              {routeSummary && routeAlternatives.length > 0 && (
+                <div className="route-alternatives-container">
+                  <div className="route-alternatives-header">
+                    <h4>Route Options</h4>
+                    <span className="route-count">{routeAlternatives.length} routes available</span>
+                  </div>
+                  <div className="route-alternatives-list">
+                    {routeAlternatives.map((route, index) => (
+                      <div
+                        key={index}
+                        className={`route-alternative-item ${index === selectedRouteIndex ? 'active' : ''}`}
+                        onClick={() => handleRouteAlternativeSelect(route, index)}
+                      >
+                        <div className="route-alternative-header">
+                          <div className="route-info">
+                            <span className="route-number">Route {index + 1}</span>
+                            {index === 0 && <span className="fastest-badge">Fastest</span>}
+                          </div>
+                        </div>
+                        <div className="route-alternative-details">
+                          <div className="route-detail-item">
+                            <FaClock className="detail-icon" />
+                            <span>{formatDuration(route.duration)}</span>
+                          </div>
+                          <div className="route-detail-item">
+                            <FaMapMarkerAlt className="detail-icon" />
+                            <span>{formatDistance(route.distance)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : null}
 
           {routeSummary && (
-  <div className="directions-actions-container">
-    <div className="directions-actions-header">
-      <FaShare className="section-icon" />
-      <h4>Share Directions</h4>
-    </div>
+          <div className="directions-actions-container">
+            <div className="directions-actions-header">
+              <FaShare className="section-icon" />
+              <h4>Share Directions</h4>
+            </div>
               <div className="directions-actions-buttons">
                 <button 
                   className="copy-directions-button"
@@ -1990,50 +2045,6 @@ useEffect(() => {
               </div>
               <div className="directions-info">
                 <small>Links will open in Google Maps for navigation</small>
-              </div>
-            </div>
-          )}
-
-          {routeSummary && routeAlternatives.length > 1 && (
-            <div className="route-alternatives-container">
-              <div className="route-alternatives-header">
-                <h4>Route Options</h4>
-                <span className="route-count">{routeAlternatives.length} routes available</span>
-              </div>
-              <div className="route-alternatives-list">
-                {routeAlternatives.map((route, index) => (
-                  <div 
-                    key={index}
-                    className={`route-alternative-item ${index === selectedRouteIndex ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedRouteIndex(index);
-                      if (setOsrmRouteCoords) setOsrmRouteCoords(route.coords);
-                      setRouteSummary({ 
-                        distance: route.distance, 
-                        duration: route.duration,
-                        vehicle: route.vehicle,
-                        roadInfo: route.roadInfo
-                      });
-                    }}
-                  >
-                    <div className="route-alternative-header">
-                      <div className="route-info">
-                        <span className="route-number">Route {index + 1}</span>
-                        {index === 0 && <span className="fastest-badge">Fastest</span>}
-                      </div>
-                    </div>
-                    <div className="route-alternative-details">
-                      <div className="route-detail-item">
-                        <FaClock className="detail-icon" />
-                        <span>{formatDuration(route.duration)}</span>
-                      </div>
-                      <div className="route-detail-item">
-                        <FaMapMarkerAlt className="detail-icon" />
-                        <span>{formatDistance(route.distance)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           )}

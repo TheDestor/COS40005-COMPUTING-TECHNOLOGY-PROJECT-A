@@ -1,3 +1,4 @@
+// top-level imports
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Settingpage.css';
@@ -11,6 +12,7 @@ import SeniorModeConfirm from '../components/SeniorModeConfirm.jsx';
 import LoginPage from './Loginpage.jsx';
 import AIChatbot from '../components/AiChatbot.jsx';
 import AboutMapModal from '../components/AboutMapModal.jsx';
+import { toast } from 'sonner';
 
 // SettingsPage component
 function SettingsPage() {
@@ -176,7 +178,7 @@ function SettingsPage() {
                 <li
                   key={lang}
                   className={`language-option ${selectedLanguage === lang ? 'selected' : ''}`}
-                  onClick={() => setSelectedLanguage(lang)}
+                  onClick={() => { setSelectedLanguage(lang); toast.info('Features coming soon.'); }}
                 >
                   {lang}
                   {selectedLanguage === lang && <span><FiCheck className="tick-mark"/></span>}
