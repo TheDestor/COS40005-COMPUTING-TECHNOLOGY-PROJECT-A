@@ -25,9 +25,10 @@ function SystemAdminDashboard() {
     totalUsers: 0,
     recaptchaBlocked: 0,
     dbStoragePercent: 0,
-    totalPageViews: 0,
+    totalUniqueVisitors: 0,
     statusBreakdown: { active: 0, inactive: 0, suspended: 0 },
   });
+  const [backupStatus, setBackupStatus] = useState('Unknown');
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -41,7 +42,7 @@ function SystemAdminDashboard() {
             totalUsers: d.totalUsers || 0,
             recaptchaBlocked: d.recaptchaBlocked || 0,
             dbStoragePercent: d.dbStoragePercent || 0,
-            totalPageViews: d.totalPageViews || 0,
+            totalUniqueVisitors: (d.totalUniqueVisitors ?? d.totalPageViews ?? 0),
             statusBreakdown: d.statusBreakdown || { active: 0, inactive: 0, suspended: 0 },
           });
         }
@@ -51,16 +52,32 @@ function SystemAdminDashboard() {
     };
     fetchMetrics();
 
-    // Light real-time polling (30s)
     const t = setInterval(fetchMetrics, 30000);
     return () => clearInterval(t);
+  }, [accessToken]);
+
+  // Fetch backup status (Healthy/Unhealthy)
+  useEffect(() => {
+    const fetchBackupStatus = async () => {
+      try {
+        const res = await ky.get('/api/admin/backup/status', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }).json();
+        const isOutdated = Boolean(res?.isOutdated);
+        setBackupStatus(isOutdated ? 'Unhealthy' : 'Healthy');
+      } catch (e) {
+        console.error('Failed to fetch backup status:', e);
+        setBackupStatus('Unknown');
+      }
+    };
+    fetchBackupStatus();
   }, [accessToken]);
 
   // New: derive summary boxes from real stats
   const summaryData = [
     {
-      title: 'Total Page Views',
-      value: dashboardStats.totalPageViews.toLocaleString(),
+      title: 'Total Unique Visitors',
+      value: dashboardStats.totalUniqueVisitors.toLocaleString(),
       icon: <AiOutlineFundView />,
       cardClass: 'teal-theme',
       iconBgClass: 'teal-bg',
@@ -73,19 +90,20 @@ function SystemAdminDashboard() {
       iconBgClass: 'blue-bg',
     },
     {
-      title: 'Database Storage',
-      value: `${Math.round(dashboardStats.dbStoragePercent)}%`,
+      // Changed: show database backup health instead of storage percent
+      title: 'Database Backup Status',
+      value: backupStatus,
       icon: <FaRegSave />,
-      cardClass: 'green-theme',
-      iconBgClass: 'green-bg',
+      cardClass: backupStatus === 'Healthy' ? 'green-theme' : 'purple-theme',
+      iconBgClass: backupStatus === 'Healthy' ? 'green-bg' : 'purple-bg',
     },
-    {
-      title: 'reCAPTCHA Blocked',
-      value: dashboardStats.recaptchaBlocked.toLocaleString(),
-      icon: <FaExclamationTriangle />,
-      cardClass: 'purple-theme',
-      iconBgClass: 'purple-bg',
-    },
+    // {
+    //   title: 'reCAPTCHA Blocked',
+    //   value: dashboardStats.recaptchaBlocked.toLocaleString(),
+    //   icon: <FaExclamationTriangle />,
+    //   cardClass: 'purple-theme',
+    //   iconBgClass: 'purple-bg',
+    // },
   ];
 
   // User usage data for the bar chart
@@ -331,8 +349,10 @@ function SystemAdminDashboard() {
     <div className="admin-container">
     <SystemAdminSidebar />
     <div className="content-section2">
-      <h2><FaTachometerAlt /> Dashboard</h2>
-
+      <div className="page-title">
+        <h2><FaTachometerAlt /> Dashboard</h2>
+        <p>Welcome back to your dashbaord!</p>
+      </div>
       <div className="summary-container">
         {summaryData.map((item, idx) => (
           <div className={`summary-box ${item.cardClass}`} key={idx}>

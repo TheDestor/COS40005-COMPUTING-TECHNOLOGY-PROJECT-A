@@ -20,6 +20,9 @@ function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const { accessToken } = useAuth();
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [saveDiff, setSaveDiff] = useState([]);
+  const [pendingSave, setPendingSave] = useState(false);
 
   // Define delete confirmation state hooks (fixes undefined error)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -131,6 +134,67 @@ function UserManagementPage() {
       setShowEditUserForm(true);
     }
   };
+
+  const handleRequestSave = ({ userId, payload, original }) => {
+    const diffs = computeDiff(original, payload);
+    setSaveDiff(diffs);
+    setPendingSave({ userId, payload });
+    setShowSaveConfirm(true);
+  };
+
+  const computeDiff = (original, payload) => {
+    const labels = {
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      email: 'Email',
+      role: 'Role',
+      companyName: 'Company Name',
+      companyRegistrationNo: 'Company Registration No.',
+      companyAddress: 'Company Address'
+    };
+    const changes = [];
+    Object.keys(payload || {}).forEach((key) => {
+      const before = original?.[key] ?? '';
+      const after = payload[key] ?? '';
+      if (String(before) !== String(after)) {
+        changes.push({ key, label: labels[key] || key, before, after });
+      }
+    });
+    return changes;
+  };
+
+  const confirmSave = async () => {
+    if (!pendingSave) return;
+    try {
+      const response = await ky
+        .put(`/api/userManagement/users/${pendingSave.userId}`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          json: pendingSave.payload,
+        })
+        .json();
+      if (response.success) {
+        toast.success(response.message || 'User updated successfully!');
+        handleUserUpdate(pendingSave.userId, {
+          ...response.user,
+          name: `${response.user.firstName} ${response.user.lastName}`,
+          id: response.user._id,
+        });
+        setShowSaveConfirm(false);
+        setPendingSave(null);
+        setShowEditUserForm(false);
+      } else {
+        toast.error(response.message || 'Failed to update user.');
+      }
+    } catch (error) {
+      const errorResponse = await error.response?.json();
+      toast.error(errorResponse?.message || 'Failed to update user.');
+    }
+  };
+
+  const cancelSave = () => {
+    setShowSaveConfirm(false);
+    setPendingSave(null);
+  };
   
   // Update user in state
   const handleUserUpdate = (userId, updatedData) => {
@@ -204,6 +268,7 @@ function UserManagementPage() {
               user={editingUser}
               onClose={() => setShowEditUserForm(false)}
               onUserUpdate={handleUserUpdate}
+              onRequestSave={handleRequestSave}
             />
           )}
 
@@ -220,6 +285,30 @@ function UserManagementPage() {
                 <button className="btn-primary" onClick={confirmDeleteUser}>Delete</button>
               </div>
             </div>
+            </div>
+          )}
+
+          {showSaveConfirm && (
+            <div className="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+              <div className="popup-content" style={{ maxWidth: '520px' }}>
+                <h3 id="save-modal-title" className="form-section-title">Confirm Changes</h3>
+                <p>Please review the changes before saving:</p>
+                <div style={{ padding: '8px 0' }}>
+                  {saveDiff.length === 0 ? (
+                    <div style={{ fontStyle: 'italic' }}>No changes detected.</div>
+                  ) : (
+                    saveDiff.map((c) => (
+                      <div key={c.key} style={{ marginBottom: 6 }}>
+                        <strong>{c.label}:</strong> "{c.before || '—'}" → "{c.after || '—'}"
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="popup-actions">
+                  <button className="btn-secondary" onClick={cancelSave}>Cancel</button>
+                  <button className="btn-primary" onClick={confirmSave}>Confirm</button>
+                </div>
+              </div>
             </div>
           )}
 

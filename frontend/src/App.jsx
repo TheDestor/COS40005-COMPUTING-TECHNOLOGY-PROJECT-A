@@ -134,31 +134,14 @@ function App() {
   );
 }
 
-function getOrCreateSessionId() {
-  let sid = sessionStorage.getItem('visitor_session_id');
-  if (sid) return sid;
-  const rand = (length = 16) => {
-    if (window.crypto?.getRandomValues) {
-      const arr = new Uint8Array(length);
-      window.crypto.getRandomValues(arr);
-      return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
-  };
-  sid = `sid_${rand(16)}`;
-  sessionStorage.setItem('visitor_session_id', sid);
-  return sid;
-}
-
 function SessionVisitorTracker() {
   useEffect(() => {
-    if (sessionStorage.getItem('uvc:session_recorded')) return;
-    const sessionId = getOrCreateSessionId();
-    sessionStorage.setItem('uvc:session_recorded', '1');
+    if (sessionStorage.getItem('uvc:boot_recorded')) return;
+    sessionStorage.setItem('uvc:boot_recorded', '1');
 
-    fetch('/api/metrics/unique-visitor-session', {
+    fetch('/api/metrics/unique-visitor', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Session-Id': sessionId },
+      credentials: 'include'
     }).catch(() => {});
   }, []);
   return null;
