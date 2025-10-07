@@ -235,8 +235,8 @@
 }
 
 .card-wrapper {
-  animation: float 6s ease-in-out infinite;
-  will-change: transform;
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
 }
 
 .card-wrapper:hover {
@@ -785,4 +785,49 @@
   .card:hover {
     transform: none;
   }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.loading-overlay .spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure smooth transitions for all interactive elements */
+.search-input-mj, .sort-btn, .explore-btn {
+  transition: all 0.3s ease;
+}
+
+/* Loading state for cards */
+.card-wrapper.loading {
+  opacity: 0.6;
+  pointer-events: none;
 }

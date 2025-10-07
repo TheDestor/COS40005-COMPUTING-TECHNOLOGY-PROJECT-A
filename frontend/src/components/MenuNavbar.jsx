@@ -10,9 +10,19 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import '../styles/MenuNavbar.css';
 import logo from '../assets/SarawakTourismLogo.png'; 
 import ProfileDropdown from '../components/ProfileDropdown.jsx';
-import ky from 'ky';
 
-const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
+const MenuNavbar = ({ 
+  onLoginClick, 
+  onMenuSelect, 
+  onMajorTownHover,
+  onAttractionsHover,
+  onShoppingHover,
+  onFoodHover,
+  onTransportationHover,
+  onAccommodationHover,
+  onTourGuidesHover,
+  onEventHover 
+}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState({ name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' });
@@ -28,16 +38,60 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
   }, []);
 
   const menuItems = [
-    { name: 'Map', icon: <FaMapLocationDot />, path: '/' },
-    { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' },
-    { name: 'Attractions', icon: <MdForest />, path: '/attractions' },
-    { name: 'Shoppings & Leisures', icon: <FaShoppingCart />, path: '/shopping' },
-    { name: 'Food & Beverages', icon: <IoFastFood />, path: '/food' },
-    { name: 'Transportation', icon: <FaPlaneDeparture />, path: '/transportation' },
-    { name: 'Accomodation', icon: <FaBed />, path: '/accomodation' },
-    { name: 'Tour Guides', icon: <FaHospital />, path: '/tourguides' },
-    { name: 'Event', icon: <FaCalendarAlt />, path: '/event' }
+    { name: 'Map', icon: <FaMapLocationDot />, path: '/', onMouseEnter: null },
+    { name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns', onMouseEnter: onMajorTownHover },
+    { name: 'Attractions', icon: <MdForest />, path: '/attractions', onMouseEnter: onAttractionsHover },
+    { name: 'Shoppings & Leisures', icon: <FaShoppingCart />, path: '/shopping', onMouseEnter: onShoppingHover },
+    { name: 'Food & Beverages', icon: <IoFastFood />, path: '/food', onMouseEnter: onFoodHover },
+    { name: 'Transportation', icon: <FaPlaneDeparture />, path: '/transportation', onMouseEnter: onTransportationHover },
+    { name: 'Accomodation', icon: <FaBed />, path: '/accomodation', onMouseEnter: onAccommodationHover },
+    { name: 'Tour Guides', icon: <FaHospital />, path: '/tourguides', onMouseEnter: onTourGuidesHover },
+    { name: 'Event', icon: <FaCalendarAlt />, path: '/event', onMouseEnter: onEventHover }
   ];
+
+  // 🚀 ENHANCEMENT: Aggressive preloading strategy
+  useEffect(() => {
+    const preloadFunctions = [
+      onMajorTownHover,
+      onAttractionsHover,
+      onShoppingHover,
+      onFoodHover,
+      onTransportationHover,
+      onAccommodationHover,
+      onTourGuidesHover,
+      onEventHover
+    ].filter(Boolean);
+
+    // PRELOAD IMMEDIATELY AND AGGRESSIVELY
+    const preloadAll = () => {
+      preloadFunctions.forEach(preloadFn => {
+        if (preloadFn && typeof preloadFn === 'function') {
+          try {
+            preloadFn();
+          } catch (error) {
+            console.warn('Preload function error:', error);
+          }
+        }
+      });
+    };
+
+    // 🚀 Preload immediately when navbar mounts
+    preloadAll();
+    
+    // 🚀 Preload more frequently (every 15 seconds)
+    const interval = setInterval(preloadAll, 15000);
+    
+    return () => clearInterval(interval);
+  }, [
+    onMajorTownHover,
+    onAttractionsHover,
+    onShoppingHover,
+    onFoodHover,
+    onTransportationHover,
+    onAccommodationHover,
+    onTourGuidesHover,
+    onEventHover
+  ]);
 
   const handleMobileMenuClick = (item) => {
     setSelectedMobileMenuItem(item);
@@ -94,6 +148,7 @@ const MenuNavbar = ({ onLoginClick, onMenuSelect }) => {
                   key={item.name}
                   to={item.path}
                   className={`menu-item3 ${isActive ? 'active' : ''}`}
+                  onMouseEnter={item.onMouseEnter}
                 >
                   <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
                     <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>

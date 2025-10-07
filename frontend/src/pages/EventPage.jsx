@@ -21,9 +21,10 @@ const EventPage = () => {
   const [currentCategory] = useState('Events');
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(() => {
-  const savedTab = localStorage.getItem('eventPageActiveTab');
+    const savedTab = localStorage.getItem('eventPageActiveTab');
     return savedTab === 'ongoing' || savedTab === 'upcoming' ? savedTab : 'ongoing';
   });
+  const [showLoading, setShowLoading] = useState(true); // 🚀 ADDED for instant loading
 
   useEffect(() => {
     localStorage.setItem('eventPageActiveTab', activeTab);
@@ -109,6 +110,17 @@ const EventPage = () => {
   useEffect(() => {
     fetchEvents();
   }, [user]); // Refetch when user changes
+
+  // 🚀 ADDED: Better loading state management
+  useEffect(() => {
+    // Hide loading when we have data OR when loading is complete without data
+    if (!loading || data.length > 0) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data.length]);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
@@ -224,18 +236,27 @@ const EventPage = () => {
     return matchesSearch && matchesSort;
   });
 
-  if (loading) {
+  // 🚀 COMMENTED OUT: Blocking loading condition (keep the code but don't use it)
+  /* if (loading) {
     return (
       <div className="loading-spinner">
         <div className="spinner"></div>
         <p>Loading Events...</p>
       </div>
     );
-  }
+  } */
 
   return (
     <div className="category-page">
       <MenuNavbar onLoginClick={handleLoginClick} />
+
+      {/* 🚀 ADDED: Loading overlay only during initial load */}
+      {/* {showLoading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <p>Loading Events...</p>
+        </div>
+      )} */}
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -359,124 +380,130 @@ const EventPage = () => {
         </div>
       </div>
 
+      {/* 🚀 UPDATED: Cards section with better loading logic */}
       <div className="cards-section">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div
-            className="card-wrapper"
-            key={`${item.source}-${item.id}-${index}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img 
-                src={item.image} 
-                alt={item.name}
-                onError={(e) => {
-                  e.target.src = defaultImage;
-                }}
-              />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="card-meta">
-                  <span className="type-badge">{item.type}</span>
-                  {/* Remove the date badge from here */}
-                  {/* Add status badge */}
-                  <span 
-                    className="status-badge"
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: '600',
-                      color: '#fff',
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      background: activeTab === 'ongoing' 
-                        ? 'linear-gradient(135deg, #28a745, #20c997)' 
-                        : 'linear-gradient(135deg, #ffc107, #fd7e14)'
+        {filteredData.length > 0 ? (
+          filteredData
+            .slice(0, visibleItems)
+            .map((item, index) => (
+              <div
+                className="card-wrapper"
+                key={`${item.source}-${item.id}-${index}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    onError={(e) => {
+                      e.target.src = defaultImage;
                     }}
-                  >
-                    {activeTab === 'ongoing' ? 'On-going' : 'Upcoming'}
-                  </span>
-                </div>
-                
-                {/* Description moved above event details */}
-                <div className="description-area">
-                  <p>{item.desc}</p>
-                </div>
-
-                {/* Event Details Section */}
-                <div className="event-details">
-                  <div className="event-detail-item">
-                    <span className="event-detail-label">Date:</span>
-                    <span className="event-detail-value">
-                      {formatDateRange(item.startDate, item.endDate)}
-                    </span>
-                  </div>
-                  <div className="event-detail-item">
-                    <span className="event-detail-label">Time:</span>
-                    <span className="event-detail-value">
-                      {formatTimePeriod(item.startTime, item.endTime)}
-                    </span>
-                  </div>
-                  <div className="event-detail-item">
-                    <span className="event-detail-label">Event Type:</span>
-                    <span className="event-detail-value">{item.type}</span>
-                  </div>
-                  <div className="event-detail-item">
-                    <span className="event-detail-label">Registration:</span>
-                    <span className="event-detail-value">{item.registrationRequired}</span>
-                  </div>
-                  {item.eventOrganizers && (
-                    <div className="event-detail-item">
-                      <span className="event-detail-label">Organizers:</span>
-                      <span className="event-detail-value">{item.eventOrganizers}</span>
+                  />
+                  <div className="card-content">
+                    <h3>{highlightMatch(item.name)}</h3>
+                    <div className="card-meta">
+                      <span className="type-badge">{item.type}</span>
+                      {/* Remove the date badge from here */}
+                      {/* Add status badge */}
+                      <span 
+                        className="status-badge"
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          color: '#fff',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          background: activeTab === 'ongoing' 
+                            ? 'linear-gradient(135deg, #28a745, #20c997)' 
+                            : 'linear-gradient(135deg, #ffc107, #fd7e14)'
+                        }}
+                      >
+                        {activeTab === 'ongoing' ? 'On-going' : 'Upcoming'}
+                      </span>
                     </div>
-                  )}
-                  {/* Remove audience section as requested */}
-                </div>
+                    
+                    {/* Description moved above event details */}
+                    <div className="description-area">
+                      <p>{item.desc}</p>
+                    </div>
 
-                <div className="button-container">
-                  <Link
-                    to={`/discover/${item.slug}`}
-                    state={{
-                      name: item.name,
-                      image: item.image,
-                      description: item.desc,
-                      latitude: item.coordinates?.lat,
-                      longitude: item.coordinates?.lng,
-                      category: item.category,
-                      type: item.type,
-                      startDate: item.startDate,
-                      endDate: item.endDate,
-                      startTime: item.startTime,
-                      endTime: item.endTime,
-                      registrationRequired: item.registrationRequired,
-                      targetAudience: item.targetAudience,
-                      eventOrganizers: item.eventOrganizers,
-                      eventHashtags: item.eventHashtags
-                    }}
-                    className="explore-btn"
-                  >
-                    Explore
-                  </Link>
+                    {/* Event Details Section */}
+                    <div className="event-details">
+                      <div className="event-detail-item">
+                        <span className="event-detail-label">Date:</span>
+                        <span className="event-detail-value">
+                          {formatDateRange(item.startDate, item.endDate)}
+                        </span>
+                      </div>
+                      <div className="event-detail-item">
+                        <span className="event-detail-label">Time:</span>
+                        <span className="event-detail-value">
+                          {formatTimePeriod(item.startTime, item.endTime)}
+                        </span>
+                      </div>
+                      <div className="event-detail-item">
+                        <span className="event-detail-label">Event Type:</span>
+                        <span className="event-detail-value">{item.type}</span>
+                      </div>
+                      <div className="event-detail-item">
+                        <span className="event-detail-label">Registration:</span>
+                        <span className="event-detail-value">{item.registrationRequired}</span>
+                      </div>
+                      {item.eventOrganizers && (
+                        <div className="event-detail-item">
+                          <span className="event-detail-label">Organizers:</span>
+                          <span className="event-detail-value">{item.eventOrganizers}</span>
+                        </div>
+                      )}
+                      {/* Remove audience section as requested */}
+                    </div>
+
+                    <div className="button-container">
+                      <Link
+                        to={`/discover/${item.slug}`}
+                        state={{
+                          name: item.name,
+                          image: item.image,
+                          description: item.desc,
+                          latitude: item.coordinates?.lat,
+                          longitude: item.coordinates?.lng,
+                          category: item.category,
+                          type: item.type,
+                          startDate: item.startDate,
+                          endDate: item.endDate,
+                          startTime: item.startTime,
+                          endTime: item.endTime,
+                          registrationRequired: item.registrationRequired,
+                          targetAudience: item.targetAudience,
+                          eventOrganizers: item.eventOrganizers,
+                          eventHashtags: item.eventHashtags
+                        }}
+                        className="explore-btn"
+                      >
+                        Explore
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
+            ))
+        ) : (
+          // 🚀 UPDATED: Only show empty state if not loading and truly no data
+          !showLoading && (
+            <div className="no-results">
+              <p>No {activeTab === 'ongoing' ? 'on-going' : 'upcoming'} events found. Try adjusting your search criteria.</p>
+              <button onClick={() => {
+                setSearchQuery('');
+                setSortOrder('all');
+              }} className="reset-filters-btn">
+                Reset Filters
+              </button>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
-
-      {filteredData.length === 0 && !loading && !error && (
-        <div className="no-results">
-          <p>No {activeTab === 'ongoing' ? 'on-going' : 'upcoming'} events found. Try adjusting your search criteria.</p>
-          <button onClick={() => {
-            setSearchQuery('');
-            setSortOrder('all');
-          }} className="reset-filters-btn">
-            Reset Filters
-          </button>
-        </div>
-      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -7,19 +7,19 @@ import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 import { FaPhone } from 'react-icons/fa';
+import { useInstantData } from '../hooks/useInstantData.jsx';
 
 const HERO_VIDEO_ID = 'f8NnjAeb304'; 
 
 const ShoppingLeisurePage = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Shopping & Leisure');
+  const [showLoading, setShowLoading] = useState(true);
 
-  // Fetch business locations with category "Shopping & Leisure"
+  // Fetch business locations with category "Shopping & Leisure" - KEPT ORIGINAL
   const fetchBusinessShopping = async () => {
     try {
       const response = await fetch('/api/businesses/approved/category/Shopping & Leisure');
@@ -61,7 +61,7 @@ const ShoppingLeisurePage = () => {
     }
   };
 
-  // Fetch shopping locations from database
+  // Fetch shopping locations from database - KEPT ORIGINAL
   const fetchShoppingLocations = async () => {
     try {
       const response = await fetch('/api/locations?category=Shopping');
@@ -93,7 +93,7 @@ const ShoppingLeisurePage = () => {
     }
   };
 
-  // Fetch shopping places from Overpass API (OpenStreetMap)
+  // Fetch shopping places from Overpass API (OpenStreetMap) - KEPT ORIGINAL
   const fetchOverpassShopping = async () => {
     try {
       // Sarawak bounding box (approximate)
@@ -191,70 +191,80 @@ const ShoppingLeisurePage = () => {
     }
   };
 
-  const fetchAllShopping = async () => {
-    setLoading(true);
-    try {
-      // Fetch from all sources
-      const [shoppingLocations, businessShopping, overpassShopping] = await Promise.all([
-        fetchShoppingLocations(),
-        fetchBusinessShopping(),
-        fetchOverpassShopping()
-      ]);
+  // Main fetch function for the hook - ADDED for instant loading
+  const fetchAllShopping = useCallback(async () => {
+    // Fetch from all sources
+    const [shoppingLocations, businessShopping, overpassShopping] = await Promise.all([
+      fetchShoppingLocations(),
+      fetchBusinessShopping(),
+      fetchOverpassShopping()
+    ]);
 
-      // Combine all data
-      const allData = [...shoppingLocations, ...businessShopping, ...overpassShopping];
-      
-      // Remove duplicates based on name and coordinates
-      const uniqueData = allData.filter((item, index, self) =>
-        index === self.findIndex(t => 
-          t.name === item.name && 
-          Math.abs(t.latitude - item.latitude) < 0.001 && 
-          Math.abs(t.longitude - item.longitude) < 0.001
-        )
-      );
+    // Combine all data
+    const allData = [...shoppingLocations, ...businessShopping, ...overpassShopping];
+    
+    // Remove duplicates based on name and coordinates
+    const uniqueData = allData.filter((item, index, self) =>
+      index === self.findIndex(t => 
+        t.name === item.name && 
+        Math.abs(t.latitude - item.latitude) < 0.001 && 
+        Math.abs(t.longitude - item.longitude) < 0.001
+      )
+    );
 
-      // Process and enhance the data
-      const processedData = uniqueData.map(item => {
-        const name = item.name;
-        const lowerName = name.toLowerCase();
-        
-        // Determine type if not already set
-        let type = item.type;
-        if (!type || type === 'Other') {
-          if (lowerName.includes('mall') || lowerName.includes('shopping')) type = 'Shopping Mall';
-          else if (lowerName.includes('market')) type = 'Market';
-          else if (lowerName.includes('supermarket')) type = 'Supermarket';
-          else if (lowerName.includes('fitness') || lowerName.includes('gym')) type = 'Fitness Center';
-          else if (lowerName.includes('sports')) type = 'Sports Center';
-          else if (lowerName.includes('park')) type = 'Park';
-          else if (item.source === 'business') type = 'Business';
-          else type = 'Other';
-        }
-
-        return {
-          ...item,
-          type,
-          lat: item.latitude || item.lat || 0,
-          lng: item.longitude || item.lng || 0
-        };
-      });
-
-      setData(processedData);
-    } catch (error) {
-      console.error('Error fetching all shopping places:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllShopping();
+    return uniqueData;
   }, []);
+
+  // Data processing function - ADDED for instant loading
+  const processShopping = useCallback((items) => {
+    return items.map(item => {
+      const name = item.name;
+      const lowerName = name.toLowerCase();
+      
+      // Determine type if not already set
+      let type = item.type;
+      if (!type || type === 'Other') {
+        if (lowerName.includes('mall') || lowerName.includes('shopping')) type = 'Shopping Mall';
+        else if (lowerName.includes('market')) type = 'Market';
+        else if (lowerName.includes('supermarket')) type = 'Supermarket';
+        else if (lowerName.includes('fitness') || lowerName.includes('gym')) type = 'Fitness Center';
+        else if (lowerName.includes('sports')) type = 'Sports Center';
+        else if (lowerName.includes('park')) type = 'Park';
+        else if (item.source === 'business') type = 'Business';
+        else type = 'Other';
+      }
+
+      return {
+        ...item,
+        type,
+        lat: item.latitude || item.lat || 0,
+        lng: item.longitude || item.lng || 0
+      };
+    });
+  }, []);
+
+  // Use the instant data hook - ADDED for instant loading
+  const { data, loading, preloadData } = useInstantData(
+    'shopping_leisure', 
+    fetchAllShopping, 
+    processShopping
+  );
+
+  // 🚀 FIXED: Better loading state management
+  useEffect(() => {
+    // Hide loading when we have data OR when loading is complete without data
+    if (!loading || data.length > 0) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data.length]);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const highlightMatch = (name) => {
+  const highlightMatch = useCallback((name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
     return (
@@ -266,26 +276,28 @@ const ShoppingLeisurePage = () => {
         {name.substring(index + searchQuery.length)}
       </>
     );
-  };
+  }, [searchQuery]);
 
-  const filteredData = data.filter(item => {
+  const filteredData = useMemo(() => data.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSort = sortOrder === 'all' || item.type === sortOrder;
     return matchesSearch && matchesSort;
-  });
-
-  if (loading) {
-    return (
-      <div className="loading-spinner">
-        <div className="spinner"></div>
-        <p>Loading Shopping & Leisure...</p>
-      </div>
-    );
-  }
+  }), [data, searchQuery, sortOrder]);
 
   return (
     <div className="category-page">
-      <MenuNavbar onLoginClick={handleLoginClick}/>
+      <MenuNavbar 
+        onLoginClick={handleLoginClick} 
+        onShoppingHover={preloadData} // ADDED for instant loading
+      />
+
+      {/* 🚀 FIXED: Loading overlay only when truly loading with no cached data
+      {showLoading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <p>Loading Shopping & Leisure...</p>
+        </div>
+      )} */}
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -340,61 +352,74 @@ const ShoppingLeisurePage = () => {
         </div>
       </div>
 
+      {/* 🚀 CONTENT ALWAYS SHOWS - cached data appears instantly */}
       <div className="cards-section">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div
-            className="card-wrapper"
-            key={`${item.source}-${item.name}-${index}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img src={item.image} alt={item.name} />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="card-meta">
-                  <span className="type-badge">{item.type}</span>
-                  {item.division && <span className="division-badge">{item.division}</span>}
-                  {item.source === 'business' && <span className="business-badge">Business</span>}
-                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
-                </div>
-                <div className="desc-scroll">
-                  <p>{item.desc}</p>
-                </div>
-                <div className="button-container">
-                  <Link
-                    to={`/discover/${item.slug}`}
-                    state={{
-                      name: item.name,
-                      image: item.image,
-                      description: item.desc,
-                      latitude: item.latitude || item.lat,
-                      longitude: item.longitude || item.lng,
-                      category: item.category,
-                      type: item.type,
-                      division: item.division,
-                      url: item.url,
-                      phone: item.phone,
-                      address: item.address,
-                      openingHours: item.openingHours,
-                      source: item.source,
-                      osmTags: item.osmTags
+        {filteredData.length > 0 ? (
+          filteredData
+            .slice(0, visibleItems)
+            .map((item, index) => (
+              <div
+                className="card-wrapper"
+                key={`${item.source}-${item.name}-${index}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = defaultImage;
                     }}
-                    className="explore-btn"
-                  >
-                    Explore
-                  </Link>
+                  />
+                  <div className="card-content">
+                    <h3>{highlightMatch(item.name)}</h3>
+                    <div className="card-meta">
+                      <span className="type-badge">{item.type}</span>
+                      {item.division && <span className="division-badge">{item.division}</span>}
+                      {item.source === 'business' && <span className="business-badge">Business</span>}
+                      {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                    </div>
+                    <div className="desc-scroll">
+                      <p>{item.desc}</p>
+                    </div>
+                    <div className="button-container">
+                      <Link
+                        to={`/discover/${item.slug}`}
+                        state={{
+                          name: item.name,
+                          image: item.image,
+                          description: item.desc,
+                          latitude: item.latitude || item.lat,
+                          longitude: item.longitude || item.lng,
+                          category: item.category,
+                          type: item.type,
+                          division: item.division,
+                          url: item.url,
+                          phone: item.phone,
+                          address: item.address,
+                          openingHours: item.openingHours,
+                          source: item.source,
+                          osmTags: item.osmTags
+                        }}
+                        className="explore-btn"
+                      >
+                        Explore
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
+            ))
+        ) : (
+          // Only show empty state if not loading and truly no data
+          !showLoading && (
+            <div className="no-results">
+              <p>No shopping and leisure destinations found. Try adjusting your search criteria.</p>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
-
-      {filteredData.length === 0 && !loading && (
-        <div className="no-results">
-          <p>No shopping and leisure destinations found. Try adjusting your search criteria.</p>
-        </div>
-      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

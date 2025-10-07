@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -7,19 +7,19 @@ import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 import { FaPhone } from 'react-icons/fa';
+import { useInstantData } from '../hooks/useInstantData.jsx';
 
 const HERO_VIDEO_ID = 'wr0h2Y4pBdQ'; 
 
 const TransportationPage = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Transportation');
+  const [showLoading, setShowLoading] = useState(true); // 🚀 ADDED for instant loading
 
-  // Fetch business locations with category "Transportation"
+  // Fetch business locations with category "Transportation" - KEPT ORIGINAL
   const fetchBusinessTransportation = async () => {
     try {
       const response = await fetch('/api/businesses/approved/category/Transportation');
@@ -61,7 +61,7 @@ const TransportationPage = () => {
     }
   };
 
-  // Fetch transportation locations from database
+  // Fetch transportation locations from database - KEPT ORIGINAL
   const fetchTransportationLocations = async () => {
     try {
       const response = await fetch('/api/locations?category=Transport');
@@ -96,7 +96,7 @@ const TransportationPage = () => {
     }
   };
 
-  // Fetch transportation places from Overpass API (OpenStreetMap)
+  // Fetch transportation places from Overpass API (OpenStreetMap) - KEPT ORIGINAL
   const fetchOverpassTransportation = async () => {
     try {
       // Sarawak bounding box (approximate)
@@ -199,7 +199,7 @@ const TransportationPage = () => {
     }
   };
 
-  // Comprehensive transportation data for Sarawak
+  // Comprehensive transportation data for Sarawak - KEPT ORIGINAL
   const staticTransportationData = [
     // Airports
     {
@@ -469,79 +469,89 @@ const TransportationPage = () => {
     }
   ];
 
-  const fetchAllTransportation = async () => {
-    setLoading(true);
-    try {
-      // Fetch from all sources
-      const [transportationLocations, businessTransportation, overpassTransportation, staticTransportation] = await Promise.all([
-        fetchTransportationLocations(),
-        fetchBusinessTransportation(),
-        fetchOverpassTransportation(),
-        Promise.resolve(staticTransportationData)
-      ]);
+  // Main fetch function for the hook - KEPT ORIGINAL
+  const fetchAllTransportation = useCallback(async () => {
+    // Fetch from all sources
+    const [transportationLocations, businessTransportation, overpassTransportation, staticTransportation] = await Promise.all([
+      fetchTransportationLocations(),
+      fetchBusinessTransportation(),
+      fetchOverpassTransportation(),
+      Promise.resolve(staticTransportationData)
+    ]);
 
-      // Combine all data
-      const allData = [...transportationLocations, ...businessTransportation, ...overpassTransportation, ...staticTransportation];
-      
-      // Remove duplicates based on name and coordinates
-      const uniqueData = allData.filter((item, index, self) =>
-        index === self.findIndex(t => 
-          t.name === item.name && 
-          Math.abs((t.latitude || t.lat) - (item.latitude || item.lat)) < 0.001 && 
-          Math.abs((t.longitude || t.lng) - (item.longitude || item.lng)) < 0.001
-        )
-      );
+    // Combine all data
+    const allData = [...transportationLocations, ...businessTransportation, ...overpassTransportation, ...staticTransportation];
+    
+    // Remove duplicates based on name and coordinates
+    const uniqueData = allData.filter((item, index, self) =>
+      index === self.findIndex(t => 
+        t.name === item.name && 
+        Math.abs((t.latitude || t.lat) - (item.latitude || item.lat)) < 0.001 && 
+        Math.abs((t.longitude || t.lng) - (item.longitude || item.lng)) < 0.001
+      )
+    );
 
-      // Process and enhance the data
-      const processedData = uniqueData.map(item => {
-        const name = item.name;
-        const lowerName = name.toLowerCase();
-        
-        // Determine type if not already set
-        let type = item.type;
-        if (!type || type === 'Other') {
-          if (lowerName.includes('airport') || lowerName.includes('terminal')) {
-            type = 'Airport';
-          } else if (lowerName.includes('bus') || lowerName.includes('station')) {
-            type = 'Bus Station';
-          } else if (lowerName.includes('ferry') || lowerName.includes('boat') || lowerName.includes('water')) {
-            type = 'Ferry Terminal';
-          } else if (lowerName.includes('taxi') || lowerName.includes('grab') || lowerName.includes('ride')) {
-            type = 'Taxi & Ride Services';
-          } else if (lowerName.includes('car rental') || lowerName.includes('rental')) {
-            type = 'Car Rental';
-          } else if (lowerName.includes('motorcycle') || lowerName.includes('scooter') || lowerName.includes('bike')) {
-            type = 'Motorcycle Rental';
-          } else if (lowerName.includes('express') || lowerName.includes('interstate') || lowerName.includes('long distance')) {
-            type = 'Long Distance Transport';
-          } else if (item.source === 'business') type = 'Business';
-          else type = 'Other';
-        }
-
-        return {
-          ...item,
-          type,
-          lat: item.latitude || item.lat || 0,
-          lng: item.longitude || item.lng || 0
-        };
-      });
-
-      setData(processedData);
-    } catch (error) {
-      console.error('Error fetching all transportation places:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllTransportation();
+    return uniqueData;
   }, []);
+
+  // Data processing function - KEPT ORIGINAL
+  const processTransportation = useCallback((items) => {
+    return items.map(item => {
+      const name = item.name;
+      const lowerName = name.toLowerCase();
+      
+      // Determine type if not already set
+      let type = item.type;
+      if (!type || type === 'Other') {
+        if (lowerName.includes('airport') || lowerName.includes('terminal')) {
+          type = 'Airport';
+        } else if (lowerName.includes('bus') || lowerName.includes('station')) {
+          type = 'Bus Station';
+        } else if (lowerName.includes('ferry') || lowerName.includes('boat') || lowerName.includes('water')) {
+          type = 'Ferry Terminal';
+        } else if (lowerName.includes('taxi') || lowerName.includes('grab') || lowerName.includes('ride')) {
+          type = 'Taxi & Ride Services';
+        } else if (lowerName.includes('car rental') || lowerName.includes('rental')) {
+          type = 'Car Rental';
+        } else if (lowerName.includes('motorcycle') || lowerName.includes('scooter') || lowerName.includes('bike')) {
+          type = 'Motorcycle Rental';
+        } else if (lowerName.includes('express') || lowerName.includes('interstate') || lowerName.includes('long distance')) {
+          type = 'Long Distance Transport';
+        } else if (item.source === 'business') type = 'Business';
+        else type = 'Other';
+      }
+
+      return {
+        ...item,
+        type,
+        lat: item.latitude || item.lat || 0,
+        lng: item.longitude || item.lng || 0
+      };
+    });
+  }, []);
+
+  // Use the instant data hook - KEPT ORIGINAL
+  const { data, loading, preloadData } = useInstantData(
+    'transportation', 
+    fetchAllTransportation, 
+    processTransportation
+  );
+
+  // 🚀 ADDED: Better loading state management
+  useEffect(() => {
+    // Hide loading when we have data OR when loading is complete without data
+    if (!loading || data.length > 0) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data.length]);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const highlightMatch = (name) => {
+  const highlightMatch = useCallback((name) => {
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
     return (
@@ -553,26 +563,41 @@ const TransportationPage = () => {
         {name.substring(index + searchQuery.length)}
       </>
     );
-  };
+  }, [searchQuery]);
 
-  const filteredData = data.filter(item => {
+  const filteredData = useMemo(() => data.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSort = sortOrder === 'all' || item.type === sortOrder;
     return matchesSearch && matchesSort;
-  });
+  }), [data, searchQuery, sortOrder]);
 
-  if (loading) {
+  // 🚀 COMMENTED OUT: Blocking loading condition (keep the code but don't use it)
+  /* if (loading && data.length === 0) {
     return (
-      <div className="loading-spinner">
-        <div className="spinner"></div>
-        <p>Loading Transportation...</p>
+      <div className="category-page">
+        <MenuNavbar onLoginClick={handleLoginClick} />
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading Transportation...</p>
+        </div>
       </div>
     );
-  }
+  } */
 
   return (
     <div className="category-page">
-      <MenuNavbar onLoginClick={handleLoginClick}/>
+      <MenuNavbar 
+        onLoginClick={handleLoginClick} 
+        onTransportationHover={preloadData}
+      />
+
+      {/* 🚀 ADDED: Loading overlay only during initial load
+      {showLoading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <p>Loading Transportation...</p>
+        </div>
+      )} */}
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -627,62 +652,75 @@ const TransportationPage = () => {
         </div>
       </div>
 
+      {/* 🚀 UPDATED: Cards section with better loading logic */}
       <div className="cards-section">
-        {filteredData.slice(0, visibleItems).map((item, index) => (
-          <div
-            className="card-wrapper"
-            key={`${item.source}-${item.name}-${index}`}
-            style={{ animationDelay: `${index * 0.1}s` }}
-          >
-            <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-              <img src={item.image} alt={item.name} />
-              <div className="card-content">
-                <h3>{highlightMatch(item.name)}</h3>
-                <div className="card-meta">
-                  <span className="type-badge">{item.type}</span>
-                  {item.division && <span className="division-badge">{item.division}</span>}
-                  {item.source === 'business' && <span className="business-badge">Business</span>}
-                  {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
-                  {item.source === 'static' && <span className="static-badge">Local</span>}
-                </div>
-                <div className="desc-scroll">
-                  <p>{item.desc}</p>
-                </div>
-                <div className="button-container">
-                  <Link
-                    to={`/discover/${item.slug}`}
-                    state={{
-                      name: item.name,
-                      image: item.image,
-                      description: item.desc,
-                      latitude: item.latitude || item.lat,
-                      longitude: item.longitude || item.lng,
-                      category: item.category,
-                      type: item.type,
-                      division: item.division,
-                      url: item.url,
-                      phone: item.phone,
-                      address: item.address,
-                      openingHours: item.openingHours,
-                      source: item.source,
-                      osmTags: item.osmTags
+        {filteredData.length > 0 ? (
+          filteredData
+            .slice(0, visibleItems)
+            .map((item, index) => (
+              <div
+                className="card-wrapper"
+                key={`${item.source}-${item.name}-${index}`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = defaultImage;
                     }}
-                    className="explore-btn"
-                  >
-                    Explore
-                  </Link>
+                  />
+                  <div className="card-content">
+                    <h3>{highlightMatch(item.name)}</h3>
+                    <div className="card-meta">
+                      <span className="type-badge">{item.type}</span>
+                      {item.division && <span className="division-badge">{item.division}</span>}
+                      {item.source === 'business' && <span className="business-badge">Business</span>}
+                      {item.source === 'overpass' && <span className="overpass-badge">OpenStreetMap</span>}
+                      {item.source === 'static' && <span className="static-badge">Local</span>}
+                    </div>
+                    <div className="desc-scroll">
+                      <p>{item.desc}</p>
+                    </div>
+                    <div className="button-container">
+                      <Link
+                        to={`/discover/${item.slug}`}
+                        state={{
+                          name: item.name,
+                          image: item.image,
+                          description: item.desc,
+                          latitude: item.latitude || item.lat,
+                          longitude: item.longitude || item.lng,
+                          category: item.category,
+                          type: item.type,
+                          division: item.division,
+                          url: item.url,
+                          phone: item.phone,
+                          address: item.address,
+                          openingHours: item.openingHours,
+                          source: item.source,
+                          osmTags: item.osmTags
+                        }}
+                        className="explore-btn"
+                      >
+                        Explore
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
+            ))
+        ) : (
+          // 🚀 UPDATED: Only show empty state if not loading and truly no data
+          !showLoading && (
+            <div className="no-results">
+              <p>No transportation places found. Try adjusting your search criteria.</p>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
-
-      {filteredData.length === 0 && !loading && (
-        <div className="no-results">
-          <p>No transportation places found. Try adjusting your search criteria.</p>
-        </div>
-      )}
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

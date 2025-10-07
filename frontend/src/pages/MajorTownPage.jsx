@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -6,80 +6,71 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
-import { motion } from 'framer-motion';
-import { useInView } from 'framer-motion';
+import { useInstantData } from '../hooks/useInstantData.jsx'; // 🚀 Updated import
 
-const HERO_VIDEO_ID = 'KIQueYmDWEQ'; 
+const HERO_VIDEO_ID = 'KIQueYmDWEQ';
 
 const MajorTownPage = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
-  const [currentCategory, setCurrentCategory] = useState('');
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, threshold: 0.3 });
 
-  // Fetch all locations and filter for Major Towns
-  const fetchAllLocations = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/locations');
-      const allData = await response.json();
-
-      // Log first 3 items to inspect structure
-      allData.slice(0, 3).forEach((item, i) => {
-        console.log(`Item ${i}: latitude = ${item.latitude}, longitude = ${item.longitude}`, item);
-      });
-
-      const majorTowns = allData.filter(item => item.type === 'Major Town');
-      handleDataFetch('Major Towns', majorTowns);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllLocations();
+  // Define data fetching function
+  const fetchMajorTowns = useCallback(async () => {
+    const response = await fetch('/api/locations');
+    const allData = await response.json();
+    return allData.filter(item => item.type === 'Major Town');
   }, []);
 
-  const handleDataFetch = (category, fetchedData) => {
-    setLoading(true);
-    setCurrentCategory(category);
-    setSearchQuery('');
-    setSortOrder('default');
-
-    const processed = processData(fetchedData);
-    setData(processed);
-    setLoading(false);
-  };
-
-  const processData = (items) => {
+  // Define data processing function
+  const processMajorTowns = useCallback((items) => {
     return items.map(item => ({
       ...item,
-      name: item.division,
-      desc: item.description,
-      slug: item.slug || item.division
+      name: item.division || item.name,
+      desc: item.description || 'No description available',
+      slug: item.slug || (item.division || item.name || 'unknown')
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^\w-]/g, ''),
       image: item.image || defaultImage,
       lat: item.latitude,
-      lng: item.longitude
+      lng: item.longitude,
+      type: item.type || 'Major Town'
     }));
-  };
+  }, []);
+
+  // 🚀 KEY CHANGE: Use the enhanced instant data hook
+  const { data, loading, isInitialLoad, preloadData } = useInstantData(
+    'major_towns', 
+    fetchMajorTowns, 
+    processMajorTowns
+  );
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
 
-  const handleSortToggle = () => {
+  const handleSortToggle = useCallback(() => {
     setSortOrder(prev => (prev === 'default' ? 'asc' : prev === 'asc' ? 'desc' : 'default'));
-  };
+  }, []);
 
-  const highlightMatch = (name) => {
+  // Memoized filtered data
+  const filteredData = useMemo(() => {
+    let result = data.filter(item => 
+      item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (sortOrder === 'asc') {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOrder === 'desc') {
+      result = [...result].sort((a, b) => b.name.localeCompare(a.name));
+    }
+
+    return result;
+  }, [data, searchQuery, sortOrder]);
+
+  const highlightMatch = useCallback((name) => {
+    if (!name) return 'Unknown';
     const index = name.toLowerCase().indexOf(searchQuery.toLowerCase());
     if (index === -1 || !searchQuery) return name;
     return (
@@ -91,29 +82,27 @@ const MajorTownPage = () => {
         {name.substring(index + searchQuery.length)}
       </>
     );
-  };
+  }, [searchQuery]);
 
-  const filteredData = [...data]
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortOrder === 'asc') return a.name.localeCompare(b.name);
-      if (sortOrder === 'desc') return b.name.localeCompare(a.name);
-      return 0;
-    });
-
-  if (loading) {
-    return (
-      <div className="loading-spinner">
-        <div className="spinner"></div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  // 🚀 KEY CHANGE: COMPLETELY REMOVED the early return loading condition
+  // The page will ALWAYS render instantly, showing cached data immediately
 
   return (
     <div className="category-page">
-      <MenuNavbar onLoginClick={handleLoginClick}/>
+      <MenuNavbar 
+        onLoginClick={handleLoginClick} 
+        onMajorTownHover={preloadData}
+      />
 
+      {/* 🚀 KEY CHANGE: Only show loading for true first-time visits with no cache
+      {loading && isInitialLoad && data.length === 0 && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <p>Loading Major Towns...</p>
+        </div>
+      )} */}
+
+      {/* 🚀 ALWAYS SHOW CONTENT - cached data appears instantly */}
       <div className="hero-banner">
         <div className="hero-video-bg">
           <iframe
@@ -128,7 +117,7 @@ const MajorTownPage = () => {
       </div>
 
       <div className="hero-overlay-mt">
-        <h1>{currentCategory.toUpperCase() || 'MAJOR TOWNS'}</h1>
+        <h1>MAJOR TOWNS</h1>
         <p className="hero-intro">
           Discover Sarawak's vibrant urban centers - from the bustling capital Kuching to the 
           historic town of Sibu and the riverine charm of Miri. Each major town offers unique 
@@ -142,7 +131,7 @@ const MajorTownPage = () => {
           <div className="search-bar-mj">
             <input
               type="text"
-              placeholder={`Search ${currentCategory}...`}
+              placeholder="Search Major Towns..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input-mj"
@@ -160,42 +149,59 @@ const MajorTownPage = () => {
         </div>
       </div>
 
+      {/* 🚀 CONTENT ALWAYS SHOWS - cached data appears instantly */}
       <div className="cards-section">
-        {filteredData
-          .slice(0, visibleItems)
-          .map((item, index) => (
-            <div
-              className="card-wrapper"
-              key={index}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
-                <img src={item.image} alt={item.name} />
-                <div className="card-content">
-                  <h3>{highlightMatch(item.name)}</h3>
-                  <div className="rating">⭐⭐⭐⭐⭐</div>
-                  <div className="desc-scroll">
-                    <p>{item.desc}</p>
-                  </div>
-                  <div className="button-container">
-                    <Link 
-                      to={`/towns/${item.slug}`} 
-                      state={{ 
-                        town: item,
-                        division: item.name,
-                        type: item.type,
-                        lat: item.latitude,
-                        lng: item.longitude
-                      }} 
-                      className="explore-btn"
-                    >
-                      Explore
-                    </Link>
+        {filteredData.length > 0 ? (
+          filteredData
+            .slice(0, visibleItems)
+            .map((item, index) => (
+              <div
+                className="card-wrapper"
+                key={item.slug || index}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
+                  />
+                  <div className="card-content">
+                    <h3>{highlightMatch(item.name)}</h3>
+                    <div className="rating">⭐⭐⭐⭐⭐</div>
+                    <div className="desc-scroll">
+                      <p>{item.desc}</p>
+                    </div>
+                    <div className="button-container">
+                      <Link 
+                        to={`/towns/${item.slug}`} 
+                        state={{ 
+                          town: item,
+                          division: item.name,
+                          type: item.type,
+                          lat: item.lat,
+                          lng: item.lng
+                        }} 
+                        className="explore-btn"
+                      >
+                        Explore
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+        ) : (
+          // 🚀 Only show empty state if not loading and truly no data
+          !loading && data.length === 0 && (
+            <div className="empty-state">
+              <p>No major towns found.</p>
             </div>
-          ))}
+          )
+        )}
       </div>
 
       {filteredData.length > visibleItems && (
@@ -211,7 +217,6 @@ const MajorTownPage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
 
-      {/* Ai Chatbot */}
       <AIChatbot />
       <Footer />
     </div>
