@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { recordUniqueVisitorSession } from '../controllers/MetricsController.js';
+import { recordUniqueVisitor } from '../controllers/MetricsController.js';
 import { uniqueVisitorLimiter } from '../middleware/rateLimiter.js';
+import { attachUserIfPresent } from '../middleware/AuthMiddleware.js';
 
 const metricsRouter = Router();
 
-// Removed: metricsRouter.post('/page-view', pageViewLimiter, incrementPageView);
-// Removed: metricsRouter.post('/unique-page-view', uniqueViewLimiter, recordUniquePageView);
-metricsRouter.post('/unique-visitor-session', uniqueVisitorLimiter, recordUniqueVisitorSession);
+metricsRouter.post('/unique-visitor', attachUserIfPresent, uniqueVisitorLimiter, recordUniqueVisitor);
 
 export default metricsRouter;

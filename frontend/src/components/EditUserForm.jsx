@@ -3,7 +3,7 @@ import ky from 'ky';
 import { useAuth } from '../context/AuthProvider';
 import { toast } from 'sonner';
 
-function EditUserForm({ user, onClose, onUserUpdate }) {
+function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -13,22 +13,24 @@ function EditUserForm({ user, onClose, onUserUpdate }) {
     companyRegistrationNo: '',
     companyAddress: '',
   });
+  const [initialData, setInitialData] = useState(null);
 
   const { accessToken } = useAuth();
 
   useEffect(() => {
     if (user) {
       const [firstName, ...lastName] = user.name.split(' ');
-      setFormData({
+      const init = {
         firstName: firstName,
         lastName: lastName.join(' '),
         email: user.email,
         role: user.role.toLowerCase(),
-        // Populate business fields if they exist, otherwise default to empty
         companyName: user.companyName || '',
         companyRegistrationNo: user.companyRegistrationNo || '',
         companyAddress: user.companyAddress || '',
-      });
+      };
+      setFormData(init);
+      setInitialData(init);
     }
   }, [user]);
 
@@ -39,22 +41,22 @@ function EditUserForm({ user, onClose, onUserUpdate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Construct the payload dynamically based on the role
     const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        role: formData.role,
-      };
-      
-
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      role: formData.role,
+    };
     if (formData.role === 'business') {
-        payload.companyName = formData.companyName;
-        payload.companyRegistrationNo = formData.companyRegistrationNo;
-        payload.companyAddress = formData.companyAddress;
+      payload.companyName = formData.companyName;
+      payload.companyRegistrationNo = formData.companyRegistrationNo;
+      payload.companyAddress = formData.companyAddress;
     }
-
+    if (onRequestSave) {
+      onRequestSave({ userId: user.id, payload, original: initialData });
+      return;
+    }
+    
     try {
       const response = await ky.put(`/api/userManagement/users/${user.id}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },

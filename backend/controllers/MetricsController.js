@@ -1,84 +1,62 @@
 // MetricsController.js
 import { PageViewCounter } from '../models/PageViewCounter.js';
-// import { UniquePageView } from '../models/UniquePageView.js';
-import { UniqueVisitorSession } from '../models/UniqueVisitorSession.js';
+import crypto from 'crypto';
+import { UniqueVisitor } from '../models/UniqueVisitor.js';
 
-export const incrementPageView = async (req, res) => {
+export const recordUniqueVisitor = async (req, res) => {
   try {
-    const doc = await PageViewCounter.findOneAndUpdate(
-      { key: 'global' },
-      { $inc: { totalCount: 1 } },
-      { new: true, upsert: true }
-    );
-    return res.status(200).json({ success: true, totalPageViews: doc.totalCount });
-  } catch (error) {
-    console.error('incrementPageView error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to increment page views' });
-  }
-};
+    const isProd = process.env.NODE_ENV === 'production';
+    const cookieName = 'visitor_id';
+    let visitorId = req.cookies?.[cookieName];
 
-// export const recordUniquePageView = async (req, res) => {
-//   try {
-//     const route = String(req.body?.route || req.headers['x-route'] || '');
-//     if (!route) return res.status(400).json({ success: false, message: 'Route is required' });
+    // If missing, mint a new ID and set a long-lived, privacy-safe cookie
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      res.cookie(cookieName, visitorId, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: isProd,
+        maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+        path: '/',
+      });
+    }
 
-//     const visitorId = String(req.headers['x-visitor-id'] || req.user || req.ip);
+    // First-time vs returning logic
+    const existing = await UniqueVisitor.findOne({ visitorId });
+    let firstVisit = false;
 
-//     const now = new Date();
-//     const dayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    if (!existing) {
+      const rawIp = (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim();
+      const userAgent = req.get('user-agent') || '';
+      const ipHash = rawIp ? crypto.createHash('sha256').update(rawIp).digest('hex') : '';
+      const userId = req.user || null; // set by attachUserIfPresent when available
 
-//     // Attempt to insert unique view (deduped by unique index)
-//     try {
-//       await UniquePageView.create({ visitorId, route, dayUTC, userAgent: req.get('user-agent') || '', ip: req.ip });
+      await UniqueVisitor.create({ visitorId, userId, userAgent, ipHash });
 
-//       // On first unique view of the day for this visitor/route, increment global counter
-//       const doc = await PageViewCounter.findOneAndUpdate(
-//         { key: 'global' },
-//         { $inc: { totalCount: 1 } },
-//         { new: true, upsert: true }
-//       );
-
-//       return res.status(200).json({ success: true, uniqueCounted: true, totalPageViews: doc.totalCount });
-//     } catch (e) {
-//       // Duplicate key => already counted for this visitor/route/day
-//       if (e?.code === 11000) {
-//         const pv = await PageViewCounter.findOne({ key: 'global' });
-//         return res.status(200).json({ success: true, uniqueCounted: false, totalPageViews: pv?.totalCount || 0 });
-//       }
-//       throw e;
-//     }
-//   } catch (error) {
-//     console.error('recordUniquePageView error:', error);
-//     return res.status(500).json({ success: false, message: 'Failed to record unique page view' });
-//   }
-// };
-
-export const recordUniqueVisitorSession = async (req, res) => {
-  try {
-    const sessionId = String(req.headers['x-session-id'] || '');
-    if (!sessionId) return res.status(400).json({ success: false, message: 'Session ID is required' });
-
-    try {
-      await UniqueVisitorSession.create({ sessionId, userAgent: req.get('user-agent') || '', ip: req.ip });
-
-      // Increment website-wide unique visitor session counter on first session
       const doc = await PageViewCounter.findOneAndUpdate(
-        { key: 'unique_session_visitors' },
+        { key: 'unique_visitors' },
         { $inc: { totalCount: 1 } },
         { new: true, upsert: true }
       );
 
-      return res.status(200).json({ success: true, uniqueCounted: true, totalUniqueVisitors: doc.totalCount });
-    } catch (e) {
-      if (e?.code === 11000) {
-        // Already counted for this session
-        const pv = await PageViewCounter.findOne({ key: 'unique_session_visitors' });
-        return res.status(200).json({ success: true, uniqueCounted: false, totalUniqueVisitors: pv?.totalCount || 0 });
-      }
-      throw e;
+      firstVisit = true;
+      return res.status(200).json({
+        success: true,
+        firstVisit,
+        visitorId,
+        totalUniqueVisitors: doc.totalCount
+      });
     }
+
+    const pv = await PageViewCounter.findOne({ key: 'unique_visitors' });
+    return res.status(200).json({
+      success: true,
+      firstVisit,
+      visitorId,
+      totalUniqueVisitors: pv?.totalCount || 0
+    });
   } catch (error) {
-    console.error('recordUniqueVisitorSession error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to record unique visitor session' });
+    console.error('recordUniqueVisitor error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to record unique visitor' });
   }
 };
