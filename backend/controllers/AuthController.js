@@ -1,8 +1,10 @@
 import { businessUserModel, userModel } from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import crypto from "crypto";
+import transporter from "../config/emailConfig.js";
 
-// @desc User registration test
+// @desc User registration
 // @route POST /register
 // @access Public
 export const register = async (req, res) => {
@@ -410,4 +412,66 @@ export const logout = (req, res) => {
     });
 
     return res.json({ message: "Logout successful", success: true });
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await userModel.findOne({ email });
+
+        if (!user) {
+            return res.status(200).json({ success: true, message: "If an account with that email exists, a password reset link has been sent." });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+
+        await user.save();
+
+        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+        const mailOptions = {
+            to: user.email,
+            from: process.env.EMAIL_USER,
+            subject: 'Password Reset Request',
+            text: `You are receiving this because you (or someone else) have requested a password reset for your account.\n\n` + `Please click on the following link, or paste this into your browser to complete the process:\n\n` + `${resetUrl}\n\n` + `If you did not request this, please ignore this email and your password will remain unchanged.\n`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: "A password reset link has been sent to your email." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An internal server error occurred." });
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        const user = await userModel.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() } // Check if the token is not expired
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Password reset token is invalid or has expired." });
+        }
+
+        // Set the new password
+        user.password = password;
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+
+        await user.save();
+
+        res.status(200).json({ success: true, message: "Password reset successfully! Redirecting to login..." });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An internal server error occurred." });
+    }
 };

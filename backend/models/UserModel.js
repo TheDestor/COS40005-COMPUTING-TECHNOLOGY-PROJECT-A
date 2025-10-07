@@ -59,7 +59,9 @@ const userSchema = new mongoose.Schema({
     avatarUrl: { type: String, default: null},
     authProvider: { type: String, enum: ['password','google'], default: 'password' },
     // Add account status for admin breakdowns
-    accountStatus: { type: String, enum: ['active','inactive','suspended'], default: 'active' }
+    accountStatus: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null }
 }, baseOptions);
 
 userSchema.pre('save', async function (next) {
