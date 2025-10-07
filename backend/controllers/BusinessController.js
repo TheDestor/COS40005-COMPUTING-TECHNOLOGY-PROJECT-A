@@ -1,100 +1,23 @@
 import { businessModel } from '../models/BusinessModel.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+import { put, del } from '@vercel/blob';
+import path from 'path';
 
-// Get the directory name using ES modules approach
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure upload directory
-const uploadsDir = path.join(__dirname, '../uploads');
-
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Helper function to save uploaded file
-const saveFile = (file) => {
+// Helper function to save uploaded file to Vercel Blob
+const saveFileToBlob = async (file) => {
     if (!file) return null;
-    
-    // Create unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = file.mimetype.split('/')[1];
-    const filename = `${file.fieldname}-${uniqueSuffix}.${extension}`;
-    
-    // Save file to uploads directory
-    const filepath = path.join(uploadsDir, filename);
-    fs.writeFileSync(filepath, file.buffer);
-    
-    // Return relative path for storage in database
-    return `/uploads/${filename}`;
+
+    const cleanOriginalName = path.basename(file.originalname);
+    const pathname = `businesses/${file.fieldname}-${cleanOriginalName}`;
+
+    const blob = await put(pathname, file.buffer, {
+        access: 'public',
+        addRandomSuffix: true,
+    });
+
+    return blob.url;
 };
 
-// // Add a new business
-// export const addBusiness = async (req, res) => {
-//     try {
-//         const businessData = req.body;
-        
-//         // Validate required fields
-//         if (!businessData.name || !businessData.owner || !businessData.description) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Missing required fields"
-//             });
-//         }
-        
-//         // Check if business already exists with the same name and owner
-//         const existingBusiness = await businessModel.findOne({
-//             name: businessData.name,
-//             owner: businessData.owner
-//         });
-        
-//         if (existingBusiness) {
-//             return res.status(409).json({
-//                 success: false,
-//                 message: "A business with this name and owner already exists"
-//             });
-//         }
-        
-//         // Handle file uploads
-//         if (!req.files || !req.files.businessImage || !req.files.ownerAvatar) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Business image and owner avatar are required"
-//             });
-//         }
-        
-//         // Save files and get paths
-//         const businessImagePath = saveFile(req.files.businessImage[0]);
-//         const ownerAvatarPath = saveFile(req.files.ownerAvatar[0]);
-        
-//         // Create new business with file paths
-//         const newBusiness = new businessModel({
-//             ...businessData,
-//             businessImage: businessImagePath,
-//             ownerAvatar: ownerAvatarPath,
-//             agreement: businessData.agreement === 'true' || businessData.agreement === true
-//         });
-        
-//         await newBusiness.save();
-        
-//         res.status(201).json({
-//             success: true,
-//             message: "Business added successfully and pending approval",
-//             data: newBusiness
-//         });
-//     } catch (error) {
-//         console.error("Error adding business:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Failed to add business",
-//             error: error.message
-//         });
-//     }
-// };
 // Add a new business
 export const addBusiness = async (req, res) => {
     try {
@@ -132,9 +55,9 @@ export const addBusiness = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Business image and owner avatar are required' });
         }
 
-        // Save files and get paths
-        const businessImageUrl = saveFileAndGetUrl(req.files.businessImage[0], req);
-        const ownerAvatarUrl = saveFileAndGetUrl(req.files.ownerAvatar[0], req);
+        // Save files to Vercel Blob and get URLs
+        const businessImageUrl = await saveFileToBlob(req.files.businessImage[0]);
+        const ownerAvatarUrl = await saveFileToBlob(req.files.ownerAvatar[0]);
 
         // Create new business with file paths (match model field names)
         // Debug logging for business creation
@@ -188,35 +111,11 @@ export const addBusiness = async (req, res) => {
     }
 };
 
-const saveFileAndGetUrl = (file, req) => {
-    try {
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        const uploadsDir = path.resolve(__dirname, '..', 'api', 'uploads');
-        fs.mkdirSync(uploadsDir, { recursive: true });
-
-        const ext = path.extname(file.originalname) || '.png';
-        const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '_');
-        const filename = `${Date.now()}-${base}${ext}`;
-        
-        // Write file to uploads directory
-        fs.writeFileSync(path.join(uploadsDir, filename), file.buffer);
-
-        // Generate URL (same pattern as Add Event)
-        const baseUrl = `${req.protocol}://localhost:${process.env.PORT || 5050}`;
-        return `${baseUrl}/uploads/${filename}`;
-
-    } catch (error) {
-        console.error("Error saving file:", error);
-        throw new Error(`Failed to save file: ${error.message}`);
-    }
-};
-
 // Get all businesses (with optional filtering)
 export const getAllBusinesses = async (req, res) => {
     try {
         // Check if request is from admin or public
-        const isAdmin = req.role === 'cbt_admin'; // FIXED: Using req.role instead of req.user.role
+        const isAdmin = req.role === 'cbt_admin';
         
         // Log debugging info
         console.log('getAllBusinesses called by:', isAdmin ? 'admin' : 'public');
@@ -528,15 +427,34 @@ export const updateBusinessDetails = async (req, res) => {
             updateData.agreement = updateData.agreement === 'true' || updateData.agreement === true;
         }
         
-        // Handle file uploads if provided (using same pattern as addBusiness)
+        // Handle file uploads if provided
         if (req.files) {
+            // Check for and handle new business image
             if (req.files.businessImage) {
-                // Use the same saveFileAndGetUrl function as addBusiness
-                updateData.businessImage = saveFileAndGetUrl(req.files.businessImage[0], req);
+                // If an old image exists, delete it from Vercel Blob
+                if (business.businessImage) {
+                    try {
+                        await del(business.businessImage);
+                    } catch (error) {
+                        console.error("Failed to delete old business image from blob storage:", error);
+                    }
+                }
+                // Upload the new image and get its URL
+                updateData.businessImage = await saveFileToBlob(req.files.businessImage[0]);
             }
+
+            // Check for and handle new owner avatar
             if (req.files.ownerAvatar) {
-                // Use the same saveFileAndGetUrl function as addBusiness
-                updateData.ownerAvatar = saveFileAndGetUrl(req.files.ownerAvatar[0], req);
+                // If an old avatar exists, delete it from Vercel Blob
+                if (business.ownerAvatar) {
+                    try {
+                        await del(business.ownerAvatar);
+                    } catch (error) {
+                        console.error("Failed to delete old owner avatar from blob storage:", error);
+                    }
+                }
+                // Upload the new avatar and get its URL
+                updateData.ownerAvatar = await saveFileToBlob(req.files.ownerAvatar[0]);
             }
         }
         
@@ -585,19 +503,13 @@ export const deleteBusiness = async (req, res) => {
             });
         }
         
-        // Delete associated image files
+        // Delete associated image files from Vercel Blob
         if (business.businessImage) {
-            const businessImagePath = path.join(__dirname, '..', business.businessImage);
-            if (fs.existsSync(businessImagePath)) {
-                fs.unlinkSync(businessImagePath);
-            }
+            await del(business.businessImage);
         }
         
         if (business.ownerAvatar) {
-            const ownerAvatarPath = path.join(__dirname, '..', business.ownerAvatar);
-            if (fs.existsSync(ownerAvatarPath)) {
-                fs.unlinkSync(ownerAvatarPath);
-            }
+            await del(business.ownerAvatar);
         }
         
         // Delete the business document
@@ -648,7 +560,7 @@ export const getAllApprovedBusinesses = async (req, res) => {
 export const getMySubmissions = async (req, res) => {
     try {
       console.log('getMySubmissions: req.user =', req.user);
-      const submitterUserId = req.user; // req.user is already the string ID from middleware
+      const submitterUserId = req.user;
       if (!submitterUserId) {
         return res.status(401).json({ success: false, message: 'Unauthorized' });
       }

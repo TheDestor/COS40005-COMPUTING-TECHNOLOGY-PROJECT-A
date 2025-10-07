@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FaBuilding, 
-  FaUser, 
-  FaEnvelope, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaGlobe, 
-  FaList, 
+import { useState, useEffect } from 'react';
+import {
+  FaBuilding,
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaGlobe,
+  FaList,
   FaClock,
   FaInfoCircle,
   FaImage,
@@ -16,13 +16,14 @@ import {
   FaArrowRight,
 } from 'react-icons/fa';
 import '../styles/BusinessSubmissionForm.css';
-import axios from 'axios'; // Make sure axios is installed
+import ky from 'ky';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useAuth } from '../context/AuthProvider';
+import { toast } from 'sonner';
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -83,7 +84,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       </div>
     );
   }
-  
+
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -135,28 +136,28 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Calculate priority based on certain criteria (this will be used when submitting)
   const calculatePriority = () => {
     let score = 0;
-    
+
     // Business categories that might be high priority
     const highPriorityCategories = ['Food & Beverage', 'Health & Fitness', 'Technology'];
     if (highPriorityCategories.includes(formData.category)) {
       score += 2;
     }
-    
+
     // Website presence might indicate more established businesses
     if (formData.website && formData.website.trim() !== '') {
       score += 1;
     }
-    
+
     // Longer descriptions might indicate more detail and effort
     if (formData.description && formData.description.length > 200) {
       score += 1;
     }
-    
+
     // Both images provided shows completeness
     if (formData.businessImage && formData.ownerAvatar) {
       score += 1;
     }
-    
+
     // Determine priority based on score
     if (score >= 4) return 'high';
     if (score >= 2) return 'medium';
@@ -166,10 +167,10 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Handle form field changes with improved image handling
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    
+
     if (type === 'file') {
       const file = files[0];
-      
+
       // Preview image with resizing control
       if (file) {
         const reader = new FileReader();
@@ -183,7 +184,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         };
         reader.readAsDataURL(file);
       }
-      
+
       setFormData({
         ...formData,
         [name]: file
@@ -197,7 +198,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         [name]: nextVal
       });
     }
-    
+
     // Clear error for this field if it exists
     if (errors[name]) {
       setErrors({
@@ -332,7 +333,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Validate the current step
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     switch (step) {
       case 1: // Basic Information
       if (!formData.name.trim()) newErrors.name = 'Business name is required';
@@ -346,7 +347,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         }
       }
       break;
-        
+
       case 2: // Business Details
         if (!formData.category) newErrors.category = 'Please select a category';
         if (!formData.description.trim()) {
@@ -372,27 +373,27 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           newErrors.phone = 'Phone format should be XXX-XXX-XXXX or XXX-XXXX-XXXX';
         }
         break;
-        
+
       case 3: // Media Upload
         if (!formData.businessImage) newErrors.businessImage = 'Business image is required';
         if (!formData.ownerAvatar) newErrors.ownerAvatar = 'Owner profile picture is required';
         break;
-        
+
       case 4: // Review and Submit
         if (!formData.agreement) newErrors.agreement = 'You must agree to the terms';
         break;
-        
+
       default:
         break;
     }
-    
+
     return newErrors;
   };
 
   // Move to next step
   const handleNextStep = () => {
     const stepErrors = validateStep(currentStep);
-    
+
     if (Object.keys(stepErrors).length === 0) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -409,75 +410,98 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitAttempted(true);
-    
+
     // Validate all steps before submitting
     let allErrors = {};
     for (let i = 1; i <= totalSteps; i++) {
       const stepErrors = validateStep(i);
       allErrors = { ...allErrors, ...stepErrors };
     }
-    
+
     if (Object.keys(allErrors).length === 0) {
       setSubmitting(true);
-      
-      try {
-        // Create form data for file uploads
-        const formDataToSend = new FormData();
-        
-        // Add all form fields
-        Object.keys(formData).forEach(key => {
-          if (key === 'businessImage' || key === 'ownerAvatar') {
-            // Add the file directly to FormData (same as Add Event page)
-            if (formData[key]) {
+      const submissionPromise = new Promise(async (resolve, reject) => {
+        try {
+          // Create form data for file uploads
+          const formDataToSend = new FormData();
+
+          // Add all form fields
+          Object.keys(formData).forEach(key => {
+            if (key === 'businessImage' || key === 'ownerAvatar') {
+              // Add the file directly to FormData (same as Add Event page)
+              if (formData[key]) {
+                formDataToSend.append(key, formData[key]);
+              }
+            } else if (key === 'targetAudience') {
+              // Handle array fields if needed
+              formDataToSend.append(key, JSON.stringify(formData[key]));
+            } else {
+              // Add regular fields
               formDataToSend.append(key, formData[key]);
             }
-          } else if (key === 'targetAudience') {
-            // Handle array fields if needed
-            formDataToSend.append(key, JSON.stringify(formData[key]));
-          } else {
-            // Add regular fields
-            formDataToSend.append(key, formData[key]);
-          }
-        });
-        
-        // Calculate and add priority
-        const priority = calculatePriority();
-        formDataToSend.append('priority', priority);
-        
-        // Add submission date
-        formDataToSend.append('submissionDate', new Date().toISOString());
-        
-        // Set initial status
-        formDataToSend.append('status', 'pending');
-        
-        // Main API call to backend endpoint
-        const response = await axios.post('/api/businesses/addBusiness', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        });
+          });
 
-        console.log('Submission successful:', response.data);
-        setSubmitSuccess(true);
-        
-        // If a success callback was provided, call it
-        if (onSubmitSuccess && typeof onSubmitSuccess === 'function') {
-          onSubmitSuccess(response.data.data);
+          // Calculate and add priority
+          const priority = calculatePriority();
+          formDataToSend.append('priority', priority);
+
+          // Add submission date
+          formDataToSend.append('submissionDate', new Date().toISOString());
+
+          // Set initial status
+          formDataToSend.append('status', 'pending');
+
+          // Main API call to backend endpoint using ky
+          const responseData = await ky.post('/api/businesses/addBusiness', {
+            body: formDataToSend,
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }).json();
+
+          console.log('Submission successful:', responseData);
+          setSubmitSuccess(true);
+
+          // If a success callback was provided, call it
+          if (onSubmitSuccess && typeof onSubmitSuccess === 'function') {
+            onSubmitSuccess(responseData.data);
+          }
+          resolve(responseData);
+        } catch (error) {
+          console.error('Submission error:', error);
+          let errorMessage = 'There was an error submitting your business. Please try again.';
+
+          // Ky throws an HTTPError for non-2xx responses
+          if (error.name === 'HTTPError') {
+            try {
+              const errorJson = await error.response.json();
+              errorMessage = errorJson.message || errorMessage;
+            } catch (e) {
+              // The response might not be JSON, fall back to the status text
+              errorMessage = error.response.statusText;
+            }
+          } else {
+            errorMessage = error.message;
+          }
+
+          setErrors({
+            ...errors,
+            submit: errorMessage,
+          });
+          reject(errorMessage);
+        } finally {
+          setSubmitting(false);
         }
-        
-      } catch (error) {
-        console.error('Submission error:', error);
-        setErrors({
-          ...errors,
-          submit: error.response?.data?.message || error.message || 'There was an error submitting your business. Please try again.'
-        });
-      } finally {
-        setSubmitting(false);
-      }
+      });
+
+      toast.promise(submissionPromise, {
+        loading: 'Submitting your business...',
+        success: 'Business submitted successfully for review!',
+        error: (err) => err || 'An unexpected error occurred.',
+      });
     } else {
       setErrors(allErrors);
-      
+
       // Move to the first step with an error
       for (let i = 1; i <= totalSteps; i++) {
         const stepErrors = validateStep(i);
@@ -494,15 +518,15 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     return (
       <div className="form-progress">
         {Array.from({ length: totalSteps }, (_, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className={`progress-step ${currentStep >= i + 1 ? 'active' : ''} ${currentStep > i + 1 ? 'completed' : ''}`}
             onClick={() => currentStep > i + 1 && setCurrentStep(i + 1)}
           >
             <div className="step-number">{i + 1}</div>
             <div className="step-label">
-              {i === 0 ? 'Basic Info' : 
-               i === 1 ? 'Business Details' : 
+              {i === 0 ? 'Basic Info' :
+               i === 1 ? 'Business Details' :
                i === 2 ? 'Media' : 'Review'}
             </div>
           </div>
@@ -519,7 +543,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         <p className="step-description">
           Let's start with the basic information about your business and yourself as the owner.
         </p>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="name">
             <FaBuilding /> Business Name*
@@ -535,7 +559,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           />
           {errors.name && <div className="error-message-business">{errors.name}</div>}
         </div>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="owner">
             <FaUser /> Owner Name*
@@ -551,7 +575,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           />
           {errors.owner && <div className="error-message-business">{errors.owner}</div>}
         </div>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="ownerEmail">
             <FaEnvelope /> Contact Email Address*
@@ -575,7 +599,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           />
           {errors.ownerEmail && <div className="error-message-business">{errors.ownerEmail}</div>}
         </div>
-        
+
         <div className="form-note">
           <FaInfoCircle /> Fields marked with an asterisk (*) are required.
         </div>
@@ -585,7 +609,6 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
   // Render step 2: Business Details
   const renderBusinessDetailsStep = () => {
-    // derive coordinates for preview (no hooks here)
     const lat = parseFloat(formData.latitude);
     const lng = parseFloat(formData.longitude);
     const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
@@ -598,7 +621,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         <p className="step-description">
           Please provide more detailed information about your business.
         </p>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="category">
             <FaList /> Business Category*
@@ -619,7 +642,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </select>
           {errors.category && <div className="error-message-business">{errors.category}</div>}
         </div>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="description">
             <FaInfoCircle /> Business Description*
@@ -639,7 +662,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
           {errors.description && <div className="error-message-business">{errors.description}</div>}
         </div>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="address">
             <FaMapMarkerAlt /> Business Address*
@@ -728,7 +751,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
           <div className="form-text">Enter a valid "lat, lng" to update the map.</div>
         </div>
-        
+
         <div className="form-row">
           <div className="form-group-bsf">
             <label htmlFor="phone">
@@ -750,7 +773,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             />
             {errors.phone && <div className="error-message-business">{errors.phone}</div>}
           </div>
-          
+
           <div className="form-group-bsf">
             <label htmlFor="website">
               <FaGlobe /> Website (optional)
@@ -765,7 +788,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
             />
           </div>
         </div>
-        
+
         <div className="form-group-bsf">
           <label htmlFor="openingHours">
             <FaClock /> Opening Hours (optional)
@@ -783,7 +806,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     );
   };
 
-  // Render step 3: Media Upload - Improved version
+  // Render step 3: Media Upload
   const renderMediaUploadStep = () => {
     return (
       <div className="form-step">
@@ -791,7 +814,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
         <p className="step-description">
           Please upload images to showcase your business and yourself as the owner.
         </p>
-        
+
         <div className="form-group-bsf upload-group">
           <label htmlFor="businessImage">
             <FaImage /> Business Image*
@@ -827,7 +850,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
           {errors.businessImage && <div className="error-message-business">{errors.businessImage}</div>}
         </div>
-        
+
         <div className="form-group-bsf upload-group">
           <label htmlFor="ownerAvatar">
             <FaUser /> Owner Profile Picture*
@@ -863,7 +886,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           </div>
           {errors.ownerAvatar && <div className="error-message-business">{errors.ownerAvatar}</div>}
         </div>
-        
+
         <div className="form-note">
           <FaInfoCircle /> Supported file formats: JPG, PNG, GIF. Maximum size: 5MB per image.
         </div>
@@ -871,7 +894,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     );
   };
 
-  // Render step 4: Review and Submit with improved image section
+  // Render step 4: Review and Submit with image section
   const renderReviewStep = () => {
     const priority = calculatePriority();
     const lat = parseFloat(formData.latitude);
@@ -1082,27 +1105,27 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
     return (
       <div className="form-navigation">
         {currentStep > 1 && (
-          <button 
-            type="button" 
-            className="prev-btn" 
+          <button
+            type="button"
+            className="prev-btn"
             onClick={handlePrevStep}
             disabled={submitting}
           >
             <FaArrowLeft /> Previous
           </button>
         )}
-        
+
         {currentStep < totalSteps ? (
-          <button 
-            type="button" 
-            className="next-btn" 
+          <button
+            type="button"
+            className="next-btn"
             onClick={handleNextStep}
           >
             Next <FaArrowRight />
           </button>
         ) : (
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="submit-btn"
             disabled={submitting}
           >
@@ -1126,13 +1149,13 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               &times;
             </button>
           </div>
-          
+
           {submitSuccess ? (
             renderSuccessMessage()
           ) : (
             <>
               {renderProgressBar()}
-              
+
               <form className="business-submission-form" onSubmit={handleSubmit}>
                 {renderFormStep()}
                 {renderFormNavigation()}
