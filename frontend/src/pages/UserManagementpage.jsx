@@ -12,7 +12,6 @@ function UserManagementPage() {
   const usersPerPage = 5;
 
   const [allUsers, setAllUsers] = useState([]);
-  const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [showEditUserForm, setShowEditUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
