@@ -4,53 +4,98 @@ import {
   FaBell,
   FaEnvelope,
   FaDownload,
-  FaUpload,
-  FaTimes,
+  FaPlus,
+  FaMinus,
+  FaExclamationTriangle,
+  FaSave,
 } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ManageLocation.css";
 import ky from "ky";
+import { useMap } from "react-leaflet";
 import { useAuth } from "../context/AuthProvider";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { useMapEvents } from "react-leaflet";
 
-const MapPreview = ({ latitude, longitude }) => (
-  <div
-    style={{
-      height: "200px",
-      borderRadius: "8px",
-      overflow: "hidden",
-      marginTop: "10px",
-    }}
-  >
-    <div style={{ marginBottom: "5px", fontSize: "14px", color: "#666" }}>
-      Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-    </div>
+const MapPreview = ({ latitude, longitude, onChange }) => {
+  const mapRef = useRef();
 
-    <MapContainer
-      key={`${latitude}-${longitude}`}
-      center={[latitude, longitude]}
-      zoom={14}
-      style={{ width: "100%", height: "100%" }}
-      scrollWheelZoom={false}
-      dragging={false}
-      doubleClickZoom={false}
-      zoomControl={false}
+  const MapEventsHandler = () => {
+    useMapEvents({
+      click: (e) => {
+        const { lat, lng } = e.latlng;
+        onChange(lat, lng);
+      },
+    });
+    return null;
+  };
+
+  const MapCenterUpdater = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      mapRef.current = map;
+    }, [map]);
+
+    useEffect(() => {
+      if (map) {
+        map.setView([latitude, longitude], map.getZoom());
+      }
+    }, [latitude, longitude, map]);
+
+    return null;
+  };
+
+  const handleMarkerDragEnd = (e) => {
+    const { lat, lng } = e.target.getLatLng();
+    onChange(lat, lng);
+  };
+
+  return (
+    <div
+      style={{
+        height: "200px",
+        borderRadius: "8px",
+        overflow: "hidden",
+        marginTop: "10px",
+      }}
     >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="© OpenStreetMap contributors"
-      />
-      <Marker position={[latitude, longitude]}>
-        <Popup>
-          Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
-        </Popup>
-      </Marker>
-    </MapContainer>
-  </div>
-);
+      <div style={{ marginBottom: "5px", fontSize: "14px", color: "#666" }}>
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </div>
+
+      <MapContainer
+        center={[latitude, longitude]}
+        zoom={14}
+        style={{ width: "100%", height: "100%" }}
+        scrollWheelZoom={true}
+        doubleClickZoom={true}
+        zoomControl={true}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© OpenStreetMap contributors"
+        />
+        <MapEventsHandler />
+        <MapCenterUpdater />
+        <Marker
+          position={[latitude, longitude]}
+          draggable={true}
+          eventHandlers={{
+            dragend: handleMarkerDragEnd,
+          }}
+        >
+          <Popup>
+            Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
+          </Popup>
+        </Marker>
+      </MapContainer>
+    </div>
+  );
+};
 
 const getTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -84,13 +129,123 @@ const getTimeAgo = (dateString) => {
   return "Just now";
 };
 
+// Confirmation Modal Component
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  type = "delete",
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="confirmation-modal-ml">
+        <div className="confirmation-header">
+          <FaExclamationTriangle className={`confirmation-icon ${type}-icon`} />
+          <h3>{title}</h3>
+        </div>
+        <div className="confirmation-body">
+          <p>{message}</p>
+        </div>
+        <div className="confirmation-actions">
+          <button className="cancel-confirm-btn" onClick={onClose}>
+            {cancelText || "Cancel"}
+          </button>
+          <button className={`confirm-btn ${type}-btn`} onClick={onConfirm}>
+            {confirmText || "Confirm"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Save Confirmation Modal Component
+const SaveConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  onCancel,
+  locationCount = 1,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="confirmation-modal-ml">
+        <div className="confirmation-header">
+          <FaSave className="confirmation-icon save-icon" />
+          <h3>Save Locations</h3>
+        </div>
+        <div className="confirmation-body">
+          <p>
+            {locationCount > 1
+              ? `Are you sure you want to save all ${locationCount} locations?`
+              : "Are you sure you want to save this location?"}
+          </p>
+        </div>
+        <div className="confirmation-actions">
+          <button className="cancel-confirm-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="confirm-btn save-btn" onClick={onConfirm}>
+            Save {locationCount > 1 ? `All (${locationCount})` : "Location"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Cancel Confirmation Modal Component
+const CancelConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  hasChanges,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="confirmation-modal-ml">
+        <div className="confirmation-header">
+          <FaExclamationTriangle className="confirmation-icon warning-icon" />
+          <h3>Unsaved Changes</h3>
+        </div>
+        <div className="confirmation-body">
+          <p>
+            {hasChanges
+              ? "You have unsaved changes. Are you sure you want to cancel? All changes will be lost."
+              : "Are you sure you want to cancel?"}
+          </p>
+        </div>
+        <div className="confirmation-actions">
+          <button className="cancel-confirm-btn" onClick={onClose}>
+            Continue Editing
+          </button>
+          <button className="confirm-btn cancel-btn" onClick={onConfirm}>
+            Yes, Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ManageLocation = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [locations, setLocations] = useState([]);
-  const [editingLocation, setEditingLocation] = useState(null);
+  const [editingLocations, setEditingLocations] = useState([]);
+  const [originalEditingLocations, setOriginalEditingLocations] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
   const { accessToken } = useAuth();
 
@@ -98,6 +253,33 @@ const ManageLocation = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
+  // Confirmation modal states
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    locationId: null,
+    locationName: "",
+  });
+  const [editModal, setEditModal] = useState({
+    isOpen: false,
+    location: null,
+  });
+  const [saveModal, setSaveModal] = useState({
+    isOpen: false,
+  });
+  const [cancelModal, setCancelModal] = useState({
+    isOpen: false,
+  });
+
+  const handleCoordinatesChange = (lat, lng) => {
+    setEditingLocation((prev) => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+  };
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -120,6 +302,7 @@ const ManageLocation = () => {
   };
 
   const categoryOptions = [
+    "Major Town",
     "Attraction",
     "Shopping & Leisure",
     "Food & Beverages",
@@ -137,7 +320,7 @@ const ManageLocation = () => {
       "Adventure Park",
       "Others",
     ],
-    "Shopping & Leisure": ["Test"],
+    "Shopping & Leisure": ["Mall"],
     "Food & Beverages": [
       "Restaurant",
       "Cafe",
@@ -146,7 +329,6 @@ const ManageLocation = () => {
       "Fine Dining",
       "Others",
     ],
-    Transportation: ["Test"],
     Accommodation: ["Hotel", "Resort", "Homestay", "Hostel", "Villa", "Others"],
     "Tour Guide": ["Test"],
   };
@@ -186,61 +368,251 @@ const ManageLocation = () => {
     return matchesSearchQuery && matchesStatusFilter && matchesDateRange;
   });
 
+  // Check if there are any changes in the form
+  const hasChanges = () => {
+    if (editingLocations.length !== originalEditingLocations.length) {
+      return true;
+    }
+
+    return editingLocations.some((location, index) => {
+      const originalLocation = originalEditingLocations[index];
+      if (!originalLocation) return true;
+
+      return (
+        location.category !== originalLocation.category ||
+        location.type !== originalLocation.type ||
+        location.division !== originalLocation.division ||
+        location.name !== originalLocation.name ||
+        location.status !== originalLocation.status ||
+        location.latitude !== originalLocation.latitude ||
+        location.longitude !== originalLocation.longitude ||
+        location.description !== originalLocation.description ||
+        location.url !== originalLocation.url
+      );
+    });
+  };
+
+  // Pagination logic
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredLocations.slice(indexOfFirstRow, indexOfLastRow);
+
+  const totalPages = Math.ceil(filteredLocations.length / rowsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   const handleOpenModalForNew = () => {
-    setEditingLocation({
-      _id: "temp-" + Date.now(),
+    const newLocation = {
+      _id: `temp-${Date.now()}-0`,
       category: "",
       type: "",
       division: "",
       name: "",
       status: "",
-      latitude: 0,
-      longitude: 0,
+      latitude: 1.560313,
+      longitude: 110.345285,
       description: "",
       url: "",
       image: null,
       updatedAt: "",
-    });
+    };
+    setEditingLocations([newLocation]);
+    setOriginalEditingLocations([newLocation]);
     setValidationErrors({});
-    setImageFile(null);
-    setImagePreview(null);
   };
 
-  const handleDelete = async (locationId) => {
+  const handleAddLocation = () => {
+    const newLocation = {
+      _id: `temp-${Date.now()}-${editingLocations.length}`,
+      category: "",
+      type: "",
+      division: "",
+      name: "",
+      status: "",
+      latitude: 1.560313,
+      longitude: 110.345285,
+      description: "",
+      url: "",
+      image: null,
+      updatedAt: "",
+    };
+    setEditingLocations([...editingLocations, newLocation]);
+  };
+
+  const handleRemoveLocation = (index) => {
+    if (editingLocations.length > 1) {
+      const updatedLocations = editingLocations.filter((_, i) => i !== index);
+      setEditingLocations(updatedLocations);
+
+      // Also remove validation errors for the removed location
+      const newErrors = { ...validationErrors };
+      Object.keys(newErrors).forEach((key) => {
+        if (key.startsWith(`locations[${index}]`)) {
+          delete newErrors[key];
+        }
+      });
+      setValidationErrors(newErrors);
+    }
+  };
+
+  const handleLocationChange = (index, updatedLocation) => {
+    const updatedLocations = [...editingLocations];
+    updatedLocations[index] = updatedLocation;
+    setEditingLocations(updatedLocations);
+  };
+
+  const handleSaveAllLocations = async () => {
+    try {
+      const savePromises = editingLocations.map(async (location) => {
+        // Create JSON object instead of FormData
+        const locationData = {
+          id: editingLocation._id,
+          category: editingLocation.category,
+          type: editingLocation.type,
+          division: editingLocation.division,
+          name: editingLocation.name,
+          status: editingLocation.status,
+          latitude: editingLocation.latitude,
+          longitude: editingLocation.longitude,
+          description: editingLocation.description,
+          url: editingLocation.url || "",
+          // Note: We're excluding image for now to test the basic update
+        };
+
+        console.log("Sending JSON data:", locationData);
+
+        const response = await ky
+          .post(
+            isNewLocation
+              ? "/api/locations/addLocation"
+              : "/api/locations/updateLocation",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json", // Important for JSON
+              },
+              json: locationData, // Use 'json' instead of 'body'
+            }
+          )
+          .json();
+      });
+
+      const results = await Promise.all(savePromises);
+      console.log("All locations saved successfully:", results);
+
+      // Check if all saves were successful
+      const allSuccessful = results.every((result) => result.success);
+
+      if (allSuccessful) {
+        closeModal();
+        // Refresh list after save
+        const refreshed = await ky.get("/api/locations").json();
+        setLocations(refreshed);
+        alert(`${editingLocations.length} location(s) saved successfully!`);
+      } else {
+        const failedCount = results.filter((result) => !result.success).length;
+        alert(`${failedCount} location(s) failed to save. Please try again.`);
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert(`Save failed: ${err.message}`);
+    }
+  };
+
+  // Delete confirmation handlers
+  const handleDeleteClick = (locationId, locationName) => {
+    setDeleteModal({
+      isOpen: true,
+      locationId,
+      locationName,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       await ky.post("/api/locations/removeLocation", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        json: { id: locationId },
+        json: { id: deleteModal.locationId },
       });
-      setLocations((prev) => prev.filter((loc) => loc._id !== locationId));
+      setLocations((prev) =>
+        prev.filter((loc) => loc._id !== deleteModal.locationId)
+      );
+      setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
     } catch (error) {
       console.error("Error deleting location:", error);
     }
   };
 
-  const handleEdit = (location) => {
-    setEditingLocation({ ...location });
-    setImagePreview(location.image || null);
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
+  };
+
+  // Edit confirmation handlers
+  const handleEditClick = (location) => {
+    setEditModal({
+      isOpen: true,
+      location,
+    });
+  };
+
+  const handleEditConfirm = () => {
+    setEditingLocation({ ...editModal.location });
+    setImagePreview(editModal.location.image || null);
+    setEditModal({ isOpen: false, location: null });
+  };
+
+  const handleEditCancel = () => {
+    setEditModal({ isOpen: false, location: null });
+  };
+
+  // Save confirmation handlers
+  const handleSaveClick = () => {
+    setSaveModal({ isOpen: true });
+  };
+
+  const handleSaveConfirm = () => {
+    setSaveModal({ isOpen: false });
+    handleSaveAllLocations();
+  };
+
+  const handleSaveCancel = () => {
+    setSaveModal({ isOpen: false });
+  };
+
+  // Cancel confirmation handlers
+  const handleCancelClick = () => {
+    setCancelModal({ isOpen: true });
+  };
+
+  const handleCancelConfirm = () => {
+    setCancelModal({ isOpen: false });
+    closeModal();
+  };
+
+  const handleCancelClose = () => {
+    setCancelModal({ isOpen: false });
   };
 
   const handleSaveEdit = async () => {
     try {
       const isNewLocation = editingLocation?._id?.startsWith("temp-");
 
-      const formData = new FormData();
-      formData.append("id", editingLocation._id);
-      formData.append("category", editingLocation.category);
-      formData.append("type", editingLocation.type);
-      formData.append("division", editingLocation.division);
-      formData.append("name", editingLocation.name);
-      formData.append("status", editingLocation.status);
-      formData.append("latitude", editingLocation.latitude);
-      formData.append("longitude", editingLocation.longitude);
-      formData.append("description", editingLocation.description);
-      formData.append("url", editingLocation.url);
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
+      // Create JSON object instead of FormData
+      const locationData = {
+        id: editingLocation._id,
+        category: editingLocation.category,
+        type: editingLocation.type,
+        division: editingLocation.division,
+        name: editingLocation.name,
+        status: editingLocation.status,
+        latitude: editingLocation.latitude,
+        longitude: editingLocation.longitude,
+        description: editingLocation.description,
+        url: editingLocation.url || "",
+        // Note: We're excluding image for now to test the basic update
+      };
+
+      console.log("Sending JSON data:", locationData);
 
       const response = await ky
         .post(
@@ -248,20 +620,40 @@ const ManageLocation = () => {
             ? "/api/locations/addLocation"
             : "/api/locations/updateLocation",
           {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            body: formData,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json", // Important for JSON
+            },
+            json: locationData, // Use 'json' instead of 'body'
           }
         )
         .json();
 
       console.log("Save success:", response);
-      closeModal();
 
-      // Refresh list after save
-      const refreshed = await ky.get("/api/locations").json();
-      setLocations(refreshed);
+      if (response.success) {
+        closeModal();
+        // Refresh list after save
+        const refreshed = await ky.get("/api/locations").json();
+        setLocations(refreshed);
+        alert("Location saved successfully!");
+      } else {
+        alert(`Save failed: ${response.message || "Unknown error"}`);
+      }
     } catch (err) {
       console.error("Save failed:", err);
+
+      if (err.response) {
+        try {
+          const errorBody = await err.response.json();
+          console.error("Error details:", errorBody);
+          alert(`Save failed: ${errorBody.message || "Server error"}`);
+        } catch (parseError) {
+          alert(`Save failed: ${err.message}`);
+        }
+      } else {
+        alert(`Save failed: ${err.message}`);
+      }
     }
   };
 
@@ -299,10 +691,9 @@ const ManageLocation = () => {
   };
 
   const closeModal = () => {
-    setEditingLocation(null);
+    setEditingLocations([]);
+    setOriginalEditingLocations([]);
     setValidationErrors({});
-    setImageFile(null);
-    setImagePreview(null);
   };
 
   const downloadCSV = () => {
@@ -474,7 +865,7 @@ const ManageLocation = () => {
             <div className="header-cell">Action</div>
           </div>
 
-          {filteredLocations.map((location) => (
+          {currentRows.map((location) => (
             <div key={location._id} className="MLtable-row">
               <div className="table-cell">{location._id}</div>
               <div className="table-cell">{location.name}</div>
@@ -494,13 +885,13 @@ const ManageLocation = () => {
               <div className="table-cell">
                 <button
                   className="edit-button"
-                  onClick={() => handleEdit(location)}
+                  onClick={() => handleEditClick(location)}
                 >
                   Edit
                 </button>
                 <button
                   className="delete-button"
-                  onClick={() => handleDelete(location._id)}
+                  onClick={() => handleDeleteClick(location._id, location.name)}
                 >
                   Delete
                 </button>
@@ -509,257 +900,383 @@ const ManageLocation = () => {
           ))}
         </div>
 
-        {/* Edit Modal */}
-        {editingLocation && (
+        {/* Pagination Controls */}
+        <div className="pagination">
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index}
+              onClick={() => paginate(index + 1)}
+              className={currentPage === index + 1 ? "active" : ""}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+
+        {/* Add Multiple Locations Modal */}
+        {editingLocations.length > 0 && (
           <div className="modal-overlay">
-            <div className="MLmodal-content">
-              <h3>
-                {editingLocation?._id?.startsWith("temp-")
-                  ? "Add New Location"
-                  : "Edit Location"}
-              </h3>
-
-              <label>Category *</label>
-              <select
-                name="category"
-                value={editingLocation.category}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    category: e.target.value,
-                    type: "",
-                  });
-                  clearValidationError("category");
-                }}
-                className={`form-select ${
-                  validationErrors.category ? "error-border" : ""
-                }`}
-              >
-                <option value="">Select a category</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              {validationErrors.category && (
-                <div className="error-message">{validationErrors.category}</div>
-              )}
-
-              <label>Type *</label>
-              <select
-                name="type"
-                value={editingLocation.type}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    type: e.target.value,
-                  });
-                  clearValidationError("type");
-                }}
-                className={`form-select ${
-                  validationErrors.type ? "error-border" : ""
-                }`}
-                disabled={!editingLocation.category}
-              >
-                <option value="">Select a type</option>
-                {getCurrentTypeOptions().map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-              {validationErrors.type && (
-                <div className="error-message">{validationErrors.type}</div>
-              )}
-
-              <label>Division *</label>
-              <input
-                name="division"
-                value={editingLocation.division}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    division: e.target.value,
-                  });
-                  clearValidationError("division");
-                }}
-                className={validationErrors.division ? "error-border" : ""}
-              />
-              {validationErrors.division && (
-                <div className="error-message">{validationErrors.division}</div>
-              )}
-
-              <label>Location Name *</label>
-              <input
-                name="name"
-                value={editingLocation.name}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    name: e.target.value,
-                  });
-                  clearValidationError("name");
-                }}
-                className={validationErrors.name ? "error-border" : ""}
-              />
-              {validationErrors.name && (
-                <div className="error-message">{validationErrors.name}</div>
-              )}
-
-              <label>Coordinates</label>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <input
-                  type="number"
-                  step="any"
-                  name="latitude"
-                  value={
-                    editingLocation.latitude === 0
-                      ? ""
-                      : editingLocation.latitude
-                  }
-                  onChange={(e) =>
-                    setEditingLocation({
-                      ...editingLocation,
-                      latitude: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="Latitude (e.g. 1.697763)"
-                />
-                <input
-                  type="number"
-                  step="any"
-                  name="longitude"
-                  value={
-                    editingLocation.longitude === 0
-                      ? ""
-                      : editingLocation.longitude
-                  }
-                  onChange={(e) =>
-                    setEditingLocation({
-                      ...editingLocation,
-                      longitude: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="Longitude (e.g. 110.407775)"
-                />
+            <div className="MLmodal-content multiple-locations-modal">
+              <div className="modal-header">
+                <h3>Add Multiple Locations</h3>
+                <p>You are adding {editingLocations.length} location(s)</p>
               </div>
 
-              <label>Description *</label>
-              <textarea
-                name="description"
-                value={editingLocation.description}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    description: e.target.value,
-                  });
-                  clearValidationError("description");
-                }}
-                className={validationErrors.description ? "error-border" : ""}
-              />
-              {validationErrors.description && (
-                <div className="error-message">
-                  {validationErrors.description}
-                </div>
-              )}
-
-              <label>Website URL</label>
-              <input
-                name="url"
-                value={editingLocation.url || ""}
-                onChange={(e) =>
-                  setEditingLocation({
-                    ...editingLocation,
-                    url: e.target.value,
-                  })
-                }
-              />
-
-              <label>Image</label>
-              <div className="image-upload-container">
-                <div className="image-upload-area">
-                  <input
-                    type="file"
-                    id="image-upload"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="image-file-input"
-                  />
-                  {imagePreview ? (
-                    <div className="image-preview-wrapper">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="image-preview"
-                      />
-                      <button
-                        type="button"
-                        className="remove-image-btn"
-                        onClick={removeImage}
-                      >
-                        <FaTimes />
-                      </button>
+              <div className="locations-form-container">
+                {editingLocations.map((location, index) => (
+                  <div key={location._id} className="location-form-section">
+                    <div className="location-form-header">
+                      <h4>Location #{index + 1}</h4>
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          className="remove-location-btn"
+                          onClick={() => handleRemoveLocation(index)}
+                        >
+                          <FaMinus /> Remove
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <label
-                      htmlFor="image-upload"
-                      className="image-upload-label"
-                    >
-                      <div className="image-upload-placeholder">
-                        <FaUpload className="upload-icon" />
-                        <span>
-                          {isUploading
-                            ? "Uploading..."
-                            : "Click to upload or drag and drop"}
-                        </span>
-                        <p className="image-upload-hint">PNG, JPG up to 5MB</p>
+
+                    <div className="form-grid">
+                      <div className="form-field">
+                        <label>Category *</label>
+                        <select
+                          name="category"
+                          value={location.category}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              category: e.target.value,
+                              type: "",
+                            });
+                            clearValidationError(
+                              `locations[${index}].category`
+                            );
+                          }}
+                          className={`form-select ${
+                            validationErrors[`locations[${index}].category`]
+                              ? "error-border"
+                              : ""
+                          }`}
+                        >
+                          <option value="">Select a category</option>
+                          {categoryOptions.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </select>
+                        {validationErrors[`locations[${index}].category`] && (
+                          <div className="error-message">
+                            {validationErrors[`locations[${index}].category`]}
+                          </div>
+                        )}
                       </div>
-                    </label>
-                  )}
-                </div>
+
+                      <div className="form-field">
+                        <label>Type *</label>
+                        <select
+                          name="type"
+                          value={location.type}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              type: e.target.value,
+                            });
+                            clearValidationError(`locations[${index}].type`);
+                          }}
+                          className={`form-select ${
+                            validationErrors[`locations[${index}].type`]
+                              ? "error-border"
+                              : ""
+                          }`}
+                          disabled={!location.category}
+                        >
+                          <option value="">
+                            {location.category
+                              ? "Select a type"
+                              : "*Please select a category first"}
+                          </option>
+                          {location.category &&
+                            (typeOptions[location.category] || []).map(
+                              (type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              )
+                            )}
+                        </select>
+                        {validationErrors[`locations[${index}].type`] && (
+                          <div className="error-message">
+                            {validationErrors[`locations[${index}].type`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-field">
+                        <label>Division *</label>
+                        <input
+                          name="division"
+                          value={location.division}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              division: e.target.value,
+                            });
+                            clearValidationError(
+                              `locations[${index}].division`
+                            );
+                          }}
+                          className={`modal-input ${
+                            validationErrors[`locations[${index}].division`]
+                              ? "error-border"
+                              : ""
+                          }`}
+                        />
+                        {validationErrors[`locations[${index}].division`] && (
+                          <div className="error-message">
+                            {validationErrors[`locations[${index}].division`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-field">
+                        <label>Location Name *</label>
+                        <input
+                          name="name"
+                          value={location.name}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              name: e.target.value,
+                            });
+                            clearValidationError(`locations[${index}].name`);
+                          }}
+                          className={`modal-input ${
+                            validationErrors[`locations[${index}].name`]
+                              ? "error-border"
+                              : ""
+                          }`}
+                        />
+                        {validationErrors[`locations[${index}].name`] && (
+                          <div className="error-message">
+                            {validationErrors[`locations[${index}].name`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-field full-width">
+                        <label>Description *</label>
+                        <textarea
+                          name="description"
+                          value={location.description}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              description: e.target.value,
+                            });
+                            clearValidationError(
+                              `locations[${index}].description`
+                            );
+                          }}
+                          className={
+                            validationErrors[`locations[${index}].description`]
+                              ? "error-border"
+                              : ""
+                          }
+                        />
+                        {validationErrors[
+                          `locations[${index}].description`
+                        ] && (
+                          <div className="error-message">
+                            {
+                              validationErrors[
+                                `locations[${index}].description`
+                              ]
+                            }
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-field full-width">
+                        <label>Website URL</label>
+                        <input
+                          name="url"
+                          value={location.url || ""}
+                          onChange={(e) =>
+                            handleLocationChange(index, {
+                              ...location,
+                              url: e.target.value,
+                            })
+                          }
+                          className="modal-input"
+                        />
+                      </div>
+
+                      <div className="form-field full-width">
+                        <label>Status *</label>
+                        <select
+                          className={`status-select ${
+                            validationErrors[`locations[${index}].status`]
+                              ? "error-border"
+                              : ""
+                          }`}
+                          value={location.status}
+                          onChange={(e) => {
+                            handleLocationChange(index, {
+                              ...location,
+                              status: e.target.value,
+                            });
+                            clearValidationError(`locations[${index}].status`);
+                          }}
+                        >
+                          <option value="">Select status</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                        {validationErrors[`locations[${index}].status`] && (
+                          <div className="error-message">
+                            {validationErrors[`locations[${index}].status`]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-field">
+                        <label>Latitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          name="latitude"
+                          value={
+                            location.latitude === 0 ? "" : location.latitude
+                          }
+                          onChange={(e) =>
+                            handleLocationChange(index, {
+                              ...location,
+                              latitude: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          placeholder="Latitude (e.g. 1.697763)"
+                          className="modal-input"
+                        />
+                      </div>
+
+                      <div className="form-field">
+                        <label>Longitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          name="longitude"
+                          value={
+                            location.longitude === 0 ? "" : location.longitude
+                          }
+                          onChange={(e) =>
+                            handleLocationChange(index, {
+                              ...location,
+                              longitude: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          placeholder="Longitude (e.g. 110.407775)"
+                          className="modal-input"
+                        />
+                      </div>
+
+                      <div className="form-field full-width">
+                        <label>Map Preview</label>
+                        <MapPreview
+                          latitude={location.latitude}
+                          longitude={location.longitude}
+                          onChange={(lat, lng) =>
+                            handleLocationChange(index, {
+                              ...location,
+                              latitude: lat,
+                              longitude: lng,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {index === editingLocations.length - 1 && (
+                      <div className="add-another-section">
+                        <button
+                          type="button"
+                          className="add-another-btn"
+                          onClick={handleAddLocation}
+                        >
+                          <FaPlus /> Add Another Location
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-
-              <label>Status *</label>
-              <select
-                className={`status-select ${
-                  validationErrors.status ? "error-border" : ""
-                }`}
-                value={editingLocation.status}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    status: e.target.value,
-                  });
-                  clearValidationError("status");
-                }}
-              >
-                <option value="">Select status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-              {validationErrors.status && (
-                <div className="error-message">{validationErrors.status}</div>
-              )}
-
-              <label>Map Preview</label>
-              <MapPreview
-                latitude={editingLocation.latitude}
-                longitude={editingLocation.longitude}
-              />
 
               <div className="modal-actions">
-                <button className="cancel-button" onClick={closeModal}>
+                <button className="cancel-button" onClick={handleCancelClick}>
                   Cancel
                 </button>
-                <button className="save-button" onClick={handleSaveEdit}>
-                  Save Location
+                <button className="save-button" onClick={handleSaveClick}>
+                  Save All Locations ({editingLocations.length})
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={deleteModal.isOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Location"
+          message={`Are you sure you want to delete "${deleteModal.locationName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="delete"
+        />
+
+        {/* Edit Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={editModal.isOpen}
+          onClose={handleEditCancel}
+          onConfirm={handleEditConfirm}
+          title="Edit Location"
+          message={`You are about to edit "${editModal.location?.name}". Any unsaved changes in the current form will be lost. Do you want to proceed?`}
+          confirmText="Continue to Edit"
+          cancelText="Cancel"
+          type="edit"
+        />
+
+        {/* Save Confirmation Modal */}
+        <SaveConfirmationModal
+          isOpen={saveModal.isOpen}
+          onClose={handleSaveCancel}
+          onConfirm={handleSaveConfirm}
+          onCancel={handleSaveCancel}
+          locationCount={editingLocations.length}
+        />
+
+        {/* Cancel Confirmation Modal */}
+        <CancelConfirmationModal
+          isOpen={cancelModal.isOpen}
+          onClose={handleCancelClose}
+          onConfirm={handleCancelConfirm}
+          hasChanges={hasChanges()}
+        />
       </div>
     </div>
   );
