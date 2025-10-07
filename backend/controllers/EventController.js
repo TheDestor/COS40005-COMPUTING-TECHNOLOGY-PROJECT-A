@@ -56,7 +56,6 @@ export const addEvent = async (req, res) => {
         const blob = await put(imageFile.originalname, imageFile.buffer, {
             access: 'public',
             addRandomSuffix: true,
-            token: process.env.BLOB_READ_WRITE_TOKEN
         });
 
         let parsedTargetAudience;
