@@ -4,10 +4,12 @@ import {
   FaBell,
   FaEnvelope,
   FaDownload,
-  FaPlus,
-  FaMinus,
+  FaUpload,
+  FaTimes,
   FaExclamationTriangle,
   FaSave,
+  FaPlus,
+  FaMinus,
 } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
@@ -244,6 +246,7 @@ const ManageLocation = () => {
   const [endDate, setEndDate] = useState(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [locations, setLocations] = useState([]);
+  const [editingLocation, setEditingLocation] = useState(null);
   const [editingLocations, setEditingLocations] = useState([]);
   const [originalEditingLocations, setOriginalEditingLocations] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
@@ -466,20 +469,21 @@ const ManageLocation = () => {
       const savePromises = editingLocations.map(async (location) => {
         // Create JSON object instead of FormData
         const locationData = {
-          id: editingLocation._id,
-          category: editingLocation.category,
-          type: editingLocation.type,
-          division: editingLocation.division,
-          name: editingLocation.name,
-          status: editingLocation.status,
-          latitude: editingLocation.latitude,
-          longitude: editingLocation.longitude,
-          description: editingLocation.description,
-          url: editingLocation.url || "",
-          // Note: We're excluding image for now to test the basic update
+          id: location._id,
+          category: location.category,
+          type: location.type,
+          division: location.division,
+          name: location.name,
+          status: location.status,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          description: location.description,
+          url: location.url || "",
         };
 
         console.log("Sending JSON data:", locationData);
+
+        const isNewLocation = location._id.startsWith("temp-");
 
         const response = await ky
           .post(
@@ -489,12 +493,14 @@ const ManageLocation = () => {
             {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json", // Important for JSON
+                "Content-Type": "application/json",
               },
-              json: locationData, // Use 'json' instead of 'body'
+              json: locationData,
             }
           )
           .json();
+
+        return response;
       });
 
       const results = await Promise.all(savePromises);
@@ -609,7 +615,6 @@ const ManageLocation = () => {
         longitude: editingLocation.longitude,
         description: editingLocation.description,
         url: editingLocation.url || "",
-        // Note: We're excluding image for now to test the basic update
       };
 
       console.log("Sending JSON data:", locationData);
@@ -622,9 +627,9 @@ const ManageLocation = () => {
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json", // Important for JSON
+              "Content-Type": "application/json",
             },
-            json: locationData, // Use 'json' instead of 'body'
+            json: locationData,
           }
         )
         .json();
@@ -691,9 +696,12 @@ const ManageLocation = () => {
   };
 
   const closeModal = () => {
+    setEditingLocation(null);
     setEditingLocations([]);
     setOriginalEditingLocations([]);
     setValidationErrors({});
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const downloadCSV = () => {
@@ -925,6 +933,273 @@ const ManageLocation = () => {
           </button>
         </div>
 
+        {/* Edit Modal (Single Location) */}
+        {editingLocation && (
+          <div className="modal-overlay">
+            <div className="MLmodal-content">
+              <h3>
+                {editingLocation?._id?.startsWith("temp-")
+                  ? "Add New Location"
+                  : "Edit Location"}
+              </h3>
+
+              <label>Category *</label>
+              <select
+                name="category"
+                value={editingLocation.category}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    category: e.target.value,
+                    type: "",
+                  });
+                  clearValidationError("category");
+                }}
+                className={`form-select ${
+                  validationErrors.category ? "error-border" : ""
+                }`}
+              >
+                <option value="">Select a category</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              {validationErrors.category && (
+                <div className="error-message">{validationErrors.category}</div>
+              )}
+
+              <label>Type *</label>
+              <select
+                name="type"
+                value={editingLocation.type}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    type: e.target.value,
+                  });
+                  clearValidationError("type");
+                }}
+                className={`form-select ${
+                  validationErrors.type ? "error-border" : ""
+                }`}
+                disabled={!editingLocation.category}
+              >
+                <option
+                  value=""
+                  className={editingLocation.category ? "" : "red-text-option"}
+                >
+                  {editingLocation.category
+                    ? "Select a type"
+                    : "*Please select a category first"}
+                </option>
+                {editingLocation.category &&
+                  getCurrentTypeOptions().map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+              </select>
+              {validationErrors.type && (
+                <div className="error-message">{validationErrors.type}</div>
+              )}
+
+              <label>Division *</label>
+              <input
+                name="division"
+                value={editingLocation.division}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    division: e.target.value,
+                  });
+                  clearValidationError("division");
+                }}
+                className={`modal-input ${
+                  validationErrors.division ? "error-border" : ""
+                }`}
+              />
+              {validationErrors.division && (
+                <div className="error-message">{validationErrors.division}</div>
+              )}
+
+              <label>Location Name *</label>
+              <input
+                name="name"
+                value={editingLocation.name}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    name: e.target.value,
+                  });
+                  clearValidationError("name");
+                }}
+                className={`modal-input ${
+                  validationErrors.name ? "error-border" : ""
+                }`}
+              />
+              {validationErrors.name && (
+                <div className="error-message">{validationErrors.name}</div>
+              )}
+
+              <label>Description *</label>
+              <textarea
+                name="description"
+                value={editingLocation.description}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    description: e.target.value,
+                  });
+                  clearValidationError("description");
+                }}
+                className={validationErrors.description ? "error-border" : ""}
+              />
+              {validationErrors.description && (
+                <div className="error-message">
+                  {validationErrors.description}
+                </div>
+              )}
+
+              <label>Website URL</label>
+              <input
+                name="url"
+                value={editingLocation.url || ""}
+                onChange={(e) =>
+                  setEditingLocation({
+                    ...editingLocation,
+                    url: e.target.value,
+                  })
+                }
+                className="modal-input"
+              />
+
+              <label>Image</label>
+              <div className="image-upload-container">
+                <div className="image-upload-area">
+                  <input
+                    type="file"
+                    id="image-upload"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="image-file-input"
+                  />
+                  {imagePreview ? (
+                    <div className="image-preview-wrapper">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="image-preview"
+                      />
+                      <button
+                        type="button"
+                        className="remove-image-btn"
+                        onClick={removeImage}
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="image-upload"
+                      className="image-upload-label"
+                    >
+                      <div className="image-upload-placeholder">
+                        <FaUpload className="upload-icon" />
+                        <span>
+                          {isUploading
+                            ? "Uploading..."
+                            : "Click to upload or drag and drop"}
+                        </span>
+                        <p className="image-upload-hint">PNG, JPG up to 5MB</p>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <label>Status *</label>
+              <select
+                className={`status-select ${
+                  validationErrors.status ? "error-border" : ""
+                }`}
+                value={editingLocation.status}
+                onChange={(e) => {
+                  setEditingLocation({
+                    ...editingLocation,
+                    status: e.target.value,
+                  });
+                  clearValidationError("status");
+                }}
+              >
+                <option value="">Select status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              {validationErrors.status && (
+                <div className="error-message">{validationErrors.status}</div>
+              )}
+
+              <label>Coordinates</label>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input
+                  type="number"
+                  step="any"
+                  name="latitude"
+                  value={
+                    editingLocation.latitude === 0
+                      ? ""
+                      : editingLocation.latitude
+                  }
+                  onChange={(e) =>
+                    setEditingLocation({
+                      ...editingLocation,
+                      latitude: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="Latitude (e.g. 1.697763)"
+                  className="modal-input"
+                />
+                <input
+                  type="number"
+                  step="any"
+                  name="longitude"
+                  value={
+                    editingLocation.longitude === 0
+                      ? ""
+                      : editingLocation.longitude
+                  }
+                  onChange={(e) =>
+                    setEditingLocation({
+                      ...editingLocation,
+                      longitude: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="Longitude (e.g. 110.407775)"
+                  className="modal-input"
+                />
+              </div>
+              <label>Map Preview</label>
+              <MapPreview
+                latitude={editingLocation.latitude}
+                longitude={editingLocation.longitude}
+                onChange={handleCoordinatesChange}
+              />
+
+              <div className="modal-actions">
+                <button className="cancel-button" onClick={handleCancelClick}>
+                  Cancel
+                </button>
+                <button className="save-button" onClick={handleSaveEdit}>
+                  Save Location
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Add Multiple Locations Modal */}
         {editingLocations.length > 0 && (
           <div className="modal-overlay">
@@ -1005,19 +1280,22 @@ const ManageLocation = () => {
                           }`}
                           disabled={!location.category}
                         >
-                          <option value="">
+                          <option
+                            value=""
+                            className={
+                              location.category ? "" : "red-text-option"
+                            }
+                          >
                             {location.category
                               ? "Select a type"
                               : "*Please select a category first"}
                           </option>
                           {location.category &&
-                            (typeOptions[location.category] || []).map(
-                              (type) => (
-                                <option key={type} value={type}>
-                                  {type}
-                                </option>
-                              )
-                            )}
+                            typeOptions[location.category]?.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
                         </select>
                         {validationErrors[`locations[${index}].type`] && (
                           <div className="error-message">
@@ -1126,7 +1404,7 @@ const ManageLocation = () => {
                         />
                       </div>
 
-                      <div className="form-field full-width">
+                      <div className="form-field">
                         <label>Status *</label>
                         <select
                           className={`status-select ${
@@ -1169,7 +1447,7 @@ const ManageLocation = () => {
                               latitude: parseFloat(e.target.value) || 0,
                             })
                           }
-                          placeholder="Latitude (e.g. 1.697763)"
+                          placeholder="Latitude"
                           className="modal-input"
                         />
                       </div>
@@ -1189,55 +1467,52 @@ const ManageLocation = () => {
                               longitude: parseFloat(e.target.value) || 0,
                             })
                           }
-                          placeholder="Longitude (e.g. 110.407775)"
+                          placeholder="Longitude"
                           className="modal-input"
-                        />
-                      </div>
-
-                      <div className="form-field full-width">
-                        <label>Map Preview</label>
-                        <MapPreview
-                          latitude={location.latitude}
-                          longitude={location.longitude}
-                          onChange={(lat, lng) =>
-                            handleLocationChange(index, {
-                              ...location,
-                              latitude: lat,
-                              longitude: lng,
-                            })
-                          }
                         />
                       </div>
                     </div>
 
-                    {index === editingLocations.length - 1 && (
-                      <div className="add-another-section">
-                        <button
-                          type="button"
-                          className="add-another-btn"
-                          onClick={handleAddLocation}
-                        >
-                          <FaPlus /> Add Another Location
-                        </button>
-                      </div>
-                    )}
+                    <div className="map-preview-section">
+                      <label>Map Preview</label>
+                      <MapPreview
+                        latitude={location.latitude}
+                        longitude={location.longitude}
+                        onChange={(lat, lng) =>
+                          handleLocationChange(index, {
+                            ...location,
+                            latitude: lat,
+                            longitude: lng,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="modal-actions">
-                <button className="cancel-button" onClick={handleCancelClick}>
-                  Cancel
+              <div className="multiple-locations-actions">
+                <button
+                  type="button"
+                  className="add-another-btn"
+                  onClick={handleAddLocation}
+                >
+                  <FaPlus /> Add Another Location
                 </button>
-                <button className="save-button" onClick={handleSaveClick}>
-                  Save All Locations ({editingLocations.length})
-                </button>
+                <div className="modal-actions">
+                  <button className="cancel-button" onClick={handleCancelClick}>
+                    Cancel
+                  </button>
+                  <button className="save-button" onClick={handleSaveClick}>
+                    Save All Locations ({editingLocations.length})
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Confirmation Modals */}
         <ConfirmationModal
           isOpen={deleteModal.isOpen}
           onClose={handleDeleteCancel}
@@ -1249,19 +1524,17 @@ const ManageLocation = () => {
           type="delete"
         />
 
-        {/* Edit Confirmation Modal */}
         <ConfirmationModal
           isOpen={editModal.isOpen}
           onClose={handleEditCancel}
           onConfirm={handleEditConfirm}
           title="Edit Location"
-          message={`You are about to edit "${editModal.location?.name}". Any unsaved changes in the current form will be lost. Do you want to proceed?`}
-          confirmText="Continue to Edit"
+          message={`Are you sure you want to edit "${editModal.location?.name}"?`}
+          confirmText="Edit"
           cancelText="Cancel"
           type="edit"
         />
 
-        {/* Save Confirmation Modal */}
         <SaveConfirmationModal
           isOpen={saveModal.isOpen}
           onClose={handleSaveCancel}
@@ -1270,7 +1543,6 @@ const ManageLocation = () => {
           locationCount={editingLocations.length}
         />
 
-        {/* Cancel Confirmation Modal */}
         <CancelConfirmationModal
           isOpen={cancelModal.isOpen}
           onClose={handleCancelClose}
