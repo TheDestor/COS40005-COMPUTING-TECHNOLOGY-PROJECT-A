@@ -900,7 +900,7 @@ transition: all 0.5s ease;
   .content-section2 { padding: 16px; gap: 16px; }
   .content-section2 h2 { font-size: 20px !important; }
 
-  .user-stats-container { gap: 10px; }
+  .user-stats-container { gap: 10px; flex-direction: column;}
   .stat-card { padding: 14px; gap: 10px; }
   .stat-content h3 { font-size: 12px; }
   .stat-number { font-size: 20px; }

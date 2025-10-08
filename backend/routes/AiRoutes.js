@@ -23,11 +23,13 @@ router.post('/chat', async (req, res) => {
 		}
 
 		const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+		// const siteUrl = process.env.SITE_PRODUCTION_URL ||process.env.SITE_URL || req.headers.origin || 'http://localhost:5050';
 		const siteUrl = process.env.SITE_URL || req.headers.origin || 'http://localhost:5050';
 		const siteTitle = process.env.SITE_TITLE || 'Sarawak Explorer';
 
 		const payload = {
 			model: model || 'deepseek/deepseek-chat-v3.1:free',
+			// model: model || 'deepseek/deepseek-r1-0528:free',
 			messages: [
 				{ role: 'system', content: SYSTEM_PROMPT },
 				...messages.map(m => ({ role: m.role, content: m.content }))

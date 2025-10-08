@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { userModel } from '../models/UserModel.js';
 import { PageViewCounter } from '../models/PageViewCounter.js';
+import { UniqueVisitor } from '../models/UniqueVisitor.js';
 
 export const getAdminMetrics = async (req, res) => {
   try {
@@ -16,8 +17,15 @@ export const getAdminMetrics = async (req, res) => {
     const rolesBreakdown = {};
     await Promise.all(roles.map(async (r) => { rolesBreakdown[r] = await userModel.countDocuments({ role: r }); }));
 
-    // Session-scoped visitors (existing)
-    // Persistent visitors (database-backed)
+    // Today window (server-local day boundaries)
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const [newUsersToday, uniqueVisitorsToday] = await Promise.all([
+      userModel.countDocuments({ createdAt: { $gte: startOfDay } }),
+      UniqueVisitor.countDocuments({ createdAt: { $gte: startOfDay } })
+    ]);
+
+    // Persistent visitors (database-backed total)
     const uvcPersistent = await PageViewCounter.findOne({ key: 'unique_visitors' });
     const totalUniqueVisitors = uvcPersistent?.totalCount ?? 0;
     
@@ -31,7 +39,7 @@ export const getAdminMetrics = async (req, res) => {
     const storageSize = Number(stats?.storageSize || dataSize || 1);
     const dbStoragePercent = storageSize > 0 ? Math.min(100, Math.max(0, (dataSize / storageSize) * 100)) : 0;
 
-    // Add: per-collection stats and total bytes
+    // Per-collection stats and total bytes
     const collections = await db.listCollections().toArray();
     const collectionStats = [];
     for (const c of collections) {
@@ -56,11 +64,14 @@ export const getAdminMetrics = async (req, res) => {
         totalUsers,
         userStatusBreakdown: { active, inactive, suspended },
         rolesBreakdown,
+        // New KPIs
+        newUsersToday,
+        uniqueVisitorsToday,
         totalUniqueVisitors,
         totalPageViews,
         dbStoragePercent,
         recaptchaBlocked,
-        // Add: database stats for DataManagementPage
+        // Database stats for DataManagementPage
         totalDataSizeBytes,
         collections: collectionStats,
       }

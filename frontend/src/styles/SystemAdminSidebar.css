@@ -20,6 +20,14 @@
     margin-left: 20px;
 }
 
+.table-header-admin h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    color: #333;
+}
+
 .sidebar-icon2 {
     font-size: 1.2rem; 
     min-width: 20px; 
@@ -163,7 +171,7 @@
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 30px;
+    /* margin-bottom: 30px; */
     color: #333;
 }
 
@@ -197,7 +205,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
   /* padding: 20px; */
-  margin-top: 24px;
+  /* margin-top: 24px; */
 }
 
 /* Top colored bar */
@@ -222,8 +230,8 @@
 
 /* Icon Container - Background color with 0.5 opacity */
 .summary-icon-wrapper {
-    width: 56px; /* Adjusted icon wrapper size */
-    height: 56px; /* Adjusted icon wrapper size */
+    width: 40px; /* Adjusted icon wrapper size */
+    height: 40px; /* Adjusted icon wrapper size */
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -247,7 +255,7 @@
 
 /* Actual icon styling - Color matches card theme, adjusted size */
 .summary-icon {
-    font-size: 2.2rem; /* Adjusted icon size, proportional to wrapper */
+    font-size: 1.75rem; /* Adjusted icon size, proportional to wrapper */
     transition: color 0.3s ease;
     display: flex;
 }
@@ -263,20 +271,11 @@
 /* Title text - Adjusted font size */
 .summary-box h3 {
     display: block;
-    font-size: 14px; /* Adjusted font size for title */
+    font-size: 1.25rem; /* Adjusted font size for title */
     font-weight: 500;
-    color: #555;
-    margin: 0 0 5px 0;
-    padding: 0;
-}
-
-/* Value text (the large number) - Adjusted font size */
-.summary-box .value {
-    font-size: 24px; /* Adjusted font size for value */
-    font-weight: 700;
     color: #333;
-    margin: 0 0 10px 0;
-    transition: color 0.3s ease; /* Added transition for smooth color change */
+    /* margin: 0 0 5px 0; */
+    padding: 0;
 }
 
 /* Value color on hover - matches card theme */
@@ -347,7 +346,7 @@
     background-color: #ffffff;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 30px;
+    /* margin-bottom: 30px; */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     animation: fadeInUp 0.6s ease forwards;
     opacity: 0;
@@ -364,17 +363,20 @@
     margin-bottom: 15px;
 }
 
-/* Align h3 and icon in the table-header */
-.table-header-admin h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 18px;
-    color: #333;
+/* Summary header: place icon and h3 on the same line */
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Remove bottom spacing when icon sits in header */
+.summary-header .summary-icon-wrapper {
+  margin-bottom: 0;
 }
 
 .header-icon-admin {
-    font-size: 18px;
+    font-size: 22px;
     color: #007bff;
     display: flex;
     align-items: center;
@@ -529,30 +531,27 @@
 }
 
 
-/* Make sure SVG is responsive and properly sized */
-.chart-container svg {
-    width: 100% !important;
-    height: 100%;
-    display: block;
-    overflow: visible;
-    max-width: 100%; 
+/* Chart section visibility + layout overrides */
+.table-section {
+  animation: none !important;   /* avoid stuck opacity if keyframes missing */
+  opacity: 1 !important;        /* ensure section is visible */
+  overflow: visible;             /* prevent clipping of chart */
+  position: relative;            /* establish containing block */
 }
 
-/* Chart container adjustments to perfectly match .table-section width */
 .chart-container {
-    /* width: 100%; */
-    min-width: 600px;
-    margin: 0 auto;
-    /* max-width: 1000px; */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-    overflow-x: auto;
-    box-sizing: border-box;
+  min-height: 350px;             /* guarantee room for the SVG */
+  position: relative;
+  isolation: isolate;            /* keep tooltips above SVG when needed */
+  z-index: 0;
 }
 
-/* Improve tooltip positioning */
+.chart-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .chart-tooltip {
     position: absolute;
     z-index: 100;
@@ -626,7 +625,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 20px;
   color: #333;
 }
 
@@ -791,4 +790,895 @@
   background: #5aa8ff; /* subtle blue */
   border-radius: 2px; /* soften edge */
   pointer-events: none;
+}
+
+/* Summary notes: consistent padding, radius, spacing, font size, alignment */
+.summary-note {
+  display: flex;
+  font-size: 1rem; /* smaller font size */
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  padding: 4px 8px; /* 2px vertical, 4px horizontal */
+  border-radius: 8px; /* 3px radius */
+  margin-top: 6px; /* spacing from primary text */
+  color: #1d9a3a;            /* match green accent */
+  border-color: #1d9a3a;     /* subtle border in same green */
+  border-width: 1px;
+  border-style: solid;
+  background-color: #e9f7ef; /* soft green background */
+  line-height: 1.2;
+  margin: 8px 10px 0 0;   /* space before the note */
+  vertical-align: middle; 
+}
+
+/* User and page views secondary text (mint green pill) */
+.note-green {
+  background-color: #b9ddbd;
+  border-color: #1d9a3a;
+  border-width: 1px;
+  border-style: solid;
+  background-color: #e6fbf7;    /* match summary-note background */
+  border-color: #2bb8a9;        /* match border */
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Prominent value with adjacent note */
+.summary-box .value {
+  display: inline-block;  /* keep value and note on one line */
+  font-size: 2rem;        /* significantly larger value */
+  line-height: 1.2;
+  margin: 8px 10px 0 0;   /* space before the note */
+  vertical-align: middle; 
+  color: #333;
+}
+
+.summary-box .backup-value {
+  display: inline-block;  /* keep value and note on one line */
+  font-size: 1.5rem;        /* significantly larger value */
+  line-height: 1.2;
+  margin: 0;   /* space before the note */
+  vertical-align: middle; 
+  color: #333;
+  font-weight: bold;
+}
+
+.summary-box .summary-note {
+  display: inline-block;  /* sit next to the value */
+  margin-top: 0;          /* align with value baseline */
+  vertical-align: middle;
+}
+
+/* Keep value and note on one line by default */
+.summary-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Backup card: stack note below the value */
+.summary-box.backup-card .summary-value-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Mint note styling for consistency */
+.summary-note,
+.summary-note.note-green,
+.note-green {
+  background-color: #e6fbf7;    /* soft mint */
+  border: 1px solid #2bb8a9;    /* teal border */
+  color: #2bb8a9;               /* teal text */
+  border-radius: 12px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+
+.summary-box .summary-note {
+  display: inline-block;  /* sit next to the value */
+  margin-top: 0;          /* align with value baseline */
+  vertical-align: middle;
+}
+
+/* Keep value and summary-note on one line */
+.summary-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.summary-value-row .value {
+  white-space: nowrap;
+  margin: 0; /* prevent pushing note to next line */
+}
+
+.summary-value-row .summary-note {
+  white-space: nowrap;
+  margin-top: 0; /* override default top margin when inline with value */
+}
+
+/* Optional: allow note to shrink before wrapping */
+.summary-value-row .summary-note {
+  flex: 0 1 auto;
+}
+
+/* Backup card: stack note below the value */
+.summary-box.backup-card .summary-value-row {
+  flex-direction: column;      /* stack value and note */
+  align-items: flex-start;     /* left-align within card */
+  gap: 6px;                    /* spacing between value and note */
+}
+
+.summary-box.backup-card .value {
+  margin: 0;                   /* remove inline spacing */
+}
+
+.summary-box {
+  flex: 1 1 280px;   /* grow/shrink, base ~280px */
+  min-width: 240px;  /* ensure readable minimum */
+}
+
+/* Backup note: permit wrapping when space is limited */
+.summary-box.backup-card .summary-note {
+  max-width: 100%;
+  white-space: normal;       /* allow lines to wrap */
+  overflow-wrap: anywhere;   /* wrap long words/URLs */
+  word-break: break-word;    /* break long tokens */
+}
+
+.summary-box:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.summary-box:active {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-section-sa {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  /* padding: 20px; */
+  /* margin-top: 24px; */
+}
+
+/* Top colored bar */
+.summary-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    z-index: 1;
+    transition: height 0.3s ease;
+}
+
+/* Specific colors for the top bar based on card theme */
+.summary-box.blue-theme::before { background-color: #3D90D7; }
+.summary-box.purple-theme::before { background-color: #3A59D1; }
+.summary-box.teal-theme::before { background-color: #71C0BB; } /* New theme color */
+.summary-box.green-theme::before { background-color: #7AC6D2; } /* New theme color */
+
+/* Icon Container - Background color with 0.5 opacity */
+.summary-icon-wrapper {
+    width: 40px; /* Adjusted icon wrapper size */
+    height: 40px; /* Adjusted icon wrapper size */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px; /* Adjusted margin for new size */
+    position: relative;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.summary-box:hover .summary-icon-wrapper {
+    transform: scale(1.1);
+}
+
+/* Specific background colors for icon wrapper (from dashboard data) with 0.2 opacity */
+.summary-icon-wrapper.blue-bg { background-color: rgba(61, 144, 215, 0.2); } /* Blue with 0.2 opacity */
+.summary-icon-wrapper.purple-bg { background-color: rgba(58, 89, 209, 0.2); } /* Purple with 0.2 opacity */
+.summary-icon-wrapper.teal-bg { background-color: rgba(181, 252, 205, 0.2); } /* Mint with 0.2 opacity */
+.summary-icon-wrapper.green-bg { background-color: rgba(122, 198, 210, 0.2); } /* Green with 0.2 opacity */
+
+
+/* Actual icon styling - Color matches card theme, adjusted size */
+.summary-icon {
+    font-size: 1.75rem; /* Adjusted icon size, proportional to wrapper */
+    transition: color 0.3s ease;
+    display: flex;
+}
+
+/* Specific icon colors (from dashboard data) */
+.summary-box.blue-theme .summary-icon { color: #3D90D7; } /* Icon matches blue theme */
+.summary-box.purple-theme .summary-icon { color: #3A59D1; } /* Icon matches purple theme */
+.summary-box.orange-theme .summary-icon { color: #FF9800; } /* Icon matches orange theme */
+.summary-box.teal-theme .summary-icon { color: #71C0BB; } /* Icon matches mint theme */
+.summary-box.green-theme .summary-icon { color: #7AC6D2; } /* Icon matches green theme */
+
+
+/* Title text - Adjusted font size */
+.summary-box h3 {
+    display: block;
+    font-size: 1.25rem; /* Adjusted font size for title */
+    font-weight: 500;
+    color: #333;
+    /* margin: 0 0 5px 0; */
+    padding: 0;
+}
+
+/* Value color on hover - matches card theme */
+.summary-box.blue-theme:hover .value { color: #3D90D7; }
+.summary-box.purple-theme:hover .value { color: #3A59D1; }
+.summary-box.teal-theme:hover .value { color: #71C0BB; }
+.summary-box.green-theme:hover .value { color: #7AC6D2; }
+
+/* Status/Trend Indicator Style matching the image */
+.summary-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-trend svg {
+    font-size: 11px;
+    margin-left: 2px;
+}
+
+/* Trend badge hover effect */
+.summary-trend:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Specific colors for Positive Trend (Green as per image) */
+.summary-trend.positive {
+    background-color: #e6ffe6;
+    color: #28a745;
+}
+
+/* Specific colors for Negative Trend (Example: Red) */
+.summary-trend.negative {
+    background-color: #ffe6e6;
+    color: #dc3545;
+}
+
+/* Large subtle circle at bottom right */
+.summary-box::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: rgba(240, 240, 240, 0.4);
+    z-index: 0;
+    transition: transform 0.4s ease; /* Animate the circle */
+}
+
+.summary-box:hover::after {
+    transform: scale(1.2); /* Slightly enlarge and move the circle on hover */
+    background-color: rgba(240, 240, 240, 0.6); /* Make it a bit more opaque */
+}
+
+/* ==========================
+   Table Section Styles
+============================= */
+.table-section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    /* margin-bottom: 30px; */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent overflow that might cause horizontal scrolling */
+}
+
+.table-header-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Summary header: place icon and h3 on the same line */
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Remove bottom spacing when icon sits in header */
+.summary-header .summary-icon-wrapper {
+  margin-bottom: 0;
+}
+
+.header-icon-admin {
+    font-size: 22px;
+    color: #007bff;
+    display: flex;
+    align-items: center;
+}
+
+
+/* ==========================
+   View All Button Styles
+============================= */
+.view-all {
+    background-color: #007bff;
+    color: white;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-all:hover {
+    background-color: #0065d8;
+}
+
+.view-all:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.view-all:active {
+    transform: scale(0.97);
+}
+
+/* ==========================
+   Enhanced Table Styles
+============================= */
+.data-table {
+    width: 100%;
+    /* Professional blue/white theme for admin data tables */
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.data-table thead th {
+    background: #f5f9ff;
+    color: #1f2937; /* slate-800 */
+    font-weight: 600;
+    padding: 14px;
+    text-align: left;
+    border-bottom: 2px solid #dbeafe; /* blue-100 */
+}
+
+.data-table tbody tr {
+    background: #ffffff;
+    border: 1px solid #eef2ff; /* indigo-50 */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.data-table tbody tr:hover {
+    background: #f8fbff; /* very light blue */
+    border-color: #dbeafe;
+}
+
+.data-table td {
+    padding: 14px;
+    color: #374151; /* slate-700 */
+    vertical-align: middle;
+}
+
+/* User cell and avatar alignment */
+.users-table .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #e6effb;
+}
+
+/* Status badges (match JSX: status-badge) */
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-badge.tourist,
+.status-badge.success {
+    background-color: #e7f1ff; /* soft blue */
+    color: #0b5ed7; /* primary blue text */
+    border-color: #cfe2ff;
+}
+
+.status-badge.business {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffe69c;
+}
+
+.status-badge.cbt_admin,
+.status-badge.system_admin {
+    background-color: #f8d7da;
+    color: #dc3545;
+    border-color: #f5c2c7;
+}
+
+/* Actions cell buttons */
+.actions-cell .action-btn-sa {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    color: #1f3b78;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.actions-cell .action-btn-sa:hover {
+    background: #f5f9ff;
+    border-color: #bcd3ff;
+}
+
+.actions-cell .action-btn-sa.view-btn {
+    background: #007bff;
+    border-color: #007bff;
+    color: #ffffff;
+}
+
+.actions-cell .action-btn-sa.view-btn:hover {
+    background: #0065d8;
+}
+
+.actions-cell .action-btn-sa.edit-btn {
+    background: #ffffff;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.actions-cell .action-btn-sa.edit-btn:hover {
+    background: #e7f1ff;
+}
+
+
+/* Chart section visibility + layout overrides */
+.table-section {
+  animation: none !important;   /* avoid stuck opacity if keyframes missing */
+  opacity: 1 !important;        /* ensure section is visible */
+  overflow: visible;             /* prevent clipping of chart */
+  position: relative;            /* establish containing block */
+}
+
+.chart-container {
+  min-height: 350px;             /* guarantee room for the SVG */
+  position: relative;
+  isolation: isolate;            /* keep tooltips above SVG when needed */
+  z-index: 0;
+}
+
+.chart-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-tooltip {
+    position: absolute;
+    z-index: 100;
+}
+
+
+/* Ensure chart container fills the entire width of table-section */
+.table-section .chart-container {
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    overflow-x: auto;
+}
+
+/* ==========================
+   Responsive Styles
+============================= */
+/* Tablet (768px and below) */
+  @media (max-width: 768px) {
+    .username {
+      font-size: 1rem;
+      margin-left: 12px;
+    }
+  
+    .sidebar-menu-admin a {
+      padding: 10px 15px;
+      font-size: 0.95rem;
+    }
+  
+    .sidebar-menu-admin a .sidebar-icon2 {
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* Mobile (480px and below) */
+  @media (max-width: 480px) {
+    .username {
+      font-size: 0.9rem;
+      margin-left: 10px;
+    }
+  
+    .sidebar-menu-admin a {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+  
+    .sidebar-menu-admin a .sidebar-icon2 {
+      font-size: 1rem;
+    }
+  }
+
+/* System Admin (-sa) scoped table styles */
+/* Container and header */
+.table-section-sa {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.table-header-sa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.table-header-sa h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  color: #333;
+}
+
+.header-icon-sa {
+  font-size: 18px;
+  color: #007bff;
+  display: flex;
+  align-items: center;
+}
+
+.view-all-sa {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-all-sa:hover { background-color: #0065d8; }
+.view-all-sa:focus { outline: none; box-shadow: 0 0 0 3px rgba(0,123,255,0.3); }
+.view-all-sa:active { transform: scale(0.97); }
+
+/* Scrollable list container with sticky header support */
+.users-list-container-sa {
+  /* max-height: 380px; */
+  overflow: auto;
+  border: 1px solid #eef2ff;
+  border-radius: 10px;
+}
+
+/* Table base */
+.users-table-sa {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table-sa thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f9ff;
+  color: #1f2937; /* slate-800 */
+  font-weight: 600;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 2px solid #dbeafe;
+}
+
+/* Column sizing for readability */
+/* .data-table-sa thead th:nth-child(1),
+.data-table-sa tbody td:nth-child(1) { width: 32%; } */
+/* .data-table-sa thead th:nth-child(2),
+.data-table-sa tbody td:nth-child(2) { width: 36%; }
+.data-table-sa thead th:nth-child(3),
+.data-table-sa tbody td:nth-child(3) { width: 14%; }
+.data-table-sa thead th:nth-child(4),
+.data-table-sa tbody td:nth-child(4) { width: 18%; } */
+
+/* Rows */
+.data-table-sa tbody tr { background: #ffffff; }
+.data-table-sa tbody tr + tr { border-top: 1px solid #eef2ff; }
+.data-table-sa tbody tr:hover { background: #f8fbff; }
+
+.data-table-sa td {
+  padding: 12px 14px;
+  color: #374151; /* slate-700 */
+  vertical-align: middle;
+}
+
+/* User cell alignment */
+.user-cell-sa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-sa {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e6effb;
+}
+
+/* Status badges */
+.status-badge-sa {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-badge-sa.tourist-sa { background-color: #e7f1ff; color: #0b5ed7; border-color: #cfe2ff; }
+.status-badge-sa.business-sa { background-color: #fff3cd; color: #856404; border-color: #ffe69c; }
+.status-badge-sa.cbt_admin-sa { background-color: #f8d7da; color: #dc3545; border-color: #f5c2c7; }
+.status-badge-sa.system_admin-sa { background-color: #f8d7da; color: #dc3545; border-color: #f5c2c7; }
+
+/* Actions */
+.actions-cell-sa { display: flex; gap: 8px; }
+
+.action-btn-sa {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  color: #1f3b78;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn-sa:hover { background: #f5f9ff; border-color: #bcd3ff; }
+
+.action-btn-sa.view-btn-sa { background: #007bff; border-color: #007bff; color: #ffffff; }
+.action-btn-sa.view-btn-sa:hover { background: #0065d8; }
+
+.action-btn-sa.edit-btn-sa { background: #ffffff; border-color: #007bff; color: #007bff; }
+.action-btn-sa.edit-btn-sa:hover { background: #e7f1ff; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .users-list-container-sa { max-height: 320px; }
+  .data-table-sa thead th, .data-table-sa td { padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .data-table-sa thead th:nth-child(1),
+  .data-table-sa tbody td:nth-child(1) { width: 44%; }
+  .data-table-sa thead th:nth-child(2),
+  .data-table-sa tbody td:nth-child(2) { width: 32%; }
+  .data-table-sa thead th:nth-child(3),
+  .data-table-sa tbody td:nth-child(3) { width: 10%; }
+  .data-table-sa thead th:nth-child(4),
+  .data-table-sa tbody td:nth-child(4) { width: 14%; }
+}
+
+/* New user highlight (System Admin) */
+.data-table-sa tbody tr.new-user-row-sa {
+  background: #e9f7ff; /* soft blue highlight */
+  border-top: 1px solid #bcd9ff;
+  border-bottom: 1px solid #bcd9ff;
+  position: relative; /* enable pseudo-element stripe */
+}
+
+.data-table-sa tbody tr.new-user-row-sa:hover {
+  background: #dff2ff;
+  border-color: #9fc8ff;
+}
+
+.data-table-sa tbody tr.new-user-row-sa::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px; /* slightly subtle width */
+  background: #5aa8ff; /* subtle blue */
+  border-radius: 2px; /* soften edge */
+  pointer-events: none;
+}
+
+/* Summary notes: consistent padding, radius, spacing, font size, alignment */
+.summary-note {
+  display: flex;
+  font-size: 0.9rem; /* smaller font size */
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+  padding: 4px 8px; /* 2px vertical, 4px horizontal */
+  border-radius: 8px; /* 3px radius */
+  margin-top: 6px; /* spacing from primary text */
+  color: #1d9a3a;            /* match green accent */
+  border-color: #1d9a3a;     /* subtle border in same green */
+  border-width: 1px;
+  border-style: solid;
+  background-color: #e9f7ef; /* soft green background */
+  line-height: 1.2;
+  margin: 8px 10px 0 0;   /* space before the note */
+  vertical-align: middle; 
+}
+
+/* User and page views secondary text (mint green pill) */
+.note-green {
+  background-color: #b9ddbd;
+  border-color: #1d9a3a;
+  border-width: 1px;
+  border-style: solid;
+  background-color: #e6fbf7;    /* match summary-note background */
+  border-color: #2bb8a9;        /* match border */
+  border-width: 1px;
+  border-style: solid;
+}
+
+.summary-box .summary-note {
+  display: inline-block;  /* sit next to the value */
+  margin-top: 0;          /* align with value baseline */
+  vertical-align: middle;
+}
+
+/* Keep value and note on one line by default */
+.summary-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Backup card: stack note below the value */
+.summary-box.backup-card .summary-value-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Mint note styling for consistency */
+.summary-note,
+.summary-note.note-green,
+.note-green {
+  background-color: #e6fbf7;    /* soft mint */
+  border: 1px solid #2bb8a9;    /* teal border */
+  color: #2bb8a9;               /* teal text */
+  border-radius: 12px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+
+.summary-box .summary-note {
+  display: inline-block;  /* sit next to the value */
+  margin-top: 0;          /* align with value baseline */
+  vertical-align: middle;
+}
+
+/* Keep value and summary-note on one line */
+.summary-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.summary-value-row .value {
+  white-space: nowrap;
+  margin: 0; /* prevent pushing note to next line */
+}
+
+.summary-value-row .summary-note {
+  white-space: nowrap;
+  margin-top: 0; /* override default top margin when inline with value */
+}
+
+/* Optional: allow note to shrink before wrapping */
+.summary-value-row .summary-note {
+  flex: 0 1 auto;
+}
+
+/* Backup card: stack note below the value */
+.summary-box.backup-card .summary-value-row {
+  flex-direction: column;      /* stack value and note */
+  align-items: flex-start;     /* left-align within card */
+  gap: 6px;                    /* spacing between value and note */
+}
+
+.summary-box.backup-card .value {
+  margin: 0;                   /* remove inline spacing */
+}
+
+.summary-box.backup-card .summary-note {
+  margin-top: 0;               /* use gap instead */
+}
+
+/* Tablet and below: stack value + note; tighten spacing; reduce h3 */
+@media (max-width: 1024px) {
+  .summary-container { gap: 16px; }
+  .summary-box { flex: 1 1 calc(50% - 16px); }
+
+  /* slightly smaller headings at medium screens */
+  .table-header-admin h3,
+  .table-header-sa h3,
+  .summary-box h3 { font-size: 18px; }
+}
+
+@media (max-width: 768px) {
+  /* one column cards */
+  .summary-box { flex: 1 1 100%; min-width: 0; }
+
+  /* value and note in a column layout */
+  .summary-value-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  /* smaller headings for compact view */
+  .table-header-admin h3,
+  .table-header-sa h3,
+  .summary-box h3 { font-size: 16px; }
+}
+
+@media (max-width: 480px) {
+  .summary-container { gap: 12px; }
+
+  /* slightly smaller icon wrapper for very small screens */
+  .summary-icon-wrapper { width: 36px; height: 36px; }
+  .summary-icon { font-size: 1.5rem; }
+
+  /* keep headings readable but compact */
+  .table-header-admin h3,
+  .table-header-sa h3,
+  .summary-box h3 { font-size: 15px; }
 }
