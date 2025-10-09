@@ -155,8 +155,14 @@ function LoginPage({ onClose }) {
         .json();
 
       if (resp?.success && resp?.accessToken) {
-        toast.success('Google login successful!');
+        try {
+          localStorage.setItem(
+            'postLoginToast',
+            JSON.stringify({ type: 'success', message: 'Google login successful!' })
+          );
+        } catch {}
         window.location.reload();
+        // toast after reload (handled globally)
       } else {
         toast.error(resp?.message || 'Google login failed.');
       }

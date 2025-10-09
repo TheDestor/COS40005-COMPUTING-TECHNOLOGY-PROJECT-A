@@ -225,8 +225,11 @@
 /* Specific colors for the top bar based on card theme */
 .summary-box.blue-theme::before { background-color: #3D90D7; }
 .summary-box.purple-theme::before { background-color: #3A59D1; }
-.summary-box.teal-theme::before { background-color: #71C0BB; } /* New theme color */
-.summary-box.green-theme::before { background-color: #7AC6D2; } /* New theme color */
+.summary-box.teal-theme::before { background-color: #71C0BB; } 
+.summary-box.green-theme::before { background-color: #7AC6D2; } 
+.summary-box.lb-theme::before { background-color: #56B4E9; }
+.summary-box.lg-theme::before { background-color: #009E73;}
+.summary-box.lr-theme::before { background-color: #D55E00;}
 
 /* Icon Container - Background color with 0.5 opacity */
 .summary-icon-wrapper {
@@ -251,6 +254,9 @@
 .summary-icon-wrapper.purple-bg { background-color: rgba(58, 89, 209, 0.2); } /* Purple with 0.2 opacity */
 .summary-icon-wrapper.teal-bg { background-color: rgba(181, 252, 205, 0.2); } /* Mint with 0.2 opacity */
 .summary-icon-wrapper.green-bg { background-color: rgba(122, 198, 210, 0.2); } /* Green with 0.2 opacity */
+.summary-icon-wrapper.lb-bg { background-color: rgba(86, 180, 233, 0.2); } /* Light Blue with 0.2 opacity */
+.summary-icon-wrapper.lg-bg { background-color: rgba(0, 158, 115, 0.2); } /* Light Green with 0.2 opacity */
+.summary-icon-wrapper.lr-bg { background-color: rgba(213, 94, 0, 0.2); } /* Light Red with 0.2 opacity */
 
 
 /* Actual icon styling - Color matches card theme, adjusted size */
@@ -266,6 +272,10 @@
 .summary-box.orange-theme .summary-icon { color: #FF9800; } /* Icon matches orange theme */
 .summary-box.teal-theme .summary-icon { color: #71C0BB; } /* Icon matches mint theme */
 .summary-box.green-theme .summary-icon { color: #7AC6D2; } /* Icon matches green theme */
+.summary-box.lb-theme .summary-icon { color: #56B4E9; } /* Icon matches light blue theme */
+.summary-box.lg-theme .summary-icon { color: #009E73; } /* Icon matches light green theme */
+.summary-box.lr-theme .summary-icon { color: #D55E00; } /* Icon matches light red theme */
+
 
 
 /* Title text - Adjusted font size */
@@ -283,6 +293,11 @@
 .summary-box.purple-theme:hover .value { color: #3A59D1; }
 .summary-box.teal-theme:hover .value { color: #71C0BB; }
 .summary-box.green-theme:hover .value { color: #7AC6D2; }
+.summary-box.lb-theme:hover .value { color: #56B4E9; }
+.summary-box.lg-theme:hover .value { color: #009E73; }
+.summary-box.lr-theme:hover .value { color: #D55E00; }
+
+
 
 /* Status/Trend Indicator Style matching the image */
 .summary-trend {
@@ -814,14 +829,18 @@
 
 /* User and page views secondary text (mint green pill) */
 .note-green {
-  background-color: #b9ddbd;
-  border-color: #1d9a3a;
-  border-width: 1px;
-  border-style: solid;
   background-color: #e6fbf7;    /* match summary-note background */
   border-color: #2bb8a9;        /* match border */
   border-width: 1px;
   border-style: solid;
+}
+
+.note-red {
+  background-color: #fff3f4 !important;    /* match summary-note background */
+  border-color: #f5c2c7 !important;        /* match border */
+  border-width: 1px;
+  border-style: solid;
+  color: #dc3545 !important;
 }
 
 /* Prominent value with adjacent note */
@@ -1219,6 +1238,18 @@
     background-color: #e7f1ff; /* soft blue */
     color: #0b5ed7; /* primary blue text */
     border-color: #cfe2ff;
+}
+
+.status-badge.status-failure {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.status-badge.status-success {
+    background-color: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
 }
 
 .status-badge.business {
