@@ -10,6 +10,7 @@ import {
   FaSave,
   FaPlus,
   FaMinus,
+  FaCheckCircle, // ADD THIS
 } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
@@ -155,7 +156,31 @@ const getTimeAgo = (dateString) => {
 
   return "Just now";
 };
+// Toast Notification Component
+const ToastNotification = ({
+  message,
+  type = "success",
+  onClose,
+  isVisible,
+}) => {
+  if (!isVisible) return null;
 
+  return (
+    <div
+      className={`toast-notification toast-${type} ${
+        isVisible ? "toast-visible" : ""
+      }`}
+    >
+      <div className="toast-content">
+        <FaCheckCircle className="toast-icon" />
+        <span className="toast-message">{message}</span>
+      </div>
+      <button className="toast-close" onClick={onClose}>
+        <FaTimes />
+      </button>
+    </div>
+  );
+};
 // Confirmation Modal Component
 const ConfirmationModal = ({
   isOpen,
@@ -282,6 +307,12 @@ const ManageLocation = () => {
   const fileInputRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: "",
+    type: "success",
+  });
 
   // Confirmation modal states
   const [deleteModal, setDeleteModal] = useState({
@@ -684,8 +715,14 @@ const ManageLocation = () => {
         prev.filter((loc) => loc._id !== deleteModal.locationId)
       );
       setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
+
+      // Show success toast notification - ADD THIS LINE
+      showToast(
+        `Location "${deleteModal.locationName}" has been deleted successfully!`
+      );
     } catch (error) {
       console.error("Error deleting location:", error);
+      showToast("Failed to delete location. Please try again.", "error"); // ADD THIS LINE
     }
   };
 
@@ -936,6 +973,25 @@ const ManageLocation = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Show toast notification
+  const showToast = (message, type = "success") => {
+    setToast({
+      isVisible: true,
+      message,
+      type,
+    });
+
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, isVisible: false }));
+    }, 5000);
+  };
+
+  // Close toast manually
+  const closeToast = () => {
+    setToast((prev) => ({ ...prev, isVisible: false }));
   };
 
   return (
@@ -1828,6 +1884,13 @@ const ManageLocation = () => {
           onClose={handleCancelClose}
           onConfirm={handleCancelConfirm}
           hasChanges={hasChanges()}
+        />
+
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={closeToast}
         />
       </div>
     </div>
