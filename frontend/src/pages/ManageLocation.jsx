@@ -519,6 +519,11 @@ const ManageLocation = () => {
   };
 
   const handleRemoveLocation = (index) => {
+    // Prevent removing the first location
+    if (index === 0) {
+      return;
+    }
+
     if (editingLocations.length > 1) {
       const updatedLocations = editingLocations.filter((_, i) => i !== index);
       setEditingLocations(updatedLocations);
@@ -1548,7 +1553,8 @@ const ManageLocation = () => {
                   >
                     <div className="location-form-header">
                       <h4>Location #{index + 1}</h4>
-                      {editingLocations.length > 1 && (
+                      {/* Only show remove button for locations after the first one */}
+                      {editingLocations.length > 1 && index > 0 && (
                         <button
                           type="button"
                           className="remove-location-btn"
