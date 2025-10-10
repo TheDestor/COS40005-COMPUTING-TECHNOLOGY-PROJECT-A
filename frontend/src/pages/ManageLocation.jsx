@@ -277,8 +277,7 @@ const ManageLocation = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const { accessToken } = useAuth();
 
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [locationImages, setLocationImages] = useState({}); // { locationId: { file: null, preview: null } }
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -533,7 +532,7 @@ const ManageLocation = () => {
       const savePromises = editingLocations.map(async (location, index) => {
         try {
           const locationData = {
-            id: location._id, // Use location, not editingLocation
+            id: location._id,
             category: location.category,
             type: location.type,
             division: location.division,
@@ -543,7 +542,8 @@ const ManageLocation = () => {
             longitude: parseFloat(location.longitude) || 0,
             description: location.description,
             url: location.url || "",
-            image: location.image || imagePreview || "", // Include image from the correct location
+            image:
+              locationImages[location._id]?.preview || location.image || "", // Use the correct image
           };
 
           const isNewLocation = location._id.startsWith("temp-");
@@ -696,19 +696,25 @@ const ManageLocation = () => {
   const handleEditClick = (location) => {
     console.log("Location image URL:", location.image);
 
-    if (location.image) {
-      console.log("Setting image preview directly");
-      setImagePreview(location.image);
-    }
-
     // Go directly to edit mode, no confirmation needed
     setEditingLocation({ ...location });
 
-    // Set image preview
+    // Set image preview using the new locationImages state
     if (location.image) {
-      setImagePreview(location.image);
+      setLocationImages((prev) => ({
+        ...prev,
+        [location._id]: {
+          file: null,
+          preview: location.image,
+        },
+      }));
     } else {
-      setImagePreview(null);
+      // Clear any existing image for this location
+      setLocationImages((prev) => {
+        const newImages = { ...prev };
+        delete newImages[location._id];
+        return newImages;
+      });
     }
 
     // Close any confirmation modal
@@ -783,7 +789,10 @@ const ManageLocation = () => {
         longitude: parseFloat(editingLocation.longitude) || 0,
         description: editingLocation.description,
         url: editingLocation.url || "",
-        image: editingLocation.image || imagePreview || "", // Include image
+        image:
+          locationImages[editingLocation._id]?.preview ||
+          editingLocation.image ||
+          "", // Use the correct image
       };
 
       console.log("Saving single location:", locationData);
@@ -839,7 +848,7 @@ const ManageLocation = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e, locationId) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
@@ -853,23 +862,28 @@ const ManageLocation = () => {
       }
 
       setIsUploading(true);
-      setImageFile(file);
 
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setImagePreview(ev.target.result);
+        setLocationImages((prev) => ({
+          ...prev,
+          [locationId]: {
+            file: file,
+            preview: ev.target.result,
+          },
+        }));
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const removeImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const removeImage = (locationId) => {
+    setLocationImages((prev) => {
+      const newImages = { ...prev };
+      delete newImages[locationId];
+      return newImages;
+    });
   };
 
   const closeModal = () => {
@@ -877,11 +891,7 @@ const ManageLocation = () => {
     setEditingLocations([]);
     setOriginalEditingLocations([]);
     setValidationErrors({});
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setLocationImages({}); // Clear all images
   };
 
   const downloadCSV = () => {
@@ -1167,7 +1177,10 @@ const ManageLocation = () => {
                 <br />
                 Editing Location ID: {editingLocation._id}
                 <br />
-                Image Preview: {imagePreview ? "SET" : "NOT SET"}
+                Image Preview:{" "}
+                {locationImages[editingLocation._id]?.preview
+                  ? "SET"
+                  : "NOT SET"}
                 <br />
                 Location Image: {editingLocation.image ? "EXISTS" : "MISSING"}
               </div>
@@ -1308,48 +1321,34 @@ const ManageLocation = () => {
                 }
                 className="modal-input"
               />
-
               <label>Image</label>
               <div className="image-upload-container">
                 <div className="image-upload-area">
                   <input
                     type="file"
-                    id="image-upload"
-                    ref={fileInputRef}
+                    id={`image-upload-${editingLocation._id}`}
                     accept="image/*"
-                    onChange={handleImageUpload}
+                    onChange={(e) => handleImageUpload(e, editingLocation._id)}
                     className="image-file-input"
                   />
-                  {imagePreview && (
-                    <div>
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="image-preview"
-                      />
-                      <div style={{ fontSize: "12px", color: "#666" }}>
-                        Image URL: {imagePreview}
-                      </div>
-                    </div>
-                  )}
-                  {imagePreview ? (
+                  {locationImages[editingLocation._id]?.preview ? (
                     <div className="image-preview-wrapper">
                       <img
-                        src={imagePreview}
+                        src={locationImages[editingLocation._id].preview}
                         alt="Preview"
                         className="image-preview"
                       />
                       <button
                         type="button"
                         className="remove-image-btn"
-                        onClick={removeImage}
+                        onClick={() => removeImage(editingLocation._id)}
                       >
                         <FaTimes />
                       </button>
                     </div>
                   ) : (
                     <label
-                      htmlFor="image-upload"
+                      htmlFor={`image-upload-${editingLocation._id}`}
                       className="image-upload-label"
                     >
                       <div className="image-upload-placeholder">
@@ -1655,30 +1654,29 @@ const ManageLocation = () => {
                         <div className="image-upload-area">
                           <input
                             type="file"
-                            id="image-upload"
-                            ref={fileInputRef}
+                            id={`image-upload-${location._id}`}
                             accept="image/*"
-                            onChange={handleImageUpload}
+                            onChange={(e) => handleImageUpload(e, location._id)}
                             className="image-file-input"
                           />
-                          {imagePreview ? (
+                          {locationImages[location._id]?.preview ? (
                             <div className="image-preview-wrapper">
                               <img
-                                src={imagePreview}
+                                src={locationImages[location._id].preview}
                                 alt="Preview"
                                 className="image-preview"
                               />
                               <button
                                 type="button"
                                 className="remove-image-btn"
-                                onClick={removeImage}
+                                onClick={() => removeImage(location._id)}
                               >
                                 <FaTimes />
                               </button>
                             </div>
                           ) : (
                             <label
-                              htmlFor="image-upload"
+                              htmlFor={`image-upload-${location._id}`}
                               className="image-upload-label"
                             >
                               <div className="image-upload-placeholder">
