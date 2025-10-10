@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import ky from "ky";
+import { toast } from "sonner";
 import {
   FaMapMarkerAlt,
   FaChartLine,
@@ -8,6 +10,7 @@ import {
 import Sidebar from "../components/Sidebar";
 import "../styles/Dashboard.css";
 import * as d3 from "d3";
+import { useAuth } from '../context/AuthProvider';
 import profile1 from "../assets/profile1.png";
 import profile2 from "../assets/profile2.png";
 import profile3 from "../assets/profile3.png";
@@ -17,6 +20,42 @@ import profile5 from "../assets/profile5.png";
 const DashboardPage = () => {
   const businessParticipationChartRef = useRef(null);
   const userEngagementChartRef = useRef(null);
+  const { accessToken } = useAuth();
+  // State for dashboard stats
+  const [dashboardStats, setDashboardStats] = useState({
+    newInquiries: 0,
+    totalInquiries: 0,
+    newsletterSubscribers: 0,
+    activeDestinations: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch dashboard stats on component mount
+  useEffect(() => {
+    if (accessToken) {
+      fetchDashboardStats();
+    }
+  }, [accessToken]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const response = await ky.get("/api/dashboard/stats", {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }).json();
+      
+      if (response.success) {
+        setDashboardStats(response.data);
+      } else {
+        toast.error("Failed to load dashboard statistics");
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      toast.error("Error loading dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Dummy data for business participation
   const businessParticipationData = {
@@ -805,90 +844,6 @@ const DashboardPage = () => {
     });
   };
 
-  // Dummy Data for Users List
-  {
-    /*
-const usersList = [
-  { id: 1, name: "Goku", email: "gokul@gmail.com", status: "Active", lastLogin: "2 hours ago", image: profile1 },
-  { id: 2, name: "Kenneth", email: "kenneth@gmail.com", status: "Inactive", lastLogin: "2 days ago", image: profile2 },
-  { id: 3, name: "Alvin", email: "alvin@gmail.com", status: "Active", lastLogin: "5 minutes ago", image: profile3 },
-  { id: 4, name: "Gary", email: "gary@gmail.com", status: "Active", lastLogin: "1 day ago", image: profile4 },
-  { id: 5, name: "Daniel", email: "daniel@gmail.com", status: "Inactive", lastLogin: "1 week ago", image: profile5 },
-];
-*/
-  }
-
-  // Sample data for reviews pending approval
-  {
-    /*
-const pendingReviews = [
-  {
-    id: 1,
-    author: "Gokul",
-    business: "Damai Beach Resort",
-    rating: 4,
-    content: "Beautiful location and friendly staff. The rooms were clean but a little outdated. Would recommend for a peaceful getaway.",
-    date: "2025-04-30",
-    userImage: profile3
-  },
-  {
-    id: 2,
-    author: "Kenneth",
-    business: "Bangoh Dam",
-    rating: 5,
-    content: "Absolutely incredible experience! Our guide was knowledgeable and safety-conscious. The views were breathtaking and the equipment was top-notch.",
-    date: "2025-05-01",
-    userImage: profile1
-  },
-  {
-    id: 3, 
-    author: "Alvin",
-    business: "Korean Cafe",
-    rating: 2,
-    content: "Disappointing experience. Long wait times and food was served cold. The ambiance was nice but doesn't make up for poor service.",
-    date: "2025-05-01",
-    userImage: profile4
-  },
-  {
-    id: 4,
-    author: "Daniel",
-    business: "Meditation Center",
-    rating: 5,
-    content: "Transformative experience! The instructor was attentive and provided great modifications for all skill levels. Studio was clean and peaceful.",
-    date: "2025-05-02",
-    userImage: profile2
-  }
-];
-*/
-  }
-
-  // These are for Review Manage
-  {
-    /*
-const handleReviewAction = (reviewId, action) => {
-  console.log(`Review ${reviewId} ${action}`);
-  // This Part can use to handle the API call to approve/reject the review
-  // For now, we'll just log the action
-};
-*/
-  }
-
-  {
-    /*
-const renderStarRating = (rating) => {
-  const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    if (i <= rating) {
-      stars.push(<span key={i} className="star filled">★</span>);
-    } else {
-      stars.push(<span key={i} className="star">☆</span>);
-    }
-  }
-  return <div className="star-rating">{stars}</div>;
-};
-*/
-  }
-
   return (
     <div className="dashboard-container">
       <Sidebar />
@@ -901,83 +856,89 @@ const renderStarRating = (rating) => {
         </div>
 
         {/* Stat Cards Section */}
-        <div className="stat-cards-container">
-          <div
-            className="stat-card"
-            onClick={() => handleCardClick("Active Destinations")}
-            aria-label="View Active Destinations"
-            role="button"
-            tabIndex="0"
-            onKeyDown={(e) =>
-              e.key === "Enter" && handleCardClick("Active Destinations")
-            }
-          >
-            <div className="stat-icon-wrapper">
-              <FaMapMarkerAlt className="stat-icon" />
-            </div>
-            <div className="stat-content">
-              <p className="stat-label">Active Destinations</p>
-              <h2 className="stat-value">45</h2>
-            </div>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' }}>
+            Loading dashboard statistics...
           </div>
+        ) : (
+          <div className="stat-cards-container">
+            <div
+              className="stat-card"
+              onClick={() => handleCardClick("Active Destinations")}
+              aria-label="View Active Destinations"
+              role="button"
+              tabIndex="0"
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleCardClick("Active Destinations")
+              }
+            >
+              <div className="stat-icon-wrapper">
+                <FaMapMarkerAlt className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <p className="stat-label">Active Destinations</p>
+                <h2 className="stat-value">{dashboardStats.activeDestinations}</h2>
+              </div>
+            </div>
 
-          <div
-            className="stat-card"
-            onClick={() => handleCardClick("Reviews Pending Approval")}
-            aria-label="View Reviews Pending Approval"
-            role="button"
-            tabIndex="0"
-            onKeyDown={(e) =>
-              e.key === "Enter" && handleCardClick("Reviews Pending Approval")
-            }
-          >
-            <div className="stat-icon-wrapper">
-              <FaChartLine className="stat-icon" />
+            <div
+              className="stat-card"
+              onClick={() => handleCardClick("Newsletter Subscribers")}
+              aria-label="View Newsletter Subscribers"
+              role="button"
+              tabIndex="0"
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleCardClick("Newsletter Subscribers")
+              }
+            >
+              <div className="stat-icon-wrapper">
+                <FaChartLine className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <p className="stat-label">Newsletter Subscribers</p>
+                <h2 className="stat-value">{dashboardStats.newsletterSubscribers}</h2>
+              </div>
             </div>
-            <div className="stat-content">
-              <p className="stat-label">Reviews Pending Approval</p>
-              <h2 className="stat-value">12</h2>
-            </div>
-          </div>
 
-          <div
-            className="stat-card"
-            onClick={() => handleCardClick("New Inquiries")}
-            aria-label="View New Inquiries"
-            role="button"
-            tabIndex="0"
-            onKeyDown={(e) =>
-              e.key === "Enter" && handleCardClick("New Inquiries")
-            }
-          >
-            <div className="stat-icon-wrapper">
-              <FaEnvelopeOpen className="stat-icon" />
+            <div
+              className="stat-card"
+              onClick={() => handleCardClick("New Inquiries")}
+              aria-label="View New Inquiries"
+              role="button"
+              tabIndex="0"
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleCardClick("New Inquiries")
+              }
+            >
+              <div className="stat-icon-wrapper">
+                <FaEnvelopeOpen className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <p className="stat-label">New Inquiries</p>
+                <h2 className="stat-value">{dashboardStats.newInquiries}</h2>
+              </div>
             </div>
-            <div className="stat-content">
-              <p className="stat-label">New Inquiries</p>
-              <h2 className="stat-value">5</h2>
-            </div>
-          </div>
 
-          <div
-            className="stat-card"
-            onClick={() => handleCardClick("Reported Content")}
-            aria-label="View Reported Content"
-            role="button"
-            tabIndex="0"
-            onKeyDown={(e) =>
-              e.key === "Enter" && handleCardClick("Reported Content")
-            }
-          >
-            <div className="stat-icon-wrapper">
-              <FaFileAlt className="stat-icon" />
-            </div>
-            <div className="stat-content">
-              <p className="stat-label">Reported Content</p>
-              <h2 className="stat-value">3</h2>
+            <div
+              className="stat-card"
+              onClick={() => handleCardClick("Total Inquiries")}
+              aria-label="View Total Inquiries"
+              role="button"
+              tabIndex="0"
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleCardClick("Total Inquiries")
+              }
+            >
+              <div className="stat-icon-wrapper">
+                <FaFileAlt className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <p className="stat-label">Total Inquiries</p>
+                <h2 className="stat-value">{dashboardStats.totalInquiries}</h2>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Data Visualisation Section - Business Participation + User Engagement Charts */}
         <div className="dashboard-visualizations">
@@ -1000,106 +961,6 @@ const renderStarRating = (rating) => {
             <div className="viz-content" ref={userEngagementChartRef}></div>
           </div>
         </div>
-        {/* Users List Section */}
-        {/*
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>Recent Users</h3>
-            <button className="view-all-btn">View All</button>
-          </div>
-          <div className="users-list-container">
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map(user => (
-                  <tr key={user.id}>
-                    <td className="user-cell">
-                      <img src={user.image} alt={user.name} className="user-avatar" />
-                      <span>{user.name}</span>
-                    </td>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className={`status-badge ${user.status.toLowerCase()}`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td>{user.lastLogin}</td>
-                    <td className="actions-cell">
-                      <button className="action-btn view-btn">View</button>
-                      <button className="action-btn edit-btn">Edit</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          */}
-        {/* Pending Reviews Section */}
-        {/*
-          <div className="dashboard-section">
-            <div className="section-header">
-              <h3>Pending Reviews</h3>
-              <button className="view-all-btn">View All Reviews</button>
-            </div>
-            <div className="reviews-list-container">
-              <table className="reviews-table">
-                <thead>
-                  <tr>
-                    <th>Reviewer</th>
-                    <th>Business</th>
-                    <th>Rating</th>
-                    <th>Review Content</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingReviews.map(review => (
-                    <tr key={review.id}>
-                      <td className="reviewer-cell">
-                        <img src={review.userImage} alt={review.author} className="user-avatar" />
-                        <span>{review.author}</span>
-                      </td>
-                      <td>{review.business}</td>
-                      <td>{renderStarRating(review.rating)}</td>
-                      <td>
-                        <div className="review-content">
-                          {review.content}
-                        </div>
-                      </td>
-                      <td>{new Date(review.date).toLocaleDateString()}</td>
-                      <td className="review-actions-cell">
-                        <div className="review-action">
-                          <button 
-                            className="action-btn approve-btn"
-                            onClick={() => handleReviewAction(review.id, 'approved')}
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            className="action-btn reject-btn"
-                            onClick={() => handleReviewAction(review.id, 'rejected')}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        */}
       </div>
     </div>
   );
