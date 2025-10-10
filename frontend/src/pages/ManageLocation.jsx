@@ -307,6 +307,7 @@ const ManageLocation = () => {
   const fileInputRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
 
   const [toast, setToast] = useState({
     isVisible: false,
@@ -478,6 +479,7 @@ const ManageLocation = () => {
     setEditingLocations([newLocation]);
     setOriginalEditingLocations([newLocation]);
     setValidationErrors({});
+    setCurrentLocationIndex(0); // Reset to first location
   };
 
   const handleAddLocation = () => {
@@ -496,12 +498,37 @@ const ManageLocation = () => {
       updatedAt: "",
     };
     setEditingLocations([...editingLocations, newLocation]);
+    // Automatically navigate to the new location
+    setCurrentLocationIndex(editingLocations.length);
+  };
+  // Navigation functions for location forms
+  const goToNextLocation = () => {
+    if (currentLocationIndex < editingLocations.length - 1) {
+      setCurrentLocationIndex(currentLocationIndex + 1);
+    }
+  };
+
+  const goToPrevLocation = () => {
+    if (currentLocationIndex > 0) {
+      setCurrentLocationIndex(currentLocationIndex - 1);
+    }
+  };
+
+  const goToLocation = (index) => {
+    setCurrentLocationIndex(index);
   };
 
   const handleRemoveLocation = (index) => {
     if (editingLocations.length > 1) {
       const updatedLocations = editingLocations.filter((_, i) => i !== index);
       setEditingLocations(updatedLocations);
+
+      // Adjust current index if needed
+      if (currentLocationIndex >= updatedLocations.length) {
+        setCurrentLocationIndex(updatedLocations.length - 1);
+      } else if (currentLocationIndex >= index) {
+        setCurrentLocationIndex(currentLocationIndex - 1);
+      }
 
       // Also remove validation errors for the removed location
       const newErrors = { ...validationErrors };
@@ -1219,27 +1246,6 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
-              {/* Add debug info */}
-              <div
-                style={{
-                  background: "#f0f0f0",
-                  padding: "10px",
-                  marginBottom: "10px",
-                  fontSize: "12px",
-                  borderRadius: "4px",
-                }}
-              >
-                <strong>Debug Info:</strong>
-                <br />
-                Editing Location ID: {editingLocation._id}
-                <br />
-                Image Preview:{" "}
-                {locationImages[editingLocation._id]?.preview
-                  ? "SET"
-                  : "NOT SET"}
-                <br />
-                Location Image: {editingLocation.image ? "EXISTS" : "MISSING"}
-              </div>
               <h3>
                 {editingLocation?._id?.startsWith("temp-")
                   ? "Add New Location"
@@ -1505,17 +1511,44 @@ const ManageLocation = () => {
         {editingLocations.length > 0 && (
           <div className="modal-overlay">
             <div className="MLmodal-content multiple-locations-modal">
-              <div className="modal-header">
-                <h3>Add Multiple Locations</h3>
-                <p>You are adding {editingLocations.length} location(s)</p>
+              <div className="modal-header-with-navigation">
+                <div className="navigation-header">
+                  <h3>Add Multiple Locations</h3>
+                  <div className="location-counter">
+                    Location {currentLocationIndex + 1} of{" "}
+                    {editingLocations.length}
+                  </div>
+                </div>
+
+                {/* Location Pagination Dots */}
+                {editingLocations.length > 1 && (
+                  <div className="location-pagination-dots">
+                    {editingLocations.map((_, index) => (
+                      <button
+                        key={index}
+                        className={`location-dot ${
+                          currentLocationIndex === index ? "active" : ""
+                        }`}
+                        onClick={() => goToLocation(index)}
+                        aria-label={`Go to location ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="locations-form-container">
+                {/* Show only the current location form */}
                 {editingLocations.map((location, index) => (
-                  <div key={location._id} className="location-form-section">
+                  <div
+                    key={location._id}
+                    className={`location-form-section ${
+                      currentLocationIndex === index ? "active" : "hidden"
+                    }`}
+                  >
                     <div className="location-form-header">
                       <h4>Location #{index + 1}</h4>
-                      {index > 0 && (
+                      {editingLocations.length > 1 && (
                         <button
                           type="button"
                           className="remove-location-btn"
@@ -1838,14 +1871,51 @@ const ManageLocation = () => {
                 ))}
               </div>
 
-              <div className="multiple-locations-actions">
-                <button
-                  type="button"
-                  className="add-another-btn"
-                  onClick={handleAddLocation}
-                >
-                  <FaPlus /> Add Another Location
-                </button>
+              {/* Navigation Controls */}
+              <div className="location-navigation-controls">
+                {/* Side arrows for navigation */}
+                {editingLocations.length > 1 && (
+                  <div className="side-navigation-arrows">
+                    <button
+                      type="button"
+                      className="side-nav-arrow left-arrow"
+                      onClick={goToPrevLocation}
+                      disabled={currentLocationIndex === 0}
+                      aria-label="Previous location"
+                    >
+                      ‹
+                    </button>
+
+                    <button
+                      type="button"
+                      className="side-nav-arrow right-arrow"
+                      onClick={goToNextLocation}
+                      disabled={
+                        currentLocationIndex === editingLocations.length - 1
+                      }
+                      aria-label="Next location"
+                    >
+                      ›
+                    </button>
+                  </div>
+                )}
+
+                <div className="navigation-buttons">
+                  <button
+                    type="button"
+                    className="add-another-btn"
+                    onClick={() => {
+                      handleAddLocation();
+                      // Automatically navigate to the new location
+                      setTimeout(() => {
+                        goToNextLocation();
+                      }, 100);
+                    }}
+                  >
+                    <FaPlus /> Add Another Location
+                  </button>
+                </div>
+
                 <div className="modal-actions">
                   <button className="cancel-button" onClick={handleCancelClick}>
                     Cancel
