@@ -1,13 +1,12 @@
+// Top imports
 import React, { useEffect, useRef } from 'react';
-import { FaTachometerAlt, FaRegSave, FaUserCog, FaExclamationTriangle, FaChartBar, FaArrowUp, FaArrowDown, FaUser, FaStar } from 'react-icons/fa';
-import { MdSpeed } from 'react-icons/md';
+import { FaTachometerAlt, FaRegSave, FaUser, FaChartBar, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { AiOutlineFundView } from "react-icons/ai";
-import { IoIosTrendingUp } from "react-icons/io";
 import * as d3 from 'd3';
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 import ky from 'ky';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/Kuching.png';
 import EditUserForm from '../components/EditUserForm';
 
@@ -15,20 +14,30 @@ import { useState } from 'react';
 
 function SystemAdminDashboard() {
   const chartRef = useRef(null);
+  const pageViewSectionRef = useRef(null);
+  const usersSectionRef = useRef(null);
+  const navigate = useNavigate();
   const [usersList, setUsersList] = useState([]);
   const { accessToken } = useAuth();
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
 
-  // New: dashboard KPI stats state
+  // KPI stats state
   const [dashboardStats, setDashboardStats] = useState({
     totalUsers: 0,
     recaptchaBlocked: 0,
     dbStoragePercent: 0,
     totalUniqueVisitors: 0,
     statusBreakdown: { active: 0, inactive: 0, suspended: 0 },
+    // New
+    newUsersToday: 0,
+    uniqueVisitorsToday: 0,
   });
   const [backupStatus, setBackupStatus] = useState('Unknown');
+  const [backupTime, setBackupTime] = useState('—');
+  const backupPrimaryText = `${backupStatus}`;
+  const userPrimaryText = `${dashboardStats.totalUsers.toLocaleString()}`;
+  const viewsPrimaryText = `${dashboardStats.totalUniqueVisitors.toLocaleString()}`;
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -44,6 +53,8 @@ function SystemAdminDashboard() {
             dbStoragePercent: d.dbStoragePercent || 0,
             totalUniqueVisitors: (d.totalUniqueVisitors ?? d.totalPageViews ?? 0),
             statusBreakdown: d.statusBreakdown || { active: 0, inactive: 0, suspended: 0 },
+            newUsersToday: d.newUsersToday || 0,
+            uniqueVisitorsToday: d.uniqueVisitorsToday || 0,
           });
         }
       } catch (e) {
@@ -51,12 +62,11 @@ function SystemAdminDashboard() {
       }
     };
     fetchMetrics();
-
     const t = setInterval(fetchMetrics, 30000);
     return () => clearInterval(t);
   }, [accessToken]);
 
-  // Fetch backup status (Healthy/Unhealthy)
+  // Fetch backup status/time
   useEffect(() => {
     const fetchBackupStatus = async () => {
       try {
@@ -65,45 +75,39 @@ function SystemAdminDashboard() {
         }).json();
         const isOutdated = Boolean(res?.isOutdated);
         setBackupStatus(isOutdated ? 'Unhealthy' : 'Healthy');
+        setBackupTime(res?.lastBackupAtMYT || 'No backups yet');
       } catch (e) {
         console.error('Failed to fetch backup status:', e);
         setBackupStatus('Unknown');
+        setBackupTime('—');
       }
     };
     fetchBackupStatus();
   }, [accessToken]);
 
-  // New: derive summary boxes from real stats
+  // Summary cards
   const summaryData = [
     {
-      title: 'Total Unique Visitors',
-      value: dashboardStats.totalUniqueVisitors.toLocaleString(),
-      icon: <AiOutlineFundView />,
-      cardClass: 'teal-theme',
-      iconBgClass: 'teal-bg',
+      title: 'Backup Last Run',
+      value: backupTime,
+      icon: <FaRegSave />,
+      cardClass: backupStatus === 'Healthy' ? 'green-theme' : 'purple-theme',
+      iconBgClass: backupStatus === 'Healthy' ? 'green-bg' : 'purple-bg',
     },
     {
-      title: 'Total Users',
-      value: dashboardStats.totalUsers.toLocaleString(),
+      title: 'Users Registered Today',
+      value: dashboardStats.newUsersToday.toLocaleString(),
       icon: <FaUser />,
       cardClass: 'blue-theme',
       iconBgClass: 'blue-bg',
     },
     {
-      // Changed: show database backup health instead of storage percent
-      title: 'Database Backup Status',
-      value: backupStatus,
-      icon: <FaRegSave />,
-      cardClass: backupStatus === 'Healthy' ? 'green-theme' : 'purple-theme',
-      iconBgClass: backupStatus === 'Healthy' ? 'green-bg' : 'purple-bg',
+      title: 'Unique Visitors Today',
+      value: dashboardStats.uniqueVisitorsToday.toLocaleString(),
+      icon: <AiOutlineFundView />,
+      cardClass: 'teal-theme',
+      iconBgClass: 'teal-bg',
     },
-    // {
-    //   title: 'reCAPTCHA Blocked',
-    //   value: dashboardStats.recaptchaBlocked.toLocaleString(),
-    //   icon: <FaExclamationTriangle />,
-    //   cardClass: 'purple-theme',
-    //   iconBgClass: 'purple-bg',
-    // },
   ];
 
   // User usage data for the bar chart
@@ -345,115 +349,167 @@ function SystemAdminDashboard() {
     );
   };
 
+  // Smooth-scroll helper
+  const scrollTo = (ref) => {
+    ref?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="admin-container">
-    <SystemAdminSidebar />
-    <div className="content-section2">
-      <div className="page-title">
-        <h2><FaTachometerAlt /> Dashboard</h2>
-        <p>Welcome back to your dashbaord!</p>
-      </div>
-      <div className="summary-container">
-        {summaryData.map((item, idx) => (
-          <div className={`summary-box ${item.cardClass}`} key={idx}>
-            <div className={`summary-icon-wrapper ${item.iconBgClass}`}>
-              <div className='summary-icon'>{item.icon}</div>
-            </div>
-            <h3>{item.title}</h3>
-            <p className="value">{item.value}</p>
-            {item.trend && (
-              <div className={`summary-trend ${item.trendType}`}>
-                {item.trend} {item.trendType === 'positive' ? <FaArrowUp /> : <FaArrowDown />}
+      <SystemAdminSidebar />
+      <div className="content-section2">
+        <div className="page-title">
+          <h2><FaTachometerAlt /> Dashboard</h2>
+          <p>Welcome back to your dashboard!</p>
+        </div>
+        
+        {/* Summary cards rendered explicitly to avoid mapping errors */}
+        <div className="summary-container">
+          {/* Page Views */}
+          <div
+            className="summary-box teal-theme"
+            role="button"
+            tabIndex={0}
+            onClick={() => scrollTo(pageViewSectionRef)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') scrollTo(pageViewSectionRef); }}
+          >
+            <div className="summary-header">
+              <div className="summary-icon-wrapper teal-bg">
+                <div className="summary-icon"><AiOutlineFundView /></div>
               </div>
-            )}
+              <h3>Page Views</h3>
+            </div>
+            <div className="summary-value-row">
+              <p className="value">{viewsPrimaryText}</p>
+              <small className="summary-note note-green">+{dashboardStats.uniqueVisitorsToday.toLocaleString()} new views today</small>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* User Usage Chart Section */}
-      <div className="table-section">
-        <div className="table-header-admin">
-          <h3>
-            <span className="header-icon-admin"><FaChartBar /></span>
-            Page Views Analytics
-          </h3>
-          <button className="view-all">Export Data</button>
+          {/* User Registered */}
+          <div
+            className="summary-box blue-theme"
+            role="button"
+            tabIndex={0}
+            onClick={() => scrollTo(usersSectionRef)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') scrollTo(usersSectionRef); }}
+          >
+            <div className="summary-header">
+              <div className="summary-icon-wrapper blue-bg">
+                <div className="summary-icon"><FaUser /></div>
+              </div>
+              <h3>User Registered</h3>
+            </div>
+            <div className="summary-value-row">
+              <p className="value">{userPrimaryText}</p>
+              <small className="summary-note note-green">+{dashboardStats.newUsersToday.toLocaleString()} new users today</small>
+            </div>
+          </div>
+
+          {/* Backup Status (note stacked below value) */}
+          <div
+            className={`summary-box backup-card ${backupStatus === 'Healthy' ? 'green-theme' : 'purple-theme'}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/data-management')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/data-management'); }}
+          >
+            <div className="summary-header">
+              <div className={`summary-icon-wrapper ${backupStatus === 'Healthy' ? 'green-bg' : 'purple-bg'}`}>
+                <div className="summary-icon"><FaRegSave /></div>
+              </div>
+              <h3>Backup Status</h3>
+            </div>
+            <div className="summary-value-row">
+              <p className="backup-value">{backupPrimaryText}</p>
+              <small className="summary-note note-green">Last backup: {backupTime}</small>
+            </div>
+          </div>
         </div>
-        <div 
-          ref={chartRef} 
-          className="chart-container" 
-          style={{ 
-            height: '450px', 
-            width: '100%', 
-            padding: '20px 0', 
-            boxSizing: 'border-box',
-            color: '#333',
-          }}
-        ></div>
-      </div>
 
-      {/* Users List Section - System Admin Table */}
-      <div className="dashboard-section-sa">
-        <div className="table-section-sa">
-          <div className="table-header-sa">
+        {/* User Usage Chart Section */}
+        <div className="table-section" ref={pageViewSectionRef}>
+          <div className="table-header-admin">
             <h3>
-              <span className="header-icon-sa"><FaUser /></span>
-              New Recent Users
+              <span className="header-icon-admin"><FaChartBar /></span>
+              Page Views Analytics
             </h3>
-            <Link to="/user-management" className="view-all-sa">View All</Link>
+            <button className="view-all-sa">Export Data</button>
           </div>
-          <div className="users-list-container-sa">
-            <table className="users-table-sa data-table-sa">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map(user => (
-                  <tr key={user.id} className={user.isNew ? 'new-user-row-sa' : ''}>
-                    <td className="user-cell-sa">
-                      <img
-                        src={user.image}
-                        alt={user.name}
-                        className="user-avatar-sa"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null; // prevent infinite loop
-                          e.currentTarget.src = defaultImage;
-                        }}
-                      />
-                      <span>{user.name}</span>
-                    </td>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className={`status-badge-sa ${user.role.toLowerCase()}-sa`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="actions-cell-sa">
-                      <button className="action-btn-sa edit-btn-sa" onClick={() => handleEditClick(user)}>Edit</button>
-                    </td>
+          <div 
+            ref={chartRef} 
+            className="chart-container" 
+            style={{ 
+              height: '450px', 
+              width: '100%', 
+              padding: '20px 0', 
+              boxSizing: 'border-box',
+              color: '#333',
+            }}
+          ></div>
+        </div>
+
+        {/* Users List Section - System Admin Table */}
+        <div className="dashboard-section-sa" ref={usersSectionRef}>
+          <div className="table-section-sa">
+            <div className="table-header-sa">
+              <h3>
+                <span className="header-icon-sa"><FaUser /></span>
+                New Recent Users
+              </h3>
+              <Link to="/user-management" className="view-all-sa">View All</Link>
+            </div>
+            <div className="users-list-container-sa">
+              <table className="users-table-sa data-table-sa">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {usersList.map(user => (
+                    <tr key={user.id} className={user.isNew ? 'new-user-row-sa' : ''}>
+                      <td className="user-cell-sa">
+                        <img
+                          src={user.image}
+                          alt={user.name}
+                          className="user-avatar-sa"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null; // prevent infinite loop
+                            e.currentTarget.src = defaultImage;
+                          }}
+                        />
+                        <span>{user.name}</span>
+                      </td>
+                      <td>{user.email}</td>
+                      <td>
+                        <span className={`status-badge-sa ${user.role.toLowerCase()}-sa`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="actions-cell-sa">
+                        <button className="action-btn-sa edit-btn-sa" onClick={() => handleEditClick(user)}>Edit</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+        </div>
+        
+        {isEditFormOpen && (
+          <EditUserForm
+            user={currentUserToEdit}
+            onClose={handleCloseForm}
+            onUserUpdate={handleUserUpdate}
+          />
+        )}
       </div>
-      </div>
-      
-      {isEditFormOpen && (
-        <EditUserForm
-          user={currentUserToEdit}
-          onClose={handleCloseForm}
-          onUserUpdate={handleUserUpdate}
-        />
-      )}
-    </div>
-  );
-};
+    );
+  }
 
 export default SystemAdminDashboard;

@@ -291,7 +291,7 @@ function UserManagementPage() {
             <div className="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
               <div className="popup-content" style={{ maxWidth: '520px' }}>
                 <h3 id="save-modal-title" className="form-section-title">Confirm Changes</h3>
-                <p>Please review the changes before saving:</p>
+                <p>Please review the changes before saving.</p>
                 <div style={{ padding: '8px 0' }}>
                   {saveDiff.length === 0 ? (
                     <div style={{ fontStyle: 'italic' }}>No changes detected.</div>

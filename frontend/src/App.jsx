@@ -21,6 +21,7 @@ import LoginPage from './pages/Loginpage.jsx';
 import UserRegistration from './pages/UserRegistration.jsx';
 import BusinessRegistration from './pages/BusinessRegistrationpage.jsx';
 import ForgetPassword from './pages/ForgetPasswordpage.jsx';
+import ResetPasswordPage from './components/ResetPassword.jsx';
 
 // Map Components Pages
 // import HomePage from './pages/Homepage.jsx';
@@ -80,6 +81,7 @@ function App() {
             
             <Route path="/footer" element={<Footer />} />
             <Route path="/forget-password" element={<ForgetPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path="/settings" element={<SettingPage />} />
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/review" element={<ReviewPage />} />
@@ -143,6 +145,24 @@ function SessionVisitorTracker() {
       method: 'POST',
       credentials: 'include'
     }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('postLoginToast');
+      if (raw) {
+        const { type, message } = JSON.parse(raw) || {};
+        if (type === 'success') {
+          toast.success(message || 'Login successful!');
+        } else if (type === 'error') {
+          toast.error(message || 'Login failed.');
+        } else {
+          toast.info(message || 'Action completed.');
+        }
+        localStorage.removeItem('postLoginToast');
+      }
+    } catch {
+      localStorage.removeItem('postLoginToast');
+    }
   }, []);
   return null;
 }

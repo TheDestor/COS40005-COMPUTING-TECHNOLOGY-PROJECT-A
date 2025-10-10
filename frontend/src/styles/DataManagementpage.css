@@ -329,12 +329,6 @@ transition: all 0.5s ease;
   overflow-x: auto;
 }
 
-/* Table styling */
-.backup-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: transparent;
-}
 .backup-table thead th {
   background-color: #f9fafb;
   color: #334155;
@@ -392,14 +386,6 @@ transition: all 0.5s ease;
 }
 .action-btn-dm.download {
   color: #0284c7;
-}
-
-.backup-table table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
 }
 
 .backup-table th, .backup-table td {
@@ -722,7 +708,6 @@ transition: all 0.5s ease;
 .panel-header .muted { color: var(--muted); margin: 4px 0 0 0; font-size: 13px; }
 
 /* Table refinements */
-.backup-table table { width: 100%; border-collapse: collapse; background: transparent; }
 .backup-table th, .backup-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
 .backup-table thead th { background: #f1f5f9; color: #334155; position: sticky; top: 0; z-index: 1; }
 .backup-table tbody tr:hover { background: #f8fafc; }
@@ -900,7 +885,7 @@ transition: all 0.5s ease;
   .content-section2 { padding: 16px; gap: 16px; }
   .content-section2 h2 { font-size: 20px !important; }
 
-  .user-stats-container { gap: 10px; }
+  .user-stats-container { gap: 10px; flex-direction: column;}
   .stat-card { padding: 14px; gap: 10px; }
   .stat-content h3 { font-size: 12px; }
   .stat-number { font-size: 20px; }

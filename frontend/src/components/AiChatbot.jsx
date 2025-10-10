@@ -7,6 +7,7 @@ import AiLogo from '../assets/AiLogo.gif';
 
 const API_ENDPOINT = '/api/ai/chat';
 const MODEL = 'deepseek/deepseek-chat-v3.1:free';
+// const MODEL = 'deepseek/deepseek-r1-0528:free';
 
 export default function AiChatbot({ visibleByDefault = false }) {
 	const [open, setOpen] = useState(visibleByDefault);

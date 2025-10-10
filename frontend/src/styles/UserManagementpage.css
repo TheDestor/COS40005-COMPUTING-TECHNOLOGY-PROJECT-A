@@ -548,7 +548,7 @@
 }
 
 /* Scroll wrapper to prevent overflow */
-.table-scroll-wrapper { width: 100%; overflow-x: auto; padding: 8px; border-radius: 12px; background: #ffffff; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
+.table-scroll-wrapper { width: 100%; overflow-x: auto; padding: 20px; border-radius: 12px; background: #ffffff; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
 
 /* Table refinements */
 .user-table {

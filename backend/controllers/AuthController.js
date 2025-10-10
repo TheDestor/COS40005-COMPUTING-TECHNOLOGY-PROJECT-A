@@ -1,8 +1,11 @@
 import { businessUserModel, userModel } from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import crypto from "crypto";
+import transporter from "../config/emailConfig.js";
+import ApiUsage from '../models/ApiUsage.js';
 
-// @desc User registration test
+// @desc User registration
 // @route POST /register
 // @access Public
 export const register = async (req, res) => {
@@ -82,6 +85,7 @@ export const businessRegister = async (req, res) => {
 // @route POST /login
 // @access Public
 export const googleLogin = async (req, res) => {
+    const device = parseUserAgent(req);
     try {
         const { credential } = req.body;
         if (!credential) {
@@ -110,6 +114,35 @@ export const googleLogin = async (req, res) => {
 
         const payload = verified?.payload || {};
         const { email, email_verified, name, picture, sub, iss, aud, exp } = payload;
+
+        if (!payload) {
+      await ApiUsage.create({
+        provider: 'auth',
+        endpoint: '/google-login',
+        success: false,
+        email: null,
+        device,
+        errorMessage: 'Missing Google payload',
+        timestamp: new Date(),
+      });
+      return res.status(400).json({ success: false, message: 'Invalid Google credential.' });
+    }
+
+        // const email = payload.email || null;
+        const emailVerified = payload.email_verified === true;
+
+        if (!emailVerified) {
+        await ApiUsage.create({
+            provider: 'auth',
+            endpoint: '/google-login',
+            success: false,
+            email,
+            device,
+            errorMessage: 'Google email not verified',
+            timestamp: new Date(),
+        });
+        return res.status(403).json({ success: false, message: 'Google email is not verified.' });
+        }
 
         // Additional explicit claim checks + logging
         if (!email_verified) {
@@ -162,6 +195,17 @@ export const googleLogin = async (req, res) => {
             user.authProvider = 'google';
             await user.save();
         }
+
+        await ApiUsage.create({
+            provider: 'auth',
+            endpoint: '/google-login',
+            success: true,
+            email: user.email || email || null,
+            device,
+            userId: user._id,
+            role: user.role,
+            timestamp: new Date(),
+            });
         
         // Create access token (include provider)
         const accessToken = jwt.sign(
@@ -200,7 +244,15 @@ export const googleLogin = async (req, res) => {
 
         return res.json({ success: true, accessToken, newUser: isNewUser, user: { firstName: user.firstName, lastName: user.lastName, email: user.email }, });
     } catch (error) {
-        console.error(error);
+        await ApiUsage.create({
+            provider: 'auth',
+            endpoint: '/google-login',
+            success: false,
+            email: null,
+            device,
+            errorMessage: err?.message || 'Google login error',
+            timestamp: new Date(),
+            });
         res.status(500).json({ success: false, message: "Internal server error during Google authentication." });
     }
 };
@@ -210,6 +262,7 @@ export const login = async (req, res) => {
     try {
         const { identifier, password, recaptchaToken } = req.body;
         const accessSecret = process.env.ACCESS_TOKEN_SECRET;
+        const device = parseUserAgent(req); // define device from user-agent
 
         // Verify reCAPTCHA token if secret configured
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
@@ -226,34 +279,38 @@ export const login = async (req, res) => {
                 });
                 const verifyJson = await verifyResp.json();
                 if (!verifyJson.success) {
+                    await ApiUsage.create({ provider: 'auth', endpoint: '/login', success: false, errorMessage: 'recaptcha_failed', email: req.body?.identifier || null, device });
                     return res.status(400).json({ success: false, message: 'Failed reCAPTCHA verification.' });
                 }
             } catch (e) {
-                console.error('reCAPTCHA verification error:', e);
+                await ApiUsage.create({ provider: 'auth', endpoint: '/login', success: false, errorMessage: 'recaptcha_error', email: req.body?.identifier || null, device });
                 return res.status(400).json({ success: false, message: 'reCAPTCHA verification failed. Please try again.' });
             }
-        } else {
-            console.warn('RECAPTCHA_SECRET not set; skipping reCAPTCHA verification.');
         }
 
         // Validation
         if (!identifier || !password) {
+            await ApiUsage.create({ provider: 'auth', endpoint: '/login', success: false, errorMessage: 'missing_credentials', email: identifier || null, device });
             return res.status(400).json({ success: false, message: "Identifier (email/phone) and password are required."});
         }
+
         const user = await userModel.findOne({
-            $or: [
-                { email: identifier },
-                { phoneNumber: identifier }
-            ]
-        }).select("-createdAt -updatedAt -__v"); // Exclude these from the response
+            $or: [ { email: identifier }, { phoneNumber: identifier } ]
+        }).select("-createdAt -updatedAt -__v");
         if (!user) {
-            return res.status(401).json({ success: false, message: "Incorrect password or email/phone number" });
+            await ApiUsage.create({ provider: 'auth', endpoint: '/login', success: false, errorMessage: 'user_not_found', email: identifier || null, device });
+            return res.status(404).json({ success: false, message: "User not found."});
         }
 
+        const isMatch = await crypto.timingSafeEqual(
+            Buffer.from(user.password),
+            Buffer.from(user.password) // placeholder for actual hash compare
+        );
         // Check if password is correct
         const auth = await user.isValidPassword(password);
         if (!auth) {
-            return res.status(401).json({ success: false, message: "Incorrect password or email/phone number"});
+            await ApiUsage.create({ provider: 'auth', endpoint: '/login', success: false, errorMessage: 'invalid_credentials', email: identifier || null, device, userId: user?._id || null, role: user?.role || null });
+            return res.status(401).json({ success: false, message: "Incorrect password or email/phone number" });
         }
 
         // Ensure provider is set to password
@@ -293,6 +350,18 @@ export const login = async (req, res) => {
         res.cookie('jwt', refreshToken, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // Log successful password login (place here)
+        await ApiUsage.create({
+            provider: 'auth',
+            endpoint: '/login',
+            success: true,
+            userId: user._id,
+            role: user.role,
+            email: user.email || null,       // include email on success
+            device,                          // include device on success
+            timestamp: new Date(),
         });
 
         res.json({ accessToken, message: "Login successful", success: true });
@@ -411,3 +480,84 @@ export const logout = (req, res) => {
 
     return res.json({ message: "Logout successful", success: true });
 };
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await userModel.findOne({ email });
+
+        if (!user) {
+            return res.status(200).json({ success: true, message: "If an account with that email exists, a password reset link has been sent." });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+
+        await user.save();
+
+        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+        const mailOptions = {
+            to: user.email,
+            from: process.env.EMAIL_USER,
+            subject: 'Password Reset Request',
+            text: `You are receiving this because you (or someone else) have requested a password reset for your account.\n\n` + `Please click on the following link, or paste this into your browser to complete the process:\n\n` + `${resetUrl}\n\n` + `If you did not request this, please ignore this email and your password will remain unchanged.\n`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: "A password reset link has been sent to your email." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An internal server error occurred." });
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        const user = await userModel.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() } // Check if the token is not expired
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Password reset token is invalid or has expired." });
+        }
+
+        // Set the new password
+        user.password = password;
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+
+        await user.save();
+
+        res.status(200).json({ success: true, message: "Password reset successfully! Redirecting to login..." });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An internal server error occurred." });
+    }
+};
+
+// helper: parse UA -> "DeviceType · Browser v · OS"
+function parseUserAgent(req) {
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  const isMobile = /mobile|android|iphone|ipad/.test(ua);
+  const deviceType = isMobile ? 'Mobile' : 'Desktop';
+  const browser = /chrome\/.+/.test(ua) ? `Chrome ${ua.match(/chrome\/(\d+)/)?.[1] || ''}`
+    : /safari\/.+/.test(ua) && !/chrome\/.+/.test(ua) ? `Safari ${ua.match(/version\/(\d+)/)?.[1] || ''}`
+    : /firefox\/.+/.test(ua) ? `Firefox ${ua.match(/firefox\/(\d+)/)?.[1] || ''}`
+    : /edg\/.+/.test(ua) ? `Edge ${ua.match(/edg\/(\d+)/)?.[1] || ''}`
+    : 'Browser';
+  const os = /windows/.test(ua) ? 'Windows'
+    : /mac os|macintosh/.test(ua) ? 'macOS'
+    : /android/.test(ua) ? 'Android'
+    : /iphone|ipad|ios/.test(ua) ? 'iOS'
+    : /linux/.test(ua) ? 'Linux'
+    : 'OS';
+  return `${deviceType} · ${browser} · ${os}`;
+}

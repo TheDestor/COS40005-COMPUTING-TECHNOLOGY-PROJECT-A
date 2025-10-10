@@ -1,6 +1,5 @@
-import { login, register, logout, businessRegister, refresh, googleLogin } from "../controllers/AuthController.js";
+import { login, register, logout, businessRegister, refresh, googleLogin, forgotPassword, resetPassword } from "../controllers/AuthController.js";
 import { Router } from "express";
-import { verifyJWT } from "../middleware/AuthMiddleware.js";
 import { loginLimiter, googleAuthLimiter, refreshLimiter } from "../middleware/rateLimiter.js";
 
 const authRouter = Router();
@@ -12,5 +11,7 @@ authRouter.post("/login", loginLimiter, login);
 authRouter.post("/google-login", googleAuthLimiter, googleLogin);
 authRouter.post("/logout", logout);
 authRouter.get("/refresh", refreshLimiter, refresh);
+authRouter.post("/forgot-password", forgotPassword);
+authRouter.post("/reset-password/:token", resetPassword);
 
 export default authRouter;
