@@ -544,9 +544,9 @@
 .MLmodal-content {
   background-color: #fff;
   padding: 1.5rem 2rem;
-  border-radius: 12px;
+  border-radius: 20px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  width: 500px;
+  width: 1200px;
   max-height: 100vh;
   text-align: center;
   z-index: 1000;
@@ -580,7 +580,6 @@
   color: #007bff;
   margin: 12px 0 2px;
   justify-content: left;
-  align-items: left;
 }
 
 .MLmodal-content input,
@@ -1084,7 +1083,6 @@
 
 /* Multiple Locations Modal Styles */
 .multiple-locations-modal {
-  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
 }

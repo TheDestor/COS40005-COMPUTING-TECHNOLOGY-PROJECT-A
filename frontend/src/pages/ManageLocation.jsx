@@ -22,6 +22,31 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
 
+const buildPageList = (total, current) => {
+  const pages = [];
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+    return pages;
+  }
+
+  if (current <= 2) {
+    return [1, 2, 3, "ellipsis", total];
+  }
+
+  if (current === 3) {
+    return [2, 3, 4, "ellipsis", total];
+  }
+
+  if (current >= total - 2) {
+    return [1, "ellipsis", total - 2, total - 1, total];
+  }
+
+  return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total];
+};
+const paginate = (pageNumber) => {
+  if (pageNumber < 1 || pageNumber > totalPages) return;
+  setCurrentPage(pageNumber);
+};
 const MapPreview = ({ latitude, longitude, onChange }) => {
   const mapRef = useRef();
 
@@ -288,6 +313,7 @@ const ManageLocation = () => {
     const fetchLocations = async () => {
       try {
         const response = await ky.get("/api/locations").json();
+        // Make sure the response includes image URLs
         setLocations(response);
       } catch (error) {
         console.error("Error fetching locations:", error);
@@ -463,65 +489,179 @@ const ManageLocation = () => {
     updatedLocations[index] = updatedLocation;
     setEditingLocations(updatedLocations);
   };
-
   const handleSaveAllLocations = async () => {
     try {
-      const savePromises = editingLocations.map(async (location) => {
-        // Create JSON object instead of FormData
-        const locationData = {
-          id: location._id,
-          category: location.category,
-          type: location.type,
-          division: location.division,
-          name: location.name,
-          status: location.status,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          description: location.description,
-          url: location.url || "",
-        };
+      // Validate all locations before sending
+      const validationResults = editingLocations.map((location, index) => {
+        const errors = {};
 
-        console.log("Sending JSON data:", locationData);
+        if (!location.category?.trim())
+          errors.category = "Category is required";
+        if (!location.type?.trim()) errors.type = "Type is required";
+        if (!location.division?.trim())
+          errors.division = "Division is required";
+        if (!location.name?.trim()) errors.name = "Name is required";
+        if (!location.status?.trim()) errors.status = "Status is required";
+        if (!location.description?.trim())
+          errors.description = "Description is required";
 
-        const isNewLocation = location._id.startsWith("temp-");
+        return { index, errors };
+      });
 
-        const response = await ky
-          .post(
-            isNewLocation
-              ? "/api/locations/addLocation"
-              : "/api/locations/updateLocation",
-            {
+      // Check if any location has validation errors
+      const hasErrors = validationResults.some(
+        (result) => Object.keys(result.errors).length > 0
+      );
+
+      if (hasErrors) {
+        // Combine all errors into validationErrors state
+        const allErrors = {};
+        validationResults.forEach((result) => {
+          Object.keys(result.errors).forEach((field) => {
+            allErrors[`locations[${result.index}].${field}`] =
+              result.errors[field];
+          });
+        });
+
+        setValidationErrors(allErrors);
+        alert("Please fix all validation errors before saving.");
+        return;
+      }
+
+      console.log("Starting to save locations:", editingLocations);
+
+      const savePromises = editingLocations.map(async (location, index) => {
+        try {
+          const locationData = {
+            id: location._id, // Use location, not editingLocation
+            category: location.category,
+            type: location.type,
+            division: location.division,
+            name: location.name,
+            status: location.status,
+            latitude: parseFloat(location.latitude) || 0,
+            longitude: parseFloat(location.longitude) || 0,
+            description: location.description,
+            url: location.url || "",
+            image: location.image || imagePreview || "", // Include image from the correct location
+          };
+
+          const isNewLocation = location._id.startsWith("temp-");
+          const endpoint = isNewLocation
+            ? "/api/locations/addLocation"
+            : "/api/locations/updateLocation";
+
+          console.log(
+            `Saving location ${index + 1} to ${endpoint}:`,
+            locationData
+          );
+
+          const response = await ky
+            .post(endpoint, {
               headers: {
                 Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
               },
               json: locationData,
-            }
-          )
-          .json();
+              timeout: 30000, // 30 second timeout
+            })
+            .json();
 
-        return response;
+          console.log(`Location ${index + 1} saved successfully:`, response);
+          return { success: true, data: response };
+        } catch (err) {
+          console.error(`Error saving location ${index + 1}:`, err);
+
+          let errorMessage = err.message;
+
+          // Try to extract more detailed error information
+          if (err.response) {
+            try {
+              const errorBody = await err.response.json();
+              errorMessage =
+                errorBody.message || errorBody.error || errorMessage;
+              console.error(
+                `Server error details for location ${index + 1}:`,
+                errorBody
+              );
+            } catch (parseError) {
+              try {
+                const errorText = await err.response.text();
+                console.error(
+                  `Raw server response for location ${index + 1}:`,
+                  errorText
+                );
+                errorMessage = `Server error: ${errorText.substring(
+                  0,
+                  100
+                )}...`;
+              } catch (textError) {
+                console.error(
+                  `Could not read error response for location ${index + 1}`
+                );
+              }
+            }
+          }
+
+          return {
+            success: false,
+            error: errorMessage,
+            locationIndex: index,
+            locationName: location.name,
+          };
+        }
       });
 
+      console.log("Waiting for all save promises to complete...");
       const results = await Promise.all(savePromises);
-      console.log("All locations saved successfully:", results);
+      console.log("All save results:", results);
 
-      // Check if all saves were successful
-      const allSuccessful = results.every((result) => result.success);
+      const successfulSaves = results.filter((result) => result.success);
+      const failedSaves = results.filter((result) => !result.success);
 
-      if (allSuccessful) {
+      if (failedSaves.length === 0) {
+        // All locations saved successfully
         closeModal();
-        // Refresh list after save
-        const refreshed = await ky.get("/api/locations").json();
-        setLocations(refreshed);
-        alert(`${editingLocations.length} location(s) saved successfully!`);
+
+        // Refresh the locations list
+        try {
+          const refreshed = await ky.get("/api/locations").json();
+          setLocations(refreshed);
+          alert(`${successfulSaves.length} location(s) saved successfully!`);
+        } catch (refreshError) {
+          console.error("Error refreshing locations:", refreshError);
+          alert(
+            `${successfulSaves.length} location(s) saved successfully, but could not refresh the list.`
+          );
+        }
       } else {
-        const failedCount = results.filter((result) => !result.success).length;
-        alert(`${failedCount} location(s) failed to save. Please try again.`);
+        // Some saves failed
+        const errorDetails = failedSaves
+          .map(
+            (failed) =>
+              `Location "${failed.locationName}" (${
+                failed.locationIndex + 1
+              }): ${failed.error}`
+          )
+          .join("\n");
+
+        alert(
+          `${successfulSaves.length} location(s) saved successfully, but ${failedSaves.length} failed:\n\n${errorDetails}`
+        );
+
+        // You might want to keep the modal open for retry, or close it
+        if (successfulSaves.length > 0) {
+          // Optionally close modal if some succeeded, or keep open for retry
+          closeModal();
+          const refreshed = await ky.get("/api/locations").json();
+          setLocations(refreshed);
+        }
       }
     } catch (err) {
-      console.error("Save failed:", err);
-      alert(`Save failed: ${err.message}`);
+      console.error("Unexpected error in handleSaveAllLocations:", err);
+      alert(
+        `Unexpected error: ${err.message}. Please check the console for details.`
+      );
     }
   };
 
@@ -553,19 +693,29 @@ const ManageLocation = () => {
     setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
   };
 
-  // Edit confirmation handlers
   const handleEditClick = (location) => {
-    setEditModal({
-      isOpen: true,
-      location,
-    });
-  };
+    console.log("Location image URL:", location.image);
 
-  const handleEditConfirm = () => {
-    setEditingLocation({ ...editModal.location });
-    setImagePreview(editModal.location.image || null);
+    if (location.image) {
+      console.log("Setting image preview directly");
+      setImagePreview(location.image);
+    }
+
+    // Go directly to edit mode, no confirmation needed
+    setEditingLocation({ ...location });
+
+    // Set image preview
+    if (location.image) {
+      setImagePreview(location.image);
+    } else {
+      setImagePreview(null);
+    }
+
+    // Close any confirmation modal
     setEditModal({ isOpen: false, location: null });
   };
+
+  // Remove the edit confirmation modal entirely, or keep it only for specific cases
 
   const handleEditCancel = () => {
     setEditModal({ isOpen: false, location: null });
@@ -601,9 +751,27 @@ const ManageLocation = () => {
 
   const handleSaveEdit = async () => {
     try {
+      // Validate single location
+      const errors = {};
+
+      if (!editingLocation.category?.trim())
+        errors.category = "Category is required";
+      if (!editingLocation.type?.trim()) errors.type = "Type is required";
+      if (!editingLocation.division?.trim())
+        errors.division = "Division is required";
+      if (!editingLocation.name?.trim()) errors.name = "Name is required";
+      if (!editingLocation.status?.trim()) errors.status = "Status is required";
+      if (!editingLocation.description?.trim())
+        errors.description = "Description is required";
+
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        alert("Please fix all validation errors before saving.");
+        return;
+      }
+
       const isNewLocation = editingLocation?._id?.startsWith("temp-");
 
-      // Create JSON object instead of FormData
       const locationData = {
         id: editingLocation._id,
         category: editingLocation.category,
@@ -611,13 +779,14 @@ const ManageLocation = () => {
         division: editingLocation.division,
         name: editingLocation.name,
         status: editingLocation.status,
-        latitude: editingLocation.latitude,
-        longitude: editingLocation.longitude,
+        latitude: parseFloat(editingLocation.latitude) || 0,
+        longitude: parseFloat(editingLocation.longitude) || 0,
         description: editingLocation.description,
         url: editingLocation.url || "",
+        image: editingLocation.image || imagePreview || "", // Include image
       };
 
-      console.log("Sending JSON data:", locationData);
+      console.log("Saving single location:", locationData);
 
       const response = await ky
         .post(
@@ -630,6 +799,7 @@ const ManageLocation = () => {
               "Content-Type": "application/json",
             },
             json: locationData,
+            timeout: 30000,
           }
         )
         .json();
@@ -638,7 +808,6 @@ const ManageLocation = () => {
 
       if (response.success) {
         closeModal();
-        // Refresh list after save
         const refreshed = await ky.get("/api/locations").json();
         setLocations(refreshed);
         alert("Location saved successfully!");
@@ -648,17 +817,25 @@ const ManageLocation = () => {
     } catch (err) {
       console.error("Save failed:", err);
 
+      let errorMessage = err.message;
+
       if (err.response) {
         try {
           const errorBody = await err.response.json();
-          console.error("Error details:", errorBody);
-          alert(`Save failed: ${errorBody.message || "Server error"}`);
+          errorMessage = errorBody.message || errorBody.error || errorMessage;
+          console.error("Server error details:", errorBody);
         } catch (parseError) {
-          alert(`Save failed: ${err.message}`);
+          try {
+            const errorText = await err.response.text();
+            console.error("Raw server response:", errorText);
+            errorMessage = `Server error: ${errorText.substring(0, 100)}...`;
+          } catch (textError) {
+            console.error("Could not read error response");
+          }
         }
-      } else {
-        alert(`Save failed: ${err.message}`);
       }
+
+      alert(`Save failed: ${errorMessage}`);
     }
   };
 
@@ -702,6 +879,9 @@ const ManageLocation = () => {
     setValidationErrors({});
     setImageFile(null);
     setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const downloadCSV = () => {
@@ -909,27 +1089,63 @@ const ManageLocation = () => {
         </div>
 
         {/* Pagination Controls */}
-        <div className="pagination">
+        {/* Pagination Controls */}
+        <div
+          className="pagination"
+          role="navigation"
+          aria-label="Location pages"
+        >
           <button
-            onClick={() => setCurrentPage(currentPage - 1)}
+            onClick={() => paginate(1)}
+            aria-label="First page"
             disabled={currentPage === 1}
           >
-            Previous
+            «
           </button>
-          {Array.from({ length: totalPages }, (_, index) => (
-            <button
-              key={index}
-              onClick={() => paginate(index + 1)}
-              className={currentPage === index + 1 ? "active" : ""}
-            >
-              {index + 1}
-            </button>
-          ))}
           <button
-            onClick={() => setCurrentPage(currentPage + 1)}
+            onClick={() => paginate(currentPage - 1)}
+            aria-label="Previous page"
+            disabled={currentPage === 1}
+          >
+            ‹
+          </button>
+
+          {buildPageList(totalPages, currentPage).map((item, idx) =>
+            item === "ellipsis" ? (
+              <button
+                key={`el-${idx}`}
+                className="ellipsis"
+                aria-hidden="true"
+                disabled
+              >
+                ...
+              </button>
+            ) : (
+              <button
+                key={item}
+                className={currentPage === item ? "active" : ""}
+                onClick={() => paginate(item)}
+                aria-label={`Go to page ${item}`}
+                aria-current={currentPage === item ? "page" : undefined}
+              >
+                {item}
+              </button>
+            )
+          )}
+
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            aria-label="Next page"
             disabled={currentPage === totalPages}
           >
-            Next
+            ›
+          </button>
+          <button
+            onClick={() => paginate(totalPages)}
+            aria-label="Last page"
+            disabled={currentPage === totalPages}
+          >
+            »
           </button>
         </div>
 
@@ -937,6 +1153,24 @@ const ManageLocation = () => {
         {editingLocation && (
           <div className="modal-overlay">
             <div className="MLmodal-content">
+              {/* Add debug info */}
+              <div
+                style={{
+                  background: "#f0f0f0",
+                  padding: "10px",
+                  marginBottom: "10px",
+                  fontSize: "12px",
+                  borderRadius: "4px",
+                }}
+              >
+                <strong>Debug Info:</strong>
+                <br />
+                Editing Location ID: {editingLocation._id}
+                <br />
+                Image Preview: {imagePreview ? "SET" : "NOT SET"}
+                <br />
+                Location Image: {editingLocation.image ? "EXISTS" : "MISSING"}
+              </div>
               <h3>
                 {editingLocation?._id?.startsWith("temp-")
                   ? "Add New Location"
@@ -1086,6 +1320,18 @@ const ManageLocation = () => {
                     onChange={handleImageUpload}
                     className="image-file-input"
                   />
+                  {imagePreview && (
+                    <div>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="image-preview"
+                      />
+                      <div style={{ fontSize: "12px", color: "#666" }}>
+                        Image URL: {imagePreview}
+                      </div>
+                    </div>
+                  )}
                   {imagePreview ? (
                     <div className="image-preview-wrapper">
                       <img
@@ -1404,6 +1650,53 @@ const ManageLocation = () => {
                         />
                       </div>
 
+                      <label>Image</label>
+                      <div className="image-upload-container">
+                        <div className="image-upload-area">
+                          <input
+                            type="file"
+                            id="image-upload"
+                            ref={fileInputRef}
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="image-file-input"
+                          />
+                          {imagePreview ? (
+                            <div className="image-preview-wrapper">
+                              <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="image-preview"
+                              />
+                              <button
+                                type="button"
+                                className="remove-image-btn"
+                                onClick={removeImage}
+                              >
+                                <FaTimes />
+                              </button>
+                            </div>
+                          ) : (
+                            <label
+                              htmlFor="image-upload"
+                              className="image-upload-label"
+                            >
+                              <div className="image-upload-placeholder">
+                                <FaUpload className="upload-icon" />
+                                <span>
+                                  {isUploading
+                                    ? "Uploading..."
+                                    : "Click to upload or drag and drop"}
+                                </span>
+                                <p className="image-upload-hint">
+                                  PNG, JPG up to 5MB
+                                </p>
+                              </div>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="form-field">
                         <label>Status *</label>
                         <select
@@ -1522,17 +1815,6 @@ const ManageLocation = () => {
           confirmText="Delete"
           cancelText="Cancel"
           type="delete"
-        />
-
-        <ConfirmationModal
-          isOpen={editModal.isOpen}
-          onClose={handleEditCancel}
-          onConfirm={handleEditConfirm}
-          title="Edit Location"
-          message={`Are you sure you want to edit "${editModal.location?.name}"?`}
-          confirmText="Edit"
-          cancelText="Cancel"
-          type="edit"
         />
 
         <SaveConfirmationModal
