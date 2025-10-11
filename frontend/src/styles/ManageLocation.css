@@ -1174,17 +1174,28 @@
   background: #3498db;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+  white-space: nowrap;
+  margin-left: auto; /* This pushes it to the right */
 }
 
 .add-another-btn:hover {
   background: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
+}
+
+.modal-header-with-navigation {
+  margin-bottom: 20px;
 }
 
 .modal-header {
@@ -1327,6 +1338,18 @@
   transform: rotate(90deg);
 }
 
+.navigation-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.navigation-header h3 {
+  margin: 0;
+  text-align: center;
+  color: #2c3e50;
+}
+
 /* Side navigation arrows */
 .side-navigation-arrows {
   position: fixed; /* Use fixed positioning instead */
@@ -1391,10 +1414,7 @@
 
 /* Update navigation buttons to center the "Add Another Location" button */
 .navigation-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 15px;
+  display: none;
 }
 
 .add-another-btn {
@@ -1417,4 +1437,228 @@
   background: #2980b9;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.header-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.location-counter {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 14px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+/* Add these styles to your ManageLocation.css */
+
+/* Two Column Layout */
+.event-form-container {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.event-form-left,
+.event-form-right {
+  flex: 1;
+  min-width: 300px;
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.event-form-left:hover,
+.event-form-right:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Form Group Styling */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group.full-width {
+  width: 100%;
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* Input Styling to Match AddEventPage */
+.form-input,
+.form-textarea,
+.form-select,
+.status-select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s;
+  background-color: #f9fafb;
+  color: #1e293b;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus,
+.status-select:focus {
+  border-color: #8b5cf6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  background-color: white;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.form-textarea {
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* Form Row for Side-by-side Fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Error States */
+.error-border {
+  border: 1px solid #ef4444 !important;
+}
+
+.error-border:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Image Upload Styling Updates */
+.image-upload-container {
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #f9fafb;
+  min-height: 160px;
+}
+
+.image-upload-container:hover {
+  border-color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.05);
+  transform: scale(1.01);
+}
+
+.image-upload-area {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #64748b;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #8b5cf6;
+  opacity: 0.8;
+}
+
+.image-upload-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Map Preview Styling */
+.map-preview-section {
+  margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .event-form-container {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .event-form-left,
+  .event-form-right {
+    min-width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-group.full-width {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-form-left,
+  .event-form-right {
+    padding: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select,
+  .status-select {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
 }

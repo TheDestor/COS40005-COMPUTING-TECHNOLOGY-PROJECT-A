@@ -1257,248 +1257,310 @@ const ManageLocation = () => {
                   : "Edit Location"}
               </h3>
 
-              <label>Category *</label>
-              <select
-                name="category"
-                value={editingLocation.category}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    category: e.target.value,
-                    type: "",
-                  });
-                  clearValidationError("category");
-                }}
-                className={`form-select ${
-                  validationErrors.category ? "error-border" : ""
-                }`}
-              >
-                <option value="">Select a category</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              {validationErrors.category && (
-                <div className="error-message">{validationErrors.category}</div>
-              )}
-
-              <label>Type *</label>
-              <select
-                name="type"
-                value={editingLocation.type}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    type: e.target.value,
-                  });
-                  clearValidationError("type");
-                }}
-                className={`form-select ${
-                  validationErrors.type ? "error-border" : ""
-                }`}
-                disabled={!editingLocation.category}
-              >
-                <option
-                  value=""
-                  className={editingLocation.category ? "" : "red-text-option"}
-                >
-                  {editingLocation.category
-                    ? "Select a type"
-                    : "*Please select a category first"}
-                </option>
-                {editingLocation.category &&
-                  getCurrentTypeOptions().map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-              </select>
-              {validationErrors.type && (
-                <div className="error-message">{validationErrors.type}</div>
-              )}
-
-              <label>Division *</label>
-              <input
-                name="division"
-                value={editingLocation.division}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    division: e.target.value,
-                  });
-                  clearValidationError("division");
-                }}
-                className={`modal-input ${
-                  validationErrors.division ? "error-border" : ""
-                }`}
-              />
-              {validationErrors.division && (
-                <div className="error-message">{validationErrors.division}</div>
-              )}
-
-              <label>Location Name *</label>
-              <input
-                name="name"
-                value={editingLocation.name}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    name: e.target.value,
-                  });
-                  clearValidationError("name");
-                }}
-                className={`modal-input ${
-                  validationErrors.name ? "error-border" : ""
-                }`}
-              />
-              {validationErrors.name && (
-                <div className="error-message">{validationErrors.name}</div>
-              )}
-
-              <label>Description *</label>
-              <textarea
-                name="description"
-                value={editingLocation.description}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    description: e.target.value,
-                  });
-                  clearValidationError("description");
-                }}
-                className={validationErrors.description ? "error-border" : ""}
-              />
-              {validationErrors.description && (
-                <div className="error-message">
-                  {validationErrors.description}
-                </div>
-              )}
-
-              <label>Website URL</label>
-              <input
-                name="url"
-                value={editingLocation.url || ""}
-                onChange={(e) =>
-                  setEditingLocation({
-                    ...editingLocation,
-                    url: e.target.value,
-                  })
-                }
-                className="modal-input"
-              />
-              <label>Image</label>
-              <div className="image-upload-container">
-                <div className="image-upload-area">
-                  <input
-                    type="file"
-                    id={`image-upload-${editingLocation._id}`}
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, editingLocation._id)}
-                    className="image-file-input"
-                  />
-                  {locationImages[editingLocation._id]?.preview ? (
-                    <div className="image-preview-wrapper">
-                      <img
-                        src={locationImages[editingLocation._id].preview}
-                        alt="Preview"
-                        className="image-preview"
-                      />
-                      <button
-                        type="button"
-                        className="remove-image-btn"
-                        onClick={() => removeImage(editingLocation._id)}
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  ) : (
-                    <label
-                      htmlFor={`image-upload-${editingLocation._id}`}
-                      className="image-upload-label"
+              <div className="event-form-container">
+                {/* Left Column */}
+                <div className="event-form-left">
+                  {/* Category Field */}
+                  <div className="form-group">
+                    <label>Category *</label>
+                    <select
+                      name="category"
+                      value={editingLocation.category}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          category: e.target.value,
+                          type: "",
+                        });
+                        clearValidationError("category");
+                      }}
+                      className={`form-select ${
+                        validationErrors.category ? "error-border" : ""
+                      }`}
                     >
-                      <div className="image-upload-placeholder">
-                        <FaUpload className="upload-icon" />
-                        <span>
-                          {isUploading
-                            ? "Uploading..."
-                            : "Click to upload or drag and drop"}
-                        </span>
-                        <p className="image-upload-hint">PNG, JPG up to 5MB</p>
+                      <option value="">Select a category</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                    {validationErrors.category && (
+                      <div className="error-message">
+                        {validationErrors.category}
                       </div>
-                    </label>
-                  )}
+                    )}
+                  </div>
+
+                  {/* Type Field */}
+                  <div className="form-group">
+                    <label>Type *</label>
+                    <select
+                      name="type"
+                      value={editingLocation.type}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          type: e.target.value,
+                        });
+                        clearValidationError("type");
+                      }}
+                      className={`form-select ${
+                        validationErrors.type ? "error-border" : ""
+                      }`}
+                      disabled={!editingLocation.category}
+                    >
+                      <option
+                        value=""
+                        className={
+                          editingLocation.category ? "" : "red-text-option"
+                        }
+                      >
+                        {editingLocation.category
+                          ? "Select a type"
+                          : "*Please select a category first"}
+                      </option>
+                      {editingLocation.category &&
+                        getCurrentTypeOptions().map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                    </select>
+                    {validationErrors.type && (
+                      <div className="error-message">
+                        {validationErrors.type}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Division Field */}
+                  <div className="form-group">
+                    <label>Division *</label>
+                    <input
+                      name="division"
+                      value={editingLocation.division}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          division: e.target.value,
+                        });
+                        clearValidationError("division");
+                      }}
+                      className={`form-input ${
+                        validationErrors.division ? "error-border" : ""
+                      }`}
+                    />
+                    {validationErrors.division && (
+                      <div className="error-message">
+                        {validationErrors.division}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Location Name Field */}
+                  <div className="form-group">
+                    <label>Location Name *</label>
+                    <input
+                      name="name"
+                      value={editingLocation.name}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          name: e.target.value,
+                        });
+                        clearValidationError("name");
+                      }}
+                      className={`form-input ${
+                        validationErrors.name ? "error-border" : ""
+                      }`}
+                    />
+                    {validationErrors.name && (
+                      <div className="error-message">
+                        {validationErrors.name}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status Field */}
+                  <div className="form-group">
+                    <label>Status *</label>
+                    <select
+                      className={`status-select ${
+                        validationErrors.status ? "error-border" : ""
+                      }`}
+                      value={editingLocation.status}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          status: e.target.value,
+                        });
+                        clearValidationError("status");
+                      }}
+                    >
+                      <option value="">Select status</option>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    {validationErrors.status && (
+                      <div className="error-message">
+                        {validationErrors.status}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="event-form-right">
+                  {/* Website URL Field */}
+                  <div className="form-group">
+                    <label>Website URL</label>
+                    <input
+                      name="url"
+                      value={editingLocation.url || ""}
+                      onChange={(e) =>
+                        setEditingLocation({
+                          ...editingLocation,
+                          url: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                    />
+                  </div>
+
+                  {/* Coordinates Row */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        value={
+                          editingLocation.latitude === 0
+                            ? ""
+                            : editingLocation.latitude
+                        }
+                        onChange={(e) =>
+                          setEditingLocation({
+                            ...editingLocation,
+                            latitude: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        placeholder="Latitude"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        value={
+                          editingLocation.longitude === 0
+                            ? ""
+                            : editingLocation.longitude
+                        }
+                        onChange={(e) =>
+                          setEditingLocation({
+                            ...editingLocation,
+                            longitude: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        placeholder="Longitude"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Image Upload */}
+                  <div className="form-group">
+                    <label>Image</label>
+                    <div className="image-upload-container">
+                      <div className="image-upload-area">
+                        <input
+                          type="file"
+                          id={`image-upload-${editingLocation._id}`}
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleImageUpload(e, editingLocation._id)
+                          }
+                          className="image-file-input"
+                        />
+                        {locationImages[editingLocation._id]?.preview ? (
+                          <div className="image-preview-wrapper">
+                            <img
+                              src={locationImages[editingLocation._id].preview}
+                              alt="Preview"
+                              className="image-preview"
+                            />
+                            <button
+                              type="button"
+                              className="remove-image-btn"
+                              onClick={() => removeImage(editingLocation._id)}
+                            >
+                              <FaTimes />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor={`image-upload-${editingLocation._id}`}
+                            className="image-upload-label"
+                          >
+                            <div className="image-upload-placeholder">
+                              <FaUpload className="upload-icon" />
+                              <span>
+                                {isUploading
+                                  ? "Uploading..."
+                                  : "Click to upload or drag and drop"}
+                              </span>
+                              <p className="image-upload-hint">
+                                PNG, JPG up to 5MB
+                              </p>
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <label>Status *</label>
-              <select
-                className={`status-select ${
-                  validationErrors.status ? "error-border" : ""
-                }`}
-                value={editingLocation.status}
-                onChange={(e) => {
-                  setEditingLocation({
-                    ...editingLocation,
-                    status: e.target.value,
-                  });
-                  clearValidationError("status");
-                }}
-              >
-                <option value="">Select status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-              {validationErrors.status && (
-                <div className="error-message">{validationErrors.status}</div>
-              )}
-
-              <label>Coordinates</label>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <input
-                  type="number"
-                  step="any"
-                  name="latitude"
-                  value={
-                    editingLocation.latitude === 0
-                      ? ""
-                      : editingLocation.latitude
-                  }
-                  onChange={(e) =>
+              {/* Full Width Fields */}
+              <div className="form-group full-width">
+                <label>Description *</label>
+                <textarea
+                  name="description"
+                  value={editingLocation.description}
+                  onChange={(e) => {
                     setEditingLocation({
                       ...editingLocation,
-                      latitude: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="Latitude (e.g. 1.697763)"
-                  className="modal-input"
+                      description: e.target.value,
+                    });
+                    clearValidationError("description");
+                  }}
+                  className={`form-textarea ${
+                    validationErrors.description ? "error-border" : ""
+                  }`}
                 />
-                <input
-                  type="number"
-                  step="any"
-                  name="longitude"
-                  value={
-                    editingLocation.longitude === 0
-                      ? ""
-                      : editingLocation.longitude
-                  }
-                  onChange={(e) =>
-                    setEditingLocation({
-                      ...editingLocation,
-                      longitude: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="Longitude (e.g. 110.407775)"
-                  className="modal-input"
+                {validationErrors.description && (
+                  <div className="error-message">
+                    {validationErrors.description}
+                  </div>
+                )}
+              </div>
+
+              {/* Map Preview - Full Width */}
+              <div className="form-group full-width">
+                <label>Map Preview</label>
+                <MapPreview
+                  latitude={editingLocation.latitude}
+                  longitude={editingLocation.longitude}
+                  onChange={handleCoordinatesChange}
                 />
               </div>
-              <label>Map Preview</label>
-              <MapPreview
-                latitude={editingLocation.latitude}
-                longitude={editingLocation.longitude}
-                onChange={handleCoordinatesChange}
-              />
 
               <div className="modal-actions">
                 <button className="cancel-button" onClick={handleCancelClick}>
@@ -1519,9 +1581,24 @@ const ManageLocation = () => {
               <div className="modal-header-with-navigation">
                 <div className="navigation-header">
                   <h3>Add Multiple Locations</h3>
-                  <div className="location-counter">
-                    Location {currentLocationIndex + 1} of{" "}
-                    {editingLocations.length}
+                  <div className="header-controls-row">
+                    <div className="location-counter">
+                      Location {currentLocationIndex + 1} of{" "}
+                      {editingLocations.length}
+                    </div>
+                    <button
+                      type="button"
+                      className="add-another-btn"
+                      onClick={() => {
+                        handleAddLocation();
+                        // Automatically navigate to the new location
+                        setTimeout(() => {
+                          goToNextLocation();
+                        }, 100);
+                      }}
+                    >
+                      <FaPlus /> Add Another Location
+                    </button>
                   </div>
                 </div>
 
@@ -1543,7 +1620,6 @@ const ManageLocation = () => {
               </div>
 
               <div className="locations-form-container">
-                {/* Show only the current location form */}
                 {editingLocations.map((location, index) => (
                   <div
                     key={location._id}
@@ -1553,7 +1629,6 @@ const ManageLocation = () => {
                   >
                     <div className="location-form-header">
                       <h4>Location #{index + 1}</h4>
-                      {/* Only show remove button for locations after the first one */}
                       {editingLocations.length > 1 && index > 0 && (
                         <button
                           type="button"
@@ -1565,301 +1640,321 @@ const ManageLocation = () => {
                       )}
                     </div>
 
-                    <div className="form-grid">
-                      <div className="form-field">
-                        <label>Category *</label>
-                        <select
-                          name="category"
-                          value={location.category}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              category: e.target.value,
-                              type: "",
-                            });
-                            clearValidationError(
-                              `locations[${index}].category`
-                            );
-                          }}
-                          className={`form-select ${
-                            validationErrors[`locations[${index}].category`]
-                              ? "error-border"
-                              : ""
-                          }`}
-                        >
-                          <option value="">Select a category</option>
-                          {categoryOptions.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                        </select>
-                        {validationErrors[`locations[${index}].category`] && (
-                          <div className="error-message">
-                            {validationErrors[`locations[${index}].category`]}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-field">
-                        <label>Type *</label>
-                        <select
-                          name="type"
-                          value={location.type}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              type: e.target.value,
-                            });
-                            clearValidationError(`locations[${index}].type`);
-                          }}
-                          className={`form-select ${
-                            validationErrors[`locations[${index}].type`]
-                              ? "error-border"
-                              : ""
-                          }`}
-                          disabled={!location.category}
-                        >
-                          <option
-                            value=""
-                            className={
-                              location.category ? "" : "red-text-option"
-                            }
+                    {/* REPLACE THIS ENTIRE form-grid SECTION: */}
+                    <div className="event-form-container">
+                      {/* LEFT COLUMN */}
+                      <div className="event-form-left">
+                        {/* Category Field */}
+                        <div className="form-group">
+                          <label>Category *</label>
+                          <select
+                            name="category"
+                            value={location.category}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                category: e.target.value,
+                                type: "",
+                              });
+                              clearValidationError(
+                                `locations[${index}].category`
+                              );
+                            }}
+                            className={`form-select ${
+                              validationErrors[`locations[${index}].category`]
+                                ? "error-border"
+                                : ""
+                            }`}
                           >
-                            {location.category
-                              ? "Select a type"
-                              : "*Please select a category first"}
-                          </option>
-                          {location.category &&
-                            typeOptions[location.category]?.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
+                            <option value="">Select a category</option>
+                            {categoryOptions.map((category) => (
+                              <option key={category} value={category}>
+                                {category}
                               </option>
                             ))}
-                        </select>
-                        {validationErrors[`locations[${index}].type`] && (
-                          <div className="error-message">
-                            {validationErrors[`locations[${index}].type`]}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-field">
-                        <label>Division *</label>
-                        <input
-                          name="division"
-                          value={location.division}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              division: e.target.value,
-                            });
-                            clearValidationError(
-                              `locations[${index}].division`
-                            );
-                          }}
-                          className={`modal-input ${
-                            validationErrors[`locations[${index}].division`]
-                              ? "error-border"
-                              : ""
-                          }`}
-                        />
-                        {validationErrors[`locations[${index}].division`] && (
-                          <div className="error-message">
-                            {validationErrors[`locations[${index}].division`]}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-field">
-                        <label>Location Name *</label>
-                        <input
-                          name="name"
-                          value={location.name}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              name: e.target.value,
-                            });
-                            clearValidationError(`locations[${index}].name`);
-                          }}
-                          className={`modal-input ${
-                            validationErrors[`locations[${index}].name`]
-                              ? "error-border"
-                              : ""
-                          }`}
-                        />
-                        {validationErrors[`locations[${index}].name`] && (
-                          <div className="error-message">
-                            {validationErrors[`locations[${index}].name`]}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-field full-width">
-                        <label>Description *</label>
-                        <textarea
-                          name="description"
-                          value={location.description}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              description: e.target.value,
-                            });
-                            clearValidationError(
-                              `locations[${index}].description`
-                            );
-                          }}
-                          className={
-                            validationErrors[`locations[${index}].description`]
-                              ? "error-border"
-                              : ""
-                          }
-                        />
-                        {validationErrors[
-                          `locations[${index}].description`
-                        ] && (
-                          <div className="error-message">
-                            {
-                              validationErrors[
-                                `locations[${index}].description`
-                              ]
-                            }
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-field full-width">
-                        <label>Website URL</label>
-                        <input
-                          name="url"
-                          value={location.url || ""}
-                          onChange={(e) =>
-                            handleLocationChange(index, {
-                              ...location,
-                              url: e.target.value,
-                            })
-                          }
-                          className="modal-input"
-                        />
-                      </div>
-
-                      <label>Image</label>
-                      <div className="image-upload-container">
-                        <div className="image-upload-area">
-                          <input
-                            type="file"
-                            id={`image-upload-${location._id}`}
-                            accept="image/*"
-                            onChange={(e) => handleImageUpload(e, location._id)}
-                            className="image-file-input"
-                          />
-                          {locationImages[location._id]?.preview ? (
-                            <div className="image-preview-wrapper">
-                              <img
-                                src={locationImages[location._id].preview}
-                                alt="Preview"
-                                className="image-preview"
-                              />
-                              <button
-                                type="button"
-                                className="remove-image-btn"
-                                onClick={() => removeImage(location._id)}
-                              >
-                                <FaTimes />
-                              </button>
+                          </select>
+                          {validationErrors[`locations[${index}].category`] && (
+                            <div className="error-message">
+                              {validationErrors[`locations[${index}].category`]}
                             </div>
-                          ) : (
-                            <label
-                              htmlFor={`image-upload-${location._id}`}
-                              className="image-upload-label"
+                          )}
+                        </div>
+
+                        {/* Type Field */}
+                        <div className="form-group">
+                          <label>Type *</label>
+                          <select
+                            name="type"
+                            value={location.type}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                type: e.target.value,
+                              });
+                              clearValidationError(`locations[${index}].type`);
+                            }}
+                            className={`form-select ${
+                              validationErrors[`locations[${index}].type`]
+                                ? "error-border"
+                                : ""
+                            }`}
+                            disabled={!location.category}
+                          >
+                            <option
+                              value=""
+                              className={
+                                location.category ? "" : "red-text-option"
+                              }
                             >
-                              <div className="image-upload-placeholder">
-                                <FaUpload className="upload-icon" />
-                                <span>
-                                  {isUploading
-                                    ? "Uploading..."
-                                    : "Click to upload or drag and drop"}
-                                </span>
-                                <p className="image-upload-hint">
-                                  PNG, JPG up to 5MB
-                                </p>
-                              </div>
-                            </label>
+                              {location.category
+                                ? "Select a type"
+                                : "*Please select a category first"}
+                            </option>
+                            {location.category &&
+                              typeOptions[location.category]?.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                          </select>
+                          {validationErrors[`locations[${index}].type`] && (
+                            <div className="error-message">
+                              {validationErrors[`locations[${index}].type`]}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Division Field */}
+                        <div className="form-group">
+                          <label>Division *</label>
+                          <input
+                            name="division"
+                            value={location.division}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                division: e.target.value,
+                              });
+                              clearValidationError(
+                                `locations[${index}].division`
+                              );
+                            }}
+                            className={`form-input ${
+                              validationErrors[`locations[${index}].division`]
+                                ? "error-border"
+                                : ""
+                            }`}
+                          />
+                          {validationErrors[`locations[${index}].division`] && (
+                            <div className="error-message">
+                              {validationErrors[`locations[${index}].division`]}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Location Name Field */}
+                        <div className="form-group">
+                          <label>Location Name *</label>
+                          <input
+                            name="name"
+                            value={location.name}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                name: e.target.value,
+                              });
+                              clearValidationError(`locations[${index}].name`);
+                            }}
+                            className={`form-input ${
+                              validationErrors[`locations[${index}].name`]
+                                ? "error-border"
+                                : ""
+                            }`}
+                          />
+                          {validationErrors[`locations[${index}].name`] && (
+                            <div className="error-message">
+                              {validationErrors[`locations[${index}].name`]}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status Field */}
+                        <div className="form-group">
+                          <label>Status *</label>
+                          <select
+                            className={`status-select ${
+                              validationErrors[`locations[${index}].status`]
+                                ? "error-border"
+                                : ""
+                            }`}
+                            value={location.status}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                status: e.target.value,
+                              });
+                              clearValidationError(
+                                `locations[${index}].status`
+                              );
+                            }}
+                          >
+                            <option value="">Select status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                          </select>
+                          {validationErrors[`locations[${index}].status`] && (
+                            <div className="error-message">
+                              {validationErrors[`locations[${index}].status`]}
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="form-field">
-                        <label>Status *</label>
-                        <select
-                          className={`status-select ${
-                            validationErrors[`locations[${index}].status`]
-                              ? "error-border"
-                              : ""
-                          }`}
-                          value={location.status}
-                          onChange={(e) => {
-                            handleLocationChange(index, {
-                              ...location,
-                              status: e.target.value,
-                            });
-                            clearValidationError(`locations[${index}].status`);
-                          }}
-                        >
-                          <option value="">Select status</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
-                        {validationErrors[`locations[${index}].status`] && (
-                          <div className="error-message">
-                            {validationErrors[`locations[${index}].status`]}
+                      {/* RIGHT COLUMN */}
+                      <div className="event-form-right">
+                        {/* Website URL Field */}
+                        <div className="form-group">
+                          <label>Website URL</label>
+                          <input
+                            name="url"
+                            value={location.url || ""}
+                            onChange={(e) =>
+                              handleLocationChange(index, {
+                                ...location,
+                                url: e.target.value,
+                              })
+                            }
+                            className="form-input"
+                          />
+                        </div>
+
+                        {/* Coordinates Row */}
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Latitude</label>
+                            <input
+                              type="number"
+                              step="any"
+                              name="latitude"
+                              value={
+                                location.latitude === 0 ? "" : location.latitude
+                              }
+                              onChange={(e) =>
+                                handleLocationChange(index, {
+                                  ...location,
+                                  latitude: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              placeholder="Latitude"
+                              className="form-input"
+                            />
                           </div>
-                        )}
-                      </div>
 
-                      <div className="form-field">
-                        <label>Latitude</label>
-                        <input
-                          type="number"
-                          step="any"
-                          name="latitude"
-                          value={
-                            location.latitude === 0 ? "" : location.latitude
-                          }
-                          onChange={(e) =>
-                            handleLocationChange(index, {
-                              ...location,
-                              latitude: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          placeholder="Latitude"
-                          className="modal-input"
-                        />
-                      </div>
+                          <div className="form-group">
+                            <label>Longitude</label>
+                            <input
+                              type="number"
+                              step="any"
+                              name="longitude"
+                              value={
+                                location.longitude === 0
+                                  ? ""
+                                  : location.longitude
+                              }
+                              onChange={(e) =>
+                                handleLocationChange(index, {
+                                  ...location,
+                                  longitude: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              placeholder="Longitude"
+                              className="form-input"
+                            />
+                          </div>
+                        </div>
 
-                      <div className="form-field">
-                        <label>Longitude</label>
-                        <input
-                          type="number"
-                          step="any"
-                          name="longitude"
-                          value={
-                            location.longitude === 0 ? "" : location.longitude
-                          }
-                          onChange={(e) =>
-                            handleLocationChange(index, {
-                              ...location,
-                              longitude: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          placeholder="Longitude"
-                          className="modal-input"
-                        />
+                        {/* Image Upload */}
+                        <div className="form-group">
+                          <label>Image</label>
+                          <div className="image-upload-container">
+                            <div className="image-upload-area">
+                              <input
+                                type="file"
+                                id={`image-upload-${location._id}`}
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleImageUpload(e, location._id)
+                                }
+                                className="image-file-input"
+                              />
+                              {locationImages[location._id]?.preview ? (
+                                <div className="image-preview-wrapper">
+                                  <img
+                                    src={locationImages[location._id].preview}
+                                    alt="Preview"
+                                    className="image-preview"
+                                  />
+                                  <button
+                                    type="button"
+                                    className="remove-image-btn"
+                                    onClick={() => removeImage(location._id)}
+                                  >
+                                    <FaTimes />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label
+                                  htmlFor={`image-upload-${location._id}`}
+                                  className="image-upload-label"
+                                >
+                                  <div className="image-upload-placeholder">
+                                    <FaUpload className="upload-icon" />
+                                    <span>
+                                      {isUploading
+                                        ? "Uploading..."
+                                        : "Click to upload or drag and drop"}
+                                    </span>
+                                    <p className="image-upload-hint">
+                                      PNG, JPG up to 5MB
+                                    </p>
+                                  </div>
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="map-preview-section">
+                    {/* FULL WIDTH FIELDS */}
+                    <div className="form-group full-width">
+                      <label>Description *</label>
+                      <textarea
+                        name="description"
+                        value={location.description}
+                        onChange={(e) => {
+                          handleLocationChange(index, {
+                            ...location,
+                            description: e.target.value,
+                          });
+                          clearValidationError(
+                            `locations[${index}].description`
+                          );
+                        }}
+                        className={`form-textarea ${
+                          validationErrors[`locations[${index}].description`]
+                            ? "error-border"
+                            : ""
+                        }`}
+                      />
+                      {validationErrors[`locations[${index}].description`] && (
+                        <div className="error-message">
+                          {validationErrors[`locations[${index}].description`]}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="form-group full-width">
                       <label>Map Preview</label>
                       <MapPreview
                         latitude={location.latitude}
