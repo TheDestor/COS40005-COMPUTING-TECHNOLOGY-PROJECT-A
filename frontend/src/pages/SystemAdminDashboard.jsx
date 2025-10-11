@@ -21,6 +21,66 @@ function SystemAdminDashboard() {
   const { accessToken } = useAuth();
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
+  const [dailyPageViews, setDailyPageViews] = useState([]);
+  const [viewPeriod, setViewPeriod] = useState('daily');
+  const [chartData, setChartData] = useState([]);
+  const [chartTitle, setChartTitle] = useState('Daily Page Views');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (chartRef.current) {
+        d3.select(chartRef.current).selectAll('*').remove();
+        createBarChart();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [chartData, viewPeriod]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${accessToken}` };
+        let url = '';
+        let title = '';
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        switch (viewPeriod) {
+          case 'daily':
+            url = '/api/admin/metrics/pageviews-dow?weekOffset=0';
+            title = 'Daily Page Views (Current Week)';
+            break;
+          case 'weekly':
+            url = '/api/admin/metrics/pageviews-weekly-month';
+            title = 'Weekly Page Views (Current Month)';
+            break;
+          case 'monthly':
+            url = '/api/admin/metrics/pageviews-monthly?months=24';
+            title = `Monthly Page Views (Jan–Dec ${currentYear})`;
+            break;
+          case 'yearly':
+            url = '/api/admin/metrics/pageviews-yearly?years=10';
+            title = 'Yearly Page Views (2021–2025)';
+            break;
+          default:
+            url = '/api/admin/metrics/pageviews-dow?weekOffset=0';
+            title = 'Daily Page Views (Current Week)';
+        }
+        const res = await ky.get(url, { headers }).json();
+        if (res?.success && Array.isArray(res.data)) {
+          setChartData(res.data);
+          setChartTitle(title);
+        } else {
+          setChartData([]);
+          setChartTitle(title);
+        }
+      } catch (e) {
+        console.error('Failed to fetch page views:', e);
+      }
+    };
+    fetchData();
+    const t = setInterval(fetchData, 30000);
+    return () => clearInterval(t);
+  }, [accessToken, viewPeriod]);
 
   // KPI stats state
   const [dashboardStats, setDashboardStats] = useState({
@@ -173,43 +233,52 @@ function SystemAdminDashboard() {
   }, []);
 
   const createBarChart = () => {
-    // Chart dimensions with increased left margin for axis labels
-    const margin = { top: 40, right: 30, bottom: 60, left: 80 };
-    // Get the full width of the container
+    const margin = { top: 40, right: 30, bottom: 70, left: 80 };
     const containerWidth = chartRef.current.clientWidth;
     const width = containerWidth - margin.left - margin.right;
     const height = 450 - margin.top - margin.bottom;
 
-    // Clear any existing SVG
-    d3.select(chartRef.current).select('svg').remove();
-    
-    // Create SVG with proper dimensions - setting explicit width to 100% to match .table-section
-    const svg = d3.select(chartRef.current)
+    const svgRoot = d3.select(chartRef.current);
+    svgRoot.select('svg').remove();
+    const svg = svgRoot
       .append('svg')
-      .attr('width', containerWidth)  // Match the full width of the container
+      .attr('width', containerWidth)
       .attr('height', height + margin.top + margin.bottom)
-      .attr('preserveAspectRatio', 'xMidYMid meet')  // Center alignment
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // X scale
-    const x = d3.scaleBand()
-      .domain(monthlyUsageData.map(d => d.month))
-      .range([0, width])
-      .padding(0.3);
+    // Build data for requested period
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let data = [];
+    if (viewPeriod === 'weekly') {
+      data = [1,2,3,4].map((w) => {
+        const found = chartData.find((d) => d.week === w);
+        return { label: `Week ${w}`, total: found ? found.total : 0 };
+      });
+    } else if (viewPeriod === 'monthly') {
+      data = Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        const found = chartData.find((d) => d.month === m && d.year === currentYear);
+        return { label: MONTH_NAMES[i], total: found ? found.total : 0 };
+      });
+    } else if (viewPeriod === 'yearly') {
+      const years = [2021, 2022, 2023, 2024, 2025];
+      data = years.map((y) => {
+        const found = chartData.find((d) => d.year === y);
+        return { label: String(y), total: found ? found.total : 0 };
+      });
+    } else {
+      data = chartData.length ? chartData : [];
+    }
 
-    // Y scale
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(monthlyUsageData, d => d.users) * 1.1])
-      .range([height, 0]);
+    const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, width]).padding(0.3);
+    const yMax = Math.max(1, d3.max(data, d => d.total) || 0) * 1.1;
+    const y = d3.scaleLinear().domain([0, yMax]).range([height, 0]);
 
-    // Format for Y axis labels (K = thousands)
-    const formatK = value => {
-      return value >= 1000 ? `${value / 1000}K` : value;
-    };
-
-    // Add X axis with rotated labels to prevent overlap
     svg.append('g')
       .attr('transform', `translate(0,${height})`)
       .call(d3.axisBottom(x))
@@ -217,32 +286,34 @@ function SystemAdminDashboard() {
       .style('font-size', '12px')
       .style('font-weight', '500')
       .style('text-anchor', 'middle');
-
-    // Add Y axis with proper formatting
     svg.append('g')
-      .call(d3.axisLeft(y).tickFormat(formatK).ticks(10))
+      .call(d3.axisLeft(y).ticks(10))
       .selectAll('text')
       .style('font-size', '12px')
       .style('text-anchor', 'end');
 
-    // Add Y axis label with proper positioning
+    const xAxisLabel = viewPeriod === 'weekly' ? 'Week' : viewPeriod === 'monthly' ? 'Month' : viewPeriod === 'yearly' ? 'Year' : 'Day of Week';
     svg.append('text')
       .attr('transform', 'rotate(-90)')
-      .attr('y', 0 - margin.left + 20) // Adjust position
+      .attr('y', 0 - margin.left + 20)
       .attr('x', 0 - (height / 2))
       .attr('dy', '1em')
       .style('text-anchor', 'middle')
       .style('font-size', '14px')
       .style('fill', '#555')
-      .text('Page Views Count');
+      .text('Total Page Views');
+    svg.append('text')
+      .attr('x', width / 2)
+      .attr('y', height + 40)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '14px')
+      .style('fill', '#555')
+      .text(xAxisLabel);
 
-    // Color scale - adjusted to use a more defined blue range
-    const color = d3.scaleLinear()
-      .domain([0, d3.max(monthlyUsageData, d => d.users)])
-      .range(['#92caff', '#007bff']); // A lighter blue to primary blue gradient
+    const baseColor = '#007bff';
+    const hoverColor = '#0056b3';
 
-    // Add tooltip
-    const tooltip = d3.select(chartRef.current)
+    const tooltip = svgRoot
       .append('div')
       .attr('class', 'chart-tooltip')
       .style('position', 'absolute')
@@ -255,80 +326,76 @@ function SystemAdminDashboard() {
       .style('pointer-events', 'none')
       .style('z-index', '10');
 
-    // Add bars with animation
-    svg.selectAll('.bar')
-      .data(monthlyUsageData)
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    const bars = svg
+      .selectAll('.bar')
+      .data(data)
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('x', d => x(d.month))
+      .attr('x', d => x(d.label))
       .attr('width', x.bandwidth())
-      .attr('y', height) // Start from bottom
-      .attr('height', 0) // Initially height is 0
-      .attr('rx', 3) // Rounded corners
-      .attr('fill', d => color(d.users))
-      .on('mouseover', function(event, d) {
-        // Highlight bar on hover with a consistent hover blue
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr('fill', '#0056b3') // A darker, more prominent blue on hover
-          .attr('opacity', 1);
-        
-        // Show tooltip
-        tooltip
-          .style('visibility', 'visible')
-          .html(`<strong>${d.month}:</strong> ${d.users.toLocaleString()} views`)
-          .style('left', `${event.pageX - chartRef.current.offsetLeft}px`)
-          .style('top', `${event.pageY - chartRef.current.offsetTop - 40}px`);
-      })
-      .on('mouseout', function(event, d) {
-        // Reset bar on mouseout to its original gradient color
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr('fill', color(d.users))
-          .attr('opacity', 0.9);
-        
-        // Hide tooltip
-        tooltip.style('visibility', 'hidden');
-      })
+      .attr('y', height)
+      .attr('height', 0)
+      .attr('rx', 3)
+      .attr('fill', baseColor)
+      .style('pointer-events', 'none');
+
+    bars
       .transition()
       .duration(1000)
       .delay((d, i) => i * 100)
-      .attr('y', d => y(d.users))
-      .attr('height', d => height - y(d.users));
+      .attr('y', d => y(d.total))
+      .attr('height', d => height - y(d.total))
+      .on('end', function () {
+        d3.select(this).style('pointer-events', 'all');
+      });
 
-    // Add a properly positioned title
-    svg.append('text')
+    bars
+      .on('mouseover', function () {
+        d3.select(this).attr('fill', hoverColor).attr('opacity', 1);
+        tooltip.style('visibility', 'visible');
+      })
+      .on('mousemove', function (event, d) {
+        tooltip.html(`<strong>${d.label}:</strong> ${d.total.toLocaleString()} views`);
+        const containerRect = chartRef.current.getBoundingClientRect();
+        const tooltipNode = tooltip.node();
+        const tooltipRect = tooltipNode.getBoundingClientRect();
+        let left = event.clientX - containerRect.left - tooltipRect.width / 2;
+        let top = event.clientY - containerRect.top - tooltipRect.height - 12;
+        left = clamp(left, 8, containerRect.width - tooltipRect.width - 8);
+        top = clamp(top, 8, containerRect.height - tooltipRect.height - 8);
+        tooltip.style('left', `${left}px`).style('top', `${top}px`);
+      })
+      .on('mouseout', function () {
+        d3.select(this).attr('fill', baseColor).attr('opacity', 0.9);
+        tooltip.style('visibility', 'hidden');
+      });
+
+    svg
+      .append('text')
       .attr('x', width / 2)
-      .attr('y', 0 - (margin.top / 2))
+      .attr('y', 0 - margin.top / 2)
       .attr('text-anchor', 'middle')
       .style('font-size', '16px')
       .style('font-weight', '600')
-      .style('fill', '#333') // Keep text dark for readability
+      .style('fill', '#333')
       .style('dominant-baseline', 'middle')
-      .text('Monthly Page Views Analytics');
+      .text(chartTitle);
 
-    // Add hover effect to grid lines (if desired, currently this is just stroke/dasharray)
-    svg.selectAll('.tick line')
-      .style('stroke', '#ccc') // Lighter grid lines
-      .style('stroke-dasharray', '2,2');
+    svg.selectAll('.tick line').style('stroke', '#ccc').style('stroke-dasharray', '2,2');
   };
 
-  // Add resize event listener for responsive chart
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
         createBarChart();
       }
     };
-
     window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [dailyPageViews]);
 
   const handleEditClick = (user) => {
     setCurrentUserToEdit(user);
@@ -433,7 +500,18 @@ function SystemAdminDashboard() {
               <span className="header-icon-admin"><FaChartBar /></span>
               Page Views Analytics
             </h3>
-            <button className="view-all-sa">Export Data</button>
+            {/* Replace Export Data button with period filter */}
+            <select
+              className="view-all-sa"
+              value={viewPeriod}
+              onChange={(e) => setViewPeriod(e.target.value)}
+              aria-label="Select period"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
           </div>
           <div 
             ref={chartRef} 
