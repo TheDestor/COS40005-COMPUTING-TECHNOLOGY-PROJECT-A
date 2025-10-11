@@ -1258,7 +1258,7 @@ const ManageLocation = () => {
               </h3>
 
               <div className="event-form-container">
-                {/* Left Column */}
+                {/* LEFT COLUMN */}
                 <div className="event-form-left">
                   {/* Category Field */}
                   <div className="form-group">
@@ -1382,6 +1382,46 @@ const ManageLocation = () => {
                     )}
                   </div>
 
+                  {/* Description Field */}
+                  <div className="form-group">
+                    <label>Description *</label>
+                    <textarea
+                      name="description"
+                      value={editingLocation.description}
+                      onChange={(e) => {
+                        setEditingLocation({
+                          ...editingLocation,
+                          description: e.target.value,
+                        });
+                        clearValidationError("description");
+                      }}
+                      className={`form-textarea ${
+                        validationErrors.description ? "error-border" : ""
+                      }`}
+                    />
+                    {validationErrors.description && (
+                      <div className="error-message">
+                        {validationErrors.description}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Website URL Field */}
+                  <div className="form-group">
+                    <label>Website URL</label>
+                    <input
+                      name="url"
+                      value={editingLocation.url || ""}
+                      onChange={(e) =>
+                        setEditingLocation({
+                          ...editingLocation,
+                          url: e.target.value,
+                        })
+                      }
+                      className="form-input"
+                    />
+                  </div>
+
                   {/* Status Field */}
                   <div className="form-group">
                     <label>Status *</label>
@@ -1410,71 +1450,8 @@ const ManageLocation = () => {
                   </div>
                 </div>
 
-                {/* Right Column */}
+                {/* RIGHT COLUMN */}
                 <div className="event-form-right">
-                  {/* Website URL Field */}
-                  <div className="form-group">
-                    <label>Website URL</label>
-                    <input
-                      name="url"
-                      value={editingLocation.url || ""}
-                      onChange={(e) =>
-                        setEditingLocation({
-                          ...editingLocation,
-                          url: e.target.value,
-                        })
-                      }
-                      className="form-input"
-                    />
-                  </div>
-
-                  {/* Coordinates Row */}
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Latitude</label>
-                      <input
-                        type="number"
-                        step="any"
-                        name="latitude"
-                        value={
-                          editingLocation.latitude === 0
-                            ? ""
-                            : editingLocation.latitude
-                        }
-                        onChange={(e) =>
-                          setEditingLocation({
-                            ...editingLocation,
-                            latitude: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        placeholder="Latitude"
-                        className="form-input"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Longitude</label>
-                      <input
-                        type="number"
-                        step="any"
-                        name="longitude"
-                        value={
-                          editingLocation.longitude === 0
-                            ? ""
-                            : editingLocation.longitude
-                        }
-                        onChange={(e) =>
-                          setEditingLocation({
-                            ...editingLocation,
-                            longitude: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        placeholder="Longitude"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-
                   {/* Image Upload */}
                   <div className="form-group">
                     <label>Image</label>
@@ -1525,41 +1502,68 @@ const ManageLocation = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Full Width Fields */}
-              <div className="form-group full-width">
-                <label>Description *</label>
-                <textarea
-                  name="description"
-                  value={editingLocation.description}
-                  onChange={(e) => {
-                    setEditingLocation({
-                      ...editingLocation,
-                      description: e.target.value,
-                    });
-                    clearValidationError("description");
-                  }}
-                  className={`form-textarea ${
-                    validationErrors.description ? "error-border" : ""
-                  }`}
-                />
-                {validationErrors.description && (
-                  <div className="error-message">
-                    {validationErrors.description}
+                  {/* Coordinates Row */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        value={
+                          editingLocation.latitude === 0
+                            ? ""
+                            : editingLocation.latitude
+                        }
+                        onChange={(e) =>
+                          setEditingLocation({
+                            ...editingLocation,
+                            latitude: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        placeholder="Latitude"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        value={
+                          editingLocation.longitude === 0
+                            ? ""
+                            : editingLocation.longitude
+                        }
+                        onChange={(e) =>
+                          setEditingLocation({
+                            ...editingLocation,
+                            longitude: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        placeholder="Longitude"
+                        className="form-input"
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Map Preview - Full Width */}
-              <div className="form-group full-width">
-                <label>Map Preview</label>
-                <MapPreview
-                  latitude={editingLocation.latitude}
-                  longitude={editingLocation.longitude}
-                  onChange={handleCoordinatesChange}
-                />
+                  {/* Map Preview - Inside the columns layout */}
+                  <div className="event-form-container">
+                    <div className="event-form-left">
+                      <div className="form-group">
+                        <label>Map Preview</label>
+                        <MapPreview
+                          latitude={editingLocation.latitude}
+                          longitude={editingLocation.longitude}
+                          onChange={handleCoordinatesChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="modal-actions">
@@ -1591,7 +1595,6 @@ const ManageLocation = () => {
                       className="add-another-btn"
                       onClick={() => {
                         handleAddLocation();
-                        // Automatically navigate to the new location
                         setTimeout(() => {
                           goToNextLocation();
                         }, 100);
@@ -1640,7 +1643,7 @@ const ManageLocation = () => {
                       )}
                     </div>
 
-                    {/* REPLACE THIS ENTIRE form-grid SECTION: */}
+                    {/* Use the same two-column layout as single location modal */}
                     <div className="event-form-container">
                       {/* LEFT COLUMN */}
                       <div className="event-form-left">
@@ -1778,6 +1781,58 @@ const ManageLocation = () => {
                           )}
                         </div>
 
+                        {/* Description Field */}
+                        <div className="form-group">
+                          <label>Description *</label>
+                          <textarea
+                            name="description"
+                            value={location.description}
+                            onChange={(e) => {
+                              handleLocationChange(index, {
+                                ...location,
+                                description: e.target.value,
+                              });
+                              clearValidationError(
+                                `locations[${index}].description`
+                              );
+                            }}
+                            className={`form-textarea ${
+                              validationErrors[
+                                `locations[${index}].description`
+                              ]
+                                ? "error-border"
+                                : ""
+                            }`}
+                          />
+                          {validationErrors[
+                            `locations[${index}].description`
+                          ] && (
+                            <div className="error-message">
+                              {
+                                validationErrors[
+                                  `locations[${index}].description`
+                                ]
+                              }
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Website URL Field */}
+                        <div className="form-group">
+                          <label>Website URL</label>
+                          <input
+                            name="url"
+                            value={location.url || ""}
+                            onChange={(e) =>
+                              handleLocationChange(index, {
+                                ...location,
+                                url: e.target.value,
+                              })
+                            }
+                            className="form-input"
+                          />
+                        </div>
+
                         {/* Status Field */}
                         <div className="form-group">
                           <label>Status *</label>
@@ -1812,67 +1867,6 @@ const ManageLocation = () => {
 
                       {/* RIGHT COLUMN */}
                       <div className="event-form-right">
-                        {/* Website URL Field */}
-                        <div className="form-group">
-                          <label>Website URL</label>
-                          <input
-                            name="url"
-                            value={location.url || ""}
-                            onChange={(e) =>
-                              handleLocationChange(index, {
-                                ...location,
-                                url: e.target.value,
-                              })
-                            }
-                            className="form-input"
-                          />
-                        </div>
-
-                        {/* Coordinates Row */}
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>Latitude</label>
-                            <input
-                              type="number"
-                              step="any"
-                              name="latitude"
-                              value={
-                                location.latitude === 0 ? "" : location.latitude
-                              }
-                              onChange={(e) =>
-                                handleLocationChange(index, {
-                                  ...location,
-                                  latitude: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              placeholder="Latitude"
-                              className="form-input"
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>Longitude</label>
-                            <input
-                              type="number"
-                              step="any"
-                              name="longitude"
-                              value={
-                                location.longitude === 0
-                                  ? ""
-                                  : location.longitude
-                              }
-                              onChange={(e) =>
-                                handleLocationChange(index, {
-                                  ...location,
-                                  longitude: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              placeholder="Longitude"
-                              className="form-input"
-                            />
-                          </div>
-                        </div>
-
                         {/* Image Upload */}
                         <div className="form-group">
                           <label>Image</label>
@@ -1923,50 +1917,73 @@ const ManageLocation = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* FULL WIDTH FIELDS */}
-                    <div className="form-group full-width">
-                      <label>Description *</label>
-                      <textarea
-                        name="description"
-                        value={location.description}
-                        onChange={(e) => {
-                          handleLocationChange(index, {
-                            ...location,
-                            description: e.target.value,
-                          });
-                          clearValidationError(
-                            `locations[${index}].description`
-                          );
-                        }}
-                        className={`form-textarea ${
-                          validationErrors[`locations[${index}].description`]
-                            ? "error-border"
-                            : ""
-                        }`}
-                      />
-                      {validationErrors[`locations[${index}].description`] && (
-                        <div className="error-message">
-                          {validationErrors[`locations[${index}].description`]}
+                        {/* Coordinates Row */}
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Latitude</label>
+                            <input
+                              type="number"
+                              step="any"
+                              name="latitude"
+                              value={
+                                location.latitude === 0 ? "" : location.latitude
+                              }
+                              onChange={(e) =>
+                                handleLocationChange(index, {
+                                  ...location,
+                                  latitude: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              placeholder="Latitude"
+                              className="form-input"
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Longitude</label>
+                            <input
+                              type="number"
+                              step="any"
+                              name="longitude"
+                              value={
+                                location.longitude === 0
+                                  ? ""
+                                  : location.longitude
+                              }
+                              onChange={(e) =>
+                                handleLocationChange(index, {
+                                  ...location,
+                                  longitude: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              placeholder="Longitude"
+                              className="form-input"
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="form-group full-width">
-                      <label>Map Preview</label>
-                      <MapPreview
-                        latitude={location.latitude}
-                        longitude={location.longitude}
-                        onChange={(lat, lng) =>
-                          handleLocationChange(index, {
-                            ...location,
-                            latitude: lat,
-                            longitude: lng,
-                          })
-                        }
-                      />
+                        {/* Map Preview */}
+
+                        <div className="event-form-container">
+                          <div className="event-form-left">
+                            <div className="form-group">
+                              <label>Map Preview</label>
+                              <MapPreview
+                                latitude={location.latitude}
+                                longitude={location.longitude}
+                                onChange={(lat, lng) =>
+                                  handleLocationChange(index, {
+                                    ...location,
+                                    latitude: lat,
+                                    longitude: lng,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -2000,22 +2017,6 @@ const ManageLocation = () => {
                     </button>
                   </div>
                 )}
-
-                <div className="navigation-buttons">
-                  <button
-                    type="button"
-                    className="add-another-btn"
-                    onClick={() => {
-                      handleAddLocation();
-                      // Automatically navigate to the new location
-                      setTimeout(() => {
-                        goToNextLocation();
-                      }, 100);
-                    }}
-                  >
-                    <FaPlus /> Add Another Location
-                  </button>
-                </div>
 
                 <div className="modal-actions">
                   <button className="cancel-button" onClick={handleCancelClick}>
