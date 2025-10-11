@@ -10,7 +10,11 @@ import {
   FaSave,
   FaPlus,
   FaMinus,
-  FaCheckCircle, // ADD THIS
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaFilter, // ADD THIS for status filter
+  FaCalendarAlt, // ADD THIS for date picker
+  FaChevronDown, // ADD THIS for dropdown arrow
 } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
@@ -172,8 +176,40 @@ const ToastNotification = ({
       }`}
     >
       <div className="toast-content">
-        <FaCheckCircle className="toast-icon" />
+        {/* UPDATE: Add icon logic based on type */}
+        {type === "success" ? (
+          <FaCheckCircle className="toast-icon" />
+        ) : (
+          <FaExclamationCircle className="toast-icon" />
+        )}
         <span className="toast-message">{message}</span>
+      </div>
+      <button className="toast-close" onClick={onClose}>
+        <FaTimes />
+      </button>
+    </div>
+  );
+};
+
+const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
+  if (!isVisible || !messages || messages.length === 0) return null;
+
+  return (
+    <div
+      className={`toast-notification toast-warning ${
+        isVisible ? "toast-visible" : ""
+      }`}
+    >
+      <div className="toast-content">
+        <FaExclamationCircle className="toast-icon" />
+        <div className="validation-messages">
+          <strong>Please fill in the following required fields:</strong>
+          <ul>
+            {messages.map((message, index) => (
+              <li key={index}>{message}</li>
+            ))}
+          </ul>
+        </div>
       </div>
       <button className="toast-close" onClick={onClose}>
         <FaTimes />
@@ -308,6 +344,73 @@ const ManageLocation = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
+
+  const [validationToast, setValidationToast] = useState({
+    isVisible: false,
+    messages: [],
+  });
+
+  // ADD: Function to show validation toast
+  const showValidationToast = (validationResults) => {
+    const errorMessages = [];
+
+    validationResults.forEach((result) => {
+      if (Object.keys(result.errors).length > 0) {
+        const locationPrefix =
+          validationResults.length > 1 ? `Location ${result.index + 1}: ` : "";
+
+        Object.keys(result.errors).forEach((field) => {
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
+          errorMessages.push(`${locationPrefix}${fieldName} is required`);
+        });
+      }
+    });
+
+    if (errorMessages.length > 0) {
+      setValidationToast({
+        isVisible: true,
+        messages: errorMessages,
+      });
+
+      // Auto hide after 8 seconds
+      setTimeout(() => {
+        setValidationToast((prev) => ({ ...prev, isVisible: false }));
+      }, 8000);
+    }
+  };
+
+  // ADD: Function to close validation toast
+  const closeValidationToast = () => {
+    setValidationToast((prev) => ({ ...prev, isVisible: false }));
+  };
+
+  // Validation Toast Notification Component
+  const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
+    if (!isVisible || !messages || messages.length === 0) return null;
+
+    return (
+      <div
+        className={`toast-notification toast-warning ${
+          isVisible ? "toast-visible" : ""
+        }`}
+      >
+        <div className="toast-content">
+          <FaExclamationCircle className="toast-icon" />
+          <div className="validation-messages">
+            <strong>Please fill in the following required fields:</strong>
+            <ul>
+              {messages.map((message, index) => (
+                <li key={index}>{message}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <button className="toast-close" onClick={onClose}>
+          <FaTimes />
+        </button>
+      </div>
+    );
+  };
 
   const [toast, setToast] = useState({
     isVisible: false,
@@ -586,7 +689,7 @@ const ManageLocation = () => {
         });
 
         setValidationErrors(allErrors);
-        alert("Please fix all validation errors before saving.");
+        showValidationToast(validationResults);
         return;
       }
 
@@ -841,7 +944,10 @@ const ManageLocation = () => {
 
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
-        alert("Please fix all validation errors before saving.");
+
+        // FIX: Create validationResults array properly
+        const validationResults = [{ index: 0, errors }];
+        showValidationToast(validationResults);
         return;
       }
 
@@ -1060,6 +1166,7 @@ const ManageLocation = () => {
         </div>
 
         {/* Filters */}
+        {/* Filters */}
         <div className="filters-actions-row">
           <button
             className="add-location-button"
@@ -1068,20 +1175,27 @@ const ManageLocation = () => {
             Add New Location +
           </button>
 
+          {/* Updated Status Filter with Icon */}
           <div className="filter-dropdown-ml">
-            <select
-              className="status-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+            <div className="custom-select-wrapper">
+              <FaFilter className="filter-icon" />
+              <select
+                className="status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+              <FaChevronDown className="dropdown-arrow" />
+            </div>
           </div>
 
+          {/* Updated Date Picker with Icons */}
           <div className="date-picker">
             <div className="date-picker-wrapper">
+              <FaCalendarAlt className="date-icon" />
               <DatePicker
                 selected={startDate}
                 onChange={(date) => setStartDate(date)}
@@ -1107,6 +1221,7 @@ const ManageLocation = () => {
               />
             </div>
             <div className="date-picker-wrapper">
+              <FaCalendarAlt className="date-icon" />
               <DatePicker
                 selected={endDate}
                 onChange={(date) => setEndDate(date)}
@@ -2047,6 +2162,13 @@ const ManageLocation = () => {
           type={toast.type}
           isVisible={toast.isVisible}
           onClose={closeToast}
+        />
+
+        {/* ADD THIS VALIDATION TOAST */}
+        <ValidationToastNotification
+          messages={validationToast.messages}
+          isVisible={validationToast.isVisible}
+          onClose={closeValidationToast}
         />
       </div>
     </div>
