@@ -1604,22 +1604,6 @@ const ManageLocation = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* Location Pagination Dots */}
-                {editingLocations.length > 1 && (
-                  <div className="location-pagination-dots">
-                    {editingLocations.map((_, index) => (
-                      <button
-                        key={index}
-                        className={`location-dot ${
-                          currentLocationIndex === index ? "active" : ""
-                        }`}
-                        onClick={() => goToLocation(index)}
-                        aria-label={`Go to location ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="locations-form-container">
