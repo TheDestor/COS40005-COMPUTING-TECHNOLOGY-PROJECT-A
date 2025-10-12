@@ -5,6 +5,33 @@ import "../styles/BackupConfigmodal.css";
 import { toast } from "sonner";
 
 // Scheduling helpers (client-side)
+const TAB_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const LEADER_KEY = "backup:scheduler:leader";
+const HEARTBEAT_KEY = "backup:scheduler:heartbeat";
+const SCHEDULE_KEY = "backup:schedule";
+const NEXT_RUN_KEY = "backup:nextRun";
+const LAST_RUN_KEY = "backup:lastRun";
+
+function nowTs() {
+  return Date.now();
+}
+
+function isValidTimeStr(str) {
+  if (typeof str !== "string") return false;
+  const m = str.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  return !!m;
+}
+
+function isValidFrequency(f) {
+  return ["Daily", "Weekly", "Monthly"].includes(f);
+}
+
+function isValidSchedule(c) {
+  if (!c) return false;
+  const r = Number(c.retention);
+  return isValidFrequency(c.frequency) && isValidTimeStr(c.time) && r > 0;
+}
+
 function getAccessToken() {
   try {
     return (
@@ -24,13 +51,18 @@ async function runBackupNow() {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
   try {
-    await fetch("/api/admin/backup/run", { method: "POST", headers });
+    const res = await fetch("/api/admin/backup/run", { method: "POST", headers });
+    const ok = !!res && res.ok;
+    window.dispatchEvent(
+      new CustomEvent("backup:run", { detail: { source: "schedule", ok } })
+    );
+    if (!ok) throw new Error(`HTTP ${res ? res.status : "ERR"}`);
   } catch (e) {
-    // Swallow errors to avoid breaking UI; emit an event for listeners
+    console.error("Backup run error:", e);
+    window.dispatchEvent(
+      new CustomEvent("backup:error", { detail: { source: "schedule", error: String(e) } })
+    );
   }
-  window.dispatchEvent(
-    new CustomEvent("backup:run", { detail: { source: "schedule" } })
-  );
 }
 
 function computeNextRunDate(frequency, timeStr) {
@@ -38,48 +70,141 @@ function computeNextRunDate(frequency, timeStr) {
   const now = new Date();
   const next = new Date(now);
   next.setHours(hh, mm, 0, 0);
-
   if (frequency === "Daily") {
     if (next <= now) next.setDate(next.getDate() + 1);
   } else if (frequency === "Weekly") {
-    // Next occurrence in 7 days at the same time
     if (next <= now) next.setDate(next.getDate() + 7);
   } else if (frequency === "Monthly") {
-    // Next month at the same day/time
     const day = next.getDate();
     next.setMonth(next.getMonth() + (next <= now ? 1 : 0));
-    // Attempt same day; if overflow, set to last day of month
     if (next.getDate() !== day) {
-      next.setDate(0); // Last day of previous month
+      next.setDate(0);
       next.setHours(hh, mm, 0, 0);
     }
   }
   return next;
 }
 
+function getLeader() {
+  try {
+    return localStorage.getItem(LEADER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setLeader(id) {
+  try {
+    localStorage.setItem(LEADER_KEY, id);
+    localStorage.setItem(HEARTBEAT_KEY, String(nowTs()));
+  } catch {}
+}
+
+function isHeartbeatStale() {
+  try {
+    const ts = parseInt(localStorage.getItem(HEARTBEAT_KEY) || "0", 10);
+    return nowTs() - ts > 60000;
+  } catch {
+    return true;
+  }
+}
+
+function tryBecomeLeader() {
+  const current = getLeader();
+  if (!current || isHeartbeatStale()) {
+    setLeader(TAB_ID);
+    return true;
+  }
+  return current === TAB_ID;
+}
+
+function isLeader() {
+  return getLeader() === TAB_ID;
+}
+
 function setupScheduler(config) {
-  // Clear previous schedule if any
   if (window.__backupScheduler?.clear) {
     window.__backupScheduler.clear();
   }
   const state = {
     timers: [],
+    intervals: [],
+    paused: false,
     clear() {
       this.timers.forEach((t) => clearTimeout(t));
+      this.intervals.forEach((i) => clearInterval(i));
       this.timers = [];
+      this.intervals = [];
+      try {
+        if (isLeader()) localStorage.removeItem(LEADER_KEY);
+      } catch {}
+    },
+    pause() {
+      this.paused = true;
+    },
+    resume() {
+      this.paused = false;
     },
   };
   window.__backupScheduler = state;
 
+  tryBecomeLeader();
+
+  const heartbeat = () => {
+    try {
+      if (isLeader()) localStorage.setItem(HEARTBEAT_KEY, String(nowTs()));
+    } catch {}
+  };
+
   const scheduleNext = () => {
     const next = computeNextRunDate(config.frequency, config.time);
+    try { localStorage.setItem(NEXT_RUN_KEY, String(next.getTime())); } catch {}
     const delay = Math.max(1000, next.getTime() - Date.now());
     const id = setTimeout(async () => {
+      if (!isLeader() || state.paused) { scheduleNext(); return; }
       await runBackupNow();
-      scheduleNext(); // Reschedule after run
+      try { localStorage.setItem(LAST_RUN_KEY, String(nowTs())); } catch {}
+      scheduleNext();
     }, delay);
     state.timers.push(id);
   };
+
+  const checkLoop = setInterval(async () => {
+    heartbeat();
+    tryBecomeLeader();
+    if (!isLeader() || state.paused) return;
+    const nextTs = parseInt(localStorage.getItem(NEXT_RUN_KEY) || "0", 10);
+    const lastTs = parseInt(localStorage.getItem(LAST_RUN_KEY) || "0", 10);
+    if (nextTs && nowTs() >= nextTs && lastTs < nextTs) {
+      await runBackupNow();
+      try { localStorage.setItem(LAST_RUN_KEY, String(nowTs())); } catch {}
+      const next = computeNextRunDate(config.frequency, config.time);
+      try { localStorage.setItem(NEXT_RUN_KEY, String(next.getTime())); } catch {}
+    }
+  }, 30000);
+  state.intervals.push(checkLoop);
+
+  const vis = () => {
+    if (document.visibilityState === "visible") {
+      tryBecomeLeader();
+    }
+  };
+  document.addEventListener("visibilitychange", vis);
+
+  const beforeUnload = () => {
+    try {
+      if (isLeader()) localStorage.removeItem(LEADER_KEY);
+    } catch {}
+    state.clear();
+  };
+  window.addEventListener("beforeunload", beforeUnload);
+
+  window.addEventListener("storage", (e) => {
+    if (e.key === LEADER_KEY) {
+      if (e.newValue !== TAB_ID) state.pause();
+      else state.resume();
+    }
+  });
 
   scheduleNext();
 }
@@ -92,32 +217,32 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
   const [nextRun, setNextRun] = useState(() => computeNextRunDate("Daily", "02:00"));
 
   useEffect(() => {
-    // Recompute next run when inputs change
     setNextRun(computeNextRunDate(frequency, time));
   }, [frequency, time]);
 
   useEffect(() => {
-    // Load saved schedule to preview when modal opens
     try {
-      const saved = localStorage.getItem("backup:schedule");
+      const saved = localStorage.getItem(SCHEDULE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         setNextRun(computeNextRunDate(parsed.frequency || frequency, parsed.time || time));
+        if (isValidSchedule(parsed)) setupScheduler(parsed);
       }
     } catch {}
   }, []);
 
   const handleSave = () => {
     const config = { frequency, time, retention: Number(retention) };
-    // Persist schedule and start client-side scheduler
+    if (!isValidSchedule(config)) {
+      toast.error("Invalid backup configuration.");
+      return;
+    }
     try {
-      localStorage.setItem("backup:schedule", JSON.stringify(config));
+      localStorage.setItem(SCHEDULE_KEY, JSON.stringify(config));
     } catch {}
     setupScheduler(config);
-
     onSave(config);
     onClose();
-    // Notify success on configuration save
     toast.success("Backup configuration saved.");
   };
 
@@ -169,6 +294,16 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
       </div>
     </div>
   );
+};
+
+export const initBackupScheduler = () => {
+  try {
+    const saved = localStorage.getItem(SCHEDULE_KEY);
+    if (saved) {
+      const config = JSON.parse(saved);
+      if (isValidSchedule(config)) setupScheduler(config);
+    }
+  } catch {}
 };
 
 export default BackupConfigurationModal;
