@@ -1,0 +1,153 @@
+/* Timeframe Selector Styles */
+.timeframe-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.timeframe-btn {
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 80px;
+  text-align: center;
+}
+
+.timeframe-btn:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.timeframe-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.timeframe-btn.active:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+/* Chart Container Styles */
+.chart-container {
+  height: 450px;
+  width: 100%;
+  padding: 20px 0;
+  box-sizing: border-box;
+  color: #333;
+  background: white;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+/* Table Header Styles */
+.table-header-admin {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-header-admin h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2d3748;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.header-icon-admin {
+  color: #007bff;
+  font-size: 20px;
+}
+
+/* View All Button Styles */
+.view-all-sa {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.view-all-sa:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Chart Tooltip Styles */
+.chart-tooltip {
+  position: fixed;
+  visibility: hidden;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 200px;
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-header-admin {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .timeframe-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .timeframe-btn {
+    flex: 1;
+    min-width: auto;
+  }
+
+  .chart-container {
+    height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeframe-selector {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .timeframe-btn {
+    width: 100%;
+  }
+}
