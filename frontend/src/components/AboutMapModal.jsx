@@ -82,7 +82,7 @@ const AboutMapModal = ({ isOpen, onClose }) => {
             <h3><FaPhone className="section-title-icon" /> Support</h3>
             <p>
               For technical support, business inquiries, or feedback, please contact 
-              our support team through the Help Centre in settings.
+              our support team through the Contact Us or swkmap@gmail.com.
             </p>
           </div>
         </div>

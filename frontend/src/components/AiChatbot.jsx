@@ -27,7 +27,7 @@ export default function AiChatbot({ visibleByDefault = false }) {
 	const suggestions = [
 		'Top attractions in Sarawak',
 		'Best local food in Sarawak',
-		'Plan a 2-day 1-night trip',
+		'Plan a 2-day 1-night trip in Kuching',
 		'Cultural sites to visit',
 	];
 
