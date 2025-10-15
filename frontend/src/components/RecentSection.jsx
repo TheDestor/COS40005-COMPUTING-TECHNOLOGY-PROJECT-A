@@ -23,7 +23,7 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
       setSelectedItems([]);
     }
   };
-  
+
   const handleDelete = () => {
     if (!onDeleteItems || selectedItems.length === 0) return;
     setConfirmState({ open: true, kind: 'delete' });
@@ -93,7 +93,10 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
               <div
                 key={index}
                 className="recent-item"
-                onClick={() => onItemClick(item)}
+                onClick={() => {
+                  onItemClick(item);
+                  toast.success(`Plotted "${item.name}" on the map`);
+                }}
               >
                 <input
                   type="checkbox"

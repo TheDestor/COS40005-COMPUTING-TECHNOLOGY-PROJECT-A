@@ -2,6 +2,7 @@ import { Router } from "express";
 import { contactUs, removeAvatar, updateAvatar, updatePassword, updateUserProfile, deleteAccount } from "../controllers/UserController.js";
 import { verifyJWT } from "../middleware/AuthMiddleware.js";
 import multer from "multer";
+import { updatePasswordLimiter, updateProfileLimiter, contactUsLimiter } from "../middleware/rateLimiter.js";
 
 const userRouter = Router();
 const upload = multer({
@@ -17,11 +18,11 @@ const upload = multer({
     }
 });
 
-userRouter.post("/updateUserProfile", verifyJWT, updateUserProfile);
-userRouter.post("/updatePassword", verifyJWT, updatePassword);
+userRouter.post("/updateUserProfile", verifyJWT, updateProfileLimiter, updateUserProfile);
+userRouter.post("/updatePassword", verifyJWT, updatePasswordLimiter, updatePassword);
 userRouter.post("/updateAvatar", verifyJWT, upload.single('avatar'), updateAvatar);
 userRouter.post("/removeAvatar", verifyJWT, removeAvatar);
-userRouter.post("/contactUs", contactUs);
+userRouter.post("/contactUs", contactUsLimiter, contactUs);
 userRouter.delete("/deleteAccount", verifyJWT, deleteAccount);
 
 export default userRouter;

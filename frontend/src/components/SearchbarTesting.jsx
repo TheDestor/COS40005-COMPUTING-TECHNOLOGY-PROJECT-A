@@ -12,11 +12,11 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       const saved = localStorage.getItem('sarawakTourismRecentLocations');
       return saved ? JSON.parse(saved).slice(0, 5).map(item => ({
         name: item.name,
-        description: item.description,
+        description: getDisplayDescriptionBySource(item),
         latitude: item.latitude,
         longitude: item.longitude,
         placeId: item.placeId || `${item.name}-${item.latitude}-${item.longitude}`,
-        source: 'recent'
+        source: item.source || 'recent'
       })) : [];
     } catch {
       return [];
@@ -26,6 +26,286 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   const [inputValue, setInputValue] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Restore normalizer
+  const normalizeName = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // Display-only description resolver. Does not mutate original data.
+  const getDisplayDescriptionBySource = (item) => {
+    const src = (item?.source || '').toLowerCase();
+    if (src === 'backend') return item.division || item.full?.division || '';
+    if (src === 'business') return item.address || item.full?.address || '';
+    if (src === 'photon' || src === 'nominatim') return item.description || '';
+
+    // Fallback for older "recent" items lacking source/division/address
+    const near = 0.0005;
+    const name = normalizeName(item.name || '');
+    const lat = Number(item.latitude);
+    const lon = Number(item.longitude);
+
+    const backendMatch = backendLocations.find(loc =>
+      normalizeName(loc.name) === name &&
+      Math.abs(Number(loc.latitude) - lat) < near &&
+      Math.abs(Number(loc.longitude) - lon) < near
+    );
+    if (backendMatch) {
+      return backendMatch.division || backendMatch.full?.division || '';
+    }
+
+    const businessMatch = approvedBusinesses.find(b =>
+      normalizeName(b.name) === name &&
+      Math.abs(Number(b.latitude) - lat) < near &&
+      Math.abs(Number(b.longitude) - lon) < near
+    );
+    if (businessMatch) {
+      return businessMatch.address || '';
+    }
+
+    return item.description || '';
+  };
+  // Approved businesses only
+  const [approvedBusinesses, setApprovedBusinesses] = useState([]);
+  const [approvedReady, setApprovedReady] = useState(false);
+  const [approvedLoadError, setApprovedLoadError] = useState(null);
+  
+  useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const r = await fetch('/api/businesses/approved');
+                if (!r.ok) throw new Error(`Failed to load approved businesses (${r.status})`);
+                const json = await r.json();
+                const arr = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
+                const mapped = arr
+                    .filter(b => String(b.status).toLowerCase() === 'approved')
+                    .map(b => ({
+                        name: b.name,
+                        // description: [b.category, b.address].filter(Boolean).join(' • '),
+                        description: b.description || '', // CHANGED: business => use address in dropdowns
+                        latitude: Number(b.latitude),
+                        longitude: Number(b.longitude),
+                        placeId: b._id || `${b.name}-${b.latitude}-${b.longitude}`,
+                        phone: b.phone || '',
+                        website: b.website || '',
+                        openingHours: b.openingHours || '',
+                        ownerEmail: b.ownerEmail || '',
+                        image: b.businessImage,
+                        category: b.category,
+                        address: b.address,
+                        website: b.website,
+                        full: b,
+                        source: 'business',
+                        status: b.status,
+                        type: 'Business'
+                    }));
+                if (mounted) {
+                    setApprovedBusinesses(mapped);
+                    setApprovedReady(true);
+                }
+            } catch (e) {
+                if (mounted) {
+                    setApprovedLoadError(e.message || 'Failed to load approved businesses');
+                    setApprovedBusinesses([]);
+                    setApprovedReady(true);
+                }
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
+
+  // NEW: load backend locations on mount
+const [backendLocations, setBackendLocations] = useState([]);
+
+// NEW: dedupe helper for external items (Photon/Nominatim)
+const dedupeByNameAndCoords = (items) => {
+    const normalize = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const byName = new Map();
+    const THRESH = 0.0005;
+
+    for (const item of items) {
+      const key = normalize(item.name);
+      const existing = byName.get(key);
+      if (!existing) {
+        byName.set(key, item);
+        continue;
+      }
+      const near =
+        Math.abs(existing.latitude - item.latitude) < THRESH &&
+        Math.abs(existing.longitude - item.longitude) < THRESH;
+
+      if (near || key === normalize(existing.name)) {
+        if (existing.source !== 'photon' && item.source === 'photon') {
+          byName.set(key, item);
+        }
+      } else {
+        if (existing.source !== 'photon' && item.source === 'photon') {
+          byName.set(key, item);
+        }
+      }
+    }
+    return Array.from(byName.values());
+  };
+
+const [backendLoadError, setBackendLoadError] = useState(null);
+
+useEffect(() => {
+  let isMounted = true;
+  const fetchLocations = async () => {
+    try {
+      const r = await fetch('/api/locations');
+      if (!r.ok) throw new Error(`Failed to load locations (${r.status})`);
+      const data = await r.json();
+      if (!Array.isArray(data)) throw new Error('Unexpected locations payload');
+      const mapped = data.map(loc => ({
+        name: loc.name,
+        description: loc.description,
+        division: loc.division,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        placeId: loc._id || `${loc.name}-${loc.latitude}-${loc.longitude}`,
+        image: loc.image,
+        url: loc.url,
+        full: loc,
+        source: 'backend'
+      }));
+      if (isMounted) setBackendLocations(mapped);
+    } catch (e) {
+      if (isMounted) setBackendLoadError(e.message || 'Failed to load locations');
+      console.error('Backend locations load error:', e);
+    }
+  };
+  fetchLocations();
+  return () => { isMounted = false; };
+}, []);
+
+useEffect(() => {
+    const q = inputValue.trim().toLowerCase();
+
+    if (!q) {
+      setPredictions([]);
+      setIsLoading(false);
+      return;
+    }
+    if (!approvedReady) {
+        setIsLoading(true);
+        return;
+    }
+
+    setIsLoading(true);
+    const controller = new AbortController();
+
+    const timeoutId = setTimeout(async () => {
+      // 1) Rank backend matches first
+      const backendRanked = backendLocations
+        .map(p => {
+          const name = normalizeName(p.name);
+          const desc = normalizeName(p.description);
+          const div = normalizeName(p.full?.division);
+          let score = Infinity;
+          if (name.startsWith(q)) score = 0;
+          else if (name.includes(q)) score = 1;
+          else if (div.includes(q)) score = 2;
+          else if (desc.includes(q)) score = 3;
+          return { p, score, key: name };
+        })
+        .filter(x => x.score !== Infinity)
+        .sort((a, b) => a.score - b.score || a.p.name.length - b.p.name.length);
+
+      const finalList = [];
+      const seenNames = new Set();
+      for (const x of backendRanked) {
+        if (!seenNames.has(x.key)) {
+          finalList.push(x.p);
+          seenNames.add(x.key);
+        }
+      }
+
+      const ranked = approvedBusinesses
+          .map(p => {
+              const name = normalizeName(p.name);
+              const cat = normalizeName(p.category);
+              const addr = normalizeName(p.address);
+              let score = Infinity;
+              if (name.startsWith(q)) score = 0;
+              else if (name.includes(q)) score = 1;
+              else if (cat.includes(q)) score = 2;
+              else if (addr.includes(q)) score = 3;
+              return { p, score, key: name };
+          })
+          .filter(x => x.score !== Infinity)
+          .sort((a, b) => a.score - b.score || a.p.name.length - b.p.name.length);
+
+      // const finalList = [];
+      const seen = new Set();
+      for (const x of ranked) {
+          if (!seen.has(x.key)) {
+              finalList.push(x.p);
+              seen.add(x.key);
+          }
+      }
+
+      // 2) Fill remaining slots with external suggestions (Photon/Nominatim)
+      const remainingSlots = Math.max(0, 5 - finalList.length);
+      if (remainingSlots > 0) {
+        let external = [];
+        try {
+          const [photonResult, nominatimResult] = await Promise.allSettled([
+            fetchPhotonSuggestions(inputValue, controller.signal).catch(() => []),
+            fetchNominatimSuggestions(inputValue, controller.signal).catch(() => [])
+          ]);
+
+          if (photonResult.status === 'fulfilled' && Array.isArray(photonResult.value)) {
+            external = external.concat(photonResult.value);
+          }
+          if (nominatimResult.status === 'fulfilled' && Array.isArray(nominatimResult.value)) {
+            external = external.concat(nominatimResult.value);
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('External search failed:', err);
+          }
+        }
+
+        // Remove external items that conflict with backend by name
+        const externalAfterBackend = external.filter(
+          ext => !seenNames.has(normalizeName(ext.name))
+        );
+
+        // NEW: dedupe external items by name/coords, prefer Photon
+        const externalDeduped = dedupeByNameAndCoords(externalAfterBackend);
+
+        // Rank remaining external (lower priority than backend)
+        const externalRanked = externalDeduped
+          .map(e => {
+            const name = normalizeName(e.name);
+            const desc = normalizeName(e.description);
+            let score = Infinity;
+            if (name.startsWith(q)) score = 10;
+            else if (name.includes(q)) score = 11;
+            else if (desc.includes(q)) score = 12;
+            return { e, score };
+          })
+          .filter(x => x.score !== Infinity)
+          .sort((a, b) => a.score - b.score || a.e.name.length - b.e.name.length)
+          .slice(0, remainingSlots)
+          .map(x => x.e);
+
+        // Use originals; compute display-only description in JSX
+        setPredictions([...finalList, ...externalRanked]);
+      } else {
+        // Use originals; compute display-only description in JSX
+        setPredictions(finalList.slice(0, 5));
+      }
+
+      setIsLoading(false);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+      setIsLoading(false);
+    };
+  }, [inputValue, backendLocations, approvedBusinesses, approvedReady]);
 
   // Sarawak bounding box: 109.5,0.8,115.5,5.5
   const sarawakBbox = '109.5,0.8,115.5,5.5';
@@ -43,64 +323,64 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   }, []);
 
   // Fetch suggestions from backend, Photon, and Nominatim with fallback, debounced and restricted to Sarawak
-  useEffect(() => {
-    if (!inputValue.trim()) {
-      setPredictions([]);
-      setIsLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!inputValue.trim()) {
+  //     setPredictions([]);
+  //     setIsLoading(false);
+  //     return;
+  //   }
 
-    setIsLoading(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      // Try to fetch from all sources in parallel
-      Promise.allSettled([
-        fetchPhotonSuggestions(inputValue, controller.signal).catch(() => []),
-        fetchNominatimSuggestions(inputValue, controller.signal).catch(() => [])
-      ])
-        .then(([photonResult, nominatimResult]) => {
-          let allResults = [];
+  //   setIsLoading(true);
+  //   const controller = new AbortController();
+  //   const timeoutId = setTimeout(() => {
+  //     // Try to fetch from all sources in parallel
+  //     Promise.allSettled([
+  //       fetchPhotonSuggestions(inputValue, controller.signal).catch(() => []),
+  //       fetchNominatimSuggestions(inputValue, controller.signal).catch(() => [])
+  //     ])
+  //       .then(([photonResult, nominatimResult]) => {
+  //         let allResults = [];
           
-          // Add Photon results first
-          if (photonResult.status === 'fulfilled' && photonResult.value.length > 0) {
-            allResults = [...photonResult.value];
-          }
+  //         // Add Photon results first
+  //         if (photonResult.status === 'fulfilled' && photonResult.value.length > 0) {
+  //           allResults = [...photonResult.value];
+  //         }
           
-          // Add Nominatim results if we have less than 5 results
-          if (allResults.length < 5) {
-            if (nominatimResult.status === 'fulfilled' && nominatimResult.value.length > 0) {
-              allResults = [...allResults, ...nominatimResult.value.slice(0, 5 - allResults.length)];
-            }
-          }
+  //         // Add Nominatim results if we have less than 5 results
+  //         if (allResults.length < 5) {
+  //           if (nominatimResult.status === 'fulfilled' && nominatimResult.value.length > 0) {
+  //             allResults = [...allResults, ...nominatimResult.value.slice(0, 5 - allResults.length)];
+  //           }
+  //         }
           
-          // Remove duplicates based on name and coordinates
-          const uniqueResults = allResults.filter((item, index, self) => 
-            index === self.findIndex(t => 
-              t.name.toLowerCase() === item.name.toLowerCase() && 
-              Math.abs(t.latitude - item.latitude) < 0.0001 && 
-              Math.abs(t.longitude - item.longitude) < 0.0001
-            )
-          );
+  //         // Remove duplicates based on name and coordinates
+  //         const uniqueResults = allResults.filter((item, index, self) => 
+  //           index === self.findIndex(t => 
+  //             t.name.toLowerCase() === item.name.toLowerCase() && 
+  //             Math.abs(t.latitude - item.latitude) < 0.0001 && 
+  //             Math.abs(t.longitude - item.longitude) < 0.0001
+  //           )
+  //         );
           
-          setPredictions(uniqueResults.slice(0, 5));
-        })
-        .catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.error('Search failed:', err);
-            setPredictions([]);
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }, 300); // Wait 300ms after user stops typing
+  //         setPredictions(uniqueResults.slice(0, 5));
+  //       })
+  //       .catch((err) => {
+  //         if (err.name !== 'AbortError') {
+  //           console.error('Search failed:', err);
+  //           setPredictions([]);
+  //         }
+  //       })
+  //       .finally(() => {
+  //         setIsLoading(false);
+  //       });
+  //   }, 300); // Wait 300ms after user stops typing
 
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-      setIsLoading(false);
-    };
-  }, [inputValue]);
+  //   return () => {
+  //     clearTimeout(timeoutId);
+  //     controller.abort();
+  //     setIsLoading(false);
+  //   };
+  // }, [inputValue]);
 
   // Fetch suggestions from Photon API with timeout - FIXED VERSION
   const fetchPhotonSuggestions = async (query, signal) => {
@@ -238,7 +518,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
     setRecentSearches((prev) => {
       const normalized = {
         name: place.name,
-        description: place.description,
+        description: place.description, // keep original, do not modify
         latitude: place.latitude,
         longitude: place.longitude,
         placeId: place.placeId || `${place.name}-${place.latitude}-${place.longitude}`,
@@ -249,25 +529,25 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       return next;
     });
 
-    // persist to localStorage shared list used by sidebar
     try {
       const saved = localStorage.getItem('sarawakTourismRecentLocations');
       const list = saved ? JSON.parse(saved) : [];
-      const exists = list.some((p) => (
-        p.name === place.name && Math.abs(p.latitude - place.latitude) < 0.0001 && Math.abs(p.longitude - place.longitude) < 0.0001
-      ));
+      const exists = list.some((p) =>
+        p.name === place.name &&
+        Math.abs(p.latitude - place.latitude) < 0.0001 &&
+        Math.abs(p.longitude - place.longitude) < 0.0001
+      );
       if (!exists) {
         const merged = [{
           name: place.name,
           latitude: place.latitude,
           longitude: place.longitude,
-          description: place.description || '',
+          description: place.description || '', // keep original
           type: place.type || 'Location',
           timestamp: new Date().toISOString(),
           source: place.source || 'search'
         }, ...list].slice(0, 20);
         localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(merged));
-        // notify listeners to refresh
         window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'add', item: place } }));
       }
     } catch (error) {
@@ -306,11 +586,20 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
       const arr = saved ? JSON.parse(saved) : [];
       setRecentSearches(arr.slice(0, 5).map(item => ({
         name: item.name,
-        description: item.description,
+        description: getDisplayDescriptionBySource(item), // CHANGED: use correct description for recent dropdown
         latitude: item.latitude,
         longitude: item.longitude,
+        phone: item.phone || '',
+        website: item.website || '',
+        openingHours: item.openingHours || '',
+        ownerEmail: item.ownerEmail || '',
+        image: item.image || '',
+        category: item.category || '',
+        address: item.address || '',
+        description: item.description || '',
+        ownerEmail: item.ownerEmail || '',
         placeId: item.placeId || `${item.name}-${item.latitude}-${item.longitude}`,
-        source: 'recent'
+        source: item.source || 'recent'
       })));
     };
     window.addEventListener('recentLocationsUpdated', handler);
@@ -407,7 +696,7 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
                   Searching...
                 </div>
               )}
-              {!isLoading && predictions.length === 0 && (
+              {!isLoading && inputValue.trim() && approvedReady && predictions.length === 0 && (
                 <div className="search-no-results">
                   No results found for "{inputValue}"
                 </div>
@@ -421,9 +710,9 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
                   <FiClock className="recent-icon5" />
                   <div className="search-result-content">
                     <div className="search-result-name">{prediction.name}</div>
-                    {prediction.description && (
+                    {getDisplayDescriptionBySource(prediction) && (
                       <div className="search-result-description">
-                        {prediction.description}
+                        {getDisplayDescriptionBySource(prediction)}
                       </div>
                     )}
                   </div>
@@ -439,7 +728,14 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
                   onMouseDown={() => handleRecentClick(place)}
                 >
                   <FiClock className="recent-icon5" />
-                  <span>{place.name}</span>
+                  <div className="search-result-content">
+                    <span className="search-result-name">{place.name}</span>
+                    {getDisplayDescriptionBySource(place) && (
+                      <div className="search-result-description">
+                        {getDisplayDescriptionBySource(place)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
               <div className="recent-more5" onClick={handleClickMoreFromRecent}>
