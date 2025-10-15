@@ -60,7 +60,6 @@ export const updateUser = async (req, res) => {
 
         const isRoleChanging = updateData.role && user.role !== updateData.role;
 
-        // If the role is NOT changing, perform a simple update
         if (!isRoleChanging) {
             const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).select("-password");
             return res.status(200).json({ message: "User updated successfully", success: true, user: updatedUser });
@@ -72,13 +71,12 @@ export const updateUser = async (req, res) => {
         if (user.role === 'business' && updateData.role !== 'business') {
             delete updatePayload.companyName;
             delete updatePayload.companyRegistrationNo;
-            delete updatePayload.companyAddress;
         }
 
         const updatedUser = await userModel.findByIdAndUpdate(id, updatePayload, {
             new: true,
-            overwrite: true, // Replace document
-            overwriteDiscriminatorKey: true, // Flag to allow role change
+            overwrite: true,
+            overwriteDiscriminatorKey: true,
             runValidators: true
         }).select("-password");
         

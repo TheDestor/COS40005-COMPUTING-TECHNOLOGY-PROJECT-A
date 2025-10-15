@@ -31,7 +31,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.3); /* Semi-transparent black */
+  background-color: rgba(0,0,0,0.1); /* Semi-transparent black */
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
@@ -39,9 +39,11 @@ body {
 }
 
 /* Main registration container (modal box) */
+/* Desktop container: more flexible height, compact width, better fit */
 .registration-container {
   width: 1000px; /* Desktop width */
-  height: 600px; /* Desktop height */
+  height: auto; /* Desktop height */
+  max-height: 90vh; /* Limit max height to viewport height */
   display: flex; /* Layout left and right panels side-by-side */
   background-color: #fff; /* White background */
   border-radius: 20px; /* Rounded corners */
@@ -67,7 +69,7 @@ body {
 .registration-right {
   flex: 1; /* Takes up equal space as left panel */
   z-index: 2; /* Ensures it's on top if overlapping */
-  padding: 2rem; /* Inner padding */
+  padding: 2rem; 
   display: flex; /* Flex container for content inside */
   flex-direction: column; /* Stack content vertically */
   justify-content: center; /* Center content vertically */
@@ -81,7 +83,7 @@ body {
 .tabs, .tabs2 {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   font-size: 1.1rem;
 }
 
@@ -177,18 +179,20 @@ body {
 .registration-form {
   display: flex;
   flex-direction: column; /* Stack fields vertically */
-  gap: 1rem; /* Space between form rows */
+  
 }
 
 /* Layout for form rows with multiple inputs */
-.form-row {
+.form-row-register {
   display: flex;
   gap: 1rem; /* Space between inputs in a row */
+  margin-bottom: 1rem ;
 }
 
-.form-row2 {
+.form-row-register2 {
   display: flex;
   gap: 0.5rem; /* Slightly less space for tighter rows */
+  margin-bottom: 1rem;
 }
 
 /* Wrapper for phone number input and country code select */
@@ -260,7 +264,7 @@ body {
 
 /* General input field styles */
 .input-field {
-  flex: 1; /* Allow input to fill available space in form-row */
+  flex: 1; /* Allow input to fill available space in form-row-register */
   padding: 0.75rem 1rem;
   border: 1px solid #ccc;
   border-radius: 999px; /* Pill shape */
@@ -325,6 +329,7 @@ input:focus {
 /* Register button style */
 .register-btn {
   padding: 0.75rem;
+  margin-top: 1rem;
   background-color: #007bff;
   color: white;
   font-weight: bold;
@@ -448,6 +453,7 @@ input:focus {
   margin-left: 6px; /* Indent slightly */
   animation: fadeInStrength 0.3s ease-in-out; /* Fade-in animation */
   color: #333 !important;
+  margin-bottom: 8px;
 }
 
 /* Color codes for different strength levels */
@@ -521,10 +527,6 @@ input:focus {
     min-height: 600px;
     max-height: 95vh; /* Limit max height to viewport height */
   }
-  /* Keeping registration-left height consistent or adjust based on overall design */
-  .registration-left {
-    height: 250px; /* Adjust image height for this breakpoint */
-  }
 }
 
 /* For screens up to 768px (e.g., tablets in portrait) */
@@ -538,7 +540,7 @@ input:focus {
   }
 
   .registration-left {
-    height: 180px; /* Reduced image height to save space */
+    display: none;
   }
 
   .registration-right {
@@ -556,7 +558,7 @@ input:focus {
     margin-top: 0.5rem; /* Space between tabs and first form field */
   }
 
-  .form-row, .form-row2 {
+  .form-row-register, .form-row-register2 {
     flex-direction: column; /* Stack inputs within rows vertically */
     gap: 0.8rem;
   }
@@ -571,7 +573,7 @@ input:focus {
     gap: 0.8rem;
   }
 
-  .form-row, .form-row2 {
+  .form-row-register, .form-row-register2 {
     margin-bottom: 0.5rem;
   }
 
@@ -596,14 +598,9 @@ input:focus {
 /* For screens up to 480px (e.g., most mobile phones) */
 @media screen and (max-width: 480px) {
   .registration-container {
-    width: 100%;
-    height: 100vh; /* Take full viewport height */
+    width: 90%;
+    height: 90vh; /* Take full viewport height */
     max-height: 100vh;
-    border-radius: 0; /* Remove rounded corners for full-screen feel */
-  }
-
-  .registration-left {
-    height: 120px; /* Further reduce image height */
   }
 
   .registration-right {

@@ -61,6 +61,7 @@ function LoginPage({ onClose }) {
       // Capture widget id so we can guard or reset later
       const widgetId = renderFn(recaptchaRef.current, {
         sitekey: captchaSiteKey,
+        size: window.innerWidth <= 420 ? 'compact' : 'normal',
         callback: (token) => {
           setRecaptchaToken(token);
           setRecaptchaError('');

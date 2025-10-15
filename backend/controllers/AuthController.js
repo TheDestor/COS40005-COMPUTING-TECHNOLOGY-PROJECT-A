@@ -4,41 +4,54 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import crypto from "crypto";
 import transporter from "../config/emailConfig.js";
 import ApiUsage from '../models/ApiUsage.js';
+import axios from 'axios';
 
 // @desc User registration
-// @route POST /register
-// @access Public
 export const register = async (req, res) => {
-    try {
-        const { firstName, lastName, email, phoneNumber, password } = req.body;
+  try {
+    const { recaptchaToken } = req.body;
+    const recaptchaSecret = process.env.RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET_KEY;
 
-        // Validation
-        if (!firstName || !lastName || !email || !phoneNumber || !password) {
-            return res.status(400).json({ success: false, message: "All fields must be filled in." });
-        };
-        const existingUser = await userModel.findOne({ 
-            $or: [
-                { email: email },
-                { phoneNumber: phoneNumber}
-            ]
-        }).select("-createdAt -updatedAt -__v -password"); // Exclude these from the response
-
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: "This user already exists." });
-        }
-
-        // Create the user if validations pass
-        const user = await userModel.create({ firstName, lastName, email, phoneNumber, password, role: 'tourist' });
-
-        // Return success
-        res.status(201).json({
-            success: true,
-            message: "Account registered successfully."
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "An internal server error occured during registration." });
+    // Only enforce reCAPTCHA if server has a secret configured
+    if (recaptchaSecret) {
+      if (!recaptchaToken) {
+        return res.status(400).json({ success: false, message: 'reCAPTCHA verification required.' });
+      }
+      const remoteip = (req.headers['x-forwarded-for'] || '').split(',')[0]?.trim() || req.ip;
+      const result = await verifyRecaptcha(recaptchaToken, remoteip);
+      if (!result?.success) {
+        return res.status(400).json({ success: false, message: 'Failed reCAPTCHA verification.' });
+      }
     }
+
+    const { firstName, lastName, email, phoneNumber, password } = req.body;
+    // Validation
+    if (!firstName || !lastName || !email || !phoneNumber || !password) {
+        return res.status(400).json({ success: false, message: "All fields must be filled in." });
+    };
+    const existingUser = await userModel.findOne({ 
+        $or: [
+            { email: email },
+            { phoneNumber: phoneNumber}
+        ]
+    }).select("-createdAt -updatedAt -__v -password"); // Exclude these from the response
+
+    if (existingUser) {
+        return res.status(400).json({ success: false, message: "This user already exists." });
+    }
+
+    // Create the user if validations pass
+    const user = await userModel.create({ firstName, lastName, email, phoneNumber, password, role: 'tourist' });
+
+    // Return success
+    res.status(201).json({
+        success: true,
+        message: "Account registered successfully."
+    });
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An internal server error occured during registration." });
+}
 };
 
 // @desc Business registration
@@ -46,10 +59,10 @@ export const register = async (req, res) => {
 // @access Public
 export const businessRegister = async (req, res) => {
     try {
-        const { firstName, lastName, companyName, companyRegistrationNo, email, phoneNumber, companyAddress, password } = req.body;
+        const { firstName, lastName, companyName, companyRegistrationNo, email, phoneNumber, password } = req.body;
 
         // Validation
-        if (!firstName || !lastName || !companyName || !companyRegistrationNo || !email || !phoneNumber || !companyAddress || !password) {
+        if (!firstName || !lastName || !companyName || !companyRegistrationNo || !email || !phoneNumber || !password) {
             return res.status(400).json({ success: false, message: "All fields must be filled in." });
         };
         const existingBusinessUser = await userModel.findOne({ 
@@ -71,7 +84,6 @@ export const businessRegister = async (req, res) => {
             password: password,
             companyName: companyName,
             companyRegistrationNo: companyRegistrationNo,
-            companyAddress: companyAddress,
         })
         
         res.status(201).json({ message: "Business account registered successfully.", success: true });
@@ -79,8 +91,7 @@ export const businessRegister = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: "An internal server error occured during login." });
     }
-}
-
+};
 // @desc Google login
 // @route POST /login
 // @access Public
@@ -561,3 +572,27 @@ function parseUserAgent(req) {
     : 'OS';
   return `${deviceType} · ${browser} · ${os}`;
 }
+
+const verifyRecaptcha = async (token, remoteip) => {
+  const secret = process.env.RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) {
+    // No secret configured — let caller decide whether to skip
+    return { success: false, 'error-codes': ['missing-secret'] };
+  }
+  try {
+    const params = new URLSearchParams();
+    params.append('secret', secret);
+    params.append('response', token);
+    if (remoteip) params.append('remoteip', remoteip);
+
+    // Ensure correct content-type for Google siteverify
+    const { data } = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      params.toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    return data;
+  } catch (err) {
+    return { success: false, 'error-codes': ['verification-failed'] };
+  }
+};

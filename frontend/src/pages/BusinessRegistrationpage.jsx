@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../styles/UserRegistration.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import RegisterImage from '../assets/Kuching.png';
@@ -14,6 +14,79 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownTimer, setCooldownTimer] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const recaptchaRef = useRef(null);
+  const captchaWidgetIdRef = useRef(null);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [recaptchaError, setRecaptchaError] = useState('');
+  const captchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+  useEffect(() => {
+    const initRecaptcha = () => {
+      if (!recaptchaRef.current || !window.grecaptcha || !captchaSiteKey) return;
+      if (captchaWidgetIdRef.current !== null) return;
+
+      const api = window.grecaptcha;
+      const renderFn =
+        typeof api.render === 'function'
+          ? api.render
+          : api.enterprise && typeof api.enterprise.render === 'function'
+          ? api.enterprise.render
+          : null;
+
+      if (!renderFn) {
+        setRecaptchaError('Verification unavailable. Please refresh or try again.');
+        setRecaptchaToken(null);
+        return;
+      }
+
+      const widgetId = renderFn(recaptchaRef.current, {
+        sitekey: captchaSiteKey,
+        size: window.innerWidth <= 420 ? 'compact' : 'normal',
+        callback: (token) => {
+          setRecaptchaToken(token);
+          setRecaptchaError('');
+        },
+        'error-callback': () => {
+          setRecaptchaError('reCAPTCHA failed, please try again.');
+          setRecaptchaToken(null);
+        },
+        'expired-callback': () => {
+          setRecaptchaError('reCAPTCHA expired, please verify again.');
+          setRecaptchaToken(null);
+        },
+      });
+      captchaWidgetIdRef.current = widgetId;
+    };
+
+    const hasRender =
+      !!(
+        window.grecaptcha &&
+        (typeof window.grecaptcha.render === 'function' ||
+          (window.grecaptcha.enterprise && typeof window.grecaptcha.enterprise.render === 'function'))
+      );
+
+    if (hasRender) {
+      initRecaptcha();
+      return;
+    }
+
+    if (!document.querySelector('script[src*="recaptcha/api.js"]')) {
+      window.initRecaptcha = initRecaptcha;
+      const script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=initRecaptcha&render=explicit';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    } else {
+      window.initRecaptcha = initRecaptcha;
+    }
+
+    return () => {
+      if (window.initRecaptcha === initRecaptcha) {
+        window.initRecaptcha = undefined;
+      }
+    };
+  }, [captchaSiteKey]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -23,18 +96,28 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     email: '',
     phonePrefix: '+60',
     phoneNumber: '',
-    companyAddress: '',
     password: '',
     confirmPassword: ''
   });
 
-  const { firstName, lastName, companyName, companyRegistrationNo, email, phonePrefix, phoneNumber, companyAddress, password, confirmPassword} = formData;
+  const { firstName, lastName, companyName, companyRegistrationNo, email, phonePrefix, phoneNumber, password, confirmPassword} = formData;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let nextValue = value.trimStart();
+
+    if (name === 'phoneNumber') {
+      nextValue = value.replace(/\D/g, '');
+    } else if (name === 'companyRegistrationNo') {
+      nextValue = value.replace(/\D/g, '').slice(0, 12);
+    } else if (name === 'firstName' || name === 'lastName') {
+      // allow only letters and '@', and limit to 20 characters
+      nextValue = nextValue.replace(/[^A-Za-z@]/g, '').slice(0, 20);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value.trimStart(),
+      [name]: nextValue,
     }));
 
     if (name === 'password') {
@@ -69,12 +152,15 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
   };
 
   const validateName = (name) => {
-    const nameRegex = /^[A-Za-z]+$/;
-    return nameRegex.test(name);
+    const trimmed = name.trim();
+    if (trimmed.length === 0 || trimmed.length > 20) return false; // enforce max 20
+    const regex = /^(?=.*[A-Za-z])[A-Za-z@]+$/; // at least one letter; only letters and '@'
+    return regex.test(trimmed);
   };  
 
   const validateCompanyRegistrationNo = (regNo) => {
-    const regNoRegex = /^\d{4}\d{2}\d{6}$/;
+    // Exactly 12 digits
+    const regNoRegex = /^\d{12}$/;
     return regNoRegex.test(regNo);
   };  
   
@@ -96,8 +182,14 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     e.preventDefault();
 
     if (isCooldown || isSubmitting) return;
-
+         
     setIsSubmitting(true);
+
+    if (!recaptchaToken) {
+      setRecaptchaError('Please complete the reCAPTCHA verification.');
+      resetSubmitState();
+      return;
+    }
 
     if (password !== confirmPassword) {
       handleError("Passwords do not match");
@@ -106,7 +198,12 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
     }
 
     if (!validateName(firstName)) {
-      handleError("First name must contain only letters (no spaces or special characters).");
+      handleError("First name cannot contain numbers. Use letters and special characters only.");
+      resetSubmitState();
+      return;
+    }
+    if (!validateName(lastName)) {
+      handleError("Last name cannot contain numbers. Use letters and special characters only.");
       resetSubmitState();
       return;
     }
@@ -129,25 +226,17 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
       return;
     }
     
-
     if (!validateCompanyRegistrationNo(companyRegistrationNo)) {
       handleError("Invalid Company Registration Number! It must be numeric and exact 12 digits (no spaces or symbols).");
       resetSubmitState();
       return;
     }
-    
-    // if (!isBusinessEmail(email)) {
-    //   handleError("Please use a business email address (e.g., not Gmail, Yahoo, etc.).");
-    //   resetSubmitState();
-    //   return;
-    // }
-    
 
     const fullPhoneNumber = `${phonePrefix}${phoneNumber}`;
 
     const userData = {
       firstName, lastName, companyName, companyRegistrationNo,
-      email, phoneNumber: fullPhoneNumber, companyAddress, password
+      email, phoneNumber: fullPhoneNumber, password, recaptchaToken
     };
 
     try {
@@ -166,7 +255,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
         setFormData({
           firstName: '', lastName: '', companyName: '',
           companyRegistrationNo: '', email: '', phonePrefix: '+60',
-          phoneNumber: '', companyAddress: '', password: '', confirmPassword: ''
+          phoneNumber: '', password: '', confirmPassword: ''
         });
 
         setFailedAttempts(0);
@@ -235,21 +324,55 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
           </div>
 
           <form className="registration-form" onSubmit={handleRegisterSubmit} onKeyDown={handleKeyDown}>
-            <div className="form-row2">
-              <input type="text" className="input-field" name="firstName" title="First Name" placeholder="First Name" value={firstName} onChange={handleInputChange} required />
-              <input type="text" className="input-field" name="lastName" title="Last Name" placeholder="Last Name" value={lastName} onChange={handleInputChange} required />
+            <div className="form-row-register2">
+              <input
+                type="text"
+                className="input-field"
+                name="firstName"
+                title="Up to 20 characters; only letters and '@'."
+                placeholder="First Name"
+                value={firstName}
+                onChange={handleInputChange}
+                pattern="^(?=.*[A-Za-z])[A-Za-z@]+$"
+                maxLength={20}
+                required
+              />
+              <input
+                type="text"
+                className="input-field"
+                name="lastName"
+                title="Up to 20 characters; only letters and '@'."
+                placeholder="Last Name"
+                value={lastName}
+                onChange={handleInputChange}
+                pattern="^(?=.*[A-Za-z])[A-Za-z@]+$"
+                maxLength={20}
+                required
+              />
             </div>
 
-            <div className="form-row2">
-              <input type="text" className="input-field" name="companyName" title="Company name" placeholder="Company Name" value={companyName} onChange={handleInputChange} required />
-              <input type="text" className="input-field" name="companyRegistrationNo" title="Registration number must exact 12 digits" placeholder="Company Registration No." maxLength="12" value={companyRegistrationNo} onChange={handleInputChange} required />
+            <div className="form-row-register2">
+              <input type="text" className="input-field" name="companyName" placeholder="Company Name" value={companyName} onChange={handleInputChange} required />
+              <input
+                type="text"
+                className="input-field"
+                name="companyRegistrationNo"
+                placeholder="Company Registration No."
+                value={companyRegistrationNo}
+                onChange={handleInputChange}
+                inputMode="numeric"
+                pattern="^[0-9]{12}$"
+                maxLength={12}
+                title="Exactly 12 digits, numbers only."
+                required
+              />
             </div>
 
-            <div className="form-row2">
+            <div className="form-row-register2">
               <input type="email" className="input-field" name="email" title="Company email" placeholder="Company Email" value={email} onChange={handleInputChange} required />
             </div>
 
-            <div className="form-row2">
+            <div className="form-row-register2">
               <div className="phone-input-wrapper">
                 <select name="phonePrefix" value={phonePrefix} onChange={handleInputChange}>
                   <option value="+60">🇲🇾 +60</option>
@@ -262,11 +385,7 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
               </div>
             </div>
 
-            <div className="form-row2">
-              <input type="text" className="input-field" name="companyAddress" placeholder="Company Address" value={companyAddress} onChange={handleInputChange} required />
-            </div>
-
-            <div className="form-row2">
+            <div className="form-row-register2">
               <div className="password-input">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -281,8 +400,19 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </span>
               </div>
+            </div>
 
-              <div className="password-input">
+            {password && (
+              <div className="password-strength">
+                Strength:{' '}
+                <span className={`strength-${passwordStrength}`}>
+                  {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][passwordStrength]}
+                </span>
+              </div>
+            )}
+
+            <div className="form-row-register2">
+             <div className="password-input">
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   name="confirmPassword"
@@ -298,14 +428,30 @@ const BusinessRegistrationpage = ({ onClose, onSwitchToLogin, onSwitchToUser }) 
               </div>
             </div>
 
-            {password && (
-              <div className="password-strength">
-                Strength:{" "}
-                <span className={`strength-${passwordStrength}`}>
-                  {["Very Weak", "Weak", "Fair", "Good", "Strong"][passwordStrength]}
-                </span>
+            {confirmPassword && (
+              <div
+                className="password-match-register"
+                role="status"
+                aria-live="polite"
+                style={{
+                  marginTop: '-10px',
+                  fontSize: '14px',
+                  marginLeft: '8px',
+                  color: password === confirmPassword ? '#16a34a' : '#dc2626'
+                }}
+              >
+                {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
               </div>
             )}
+
+            <div className="captcha-section">
+              <div className="captcha-item">
+                <div ref={recaptchaRef} className="g-recaptcha" aria-label="reCAPTCHA"></div>
+              </div>
+              {recaptchaError && (
+                <div className="captcha-error" role="alert" aria-live="polite">{recaptchaError}</div>
+              )}
+            </div>
 
             <button
               type="submit"

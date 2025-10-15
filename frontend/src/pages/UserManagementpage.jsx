@@ -148,8 +148,7 @@ function UserManagementPage() {
       email: 'Email',
       role: 'Role',
       companyName: 'Company Name',
-      companyRegistrationNo: 'Company Registration No.',
-      companyAddress: 'Company Address'
+      companyRegistrationNo: 'Company Registration No.'
     };
     const changes = [];
     Object.keys(payload || {}).forEach((key) => {

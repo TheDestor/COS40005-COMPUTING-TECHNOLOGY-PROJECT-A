@@ -23,12 +23,12 @@ const EmailVerification = ({ onCancel }) => {
 
     return (
         <div className="overlay">
-            <div className="login-wrapper2">
+            <div className="login-wrapper">
                 <div className="login-image">
                     <img src={backgroundImg} alt="Background" />
                 </div>
                 <div className="reset-container">
-                    <button onClick={onCancel} className="close-btn">✕</button>
+                    <button onClick={onCancel} className="close-btn95">✕</button>
                     <h2>Forgot Password</h2>
                     <p>Please enter your email address to receive a password reset link.</p>
                     <form onSubmit={handleSubmit}>
