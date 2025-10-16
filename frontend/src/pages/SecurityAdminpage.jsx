@@ -5,6 +5,55 @@ import { FaShieldAlt, FaClock, FaSignInAlt, FaUserShield, FaTimesCircle, FaListA
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import { useAuth } from '../context/AuthProvider';
 
+// AnimatedNumber helper: configurable duration and easing
+const easeFns = {
+  linear: (t) => t,
+  easeOutQuad: (t) => 1 - (1 - t) * (1 - t),
+  easeOutCubic: (t) => 1 - Math.pow(1 - t, 3),
+  easeOutQuart: (t) => 1 - Math.pow(1 - t, 4),
+  easeOutExpo: (t) => (t === 0 ? 0 : 1 - Math.pow(2, -10 * t)),
+};
+
+function AnimatedNumber({
+  value = 0,
+  duration = 1200,
+  easing = "easeOutCubic",
+  className = "value countup-value",
+  ...rest
+}) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const end = Number(value) || 0;
+    const start = 0; // per requirement: always animate from zero
+    const d = Math.max(0, Number(duration) || 0);
+    const ease =
+      typeof easing === "function" ? easing : easeFns[easing] || easeFns.easeOutCubic;
+
+    let rafId = null;
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const t = Math.min(1, (now - startTime) / d);
+      const eased = ease(t);
+      const current = Math.round(start + (end - start) * eased);
+      setDisplay(current);
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [value, duration, easing]);
+
+  return (
+    <p className={className} {...rest}>
+      {display.toLocaleString()}
+    </p>
+  );
+}
+
 // SecurityAdminPage component
 function SecurityAdminPage() {
   const { accessToken, isLoggedIn } = useAuth();
@@ -45,7 +94,7 @@ function SecurityAdminPage() {
     invalid_input: 'Please ensure all required fields are filled correctly.', 
   };
   const getFriendlyErrorMessage = (msg) => friendlyMessages[msg] || msg || 'No error details available.';
-
+  
   useEffect(() => {
     let ignore = false;
     const fetchMetrics = async () => {
@@ -150,8 +199,16 @@ function SecurityAdminPage() {
                 <h3>User Sign-ins</h3>
               </div>
               <div className="summary-value-row">
-                <span className="value" aria-label="Users sign-ins combined (last 24h)">{signInStats.userTotal24h}</span>
-                <small className="summary-note note-green">{signInStats.deltaUserTotal >= 0 ? `+${signInStats.deltaUserTotal}` : signInStats.deltaUserTotal} since last 24 hrs</small>
+                <AnimatedNumber
+                  value={signInStats.userTotal24h || 0}
+                  duration={1500}
+                  easing="easeOutQuart"
+                  className="value countup-value"
+                  aria-label="Users sign-ins combined (last 24h)"
+                />
+                <small className="summary-note note-green">
+                  {signInStats.deltaUserTotal >= 0 ? `+${signInStats.deltaUserTotal}` : signInStats.deltaUserTotal} since last 24 hrs
+                </small>
               </div>
             </div>
 
@@ -162,20 +219,36 @@ function SecurityAdminPage() {
                 <h3>Admin Sign-ins</h3>
               </div>
               <div className="summary-value-row">
-                <span className="value" aria-label="Admins sign-ins combined (last 24h)">{signInStats.adminTotal24h}</span>
-                <small className="summary-note note-green">{signInStats.deltaAdminTotal >= 0 ? `+${signInStats.deltaAdminTotal}` : signInStats.deltaAdminTotal} since last 24 hrs</small>
+                <AnimatedNumber
+                  value={signInStats.adminTotal24h || 0}
+                  duration={1500}
+                  easing="easeOutQuart"
+                  className="value countup-value"
+                  aria-label="Admins sign-ins combined (last 24h)"
+                />
+                <small className="summary-note note-green">
+                  {signInStats.deltaAdminTotal >= 0 ? `+${signInStats.deltaAdminTotal}` : signInStats.deltaAdminTotal} since last 24 hrs
+                </small>
               </div>
             </div>
 
-            {/* Failed Login Attempts (unchanged) */}
+            {/* Failed Login Attempts */}
             <div className="summary-box lr-theme non-interactive">
               <div className="summary-header">
                 <div className="summary-icon-wrapper lr-bg"><div className="summary-icon"><FaTimesCircle /></div></div>
                 <h3>Failed Logins</h3>
               </div>
               <div className="summary-value-row">
-                <span className="value" aria-label="Failed login attempts (last 24h)">{signInStats.failedLoginAttempts24h}</span>
-                <small className="summary-note note-red">{signInStats.deltaFailedLogins >= 0 ? `+${signInStats.deltaFailedLogins}` : signInStats.deltaFailedLogins} since last 24 hrs</small>
+                <AnimatedNumber
+                  value={signInStats.failedLoginAttempts24h || 0}
+                  duration={1500}
+                  easing="easeOutQuart"
+                  className="value countup-value"
+                  aria-label="Failed login attempts (last 24h)"
+                />
+                <small className="summary-note note-red">
+                  {signInStats.deltaFailedLogins >= 0 ? `+${signInStats.deltaFailedLogins}` : signInStats.deltaFailedLogins} since last 24 hrs
+                </small>
               </div>
             </div>
           </div>

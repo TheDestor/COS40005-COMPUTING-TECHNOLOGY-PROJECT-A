@@ -918,6 +918,45 @@ z-index: 1100;
 padding: 20px;
 }
 
+/* Modal width: expand for side-by-side layout when showing database details */
+.data-modal-content.wide {
+  width: min(1000px, 95vw);
+  max-width: 1000px;
+}
+
+/* Two-column layout for database details (left) and chart (right) */
+.dbsize-modal-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr; /* left details wider, chart right */
+  gap: 20px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.dbsize-panel-left,
+.dbsize-panel-right {
+  display: block;
+}
+
+/* Chart container sizing */
+.dbsize-chart-container {
+  width: 100%;
+  min-height: 320px;
+  overflow: visible; /* allow axis labels to show fully */
+}
+
+/* Responsive: stack columns on small screens */
+@media (max-width: 768px) {
+  .data-modal-content.wide {
+    width: 95vw;
+    max-width: none;
+  }
+  .dbsize-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
 /* Use either `dbsize-modal-content` or `data-modal-content database` */
 .dbsize-modal-content,
 .data-modal-content.database {
