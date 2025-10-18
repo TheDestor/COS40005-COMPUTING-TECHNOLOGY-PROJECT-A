@@ -554,6 +554,9 @@ transition: all 0.5s ease;
   padding: 24px 28px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  /* Ensure backup status modal stays compact */
+  max-width: 500px;
+  width: 90%;
 }
 
 .data-modal-content h2 {
@@ -884,6 +887,9 @@ transition: all 0.5s ease;
 @media (max-width: 480px) {
   .content-section2 { padding: 16px; gap: 16px; }
   .content-section2 h2 { font-size: 20px !important; }
+
+  .data-modal-content h2 { font-size: 16px !important; }
+  .data-modal-close { font-size: 1.5rem; padding: 0 10px; }
 
   .user-stats-container { gap: 10px; flex-direction: column;}
   .stat-card { padding: 14px; gap: 10px; }

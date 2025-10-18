@@ -26,6 +26,7 @@ import { nominatimLimiter } from "../middleware/rateLimiter.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// In your Express app bootstrap, after creating `app`
 const app = express();
 const PORT = process.env.PORT || 5050
 

@@ -18,7 +18,10 @@ const DetailModal = ({ children, onClose, variant }) => {
         className={`data-modal-content ${isDatabase ? 'wide' : ''}`}
         onClick={(e) => e.stopPropagation()}
         // Responsive width for smaller screens
-        style={{ width: isDatabase ? 'min(96vw, 1000px)' : undefined, maxWidth: '100%' }}
+        style={{
+          width: isDatabase ? 'min(96vw, 1000px)' : undefined,
+          maxWidth: isDatabase ? undefined : 500
+        }}
       >
         <button className="data-modal-close" onClick={onClose}>&times;</button>
         {children}

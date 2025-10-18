@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
 import { MdManageAccounts, MdAddLocationAlt } from 'react-icons/md';
 import { toast } from 'sonner';
@@ -2266,11 +2266,15 @@ useEffect(() => {
                         className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
                         onClick={() => handleNearbyPlaceClick(place)}
                       >
-                        <div className="place-name100">{place.name}</div>
-                        <div className="place-address100">{place.vicinity}</div>
-                        <div className="place-type100">
-                          <FaMapPin className="place-type-icon" />
-                          {place.type}
+                        <div className="nearby-place-content100">
+                          <div className="place-header100">
+                            <div className="place-name100">{place.name}</div>
+                            <div className="place-type100">
+                              <FaMapPin className="place-type-icon" />
+                              {String(place.type || '').replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                          <div className="place-address100">{place.vicinity}</div>
                         </div>
                       </div>
                     ))}

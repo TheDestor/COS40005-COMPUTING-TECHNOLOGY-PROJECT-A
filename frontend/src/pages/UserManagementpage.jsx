@@ -40,8 +40,11 @@ function UserManagementPage() {
             id: user._id,
             name: `${user.firstName} ${user.lastName}`,
             email: user.email,
-            role: user.role, // display label
-            roleKey: user.role, // canonical key for filtering
+            role: user.role,
+            roleKey: user.role,
+            companyName: user.companyName || '',
+            companyRegistrationNo: user.companyRegistrationNo || ''
+            // companyAddress: user.companyAddress || '',
           }));
           setAllUsers(formattedUsers);
         } else {
@@ -148,7 +151,8 @@ function UserManagementPage() {
       email: 'Email',
       role: 'Role',
       companyName: 'Company Name',
-      companyRegistrationNo: 'Company Registration No.'
+      companyRegistrationNo: 'Company Registration No.',
+      companyAddress: 'Company Address',
     };
     const changes = [];
     Object.keys(payload || {}).forEach((key) => {
