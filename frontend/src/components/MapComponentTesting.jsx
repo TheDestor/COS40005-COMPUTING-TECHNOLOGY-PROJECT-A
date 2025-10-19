@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import EventNotificationPanel from './EventNotificationPanel';
 
 import carIcon from '../assets/car.gif';
 import homestayIcon from '../assets/homestay.gif';
@@ -1042,6 +1043,9 @@ function MapComponentTesting({  }) {
 
       {/* Ai Chatbot */}
       <AiChatbot />
+
+      {/* Event Notification */}
+      <EventNotificationPanel />
     </div>
   );
 }
