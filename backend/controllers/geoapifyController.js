@@ -1,7 +1,7 @@
-import axios from 'axios';
-import NodeCache from 'node-cache';
-import Place from '../models/Place.js';
-import ApiUsage from '../models/ApiUsage.js';
+import axios from "axios";
+import NodeCache from "node-cache";
+import Place from "../models/Place.js";
+import ApiUsage from "../models/ApiUsage.js";
 
 // In-memory cache for ultra-fast responses (TTL: 1 hour)
 const memoryCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
@@ -14,14 +14,14 @@ const generateCacheKey = (lat, lng, radius) => {
 // Calculate distance between two coordinates (Haversine formula)
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371e3; // Earth's radius in meters
-  const φ1 = lat1 * Math.PI / 180;
-  const φ2 = lat2 * Math.PI / 180;
-  const Δφ = (lat2 - lat1) * Math.PI / 180;
-  const Δλ = (lng2 - lng1) * Math.PI / 180;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
 
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) *
-    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c; // Distance in meters
@@ -31,80 +31,104 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
 const findNearbyCache = async (lat, lng, radius) => {
   try {
     const cacheDistance = radius * 0.1; // 10% of search radius
-    
+
     const cachedData = await Place.findOne({
       latitude: {
-        $gte: lat - (cacheDistance / 111320),
-        $lte: lat + (cacheDistance / 111320)
+        $gte: lat - cacheDistance / 111320,
+        $lte: lat + cacheDistance / 111320,
       },
       longitude: {
-        $gte: lng - (cacheDistance / (111320 * Math.cos(lat * Math.PI / 180))),
-        $lte: lng + (cacheDistance / (111320 * Math.cos(lat * Math.PI / 180)))
+        $gte: lng - cacheDistance / (111320 * Math.cos((lat * Math.PI) / 180)),
+        $lte: lng + cacheDistance / (111320 * Math.cos((lat * Math.PI) / 180)),
       },
       radius: { $gte: radius * 0.8 }, // At least 80% of requested radius
-      updatedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Less than 7 days old
-    }).sort({ updatedAt: -1 }).limit(1);
+      updatedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, // Less than 7 days old
+    })
+      .sort({ updatedAt: -1 })
+      .limit(1);
 
     return cachedData;
   } catch (error) {
-    console.error('Error finding nearby cache:', error);
+    console.error("Error finding nearby cache:", error);
     return null;
   }
 };
 
 // Fetch places from Geoapify API
-const fetchFromGeoapify = async (lat, lng, radius) => {
+const fetchFromGeoapify = async (req, lat, lng, radius) => {
   const apiKey = process.env.GEOAPIFY_API_KEY;
-  
+
   if (!apiKey) {
-    throw new Error('Geoapify API key not configured');
+    throw new Error("Geoapify API key not configured");
   }
 
   const url = `https://api.geoapify.com/v2/places`;
-  
+
   const params = {
-    categories: 'tourism,accommodation,catering,entertainment,leisure,commercial,building',
+    categories:
+      "tourism,accommodation,catering,entertainment,leisure,commercial,building",
     filter: `circle:${lng},${lat},${radius}`,
     limit: 50,
-    apiKey: apiKey
+    apiKey: apiKey,
   };
 
   try {
     const response = await axios.get(url, { params, timeout: 10000 });
-    
+
     // Track API usage
-    await trackApiUsage('geoapify', 'nearby_places', true);
-    
+    await trackApiUsage(req, "geoapify", "nearby_places", true);
+
     return response.data;
   } catch (error) {
-    await trackApiUsage('geoapify', 'nearby_places', false, error.message);
+    await trackApiUsage(req, "geoapify", "nearby_places", false, error.message);
     throw error;
   }
 };
 
 // Track API usage for monitoring
-const trackApiUsage = async (provider, endpoint, success, errorMessage = null) => {
+const trackApiUsage = async (
+  req,
+  provider,
+  endpoint,
+  success,
+  errorMessage = null
+) => {
   try {
+    // Parse user agent to get device info
+    let deviceInfo = null;
+    if (req && req.headers["user-agent"]) {
+      const UAParser = require("ua-parser-js");
+      const parser = new UAParser(req.headers["user-agent"]);
+      const result = parser.getResult();
+
+      deviceInfo = `${result.device.type || "Desktop"} · ${
+        result.browser.name
+      } ${result.browser.version} · ${result.os.name}`;
+    }
+
     await ApiUsage.create({
       provider,
       endpoint,
       success,
       errorMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      userId: req?.user?.id || null,
+      role: req?.user?.role || null,
+      email: req?.user?.email || null,
+      device: deviceInfo,
     });
   } catch (error) {
-    console.error('Error tracking API usage:', error);
+    console.error("Error tracking API usage:", error);
   }
 };
-
 // Process and enrich place data
 const processPlaceData = (feature) => {
   const props = feature.properties;
-  
+
   return {
     place_id: props.place_id,
-    name: props.name || 'Unnamed Place',
-    address: props.formatted || props.address_line1 || 'Address not available',
+    name: props.name || "Unnamed Place",
+    address: props.formatted || props.address_line1 || "Address not available",
     types: props.categories || [],
     coordinates: feature.geometry.coordinates, // [lng, lat]
     photos: props.image ? [props.image] : [],
@@ -115,7 +139,7 @@ const processPlaceData = (feature) => {
     opening_hours: props.opening_hours || null,
     distance: props.distance || null,
     datasource: props.datasource || {},
-    raw_data: props
+    raw_data: props,
   };
 };
 
@@ -128,7 +152,7 @@ const getNearbyPlaces = async (req, res) => {
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required'
+        message: "Latitude and longitude are required",
       });
     }
 
@@ -136,10 +160,15 @@ const getNearbyPlaces = async (req, res) => {
     const longitude = parseFloat(lng);
     const searchRadius = parseInt(radius) || 1000;
 
-    if (isNaN(latitude) || isNaN(longitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+    if (
+      isNaN(latitude) ||
+      isNaN(longitude) ||
+      Math.abs(latitude) > 90 ||
+      Math.abs(longitude) > 180
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid coordinates provided'
+        message: "Invalid coordinates provided",
       });
     }
 
@@ -153,9 +182,9 @@ const getNearbyPlaces = async (req, res) => {
           success: true,
           data: memoryCached.data,
           cached: true,
-          cacheType: 'memory',
+          cacheType: "memory",
           timestamp: memoryCached.timestamp,
-          source: 'memory_cache'
+          source: "memory_cache",
         });
       }
 
@@ -164,28 +193,35 @@ const getNearbyPlaces = async (req, res) => {
       if (dbCached) {
         const cacheData = {
           data: dbCached.places,
-          timestamp: dbCached.updatedAt
+          timestamp: dbCached.updatedAt,
         };
-        
+
         // Store in memory cache for next time
         memoryCache.set(cacheKey, cacheData);
-        
+
         return res.json({
           success: true,
           data: dbCached.places,
           cached: true,
-          cacheType: 'database',
+          cacheType: "database",
           timestamp: dbCached.updatedAt,
-          source: 'database_cache'
+          source: "database_cache",
         });
       }
     }
 
     // No cache found or force refresh - fetch from API
-    console.log(`Fetching fresh data from Geoapify for ${latitude}, ${longitude}`);
-    
-    const apiResponse = await fetchFromGeoapify(latitude, longitude, searchRadius);
-    
+    console.log(
+      `Fetching fresh data from Geoapify for ${latitude}, ${longitude}`
+    );
+
+    const apiResponse = await fetchFromGeoapify(
+      req,
+      latitude,
+      longitude,
+      searchRadius
+    );
+
     // Process the data
     const processedPlaces = apiResponse.features.map(processPlaceData);
 
@@ -194,7 +230,7 @@ const getNearbyPlaces = async (req, res) => {
       {
         latitude: { $gte: latitude - 0.001, $lte: latitude + 0.001 },
         longitude: { $gte: longitude - 0.001, $lte: longitude + 0.001 },
-        radius: searchRadius
+        radius: searchRadius,
       },
       {
         latitude,
@@ -203,7 +239,7 @@ const getNearbyPlaces = async (req, res) => {
         places: processedPlaces,
         totalResults: processedPlaces.length,
         apiResponse: apiResponse,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       { upsert: true, new: true }
     );
@@ -211,7 +247,7 @@ const getNearbyPlaces = async (req, res) => {
     // Store in memory cache
     const cacheData = {
       data: processedPlaces,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     memoryCache.set(cacheKey, cacheData);
 
@@ -220,17 +256,19 @@ const getNearbyPlaces = async (req, res) => {
       data: processedPlaces,
       cached: false,
       timestamp: new Date(),
-      source: 'geoapify_api',
-      totalResults: processedPlaces.length
+      source: "geoapify_api",
+      totalResults: processedPlaces.length,
     });
-
   } catch (error) {
-    console.error('Error in getNearbyPlaces:', error);
-    
+    console.error("Error in getNearbyPlaces:", error);
+
     return res.status(500).json({
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to fetch nearby places',
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message:
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch nearby places",
+      error: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };
@@ -243,7 +281,7 @@ const refreshCache = async (req, res) => {
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required'
+        message: "Latitude and longitude are required",
       });
     }
 
@@ -256,7 +294,12 @@ const refreshCache = async (req, res) => {
     memoryCache.del(cacheKey);
 
     // Fetch fresh data
-    const apiResponse = await fetchFromGeoapify(latitude, longitude, searchRadius);
+    const apiResponse = await fetchFromGeoapify(
+      req,
+      latitude,
+      longitude,
+      searchRadius
+    );
     const processedPlaces = apiResponse.features.map(processPlaceData);
 
     // Update database
@@ -264,7 +307,7 @@ const refreshCache = async (req, res) => {
       {
         latitude: { $gte: latitude - 0.001, $lte: latitude + 0.001 },
         longitude: { $gte: longitude - 0.001, $lte: longitude + 0.001 },
-        radius: searchRadius
+        radius: searchRadius,
       },
       {
         latitude,
@@ -273,7 +316,7 @@ const refreshCache = async (req, res) => {
         places: processedPlaces,
         totalResults: processedPlaces.length,
         apiResponse: apiResponse,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       { upsert: true, new: true }
     );
@@ -281,22 +324,24 @@ const refreshCache = async (req, res) => {
     // Update memory cache
     memoryCache.set(cacheKey, {
       data: processedPlaces,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     return res.json({
       success: true,
       data: processedPlaces,
-      message: 'Cache refreshed successfully',
-      timestamp: new Date()
+      message: "Cache refreshed successfully",
+      timestamp: new Date(),
     });
-
   } catch (error) {
-    console.error('Error refreshing cache:', error);
-    
+    console.error("Error refreshing cache:", error);
+
     return res.status(500).json({
       success: false,
-      message: error.response?.data?.message || error.message || 'Failed to refresh cache'
+      message:
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to refresh cache",
     });
   }
 };
@@ -305,7 +350,7 @@ const refreshCache = async (req, res) => {
 const getApiUsageStats = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     const query = {};
     if (startDate || endDate) {
       query.timestamp = {};
@@ -318,16 +363,16 @@ const getApiUsageStats = async (req, res) => {
       {
         $group: {
           _id: {
-            provider: '$provider',
-            endpoint: '$endpoint',
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }
+            provider: "$provider",
+            endpoint: "$endpoint",
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
           },
           totalCalls: { $sum: 1 },
-          successfulCalls: { $sum: { $cond: ['$success', 1, 0] } },
-          failedCalls: { $sum: { $cond: ['$success', 0, 1] } }
-        }
+          successfulCalls: { $sum: { $cond: ["$success", 1, 0] } },
+          failedCalls: { $sum: { $cond: ["$success", 0, 1] } },
+        },
       },
-      { $sort: { '_id.date': -1 } }
+      { $sort: { "_id.date": -1 } },
     ]);
 
     // Get overall statistics
@@ -337,24 +382,27 @@ const getApiUsageStats = async (req, res) => {
         $group: {
           _id: null,
           totalCalls: { $sum: 1 },
-          successfulCalls: { $sum: { $cond: ['$success', 1, 0] } },
-          failedCalls: { $sum: { $cond: ['$success', 0, 1] } }
-        }
-      }
+          successfulCalls: { $sum: { $cond: ["$success", 1, 0] } },
+          failedCalls: { $sum: { $cond: ["$success", 0, 1] } },
+        },
+      },
     ]);
 
     return res.json({
       success: true,
       stats,
-      overall: overall[0] || { totalCalls: 0, successfulCalls: 0, failedCalls: 0 }
+      overall: overall[0] || {
+        totalCalls: 0,
+        successfulCalls: 0,
+        failedCalls: 0,
+      },
     });
-
   } catch (error) {
-    console.error('Error getting API usage stats:', error);
-    
+    console.error("Error getting API usage stats:", error);
+
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve API usage statistics'
+      message: "Failed to retrieve API usage statistics",
     });
   }
 };
@@ -366,29 +414,241 @@ const clearOldCache = async (req, res) => {
     const cutoffDate = new Date(Date.now() - daysOld * 24 * 60 * 60 * 1000);
 
     const result = await Place.deleteMany({
-      updatedAt: { $lt: cutoffDate }
+      updatedAt: { $lt: cutoffDate },
     });
 
     return res.json({
       success: true,
       message: `Cleared ${result.deletedCount} old cache entries`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
-
   } catch (error) {
-    console.error('Error clearing old cache:', error);
-    
+    console.error("Error clearing old cache:", error);
+
     return res.status(500).json({
       success: false,
-      message: 'Failed to clear old cache entries'
+      message: "Failed to clear old cache entries",
     });
   }
 };
 
+// Get device usage statistics for analytics dashboard
+const getDeviceUsageStats = async (req, res) => {
+  try {
+    const { timeRange = "7d" } = req.query;
+
+    let dateFilter = {};
+    switch (timeRange) {
+      case "24h":
+        dateFilter = { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) };
+        break;
+      case "7d":
+        dateFilter = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+        break;
+      case "30d":
+        dateFilter = { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+        break;
+    }
+
+    const deviceStats = await ApiUsage.aggregate([
+      {
+        $match: {
+          timestamp: dateFilter,
+          device: { $exists: true, $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              {
+                $regexMatch: {
+                  input: "$device",
+                  regex: /Mobile|Android|iPhone|iPad/i,
+                },
+              },
+              "Mobile",
+              "Desktop",
+            ],
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          deviceType: "$_id",
+          count: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    // Calculate percentages
+    const total = deviceStats.reduce((sum, item) => sum + item.count, 0);
+    const formattedStats = deviceStats.map((item) => ({
+      deviceType: item.deviceType,
+      count: item.count,
+      percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
+    }));
+
+    // Ensure we have both Mobile and Desktop
+    const deviceTypes = ["Desktop", "Mobile"];
+    const result = deviceTypes.map((type) => {
+      const existing = formattedStats.find((item) => item.deviceType === type);
+      return (
+        existing || {
+          deviceType: type,
+          count: 0,
+          percentage: 0,
+        }
+      );
+    });
+
+    res.json({
+      success: true,
+      data: result,
+      total: total,
+      timeRange: timeRange,
+    });
+  } catch (error) {
+    console.error("Error fetching device usage:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch device usage statistics",
+    });
+  }
+};
+
+// Get system usage statistics for analytics dashboard
+const getSystemUsageStats = async (req, res) => {
+  try {
+    const { timeRange = "7d" } = req.query;
+
+    let dateFilter = {};
+    switch (timeRange) {
+      case "24h":
+        dateFilter = { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) };
+        break;
+      case "7d":
+        dateFilter = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+        break;
+      case "30d":
+        dateFilter = { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+        break;
+    }
+
+    const systemStats = await ApiUsage.aggregate([
+      {
+        $match: {
+          timestamp: dateFilter,
+          device: { $exists: true, $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $regexMatch: { input: "$device", regex: /Windows/i } },
+              "Windows",
+              {
+                $cond: [
+                  {
+                    $regexMatch: {
+                      input: "$device",
+                      regex: /macOS|Mac OS|Macintosh/i,
+                    },
+                  },
+                  "macOS",
+                  {
+                    $cond: [
+                      { $regexMatch: { input: "$device", regex: /Linux/i } },
+                      "Linux",
+                      {
+                        $cond: [
+                          {
+                            $regexMatch: {
+                              input: "$device",
+                              regex: /iPhone|iPad|iOS/i,
+                            },
+                          },
+                          "iOS",
+                          {
+                            $cond: [
+                              {
+                                $regexMatch: {
+                                  input: "$device",
+                                  regex: /Android/i,
+                                },
+                              },
+                              "Android",
+                              "Other",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          name: "$_id",
+          count: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    // Calculate percentages and add icons
+    const total = systemStats.reduce((sum, item) => sum + item.count, 0);
+    const formattedStats = systemStats.map((item) => ({
+      name: item.name,
+      count: item.count,
+      percent: total > 0 ? Math.round((item.count / total) * 100) : 0,
+      icon: getSystemIcon(item.name),
+    }));
+
+    // Sort by percentage (descending)
+    formattedStats.sort((a, b) => b.percent - a.percent);
+
+    res.json({
+      success: true,
+      data: formattedStats,
+      total: total,
+      timeRange: timeRange,
+    });
+  } catch (error) {
+    console.error("Error fetching system usage:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch system usage statistics",
+    });
+  }
+};
+
+// Helper function to get system icons
+const getSystemIcon = (systemName) => {
+  const icons = {
+    Windows: "🪟",
+    macOS: "🍎",
+    Linux: "🐧",
+    iOS: "📱",
+    Android: "🤖",
+    Other: "💻",
+  };
+  return icons[systemName] || "💻";
+};
 // Export functions as named exports
 export {
   getNearbyPlaces,
   refreshCache,
   getApiUsageStats,
-  clearOldCache
+  clearOldCache,
+  getDeviceUsageStats, // Add this line
+  getSystemUsageStats,
 };
