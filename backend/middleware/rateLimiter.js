@@ -288,3 +288,52 @@ export const adminUserModifyLimiter = createAdminLimiter({
   max: Number(process.env.ADMIN_USER_MODIFY_MAX) || 15,
   message: 'Too many user modification requests.',
 });
+
+export const adminEventModifyLimiter = createAdminLimiter({
+  name: 'admin_event_modify',
+  windowMs: Number(process.env.ADMIN_EVENT_MODIFY_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_EVENT_MODIFY_MAX) || 10,
+  message: 'Too many event modification requests.',
+});
+
+export const adminEventDeleteLimiter = createAdminLimiter({
+  name: 'admin_event_delete',
+  windowMs: Number(process.env.ADMIN_EVENT_DELETE_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_EVENT_DELETE_MAX) || 10,
+  message: 'Too many event delete requests.',
+});
+
+export const adminBusinessReadLimiter = createAdminLimiter({
+  name: 'admin_business_read',
+  windowMs: Number(process.env.ADMIN_BUSINESS_READ_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_BUSINESS_READ_MAX) || 30,
+  message: 'Too many admin business reads.',
+});
+
+export const adminBusinessModifyLimiter = createAdminLimiter({
+  name: 'admin_business_modify',
+  windowMs: Number(process.env.ADMIN_BUSINESS_MODIFY_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_BUSINESS_MODIFY_MAX) || 15,
+  message: 'Too many business modification requests.',
+});
+
+export const adminLocationModifyLimiter = createAdminLimiter({
+  name: 'admin_location_modify',
+  windowMs: Number(process.env.ADMIN_LOCATION_MODIFY_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_LOCATION_MODIFY_MAX) || 20,
+  message: 'Too many location modification requests.',
+});
+
+export const adminInquiryReadLimiter = createAdminLimiter({
+  name: 'admin_inquiry_read',
+  windowMs: Number(process.env.ADMIN_INQUIRY_READ_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_INQUIRY_READ_MAX) || 30,
+  message: 'Too many admin inquiry reads.',
+});
+
+export const adminInquiryModifyLimiter = createAdminLimiter({
+  name: 'admin_inquiry_modify',
+  windowMs: Number(process.env.ADMIN_INQUIRY_MODIFY_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.ADMIN_INQUIRY_MODIFY_MAX) || 30,
+  message: 'Too many inquiry modification requests.',
+});

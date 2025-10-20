@@ -1519,6 +1519,7 @@ const ViewInquiry = () => {
           transition: all 0.2s ease;
           min-width: 35px;
           text-align: center;
+          color: #374151;
         }
 
         .page-number:hover {

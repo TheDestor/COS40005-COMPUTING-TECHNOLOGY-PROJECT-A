@@ -174,7 +174,7 @@ const EventNotificationPanel = () => {
         padding: '15px 20px',
         borderRadius: '12px',
         boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
-        zIndex: 1000,
+        zIndex: 950,
         fontSize: '14px',
         fontWeight: '500',
         display: 'flex',
@@ -247,7 +247,7 @@ const EventNotificationPanel = () => {
           borderRadius: '50px',
           boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
           cursor: 'pointer',
-          zIndex: 1000,
+          zIndex: 950,
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -288,7 +288,7 @@ const EventNotificationPanel = () => {
       background: 'white',
       borderRadius: '16px',
       boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-      zIndex: 1000,
+      zIndex: 950,
       overflow: 'hidden',
       transition: 'all 0.3s ease',
       animation: 'slideIn 0.4s ease-out'
@@ -327,7 +327,7 @@ const EventNotificationPanel = () => {
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>
               Events in Sarawak
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9, color: 'white' }}>
               {eventCounts.ongoing > 0 && `${eventCounts.ongoing} happening now • `}
               {events.length} total event{events.length !== 1 ? 's' : ''}
             </p>

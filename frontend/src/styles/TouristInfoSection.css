@@ -413,35 +413,6 @@
   gap: 8px;
 }
 
-.refresh-btn {
-  background: #007aff;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #0051cc;
-  transform: scale(1.1);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.refresh-btn.refreshing {
-  animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

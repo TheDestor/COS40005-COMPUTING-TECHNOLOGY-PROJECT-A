@@ -2,7 +2,8 @@ import { Router } from "express";
 import { addEvent, getAllEvents, updateEvent, getEventById, deleteEvent } from "../controllers/EventController.js";
 import multer from "multer";
 import { checkRole, verifyJWT } from "../middleware/AuthMiddleware.js";
-import { eventsLimiter } from "../middleware/rateLimiter.js";
+import { logAdminUsage } from "../middleware/adminMonitor.js";
+import { adminEventModifyLimiter, adminEventDeleteLimiter, eventsLimiter } from "../middleware/rateLimiter.js";
 
 const eventRouter = Router();
 const upload = multer({
@@ -19,10 +20,10 @@ const upload = multer({
     }
 });
 
-eventRouter.post("/addEvent", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), addEvent);
+eventRouter.post("/addEvent", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), adminEventModifyLimiter, logAdminUsage('admin_events_add'), addEvent);
 eventRouter.get("/getAllEvents", eventsLimiter, getAllEvents);
 eventRouter.get("/getEvent/:id", getEventById);
-eventRouter.put("/updateEvent/:id", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), updateEvent);
-eventRouter.delete("/deleteEvent/:id", verifyJWT, checkRole(['cbt_admin']), deleteEvent);
+eventRouter.put("/updateEvent/:id", upload.single('image'), verifyJWT, checkRole(['cbt_admin']), adminEventModifyLimiter, logAdminUsage('admin_events_update'), updateEvent);
+eventRouter.delete("/deleteEvent/:id", verifyJWT, checkRole(['cbt_admin']), adminEventDeleteLimiter, logAdminUsage('admin_events_delete'), deleteEvent);
 
 export default eventRouter;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import '../styles/UserManagementpage.css';
 import { FaUsersCog, FaSearch, FaFilter } from 'react-icons/fa';
-import AddUserForm from '../components/AddUserForm.jsx';
+// import AddUserForm from '../components/AddUserForm.jsx';
 import EditUserForm from '../components/EditUserForm.jsx'; // Import EditUserForm
 import SystemAdminSidebar from '../pages/SystemAdminSidebar';
 import ky from 'ky';
@@ -43,9 +43,11 @@ function UserManagementPage() {
             role: user.role,
             roleKey: user.role,
             companyName: user.companyName || '',
-            companyRegistrationNo: user.companyRegistrationNo || ''
-            // companyAddress: user.companyAddress || '',
+            companyRegistrationNo: user.companyRegistrationNo || '',
+            createdAt: user.createdAt, // include timestamp for sorting
           }));
+          // Sort by created time (newest first)
+          formattedUsers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setAllUsers(formattedUsers);
         } else {
           console.error(response.message);
@@ -101,18 +103,21 @@ function UserManagementPage() {
     setCurrentPage(1);
   };
 
-  const filteredUsers = allUsers.filter((user) => {
-    const q = searchTerm.trim().toLowerCase();
-    const matchesSearch =
-      user.name.toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q) ||
-      user.role.toLowerCase().includes(q);
+  const filteredUsers = allUsers
+    .filter((user) => {
+      const q = searchTerm.trim().toLowerCase();
+      const matchesSearch =
+        user.name.toLowerCase().includes(q) ||
+        user.email.toLowerCase().includes(q) ||
+        user.role.toLowerCase().includes(q);
 
-    const matchesRole =
-      selectedRoles.length === 0 || selectedRoles.includes(user.roleKey);
+      const matchesRole =
+        selectedRoles.length === 0 || selectedRoles.includes(user.roleKey);
 
-    return matchesSearch && matchesRole;
-  });
+      return matchesSearch && matchesRole;
+    })
+    // Keep filtered list sorted by created time as well
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
@@ -140,7 +145,8 @@ function UserManagementPage() {
   const handleRequestSave = ({ userId, payload, original }) => {
     const diffs = computeDiff(original, payload);
     setSaveDiff(diffs);
-    setPendingSave({ userId, payload });
+    // Preserve original for validation during confirm
+    setPendingSave({ userId, payload, original });
     setShowSaveConfirm(true);
   };
 
@@ -165,13 +171,49 @@ function UserManagementPage() {
     return changes;
   };
 
+  // Normalizes any numeral characters to ASCII digits and strips non-digits
+  const normalizeDigits = (v) => {
+    if (v == null) return '';
+    const s = String(v);
+    const toAscii = s.replace(/[\uFF10-\uFF19]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0xFF10 + 0x30)
+    );
+    return toAscii.replace(/\D/g, '');
+  };
+
   const confirmSave = async () => {
     if (!pendingSave) return;
+    const { userId, payload, original } = pendingSave;
+
+    // Validation: names may only contain letters, spaces, and @
+    const namePattern = /^[A-Za-z @]+$/;
+    if (!namePattern.test(payload.firstName || '') || !namePattern.test(payload.lastName || '')) {
+      toast.error('Name fields can only contain letters, spaces, and @');
+      return;
+    }
+
+    // Validation: email must not change
+    if (payload.email !== (original?.email ?? payload.email)) {
+      toast.error('Email cannot be changed.');
+      return;
+    }
+
+    // Validation: company registration number (business only) must be exactly 12 digits
+    let finalPayload = { ...payload };
+    if ((payload.role || '').toLowerCase() === 'business') {
+      const regNo = normalizeDigits(payload.companyRegistrationNo);
+      if (regNo.length !== 12) {
+        toast.error('Company registration number must be exactly 12 digits.');
+        return;
+      }
+      finalPayload.companyRegistrationNo = regNo;
+    }
+
     try {
       const response = await ky
-        .put(`/api/userManagement/users/${pendingSave.userId}`, {
+        .put(`/api/userManagement/users/${userId}`, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
-          json: pendingSave.payload,
+          json: finalPayload,
         })
         .json();
       if (response.success) {

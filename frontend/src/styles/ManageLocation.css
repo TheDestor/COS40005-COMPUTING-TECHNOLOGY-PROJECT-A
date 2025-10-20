@@ -536,6 +536,26 @@
   margin-top: 20px;
 }
 
+.search-bar {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #475569;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.3s;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: none;
+  box-shadow: none;
+  transform: none;
+}
+
 /* Fixed the columns to 6 */
 .MLtable-header {
   display: grid;

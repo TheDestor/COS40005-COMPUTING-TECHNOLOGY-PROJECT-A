@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
-import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
+import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Sidebar from '../components/Sidebar';
@@ -9,6 +8,7 @@ import '../styles/AddEventPage.css';
 import { useAuth } from '../context/AuthProvider.jsx';
 import { toast } from 'sonner';
 import { FaLocationArrow } from 'react-icons/fa6';
+import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 
 const defaultIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -337,6 +337,23 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'eventHashtags') {
+      const allowedChars = /^[A-Za-z0-9#,]*$/;
+      const tagFormat = /^#?[A-Za-z0-9]+$/;
+
+      if (value && !allowedChars.test(value)) {
+        toast.error('Only letters, numbers, commas, and # are allowed.');
+        return;
+      }
+
+      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
+      if (tags.some(t => !tagFormat.test(t))) {
+        toast.error('Each hashtag must be alphanumeric, optionally starting with #.');
+        return;
+      }
+    }
+
     setEditForm(prev => ({
       ...prev,
       [name]: value
@@ -404,7 +421,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
             <div className="modal-body edit-modal-body">
               <div className="event-form-container edit-event-form">
                 <div className="event-form-left">
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Name</label>
                     <input
                       type="text"
@@ -416,7 +433,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Description</label>
                     <textarea
                       name="description"
@@ -428,7 +445,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Organizers</label>
                     <input
                       type="text"
@@ -440,7 +457,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Hashtags</label>
                     <input
                       type="text"
@@ -449,13 +466,15 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       onChange={handleInputChange}
                       className="form-input"
                       placeholder="e.g., #Festival, #Sarawak, #Culture"
+                      pattern="^[A-Za-z0-9#,]+$"
+                      title="Only alphanumeric characters, commas, and # allowed."
                     />
                     <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                       Separate multiple hashtags with commas
                     </small>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Location (Latitude, Longitude)</label>
                     <div style={{ position: 'relative' }}>
                       <input
@@ -484,16 +503,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                         type="button"
                         onClick={handleUseCurrentLocation}
                         aria-label="Use current location"
-                        style={{
-                          position: 'absolute',
-                          right: '0px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: '#8b5cf6'
-                        }}
+                        className="use-current-location-btn"
                       >
                         <FaLocationArrow size={18} />
                       </button>
@@ -515,7 +525,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Target Audience</label>
                     <div className="checkbox-group-av">
                       <label className="checkbox-label">
@@ -625,7 +635,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     )}
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Registration Required?</label>
                     <div className="radio-group-av">
                       <label className="radio-label">
@@ -656,7 +666,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
 
                 <div className="event-form-right">
                   <div className="calendar-section">
-                    <div className="form-group">
+                    <div className="form-group-ae">
                       <label>Start Date</label>
                       <input
                         type="date"
@@ -667,7 +677,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group-ae">
                       <label>Start Time</label>
                       <input
                         type="time"
@@ -678,7 +688,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group-ae">
                       <label>End Date</label>
                       <input
                         type="date"
@@ -689,7 +699,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group-ae">
                       <label>End Time</label>
                       <input
                         type="time"
@@ -701,7 +711,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     </div>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Type</label>
                     <select
                       name="eventType"
@@ -716,7 +726,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-ae">
                     <label>Event Image</label>
                     <div 
                       className={`image-upload-container ${uploadedImage ? 'has-image' : ''}`}
@@ -915,7 +925,8 @@ const AddEventPage = () => {
     return savedTab || 'Add Event';
   });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null); // 'clear' | 'publish'
+  const [confirmAction, setConfirmAction] = useState(null); // 'clear' | 'publish' | 'delete'
+  const [pendingDeleteEventId, setPendingDeleteEventId] = useState(null);
   const [eventName, setEventName] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
@@ -935,6 +946,8 @@ const AddEventPage = () => {
   // Date and Time states
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
   const [startDate, setStartDate] = useState(() => {
     const tomorrow = new Date();
@@ -970,6 +983,17 @@ const AddEventPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editForm, setEditForm] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  // Add indices for the "Showing X–Y of N" calculations
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredEvents.length);
   
   const fileInputRef = useRef(null);
 
@@ -1000,13 +1024,32 @@ const AddEventPage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const filtered = events.filter(event => 
-      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = (searchQuery ?? '').toLowerCase();
+
+    const filtered = events.filter((event) => 
+      ((event?.name ?? '').toLowerCase().includes(q)) ||
+      ((event?.description ?? '').toLowerCase().includes(q)) ||
+      ((event?.location ?? '').toLowerCase().includes(q))
     );
+
     setFilteredEvents(filtered);
+    setCurrentPage(1);
   }, [searchQuery, events]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredEvents, totalPages]);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const prevPage = () => goToPage(currentPage - 1);
+  const nextPage = () => goToPage(currentPage + 1);
 
   const fetchEvents = async () => {
     try {
@@ -1280,6 +1323,26 @@ const AddEventPage = () => {
 
   const days = getCalendarDays();
 
+  const generateTimeOptionsAe = (stepMinutes = 30) => {
+    const options = [];
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += stepMinutes) {
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        options.push(`${hh}:${mm}`);
+      }
+    }
+    return options;
+  };
+
+  const formatTimeDisplayAe = (time) => {
+    if (!time) return '';
+    const [hh, mm] = time.split(':').map(Number);
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    const hour12 = hh % 12 === 0 ? 12 : hh % 12;
+    return `${String(hour12).padStart(2, '0')}:${String(mm).padStart(2, '0')} ${ampm}`;
+  };
+
   // Check if end time should be disabled
   const isEndTimeDisabled = () => {
     if (!startDate || !endDate || !startTime) return false;
@@ -1374,6 +1437,54 @@ const AddEventPage = () => {
     );
   };
 
+  // Helper component in AddEventPage.jsx (place near Calendar component)
+  const TimePickerAe = ({ timeType, isOpen, currentValue, onClose, startDate, endDate, startTime, handleTimeChange }) => {
+    if (!isOpen) return null;
+
+    const times = generateTimeOptionsAe(30);
+    const [tempTime, setTempTime] = useState(currentValue || '');
+    const isSameDay = startDate && endDate && startDate.getTime() === endDate.getTime();
+    const isOptionDisabled = (value) => timeType === 'end' && isSameDay && startTime && value < startTime;
+
+    return (
+      <div className="time-picker-ae">
+        <div className="time-picker-header-ae">
+          <div className="time-picker-title-ae">
+            {timeType === 'start' ? 'Select Start Time' : 'Select End Time'}
+          </div>
+        </div>
+
+        <div className="time-picker-grid-ae">
+          {times.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={`time-picker-option-ae ${tempTime === t ? 'selected' : ''} ${isOptionDisabled(t) ? 'disabled' : ''}`}
+              onClick={() => !isOptionDisabled(t) && setTempTime(t)}
+            >
+              {formatTimeDisplayAe(t)}
+            </button>
+          ))}
+        </div>
+
+        <div className="time-picker-footer-ae">
+          <button type="button" className="time-picker-button-ae cancel" onClick={onClose}>Cancel</button>
+          <button
+            type="button"
+            className="time-picker-button-ae done"
+            onClick={() => {
+              handleTimeChange(tempTime, timeType);
+              onClose();
+            }}
+            disabled={!tempTime}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const validateEventForm = () => {
     const errors = [];
 
@@ -1406,6 +1517,20 @@ const AddEventPage = () => {
       const ll = L.latLng(latitude, longitude);
       if (!SARAWAK_BOUNDS.contains(ll)) {
         errors.push('Coordinates must be within Sarawak bounds.');
+      }
+    }
+
+    if (eventHashtags) {
+      const allowedChars = /^[A-Za-z0-9#,]+$/;
+      const tagFormat = /^#?[A-Za-z0-9]+$/;
+
+      if (!allowedChars.test(eventHashtags)) {
+        errors.push('Hashtags: only letters, numbers, commas, and #.');
+      } else {
+        const tags = eventHashtags.split(',').map(t => t.trim()).filter(Boolean);
+        if (tags.some(t => !tagFormat.test(t))) {
+          errors.push('Hashtags must be alphanumeric, optionally starting with #.');
+        }
       }
     }
 
@@ -1529,6 +1654,27 @@ const AddEventPage = () => {
       if (ok) {
         toast.success('Event published successfully', { className: 'confirm-toast-success', duration: 2500 });
       }
+    } else if (action === 'delete') {
+      try {
+        const response = await ky
+          .delete(`/api/event/deleteEvent/${pendingDeleteEventId}`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          })
+          .json();
+
+        if (response.success) {
+          const updatedEvents = events.filter((e) => e._id !== pendingDeleteEventId);
+          setEvents(updatedEvents);
+          setFilteredEvents(updatedEvents);
+          toast.success('Event deleted successfully', { className: 'confirm-toast-success', duration: 2500 });
+        } else {
+          toast.error(response?.message || 'Failed to delete event');
+        }
+      } catch (error) {
+        toast.error('Failed to delete event');
+      } finally {
+        setPendingDeleteEventId(null);
+      }
     }
   };
 
@@ -1599,6 +1745,25 @@ const AddEventPage = () => {
       toast.error(msg);
     }
   };
+
+  const handleHashtagsChange = (e) => {
+      const value = e.target.value;
+      const allowedChars = /^[A-Za-z0-9#,]*$/;
+      const tagFormat = /^#?[A-Za-z0-9]+$/;
+
+      if (value && !allowedChars.test(value)) {
+        toast.error('Only letters, numbers, commas, and # are allowed.');
+        return;
+      }
+
+      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
+      if (tags.some(t => !tagFormat.test(t))) {
+        toast.error('Each hashtag must be alphanumeric, optionally starting with #.');
+        return;
+      }
+
+      setEventHashtags(value);
+    };
 
   const createNewEventFromPast = async (eventData) => {
     try {
@@ -1684,27 +1849,9 @@ const AddEventPage = () => {
     }
   };
 
-  const deleteEvent = async (eventId) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-
-    try {
-      const response = await ky.delete(
-        `/api/event/deleteEvent/${eventId}`,
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
-      ).json();
-
-      if (response.success) {
-        const updatedEvents = events.filter(event => event._id !== eventId);
-        setEvents(updatedEvents);
-        setFilteredEvents(updatedEvents);
-        toast.success('Event deleted successfully!');
-      }
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast.error('Failed to delete event');
-    }
+  const deleteEvent = (eventId) => {
+    setPendingDeleteEventId(eventId);
+    openConfirm('delete');
   };
 
   const urlToFile = async (url, filename) => {
@@ -1723,7 +1870,7 @@ const AddEventPage = () => {
       return (
         <div className="event-form-container">
           <div className="event-form-left">
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Event Name</label>
               <input
                 type="text"
@@ -1734,7 +1881,7 @@ const AddEventPage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Event Description</label>
               <textarea
                 placeholder="What is this event about?"
@@ -1744,7 +1891,7 @@ const AddEventPage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Event Organizers</label>
               <input
                 type="text"
@@ -1755,21 +1902,23 @@ const AddEventPage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Event Hashtags</label>
               <input
                 type="text"
                 placeholder="e.g., #Festival, #Sarawak, #Culture"
                 value={eventHashtags}
-                onChange={(e) => setEventHashtags(e.target.value)}
+                onChange={handleHashtagsChange}
                 className="form-input"
+                pattern="^[A-Za-z0-9#,]+$"
+                title="Only alphanumeric characters, commas, and # allowed."
               />
               <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                 Separate multiple hashtags with commas
               </small>
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Event Location (Latitude, Longitude)</label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -1784,16 +1933,7 @@ const AddEventPage = () => {
                   type="button"
                   onClick={handleUseCurrentLocation}
                   aria-label="Use current location"
-                  style={{
-                    position: 'absolute',
-                    right: '0px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#8b5cf6'
-                  }}
+                  className="use-current-location-btn"
                 >
                   <FaLocationArrow size={18} />
                 </button>
@@ -1813,7 +1953,7 @@ const AddEventPage = () => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Target Audience</label>
               <div className="checkbox-group-av">
                 <label className="checkbox-label">
@@ -1855,7 +1995,7 @@ const AddEventPage = () => {
               )}
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Registration Required?</label>
               <div className="radio-group-av">
                 <label className="radio-label">
@@ -1886,72 +2026,80 @@ const AddEventPage = () => {
 
           <div className="event-form-right">
             <div className="calendar-section">
-              <div className="form-group">
-                <label>Start Date</label>
-                <div 
-                  className="date-display" 
-                  onClick={() => {
-                    setShowStartCalendar(!showStartCalendar);
-                    setShowEndCalendar(false);
-                  }}
-                >
-                  {startDate ? formatSelectedDate(startDate) : 'Select start date'}
-                  <span className={`dropdown-arrow ${showStartCalendar ? 'open' : ''}`}>▼</span>
-                </div>
-                {showStartCalendar && (
-                  <Calendar 
-                    calendarType="start" 
-                    isOpen={showStartCalendar} 
-                    onClose={() => setShowStartCalendar(false)} 
-                  />
-                )}
+              <div className="date-time-row-ae date-time-row-start-ae">
+            <div className="form-group-ae">
+              <label>Start Date</label>
+              <div 
+                className="date-display" 
+                onClick={() => {
+                  setShowStartCalendar(!showStartCalendar);
+                  setShowEndCalendar(false);
+                }}
+              >
+                {startDate ? formatSelectedDate(startDate) : 'Select start date'}
+                <span className={`dropdown-arrow ${showStartCalendar ? 'open' : ''}`}>▼</span>
               </div>
+              {showStartCalendar && (
+                <Calendar 
+                  calendarType="start" 
+                  isOpen={showStartCalendar} 
+                  onClose={() => setShowStartCalendar(false)} 
+                />
+              )}
+            </div>
 
-              <div className="form-group">
-                <label>Start Time</label>
+            <div className="form-group-ae time-selection-container-ae">
+              <label>Start Time</label>
+              <div className="time-display-ae">
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => handleTimeChange(e.target.value, 'start')}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>End Date</label>
-                <div 
-                  className="date-display" 
-                  onClick={() => {
-                    setShowEndCalendar(!showEndCalendar);
-                    setShowStartCalendar(false);
-                  }}
-                >
-                  {endDate ? formatSelectedDate(endDate) : 'Select end date'}
-                  <span className={`dropdown-arrow ${showEndCalendar ? 'open' : ''}`}>▼</span>
-                </div>
-                {showEndCalendar && (
-                  <Calendar 
-                    calendarType="end" 
-                    isOpen={showEndCalendar} 
-                    onClose={() => setShowEndCalendar(false)} 
-                  />
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>End Time</label>
-                <input
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => handleTimeChange(e.target.value, 'end')}
-                  className="form-input"
-                  min={getMinEndTime()}
-                  disabled={isEndTimeDisabled() && !startTime}
+                  className="time-input-native-ae"
                 />
               </div>
             </div>
+          </div>
 
-            <div className="form-group">
+              <div className="date-time-row-ae date-time-row-start-ae">
+                <div className="form-group-ae">
+                  <label>End Date</label>
+                  <div 
+                    className="date-display" 
+                    onClick={() => {
+                      setShowEndCalendar(!showEndCalendar);
+                      setShowStartCalendar(false);
+                    }}
+                  >
+                    {endDate ? formatSelectedDate(endDate) : 'Select end date'}
+                    <span className={`dropdown-arrow ${showEndCalendar ? 'open' : ''}`}>▼</span>
+                  </div>
+                  {showEndCalendar && (
+                    <Calendar 
+                      calendarType="end" 
+                      isOpen={showEndCalendar} 
+                      onClose={() => setShowEndCalendar(false)} 
+                    />
+                  )}
+                </div>
+
+                <div className="form-group-ae time-selection-container-ae">
+                  <label>End Time</label>
+                  <div className="time-display-ae">
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => handleTimeChange(e.target.value, 'end')}
+                      className="time-input-native-ae"
+                      min={getMinEndTime()}
+                      disabled={isEndTimeDisabled() && !startTime}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group-ae">
               <label>Event Type</label>
               <div className="custom-dropdown">
                 <div 
@@ -1977,7 +2125,7 @@ const AddEventPage = () => {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group-ae">
               <label>Upload Image</label>
               <div 
                 className={`image-upload-container ${uploadedImage ? 'has-image' : ''}`}
@@ -2015,36 +2163,36 @@ const AddEventPage = () => {
         </div>
       );
     } else if (activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events' || activeTab === 'On-going Events') {
-      if (loading) {
-        return <div className="loading">Loading events...</div>;
-      }
-      
-      if (error) {
-        return <div className="error">{error}</div>;
-      }
-      
-      return (
-        <div className="events-grid">
-          {filteredEvents.length === 0 ? (
-            <div className="no-events">
-              <h3>No {activeTab.toLowerCase()} found</h3>
-              <p>There are no {activeTab.toLowerCase()} to display.</p>
-            </div>
-          ) : (
-            filteredEvents.map((event) => (
-              <EventCard
-                key={event._id}
-                event={event}
-                type={activeTab === 'Schedule Upcoming Events' ? 'upcoming' : 'past'}
-                onEdit={(event) => openEventModal(event, 'edit')}
-                onDelete={deleteEvent}
-                onClick={() => openEventModal(event, 'view')}
-              />
-            ))
-          )}
-        </div>
-      );
+    if (loading) {
+      return <div className="loading">Loading events...</div>;
     }
+    
+    if (error) {
+      return <div className="error">{error}</div>;
+    }
+    
+    return (
+      <div className="events-grid">
+        {filteredEvents.length === 0 ? (
+          <div className="no-events">
+            <h3>No {activeTab.toLowerCase()} found</h3>
+            <p>There are no {activeTab.toLowerCase()} to display.</p>
+          </div>
+        ) : (
+          paginatedEvents.map((event) => (
+            <EventCard
+              key={event._id}
+              event={event}
+              type={activeTab === 'Schedule Upcoming Events' ? 'upcoming' : 'past'}
+              onEdit={(event) => openEventModal(event, 'edit')}
+              onDelete={deleteEvent}
+              onClick={() => openEventModal(event, 'view')}
+            />
+          ))
+        )}
+      </div>
+    );
+  };
   };
 
   return (
@@ -2052,8 +2200,8 @@ const AddEventPage = () => {
       <Sidebar />
       <div className="add-event-content">
         <div className="add-event-header">
-          <div className="heading">
-            <h2>Add Event</h2>
+          <div className="greeting">
+            <h3>Add Event</h3>
             <p>Create and publish new event</p>
           </div>
         </div>
@@ -2070,7 +2218,68 @@ const AddEventPage = () => {
           ))}
         </div>
 
-        {renderContent()}
+        {(activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events' || activeTab === 'On-going Events') && (
+        <div className="events-controls-ae">
+          <div className="search-bar-ae">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder={`Search ${activeTab === 'Past Events' ? 'Past' : activeTab === 'Schedule Upcoming Events' ? 'Scheduled' : 'On-going'} events by name...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {totalPages > 1 && (
+          <div className="pagination-controls-ae">
+            <button
+              className={`page-btn-ae ${currentPage === 1 ? 'disabled' : ''}`}
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              aria-label="Previous page"
+            >
+              <FaChevronLeft />
+            </button>
+
+            {
+              Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+                let pageNumber;
+                if (totalPages <= 5) {
+                  pageNumber = index + 1;
+                } else if (currentPage <= 3) {
+                  pageNumber = index + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNumber = totalPages - 4 + index;
+                } else {
+                  pageNumber = currentPage - 2 + index;
+                }
+                return (
+                  <button
+                    key={pageNumber}
+                    className={`page-number-ae ${currentPage === pageNumber ? 'active' : ''}`}
+                    onClick={() => goToPage(pageNumber)}
+                    aria-label={`Go to page ${pageNumber}`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })
+            }
+
+            <button
+              className={`page-btn-ae ${currentPage === totalPages ? 'disabled' : ''}`}
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              aria-label="Next page"
+            >
+             <FaChevronRight />
+            </button>
+          </div>
+        )}
+        </div>
+      )}
+
+      {renderContent()}
 
         {activeTab === 'Add Event' && (
           <button 
@@ -2090,12 +2299,18 @@ const AddEventPage = () => {
           >
             <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
               <h3 className="confirm-modal-title">
-                {confirmAction === 'publish' ? 'Publish event?' : 'Clear all fields?'}
+                {confirmAction === 'publish'
+                  ? 'Publish event?'
+                  : confirmAction === 'delete'
+                    ? 'Delete event?'
+                    : 'Clear all fields?'}
               </h3>
               <p className="confirm-modal-body">
                 {confirmAction === 'publish'
                   ? 'This will publish your event to the platform. Continue?'
-                  : 'This will remove all input from the form. Continue?'}
+                  : confirmAction === 'delete'
+                    ? 'This will permanently delete the selected event. Continue?'
+                    : 'This will remove all input from the form. Continue?'}
               </p>
               <div className="confirm-modal-actions">
                 <button type="button" className="modal-cancel-btn" onClick={closeConfirm}>

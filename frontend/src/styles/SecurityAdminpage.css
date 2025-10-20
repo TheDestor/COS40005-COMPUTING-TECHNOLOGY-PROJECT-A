@@ -7,23 +7,6 @@
     align-items: center;
   }
   
-  .refresh-btn {
-    background: #007efe;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  .refresh-btn:hover {
-    background: #005bbf;
-  }
-  
   /* 2x2 Card grid */
   .security-dashboard {
     display: grid;

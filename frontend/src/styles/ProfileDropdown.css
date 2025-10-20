@@ -7,9 +7,8 @@
 .profile-dropdown {
   position: relative;
   display: inline-block;
-  z-index: 9999;
+  z-index: 10050;
   flex-shrink: 0;
-  min-width: fit-content;
   pointer-events: auto;
 }
 
@@ -47,7 +46,7 @@
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   width: 260px;
-  z-index: 1000;
+  z-index: 10060;
   padding: 10px 0;
   text-align: center;
   animation: dropdownFade 0.3s ease-out;
