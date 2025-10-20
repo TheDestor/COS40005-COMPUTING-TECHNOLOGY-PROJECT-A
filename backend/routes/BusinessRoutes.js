@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { verifyJWT, checkRole, attachUserIfPresent } from "../middleware/AuthMiddleware.js";
 import multer from "multer";
+import { businessesLimiter } from "../middleware/rateLimiter.js";
 
 // Import business controllers (we'll create these next)
 import {
@@ -40,8 +41,8 @@ const businessUpload = upload.fields([
 ]);
 
 // Public
-businessRouter.get("/approved", getAllApprovedBusinesses);
-businessRouter.get("/approved/category/:category", getApprovedBusinessesByCategory);
+businessRouter.get("/approved", businessesLimiter, getAllApprovedBusinesses);
+businessRouter.get("/approved/category/:category", businessesLimiter, getApprovedBusinessesByCategory);
 
 // Business user only routes
 businessRouter.post("/addBusiness", verifyJWT, checkRole(['business']), businessUpload, addBusiness);

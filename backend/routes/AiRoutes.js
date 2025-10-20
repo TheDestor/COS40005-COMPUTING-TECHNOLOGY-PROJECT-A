@@ -1,4 +1,5 @@
 import express from 'express';
+import { aiChatLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ You are Sarawak Tourism Assistant.
 - Use markdown headings and lists, bold for important information and no ###.
 `;
 
-router.post('/chat', async (req, res) => {
+router.post('/chat', aiChatLimiter, async (req, res) => {
 	try {
 		const { messages, model } = req.body || {};
 		if (!Array.isArray(messages) || messages.length === 0) {

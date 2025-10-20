@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
 import { MdManageAccounts, MdAddLocationAlt } from 'react-icons/md';
 import { toast } from 'sonner';
@@ -10,42 +10,277 @@ import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
-import { BiCurrentLocation } from "react-icons/bi";
 
-function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
+// function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
+//   const [suggestions, setSuggestions] = useState([]);
+//   const [showDropdown, setShowDropdown] = useState(false);
+//   const debounceRef = useRef();
+
+//   const handleInput = (e) => {
+//     const val = e.target.value;
+//     onChange(val);
+
+//     // Debounce the fetch
+//     if (debounceRef.current) clearTimeout(debounceRef.current);
+//     if (val.length < 2) {
+//       setSuggestions([]);
+//       setShowDropdown(false);
+//       return;
+//     }
+//     debounceRef.current = setTimeout(async () => {
+//       const bbox = '109.5,0.8,115.5,5.5';
+//       const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&lang=en&limit=5&bbox=${bbox}`;
+//       try {
+//         const res = await fetch(url);
+//         const data = await res.json();
+//         setSuggestions(data.features || []);
+//         setShowDropdown(true);
+//       } catch {
+//         setSuggestions([]);
+//         setShowDropdown(false);
+//       }
+//     }, 300); // 300ms debounce
+//   };
+
+//   const handleSelect = (feature) => {
+//     onChange(feature.properties.name);
+//     onSelect(feature);
+//     setSuggestions([]);
+//     setShowDropdown(false);
+//   };
+
+//   return (
+//     <div style={{ position: 'relative', width: '100%' }}>
+//       <input
+//         value={value}
+//         onChange={handleInput}
+//         onKeyDown={(e) => {
+//           if (e.key === 'Enter' && onManualSubmit) {
+//             e.preventDefault();
+//             onManualSubmit(e.target.value);
+//             setShowDropdown(false);
+//           }
+//         }}
+//         onFocus={() => {
+//           if (suggestions.length > 0) setShowDropdown(true);
+//         }}
+//         onBlur={() => {
+//           // Delay closing to allow item click
+//           setTimeout(() => setShowDropdown(false), 150);
+//         }}
+//         placeholder={placeholder}
+//         autoComplete="off"
+//       />
+//       {showDropdown && suggestions.length > 0 && (
+//         <div className='photon-autocomplete-dropdown'>
+//           {suggestions.map((feature, idx) => (
+//             <div
+//               key={idx}
+//               style={{ padding: 8, cursor: 'pointer' }}
+//               onClick={() => handleSelect(feature)}
+//             >
+//               {feature.properties.name} {feature.properties.city ? `(${feature.properties.city})` : ''}
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+function ComprehensiveAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [backendLocations, setBackendLocations] = useState([]);
+  const [approvedBusinesses, setApprovedBusinesses] = useState([]);
   const debounceRef = useRef();
+  const nominatimAbortRef = useRef(null);
+  const photonAbortRef = useRef(null);
+  const lastQueryRef = useRef({ q: '', results: [] });
+  const BBOX = '109.5,0.8,115.5,5.5';
+  const MIN_QUERY = 2;
+  const LIMIT = 5;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/locations');
+        const json = await res.json();
+        const arr = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
+        if (!cancelled) setBackendLocations(arr);
+      } catch {}
+      try {
+        const res = await fetch('/api/businesses/approved');
+        const json = await res.json();
+        const arr = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
+        if (!cancelled) setApprovedBusinesses(arr);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const normalizeBackend = (loc) => {
+    const lat = parseFloat(loc.latitude ?? loc.lat);
+    const lon = parseFloat(loc.longitude ?? loc.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+      name: loc.name || loc.title || loc.placeName || 'Unnamed Location',
+      lat, lon,
+      source: 'backend',
+      subtitle: loc.division || loc.region || undefined
+    };
+  };
+
+  const normalizeBusiness = (b) => {
+    const lat = parseFloat(b.latitude ?? b.lat);
+    const lon = parseFloat(b.longitude ?? b.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+      name: b.name || 'Unnamed Business',
+      lat, lon,
+      source: 'business',
+      subtitle: b.address || b.location || undefined
+    };
+  };
+
+  const mapNominatimItem = (item) => {
+    const lat = parseFloat(item.lat);
+    const lon = parseFloat(item.lon);
+    const primary = (item.display_name || '').split(',')[0]?.trim();
+    return {
+      name: primary || item.name || 'Selected Location',
+      lat, lon,
+      source: 'nominatim',
+      subtitle: item.display_name
+    };
+  };
+
+  const mapPhotonFeature = (feature) => {
+    const [lon, lat] = feature.geometry.coordinates;
+    const props = feature.properties || {};
+    const city = props.city || props.county || props.state;
+    const country = props.country;
+    const subtitle = [city, country].filter(Boolean).join(', ') || props.osm_value;
+    return {
+      name: props.name || props.street || 'Selected Location',
+      lat, lon,
+      source: 'photon',
+      subtitle
+    };
+  };
+
+  const fetchNominatim = async (q) => {
+    if (nominatimAbortRef.current) nominatimAbortRef.current.abort();
+    nominatimAbortRef.current = new AbortController();
+    const url = `/api/nominatim/search?q=${encodeURIComponent(q)}&limit=${LIMIT}&countrycodes=my&viewbox=${BBOX}&bounded=1`;
+    const res = await fetch(url, { signal: nominatimAbortRef.current.signal });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(mapNominatimItem) : [];
+  };
+
+  const fetchPhoton = async (q) => {
+    if (photonAbortRef.current) photonAbortRef.current.abort();
+    photonAbortRef.current = new AbortController();
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lang=en&limit=${LIMIT}&bbox=${BBOX}`;
+    const res = await fetch(url, { signal: photonAbortRef.current.signal });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const features = Array.isArray(data.features) ? data.features : [];
+    return features.map(mapPhotonFeature);
+  };
+
+  // const renderBadge = (source) => {
+  //   const style = {
+  //     fontSize: 11, padding: '2px 6px', borderRadius: 8, marginLeft: 8,
+  //     background: source === 'backend' ? '#e8f4ff'
+  //              : source === 'business' ? '#fff7ea'
+  //              : source === 'nominatim' ? '#eefbea'
+  //              : '#f0f0ff',
+  //     color: source === 'backend' ? '#1a73e8'
+  //           : source === 'business' ? '#b76e00'
+  //           : source === 'nominatim' ? '#2e7d32'
+  //           : '#4b3fb3',
+  //     border: source === 'backend' ? '1px solid #1a73e8'
+  //           : source === 'business' ? '1px solid #b76e00'
+  //           : source === 'nominatim' ? '1px solid #2e7d32'
+  //           : '1px solid #4b3fb3'
+  //   };
+  //   const label = source === 'backend' ? 'Backend'
+  //                : source === 'business' ? 'Business'
+  //                : source === 'nominatim' ? 'Nominatim'
+  //                : 'Photon';
+  //   return <span style={style}>{label}</span>;
+  // };
 
   const handleInput = (e) => {
-    const val = e.target.value;
-    onChange(val);
-
-    // Debounce the fetch
+    const q = e.target.value;
+    onChange(q);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (val.length < 2) {
+
+    if (!q || q.trim().length < MIN_QUERY) {
       setSuggestions([]);
       setShowDropdown(false);
       return;
     }
+
     debounceRef.current = setTimeout(async () => {
-      const bbox = '109.5,0.8,115.5,5.5';
-      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&lang=en&limit=5&bbox=${bbox}`;
+      const qLower = q.toLowerCase();
+      const backendResults = backendLocations
+        .filter(loc => {
+          const name = String(loc.name || '').toLowerCase();
+          const div = String(loc.division || '').toLowerCase();
+          return name.includes(qLower) || div.includes(qLower);
+        })
+        .slice(0, LIMIT)
+        .map(normalizeBackend)
+        .filter(Boolean);
+
+      const businessResults = approvedBusinesses
+        .filter(b => {
+          const name = String(b.name || '').toLowerCase();
+          const addr = String(b.address || '').toLowerCase();
+          return name.includes(qLower) || addr.includes(qLower);
+        })
+        .slice(0, LIMIT)
+        .map(normalizeBusiness)
+        .filter(Boolean);
+
+      const internal = [...backendResults, ...businessResults];
+      if (internal.length > 0) {
+        setSuggestions(internal);
+        setShowDropdown(true);
+        return;
+      }
+
       try {
-        const res = await fetch(url);
-        const data = await res.json();
-        setSuggestions(data.features || []);
+        if (lastQueryRef.current.q === q && lastQueryRef.current.results.length > 0) {
+          setSuggestions(lastQueryRef.current.results);
+          setShowDropdown(true);
+          return;
+        }
+        const nom = await fetchNominatim(q);
+        if (nom.length > 0) {
+          lastQueryRef.current = { q, results: nom };
+          setSuggestions(nom);
+          setShowDropdown(true);
+          return;
+        }
+        const pho = await fetchPhoton(q);
+        lastQueryRef.current = { q, results: pho };
+        setSuggestions(pho);
         setShowDropdown(true);
       } catch {
         setSuggestions([]);
         setShowDropdown(false);
       }
-    }, 300); // 300ms debounce
+    }, 250);
   };
 
-  const handleSelect = (feature) => {
-    onChange(feature.properties.name);
-    onSelect(feature);
+  const handleSelect = (item) => {
+    onChange(item.name);
+    onSelect(item);
     setSuggestions([]);
     setShowDropdown(false);
   };
@@ -62,18 +297,32 @@ function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, pl
             setShowDropdown(false);
           }
         }}
+        onFocus={() => {
+          if (suggestions.length > 0) setShowDropdown(true);
+        }}
+        onBlur={() => {
+          setTimeout(() => setShowDropdown(false), 150);
+        }}
         placeholder={placeholder}
         autoComplete="off"
       />
       {showDropdown && suggestions.length > 0 && (
         <div className='photon-autocomplete-dropdown'>
-          {suggestions.map((feature, idx) => (
+          {suggestions.map((s, idx) => (
             <div
               key={idx}
-              style={{ padding: 8, cursor: 'pointer' }}
-              onClick={() => handleSelect(feature)}
+              style={{ padding: 8, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleSelect(s)}
             >
-              {feature.properties.name} {feature.properties.city ? `(${feature.properties.city})` : ''}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 'bold' }}>{s.name}</span>
+              </div>
+              {s.subtitle && (
+                <div style={{ fontSize: 11, color: '#555' }}>
+                  {s.subtitle}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -114,10 +363,8 @@ async function reverseGeocodeNominatim(lat, lng) {
 
 // Nominatim geocoding helper
 async function geocodeAddressNominatim(address) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1&countrycodes=my&viewbox=109.5,0.8,115.5,5.5&bounded=1`;
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'SarawakTourismApp/1.0' }
-  });
+  const url = `/api/nominatim/search?q=${encodeURIComponent(address)}&limit=1&countrycodes=my&viewbox=109.5,0.8,115.5,5.5&bounded=1`;
+  const response = await fetch(url);
   const data = await response.json();
   if (data && data[0]) {
     return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -583,7 +830,7 @@ const LeftSidebarTesting = forwardRef(({
 }, ref) => {
   const { user, isLoggedIn } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
   const [destination, setDestination] = useState('');
   const [startingPointCoords, setStartingPointCoords] = useState(null);
@@ -620,6 +867,10 @@ const LeftSidebarTesting = forwardRef(({
   // Use external destination input if provided, otherwise use internal state
   const currentDestinationInput = destinationInput !== undefined ? destinationInput : destination;
   const setCurrentDestinationInput = setDestinationInput || setDestination;
+
+  const hasValidInputs =
+    (String(startingPoint).trim().length > 0) &&
+    (String(currentDestinationInput).trim().length > 0);
 
   const handleRouteAlternativeSelect = async (route, index) => {
     setSelectedRouteIndex(index);
@@ -814,91 +1065,98 @@ const LeftSidebarTesting = forwardRef(({
       toast.error("Geolocation is not supported by your browser");
       return;
     }
-  
+
     // Prevent multiple clicks
     if (isLocationFetching) {
       toast.warning("Please wait... Fetching your location");
       return;
     }
-  
+
     setIsLocationFetching(true);
-    setIsLoading(true);
-  
-    // Check permission status
-    const permissionStatus = await navigator.permissions?.query({ name: 'geolocation' });
-    if (permissionStatus?.state === 'denied') {
-      toast.error("Location permission denied. Please enable it in browser settings.");
-      setIsLocationFetching(false);
-      setIsLoading(false);
-      return;
+
+    // Check permission status (if available)
+    try {
+      const permissionStatus = await navigator.permissions?.query({ name: 'geolocation' });
+      if (permissionStatus?.state === 'denied') {
+        toast.error("Location permission denied. Please enable it in browser settings.");
+        setIsLocationFetching(false);
+        return;
+      }
+    } catch {
+      // Ignore permissions API errors; proceed to geolocation
     }
-  
-    // Add a 2.5-second delay to prevent spamming
+
+    // Small debounce to prevent spamming
     await new Promise(resolve => setTimeout(resolve, 2500));
-  
+
     const options = {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0
     };
-  
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude, accuracy } = position.coords;
+
+        // Basic validation of coordinates
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          toast.error("Invalid coordinates from geolocation");
+          setIsLocationFetching(false);
+          return;
+        }
+
         setCurrentLocation({ lat: latitude, lng: longitude });
-        
+
+        // Accuracy check (meters)
         if (accuracy > 10000) {
           toast.error(
             `GPS signal weak (accuracy: ${Math.round(accuracy)}m).\n
-            1. Ensure high-accuracy mode is enabled on your device.\n
-            2. Move to an open area.`,
+          1. Ensure high-accuracy mode is enabled on your device.\n
+          2. Move to an open area.`,
           );
           setIsLocationFetching(false);
-          setIsLoading(false);
           return;
         }
-  
+
+        // Prepare current location label
+        const label = "Current Location";
+        const coords = { lat: latitude, lng: longitude };
+
+        // Read and validate input field values
+        const startText = (startingPoint || "").trim();
+        const destText = (currentDestinationInput || "").trim();
+        const hasStart = startText.length > 0;
+        const hasDest = destText.length > 0;
+
         try {
-          // Use Nominatim for reverse geocoding (free alternative to Google)
-          const address = await reverseGeocodeNominatim(latitude, longitude);
-          
-          if (!startingPoint.trim()) {
-            setStartingPoint(address);
-            setStartingPointCoords({ lat: latitude, lng: longitude });
-            toast.success("Current location set as starting point");
-          } else if (!destination.trim()) {
-            setDestination(address);
-            setDestinationCoords({ lat: latitude, lng: longitude });
-            toast.success("Current location set as destination");
-          } else {
-            setAddDestinations(prev => [...prev, address]);
+          if (hasStart && hasDest) {
+            // Both fields filled → add as waypoint
+            setAddDestinations(prev => [...prev, label]);
+            setWaypointCoords(prev => [...prev, coords]);
             toast.success("Current location added as waypoint");
-          }
-        } catch (error) {
-          console.error('Reverse geocoding error:', error);
-          // Fallback: use coordinates as address
-          const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-          
-          if (!startingPoint.trim()) {
-            setStartingPoint(fallbackAddress);
-            setStartingPointCoords({ lat: latitude, lng: longitude });
-            toast.success("Current location set as starting point (coordinates only)");
-          } else if (!destination.trim()) {
-            setDestination(fallbackAddress);
-            setDestinationCoords({ lat: latitude, lng: longitude });
-            toast.success("Current location set as destination (coordinates only)");
+          } else if (!hasStart && !hasDest) {
+            // Both empty → set as destination
+            setCurrentDestinationInput(label);
+            setDestinationCoords(coords);
+            toast.success("Current location set as destination");
+          } else if (!hasStart) {
+            // Starting point empty → set as starting point
+            setStartingPoint(label);
+            setStartingPointCoords(coords);
+            toast.success("Current location set as starting point");
           } else {
-            setAddDestinations(prev => [...prev, fallbackAddress]);
-            toast.success("Current location added as waypoint (coordinates only)");
+            // Destination empty → set as destination
+            setCurrentDestinationInput(label);
+            setDestinationCoords(coords);
+            toast.success("Current location set as destination");
           }
         } finally {
           setIsLocationFetching(false);
-          setIsLoading(false);
         }
       },
       (error) => {
         setIsLocationFetching(false);
-        setIsLoading(false);
         const errorMessage = error.code === error.PERMISSION_DENIED 
           ? "Please enable location permissions in your browser settings"
           : error.message;
@@ -1374,6 +1632,10 @@ const handleVehicleClick = async (vehicle) => {
         if (setOsrmRouteCoords) {
           setOsrmRouteCoords(firstRoute.coords);
         }
+        if (setOsrmWaypoints) {
+          // Populate waypoint marker positions from resolved waypointCoords
+          setOsrmWaypoints(waypointsCoords);
+        }
         setRouteSummary({ 
           distance: firstRoute.distance, 
           duration: firstRoute.duration,
@@ -1466,20 +1728,20 @@ const handleVehicleClick = async (vehicle) => {
 
 // Coordinate-based auto-calc: keep guard; no default vehicle means it won't run
 useEffect(() => {
-  const shouldAutoCalculate = 
-    startingPointCoords &&
-    destinationCoords &&
-    !isLoading &&
-    routeAlternatives.length === 0 &&
-    selectedVehicle === 'Car' &&
-    !autoCalculatedRef.current;
+    const shouldAutoCalculate = 
+      startingPointCoords &&
+      destinationCoords &&
+      !isLoading &&
+      routeAlternatives.length === 0 &&
+      !autoCalculatedRef.current;
 
-  if (shouldAutoCalculate) {
-    autoCalculatedRef.current = true;
-    handleVehicleClick('Car');
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length, selectedVehicle]);
+    if (shouldAutoCalculate) {
+      autoCalculatedRef.current = true;
+      setSelectedVehicle('Car');
+      handleVehicleClick('Car');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length]);
 
 // Input-based auto-calc effect: disable unless a vehicle is selected
 useEffect(() => {
@@ -1509,44 +1771,77 @@ useEffect(() => {
 
   // Handle destination selection from search - UPDATED to set both name and coordinates
   const handleDestinationSelect = useCallback((place) => {
-    if (place && place.lat !== undefined && place.lon !== undefined) {
-      const placeName = place.name || place.display_name || 'Selected Location';
-      setCurrentDestinationInput(placeName);
-      setDestinationCoords({ lat: place.lat, lng: place.lon });
-      
-      // Add to recent locations
-      addToRecentLocations({
-        name: placeName,
-        latitude: place.lat,
-        longitude: place.lon,
-        type: 'Location',
-        source: 'search'
-      });
-      
-      // If starting point is also set, reset auto-calculate flag to trigger route calculation
-      if (startingPointCoords) {
-        autoCalculatedRef.current = false;
-      }
+    if (!place) return;
+
+    const placeName =
+        place.properties?.name ||
+        place.name ||
+        place.display_name ||
+        'Selected Location';
+
+    const lon = place.lon ?? place.lng ?? place.geometry?.coordinates?.[0];
+    const lat = place.lat ?? place.geometry?.coordinates?.[1];
+
+    setCurrentDestinationInput(placeName);
+
+    if (typeof lat === 'number' && typeof lon === 'number') {
+        setDestinationCoords({ lat, lng: lon });
+
+        addToRecentLocations({
+            name: placeName,
+            latitude: lat,
+            longitude: lon,
+            type: 'Location',
+            source: 'search'
+        });
+
+        if (startingPointCoords) {
+            autoCalculatedRef.current = false;
+        }
+    } else {
+        geocodeAddressNominatim(placeName)
+            .then((geo) => {
+                setDestinationCoords({ lat: geo.lat, lng: geo.lng });
+                addToRecentLocations({
+                    name: placeName,
+                    latitude: geo.lat,
+                    longitude: geo.lng,
+                    type: 'Location',
+                    source: 'search'
+                });
+                if (startingPointCoords) {
+                    autoCalculatedRef.current = false;
+                }
+            })
+            .catch(() => {
+                toast.error('Unable to resolve coordinates for selected destination');
+            });
     }
   }, [startingPointCoords]);
 
   const handleManualDestinationSubmit = useCallback(async (text) => {
     try {
-      const results = await geocodeAddressNominatim(text);
-      if (Array.isArray(results) && results.length > 0) {
-        const res = results[0];
-        const name = res.display_name || text;
-        const lat = parseFloat(res.lat);
-        const lon = parseFloat(res.lon);
-        setCurrentDestinationInput(name);
-        setDestinationCoords({ lat, lng: lon });
+      const query = (text || '').trim();
+      if (!query) {
+        toast.error('Please enter a destination');
+        setCurrentDestinationInput(text);
+        setDestinationCoords(null);
+        return;
+      }
+
+      const res = await geocodeAddressNominatim(query);
+      if (res && typeof res.lat === 'number' && typeof res.lng === 'number') {
+        setCurrentDestinationInput(query);
+        setDestinationCoords({ lat: res.lat, lng: res.lng });
+
         addToRecentLocations({
-          name,
-          latitude: lat,
-          longitude: lon,
+          name: query,
+          latitude: res.lat,
+          longitude: res.lng,
           type: 'Location',
           source: 'manual'
         });
+
         if (startingPointCoords) {
           autoCalculatedRef.current = false;
         }
@@ -1558,7 +1853,7 @@ useEffect(() => {
     } catch (err) {
       setCurrentDestinationInput(text);
       setDestinationCoords(null);
-      toast.error('Failed to look up address.');
+      toast.error('No matching address found.');
     }
   }, [startingPointCoords]);
 
@@ -1653,14 +1948,28 @@ useEffect(() => {
   // Notify parent component when route info changes
   useEffect(() => {
     if (onRouteInfoChange) {
+      const waypointsDetails = addDestinations
+        .map((wpName, idx) => {
+          const coords = waypointCoords[idx] || null;
+          return {
+            name: wpName,
+            address: wpName,
+            latitude: coords?.lat,
+            longitude: coords?.lng,
+            coordinates: coords ? { latitude: coords.lat, longitude: coords.lng } : null
+          };
+        })
+        .filter(wp => wp?.name?.trim());
+
       onRouteInfoChange({
         startingPoint,
-        destination,
+        destination: currentDestinationInput || destination,
         startingPointCoords,
-        destinationCoords
+        destinationCoords,
+        waypoints: waypointsDetails
       });
     }
-  }, [startingPoint, destination, startingPointCoords, destinationCoords, onRouteInfoChange]);
+  }, [startingPoint, destination, currentDestinationInput, startingPointCoords, destinationCoords, addDestinations, waypointCoords, onRouteInfoChange]);
   
 
   return (
@@ -1786,15 +2095,12 @@ useEffect(() => {
           <div className="input-container">
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon-lsb red" />
-              <PhotonAutocompleteInput
+              <ComprehensiveAutocompleteInput
                 value={startingPoint}
                 onChange={setStartingPoint}
-                onSelect={feature => {
-                  setStartingPoint(feature.properties.name);
-                  setStartingPointCoords({
-                    lat: feature.geometry.coordinates[1],
-                    lng: feature.geometry.coordinates[0]
-                  });
+                onSelect={(place) => {
+                  setStartingPoint(place.name);
+                  setStartingPointCoords({ lat: place.lat, lng: place.lon });
                 }}
                 placeholder="Enter starting location..."
               />
@@ -1814,7 +2120,7 @@ useEffect(() => {
           <div className="input-container">
             <div className="input-box">
               <FaMapMarkerAlt className="input-icon-lsb red" />
-              <PhotonAutocompleteInput
+              <ComprehensiveAutocompleteInput
                 value={currentDestinationInput}
                 onChange={setCurrentDestinationInput}
                 onSelect={handleDestinationSelect}
@@ -1838,35 +2144,29 @@ useEffect(() => {
             <div className="input-container" key={index}>
               <div className="input-box">
                 <FaMapMarkerAlt className="input-icon-lsb-add" />
-                <PhotonAutocompleteInput
+                <ComprehensiveAutocompleteInput
                   value={addDestinations[index]}
-                  onChange={val => {
-                    // Update the text
+                  onChange={(val) => {
                     setAddDestinations(prev => {
                       const arr = [...prev];
                       arr[index] = val;
                       return arr;
                     });
-                    // Clear the coordinate if user is typing
                     setWaypointCoords(prev => {
                       const arr = [...prev];
                       arr[index] = null;
                       return arr;
                     });
                   }}
-                  onSelect={feature => {
-                    // Set the text and the coordinate
+                  onSelect={(place) => {
                     setAddDestinations(prev => {
                       const arr = [...prev];
-                      arr[index] = feature.properties.name;
+                      arr[index] = place.name;
                       return arr;
                     });
                     setWaypointCoords(prev => {
                       const arr = [...prev];
-                      arr[index] = {
-                        lat: feature.geometry.coordinates[1],
-                        lng: feature.geometry.coordinates[0]
-                      };
+                      arr[index] = { lat: place.lat, lng: place.lon };
                       return arr;
                     });
                   }}
@@ -1892,9 +2192,9 @@ useEffect(() => {
                 className="current-location-button" 
                 onClick={handleAddCurrentLocation}
                 title="Use my current location"
-                disabled={isLoading}
+                disabled={isLocationFetching}
               >
-                {isLoading ? (
+                {isLocationFetching ? (
                   <>
                     <span className="location-error"></span>
                     Locating...
@@ -1911,7 +2211,7 @@ useEffect(() => {
 
  {isLoading ? (
             <div className="loading-message">Calculating route...</div>
-          ) : routeSummary ? (
+          ) : (hasValidInputs && routeSummary) ? (
             <div className="route-summary-container">
               <div className="route-summary-header">
                 <FaMapMarkerAlt className="section-icon" />
@@ -1950,9 +2250,9 @@ useEffect(() => {
 
 {isLoading ? (
             <div className="loading-message">Loading nearby places...</div>
-          ) : routeSummary ? (
+          ) : (hasValidInputs && routeSummary) ? (
             <>
-              {/* Show route summary and nearby places when we have a route */}
+              {/* Explore Nearby (hidden until both inputs valid) */}
               <div className="route-footer">
                 <div className="explore-nearby-text">
                   <FaCompass className="explore-icon" />
@@ -1966,11 +2266,15 @@ useEffect(() => {
                         className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
                         onClick={() => handleNearbyPlaceClick(place)}
                       >
-                        <div className="place-name100">{place.name}</div>
-                        <div className="place-address100">{place.vicinity}</div>
-                        <div className="place-type100">
-                          <FaMapPin className="place-type-icon" />
-                          {place.type}
+                        <div className="nearby-place-content100">
+                          <div className="place-header100">
+                            <div className="place-name100">{place.name}</div>
+                            <div className="place-type100">
+                              <FaMapPin className="place-type-icon" />
+                              {String(place.type || '').replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                          <div className="place-address100">{place.vicinity}</div>
                         </div>
                       </div>
                     ))}
@@ -1982,7 +2286,8 @@ useEffect(() => {
                 )}
               </div>
 
-              {routeSummary && routeAlternatives.length > 0 && (
+              {/* Route Options (hidden until both inputs valid) */}
+              {hasValidInputs && routeSummary && routeAlternatives.length > 0 && (
                 <div className="route-alternatives-container">
                   <div className="route-alternatives-header">
                     <h4>Route Options</h4>
@@ -2016,38 +2321,39 @@ useEffect(() => {
                   </div>
                 </div>
               )}
+
+              {/* Share Directions (hidden until both inputs valid) */}
+              {hasValidInputs && routeSummary && routeAlternatives.length > 0 && (
+                <div className="directions-actions-container">
+                  <div className="directions-actions-header">
+                    <FaShare className="section-icon" />
+                    <h4>Share Directions</h4>
+                  </div>
+                  <div className="directions-actions-buttons">
+                    <button 
+                      className="copy-directions-button"
+                      onClick={copyDirectionsLink}
+                      title="Copy Google Maps directions link"
+                    >
+                      <FaCopy className="action-icon" />
+                      Copy Link
+                    </button>
+                    <button 
+                      className="share-directions-button"
+                      onClick={shareDirections}
+                      title="Share directions"
+                    >
+                      <FaShare className="action-icon" />
+                      Share
+                    </button>
+                  </div>
+                  <div className="directions-info">
+                    <small>Links will open in Google Maps for navigation</small>
+                  </div>
+                </div>
+              )}
             </>
           ) : null}
-
-          {routeSummary && (
-          <div className="directions-actions-container">
-            <div className="directions-actions-header">
-              <FaShare className="section-icon" />
-              <h4>Share Directions</h4>
-            </div>
-              <div className="directions-actions-buttons">
-                <button 
-                  className="copy-directions-button"
-                  onClick={copyDirectionsLink}
-                  title="Copy Google Maps directions link"
-                >
-                  <FaCopy className="action-icon" />
-                  Copy Link
-                </button>
-                <button 
-                  className="share-directions-button"
-                  onClick={shareDirections}
-                  title="Share directions"
-                >
-                  <FaShare className="action-icon" />
-                  Share
-                </button>
-              </div>
-              <div className="directions-info">
-                <small>Links will open in Google Maps for navigation</small>
-              </div>
-            </div>
-          )}
 
           </div>
             {showBusiness && (

@@ -19,12 +19,14 @@ import metricsRouter from "../routes/MetricsRoutes.js";
 import adminMetricsRouter from "../routes/AdminMetricsRoutes.js";
 import backupRouter from "../routes/BackupRoutes.js";
 import UserManagementRouter from "../routes/UserManagementRoutes.js";
+import { nominatimLimiter } from "../middleware/rateLimiter.js";
 
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// In your Express app bootstrap, after creating `app`
 const app = express();
 const PORT = process.env.PORT || 5050
 
@@ -35,6 +37,9 @@ const connectDB = async () => {
 connectDB(); // Establish connection to the database as soon as the backend is run
 
 app.disable("x-powered-by");
+
+// Respect X-Forwarded-For when behind proxies/CDNs
+app.set('trust proxy', 1);
 
 // CORS configuration - more permissive for development
 app.use(cors({
@@ -92,7 +97,7 @@ app.use("/api/admin/backup", backupRouter);
 app.use("/api/geoapify", geoapifyRouter);
 
 // In your backend routes
-app.get('/api/nominatim/search', async (req, res) => {
+app.get('/api/nominatim/search', nominatimLimiter, async (req, res) => {
   try {
     const { q, limit, countrycodes, bounded, viewbox } = req.query;
     
@@ -112,6 +117,34 @@ app.get('/api/nominatim/search', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Nominatim proxy error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/nominatim/reverse', nominatimLimiter, async (req, res) => {
+  try {
+    const { lat, lon, addressdetails = '1' } = req.query;
+
+    if (!lat || !lon) {
+      return res.status(400).json({ error: 'lat and lon are required' });
+    }
+
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&addressdetails=${addressdetails}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'SarawakTourismApp/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Nominatim API error' });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Nominatim reverse proxy error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

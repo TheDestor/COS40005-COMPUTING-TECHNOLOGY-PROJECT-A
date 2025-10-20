@@ -234,7 +234,7 @@ const ScheduleEventsPage = () => {
                 <div className="event-image">
                   <img src={event.imageUrl} alt={event.name} />
                   <div className="event-date-badge">
-                    <FaCalendar className="date-icon" />
+                    <FaCalendar className="date-icon-ae" />
                     <span>{formatDate(event.startDate)}</span>
                   </div>
                   <div className="event-actions">

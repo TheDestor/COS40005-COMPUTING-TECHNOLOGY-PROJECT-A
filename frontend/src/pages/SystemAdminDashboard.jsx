@@ -19,6 +19,55 @@ import EditUserForm from "../components/EditUserForm";
 
 import { useState } from "react";
 
+// AnimatedNumber helper: configurable duration and easing
+const easeFns = {
+  linear: (t) => t,
+  easeOutQuad: (t) => 1 - (1 - t) * (1 - t),
+  easeOutCubic: (t) => 1 - Math.pow(1 - t, 3),
+  easeOutQuart: (t) => 1 - Math.pow(1 - t, 4),
+  easeOutExpo: (t) => (t === 0 ? 0 : 1 - Math.pow(2, -10 * t)),
+};
+
+function AnimatedNumber({
+  value = 0,
+  duration = 1200,
+  easing = "easeOutCubic",
+  className = "value countup-value",
+  ...rest
+}) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const end = Number(value) || 0;
+    const start = 0; // per requirement: always animate from zero
+    const d = Math.max(0, Number(duration) || 0);
+    const ease =
+      typeof easing === "function" ? easing : easeFns[easing] || easeFns.easeOutCubic;
+
+    let rafId = null;
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const t = Math.min(1, (now - startTime) / d);
+      const eased = ease(t);
+      const current = Math.round(start + (end - start) * eased);
+      setDisplay(current);
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [value, duration, easing]);
+
+  return (
+    <p className={className} {...rest}>
+      {display.toLocaleString()}
+    </p>
+  );
+}
+
 function SystemAdminDashboard() {
   const chartRef = useRef(null);
   const pageViewSectionRef = useRef(null);
@@ -518,7 +567,14 @@ function SystemAdminDashboard() {
               <h3>Page Views</h3>
             </div>
             <div className="summary-value-row">
-              <p className="value">{viewsPrimaryText}</p>
+              {/* Animated count-up from 0 to totalUniqueVisitors */}
+              <AnimatedNumber
+                value={dashboardStats.totalUniqueVisitors || 0}
+                duration={1500}
+                easing="easeOutQuart"
+                className="value countup-value"
+                aria-label="Total unique visitors"
+              />
               <small className="summary-note note-green">
                 +{dashboardStats.uniqueVisitorsToday.toLocaleString()} new views
                 today
@@ -545,14 +601,21 @@ function SystemAdminDashboard() {
               <h3>User Registered</h3>
             </div>
             <div className="summary-value-row">
-              <p className="value">{userPrimaryText}</p>
+              {/* Animated count-up from 0 to totalUsers */}
+              <AnimatedNumber
+                value={dashboardStats.totalUsers || 0}
+                duration={3000}
+                easing="easeOutQuart"
+                className="value countup-value"
+                aria-label="Total users"
+              />
               <small className="summary-note note-green">
                 +{dashboardStats.newUsersToday.toLocaleString()} new users today
               </small>
             </div>
           </div>
 
-          {/* Backup Status (note stacked below value) */}
+          {/* Backup Status (text, not animated) */}
           <div
             className={`summary-box backup-card ${
               backupStatus === "Healthy" ? "green-theme" : "purple-theme"

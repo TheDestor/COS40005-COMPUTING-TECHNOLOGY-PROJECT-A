@@ -28,7 +28,7 @@ import ResetPasswordPage from './components/ResetPassword.jsx';
 import SettingPage from './pages/Settingpage.jsx';
 import ProfileSettingPage from './pages/ProfileSettingpage.jsx';
 import BookmarkPage from './pages/Bookmarkpage.jsx';
-import ReviewPage from './pages/ReviewPage.jsx';
+// import ReviewPage from './pages/ReviewPage.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import BusinessSubmissionForm from './pages/BusinessSubmissionForm.jsx';
 import ManageBusiness from './pages/ManageBusiness.jsx';
@@ -84,7 +84,7 @@ function App() {
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path="/settings" element={<SettingPage />} />
             <Route path="/contact-us" element={<ContactUs />} />
-            <Route path="/review" element={<ReviewPage />} />
+            {/* <Route path="/review" element={<ReviewPage />} /> */}
             <Route path="/business-submission" element={<BusinessSubmissionForm />} />
             <Route path="/manage-business" element={<ManageBusiness />} />
             <Route path="/error" element={<ErrorPage />} />

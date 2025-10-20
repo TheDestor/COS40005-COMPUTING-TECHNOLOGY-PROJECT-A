@@ -11,6 +11,8 @@ import {
   verifyJWT,
   checkRole,
 } from "../middleware/AuthMiddleware.js";
+import { adminMetricsLimiter } from "../middleware/rateLimiter.js";
+import { logAdminUsage } from "../middleware/adminMonitor.js";
 
 const metricsRouter = Router();
 
@@ -27,12 +29,16 @@ metricsRouter.get(
   "/admin/page-views-timeline",
   verifyJWT,
   checkRole(["system_admin"]),
+  adminMetricsLimiter,
+  logAdminUsage('metrics_admin_page_views_timeline'),
   getPageViewsTimeline
 );
 metricsRouter.get(
   "/admin/stats",
   verifyJWT,
   checkRole(["system_admin"]),
+  adminMetricsLimiter,
+  logAdminUsage('metrics_admin_stats'),
   getAdminMetrics
 );
 

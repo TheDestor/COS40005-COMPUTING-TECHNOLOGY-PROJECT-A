@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import EventNotificationPanel from './EventNotificationPanel';
 
 import carIcon from '../assets/car.gif';
 import homestayIcon from '../assets/homestay.gif';
@@ -18,7 +19,7 @@ import restaurantIcon from '../assets/restaurant.png';
 
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
-import ReviewPage from '../pages/ReviewPage';
+// import ReviewPage from '../pages/ReviewPage';
 import { UseBookmarkContext } from '../context/BookmarkProvider';
 import '../styles/MapComponent.css';
 import SearchBarTesting from './SearchbarTesting';
@@ -513,6 +514,13 @@ function MapComponentTesting({  }) {
     }
   }, [isRoutingActive]);
 
+  // NEW: Clear search bar plotting when starting route direction
+  useEffect(() => {
+    if (routeInfo.startingPointCoords || routeInfo.destinationCoords || isRoutingActive) {
+      setSelectedSearchBarPlace(null);
+    }
+  }, [routeInfo.startingPointCoords, routeInfo.destinationCoords, isRoutingActive]);
+
   // Memoize callback functions to prevent infinite re-renders
   const handleRouteAlternativesChange = useCallback((alternatives, selectedIndex) => {
     setRouteAlternatives(alternatives);
@@ -712,74 +720,11 @@ function MapComponentTesting({  }) {
         }
       }
 
-      // Step 4: Only perform reverse geocoding as fallback if no data found
+      // Step 4: Skip reverse geocoding; use provided details directly
       if (!dataFound) {
-        console.log('No backend data found, performing reverse geocoding as fallback');
-        
-        const nominatimResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position[0]}&lon=${position[1]}&addressdetails=1`, {
-          headers: {
-            'User-Agent': 'SarawakTourismApp/1.0'
-          }
-        });
-        
-        if (nominatimResponse.ok) {
-          const nominatimData = await nominatimResponse.json();
-          
-          if (nominatimData && nominatimData.display_name) {
-            address = nominatimData.display_name;
-            detailedDescription = `${description}\n\nAddress: ${address}`;
-          }
-          
-          // Extract division/state information
-          if (nominatimData.address) {
-            division = nominatimData.address.state || nominatimData.address.region || nominatimData.address.county || '';
-          }
-        }
-
-        // Try Overpass API for POI details as additional fallback
-        try {
-          const overpassQuery = `
-            [out:json][timeout:25];
-            (
-              node["amenity"](around:100,${position[0]},${position[1]});
-              node["tourism"](around:100,${position[0]},${position[1]});
-              node["shop"](around:100,${position[0]},${position[1]});
-              node["leisure"](around:100,${position[0]},${position[1]});
-            );
-            out geom;
-          `;
-          
-          const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: overpassQuery,
-            headers: {
-              'Content-Type': 'text/plain'
-            }
-          });
-
-          if (overpassResponse.ok) {
-            const overpassData = await overpassResponse.json();
-            if (overpassData.elements && overpassData.elements.length > 0) {
-              const poi = overpassData.elements[0];
-              if (poi.tags) {
-                enhancedData = {
-                  ...enhancedData,
-                  name: poi.tags.name || name,
-                  phone: poi.tags.phone || poi.tags['contact:phone'] || routeInfo.phone || '',
-                  website: poi.tags.website || poi.tags['contact:website'] || routeInfo.website || '',
-                  openingHours: poi.tags.opening_hours || routeInfo.openingHours || '',
-                  amenity: poi.tags.amenity,
-                  tourism: poi.tags.tourism,
-                  shop: poi.tags.shop,
-                  leisure: poi.tags.leisure,
-                  source: 'overpass_fallback'
-                };
-              }
-            }
-          }
-        } catch (overpassError) {
-          console.log('Overpass API not available');
-        }
+        address = routeInfo.address || '';
+        division = routeInfo.division || '';
+        detailedDescription = description;
       }
 
     } catch (error) {
@@ -898,8 +843,8 @@ function MapComponentTesting({  }) {
               onZoomToPlace={handleZoomToPlace}
               isRoutingActive={isRoutingActive}
               onClearRouting={clearAllRoutingData}
-              // NEW: keep menu inactive whenever a search selection exists
-              isSearchActive={!!selectedSearchBarPlace}
+              // NEW: prevent search-active state while routing
+              isSearchActive={!isRoutingActive && !!selectedSearchBarPlace}
             />
           </div>
           <div className="weather-profile-group">
@@ -944,7 +889,8 @@ function MapComponentTesting({  }) {
           onMarkerClick={handleMarkerClick}
           selectedLocation={selectedLocation}
         />
-        {selectedSearchBarPlace && (
+        {/* NEW: Only render search plotting when not routing */}
+        {selectedSearchBarPlace && !isRoutingActive && (
           <SearchHandlerTesting
             selectedSearchBarPlace={selectedSearchBarPlace}
             setSearchNearbyPlaces={setSearchNearbyPlaces}
@@ -970,15 +916,15 @@ function MapComponentTesting({  }) {
               eventHandlers={{
                 click: async () => {
                   const startLocation = await createRouteMarkerLocation(
-                    osrmRouteCoords[0], 
-                    routeInfo.name,
-                    routeInfo.name || 'Starting Point',
-                    routeInfo.description,
+                    osrmRouteCoords[0],
+                    'Starting Point',
+                    routeInfo.startingPoint || 'Starting Point',
+                    'Your selected starting location',
                     {
+                      address: routeInfo.startingPoint || routeInfo.address || '',
                       website: routeInfo.website,
                       phone: routeInfo.phone,
                       ownerEmail: routeInfo.email,
-                      address: routeInfo.address,
                       openingHours: routeInfo.openingHours,
                       startDate: routeInfo.startDate,
                       endDate: routeInfo.endDate,
@@ -1022,14 +968,14 @@ function MapComponentTesting({  }) {
                 click: async () => {
                   const endLocation = await createRouteMarkerLocation(
                     osrmRouteCoords[osrmRouteCoords.length - 1],
-                    routeInfo.name,
-                    routeInfo.name || 'Destination',
-                    routeInfo.description || 'Destination',
+                    'Destination',
+                    routeInfo.destination || 'Destination',
+                    'Your selected destination',
                     {
+                      address: routeInfo.destination || routeInfo.address || '',
                       website: routeInfo.website,
                       phone: routeInfo.phone,
                       ownerEmail: routeInfo.email,
-                      address: routeInfo.address,
                       openingHours: routeInfo.openingHours,
                       startDate: routeInfo.startDate,
                       endDate: routeInfo.endDate,
@@ -1071,7 +1017,7 @@ function MapComponentTesting({  }) {
             top: '50%',
             left: '350px',
             transform: 'translateY(-50%)',
-            zIndex: 1000
+            zIndex: 10000
           }}
         >
           <CustomInfoWindow
@@ -1097,6 +1043,9 @@ function MapComponentTesting({  }) {
 
       {/* Ai Chatbot */}
       <AiChatbot />
+
+      {/* Event Notification */}
+      <EventNotificationPanel />
     </div>
   );
 }

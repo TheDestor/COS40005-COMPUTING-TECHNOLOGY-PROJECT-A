@@ -374,7 +374,12 @@ const CustomInfoWindow = ({
 
   // Get backend URL
   const getBackendUrl = () => {
-    return process.env.VITE_DEPLOYMENT_BACKEND || process.env.VITE_BACKEND_URL || 'http://localhost:5050';
+    const url =
+      import.meta?.env?.VITE_DEPLOYMENT_BACKEND ||
+      import.meta?.env?.VITE_BACKEND_URL ||
+      'http://localhost:5050';
+    return url;
+    // return process.env.VITE_DEPLOYMENT_BACKEND || process.env.VITE_BACKEND_URL || 'http://localhost:5050';
   };
 
   // Enhanced image URL handler for route markers
@@ -438,22 +443,22 @@ const CustomInfoWindow = ({
   const renderRouteMarkerDetails = () => (
     <>
       {/* Show coordinates for route markers */}
-      <div className="info-row">
+      {/* <div className="info-row">
         <span className="info-row-icon"><FaMapMarkerAlt /></span>
         <span className="info-row-text">
           <strong>Coordinates:</strong> {location.latitude?.toFixed(6)}, {location.longitude?.toFixed(6)}
         </span>
-      </div>
+      </div> */}
 
       {/* Show address if available from reverse geocoding */}
-      {location.address && (
+      {/* {location.address && (
         <div className="info-row">
           <span className="info-row-icon"><FaMapMarkerAlt /></span>
           <span className="info-row-text">
-            <strong>Address:</strong> {location.address}
+            {location.address}
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Show division if available */}
       {location.division && (
@@ -536,7 +541,7 @@ const CustomInfoWindow = ({
         <div className="info-row">
           <span className="info-row-icon"><FaClock /></span>
           <span className="info-row-text">
-            <strong>Hours:</strong> {location.openingHours}
+            {location.openingHours}
           </span>
         </div>
       )}
@@ -546,7 +551,7 @@ const CustomInfoWindow = ({
         <div className="info-row">
           <span className="info-row-icon"><FaEnvelope /></span>
           <span className="info-row-text">
-            <strong>Contact:</strong> {location.ownerEmail}
+            {location.ownerEmail}
           </span>
         </div>
       )}
@@ -591,24 +596,24 @@ const CustomInfoWindow = ({
       )}
 
       {/* Show rating if available from backend */}
-      {location.rating && (
+      {/* {location.rating && (
         <div className="info-row">
           <span className="info-row-icon"><FaStar /></span>
           <span className="info-row-text">
             <strong>Rating:</strong> {location.rating.toFixed(1)} ⭐
           </span>
         </div>
-      )}
+      )} */}
 
       {/* Show data source for debugging */}
-      {location.dataEnhanced && (
+      {/* {location.dataEnhanced && (
         <div className="info-row" style={{ fontSize: '0.8em', color: '#666' }}>
           <span className="info-row-icon"><FaStar /></span>
           <span className="info-row-text">
             <strong>Data Source:</strong> {location.source || 'Enhanced'}
           </span>
         </div>
-      )}
+      )} */}
     </>
   );
 

@@ -11,7 +11,6 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
     role: '',
     companyName: '',
     companyRegistrationNo: '',
-    companyAddress: '',
   });
   const [initialData, setInitialData] = useState(null);
 
@@ -27,7 +26,6 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
         role: user.role.toLowerCase(),
         companyName: user.companyName || '',
         companyRegistrationNo: user.companyRegistrationNo || '',
-        companyAddress: user.companyAddress || '',
       };
       setFormData(init);
       setInitialData(init);
@@ -50,7 +48,6 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
     if (formData.role === 'business') {
       payload.companyName = formData.companyName;
       payload.companyRegistrationNo = formData.companyRegistrationNo;
-      payload.companyAddress = formData.companyAddress;
     }
     if (onRequestSave) {
       onRequestSave({ userId: user.id, payload, original: initialData });
@@ -94,7 +91,6 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
         <form onSubmit={handleSubmit}>
           {isBusiness ? (
             <div className="edit-business-grid-um">
-              {/* Left column: Edit User */}
               <div className="form-section-um">
                 <h3 className="form-section-title">User Details</h3>
                 <div className="form-grid-um">
@@ -121,8 +117,6 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
                   </div>
                 </div>
               </div>
-
-              {/* Right column: Business Details */}
               <div className="form-section-um">
                 <h3 className="form-section-title">Additional Business Details</h3>
                 <div className="form-grid-um">
@@ -134,10 +128,7 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
                     <label>Company Registration No.</label>
                     <input type="text" name="companyRegistrationNo" value={formData.companyRegistrationNo} onChange={handleChange} required />
                   </div>
-                  <div className="form-group-um">
-                    <label>Company Address</label>
-                    <input type="text" name="companyAddress" value={formData.companyAddress} onChange={handleChange} required />
-                  </div>
+                  {/* Company Address field removed */}
                 </div>
               </div>
             </div>

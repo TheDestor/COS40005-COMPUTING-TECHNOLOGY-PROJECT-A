@@ -274,7 +274,7 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
           onChange={(e) => setTime(e.target.value)}
         />
 
-        <label>Retention Period (days)</label>
+        {/* <label>Retention Period (days)</label>
         <input
           type="number"
           min="1"
@@ -282,10 +282,9 @@ const BackupConfigurationModal = ({ onClose, onSave }) => {
           onChange={(e) => setRetention(e.target.value)}
         />
 
-        {/* Retention indicator */}
         <div className="retention-info" aria-label="Retention period">
           Retention: <strong>{Number(retention)}</strong> days
-        </div>
+        </div> */}
 
         <div className="buttons">
           <button className="modal-cancel-btn" onClick={onClose}>Cancel</button>

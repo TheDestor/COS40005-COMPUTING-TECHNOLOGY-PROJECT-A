@@ -281,10 +281,24 @@
 /* =========================================
    6. CAPTCHA CHECKBOX (Currently Commented Out in JSX)
    ========================================= */
-/* .captcha-section {
-  margin: 1rem 0;
-} */
-.captcha-section { margin-top: 12px; }
+/* Keep captcha inside container and shrink on small screens */
+.captcha-section {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+@media (max-width: 480px) {
+  .captcha-section .g-recaptcha {
+    transform: scale(0.84);
+    transform-origin: left top;
+  }
+  .captcha-section {
+    height: 65px; /* matches scaled height to prevent clipping */
+    overflow: hidden;
+  }
+}
 .captcha-label { display: block; font-weight: 600; margin-bottom: 6px; }
 /* .captcha-item { display: flex; justify-content: center; } */
 .captcha-error { margin-top: 6px; color: #d32f2f; font-size: 0.9rem; }
@@ -452,12 +466,14 @@
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
   font-weight: bold;
+  color: #333;
 }
 
 .reset-container p {
   margin-bottom: 6rem; /* Large margin, adjust if needed */
   color: #555;
   font-size: 0.95rem;
+  text-align: left;
 }
 
 /* Variants of paragraph spacing for different reset steps */
@@ -695,6 +711,8 @@
 
 /* For screens up to 480px (e.g., most mobile phones) */
 @media screen and (max-width: 480px) {
+
+
   .login-wrapper {
     margin: 10px; /* Smaller margin */
   }

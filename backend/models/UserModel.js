@@ -89,7 +89,6 @@ export const userModel = mongoose.models.user || mongoose.model('users', userSch
 const businessUserSchema = new mongoose.Schema({
     companyName: { type: String, required: true, trim: true },
     companyRegistrationNo: { type: String, required: true, trim: true },
-    companyAddress: { type: String, required: true, trim: true },
 })
 
 const touristUserSchema = new mongoose.Schema({});

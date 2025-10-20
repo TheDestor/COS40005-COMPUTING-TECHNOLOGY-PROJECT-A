@@ -59,6 +59,7 @@
   justify-content: space-between;
   padding: 20px 16px;
   background: linear-gradient(135deg, #6c5dd3 0%, #3b82f6 100%);
+  color: #ffffff;
   position: sticky;
   top: 0;
   z-index: 10;

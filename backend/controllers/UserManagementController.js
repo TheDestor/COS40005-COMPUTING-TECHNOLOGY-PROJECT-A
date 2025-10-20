@@ -1,10 +1,11 @@
 import { userModel } from "../models/UserModel.js"
 
+// getAllUsers
 export const getAllUsers = async (req, res) => {
     try {
         const { limit, sort } = req.query;
 
-        let query = userModel.find().select("firstName lastName email role avatarUrl createdAt");
+        let query = userModel.find().select("firstName lastName email role avatarUrl createdAt companyName companyRegistrationNo");
 
         if (sort) {
             const [sortField, sortOrder] = sort.split('_');
@@ -45,6 +46,7 @@ export const deleteUser = async (req, res) => {
     }
 }
 
+// updateUser
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -60,9 +62,11 @@ export const updateUser = async (req, res) => {
 
         const isRoleChanging = updateData.role && user.role !== updateData.role;
 
-        // If the role is NOT changing, perform a simple update
         if (!isRoleChanging) {
-            const updatedUser = await userModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).select("-password");
+            // Use document save to preserve discriminator fields (e.g., companyName, companyRegistrationNo)
+            user.set(updateData);
+            await user.save(); // runs validators on the correct discriminator schema
+            const updatedUser = await userModel.findById(id).select("-password");
             return res.status(200).json({ message: "User updated successfully", success: true, user: updatedUser });
         }
         
@@ -77,8 +81,8 @@ export const updateUser = async (req, res) => {
 
         const updatedUser = await userModel.findByIdAndUpdate(id, updatePayload, {
             new: true,
-            overwrite: true, // Replace document
-            overwriteDiscriminatorKey: true, // Flag to allow role change
+            overwrite: true,
+            overwriteDiscriminatorKey: true,
             runValidators: true
         }).select("-password");
         
