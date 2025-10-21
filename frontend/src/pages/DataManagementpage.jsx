@@ -719,7 +719,7 @@ const DataManagementPage = () => {
                 <div className="confirm-actions-dm">
                   <button className="modal-cancel-btn" onClick={() => setConfirmAction(null)} disabled={loading}>Cancel</button>
                   <button
-                    className="modal-confirm-btn"
+                    className="modal-delete-btn"
                     onClick={async () => {
                       const name = confirmAction?.filename;
                       if (!name) return;
@@ -732,7 +732,7 @@ const DataManagementPage = () => {
                     }}
                     disabled={loading}
                   >
-                    {loading ? 'Working…' : 'Confirm'}
+                    {loading ? 'Working…' : 'Delete'}
                   </button>
                 </div>
               </div>

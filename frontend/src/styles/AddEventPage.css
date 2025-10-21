@@ -2450,7 +2450,7 @@ p {
   .confirm-modal-title { font-size: 18px; }
   .confirm-modal-body { font-size: 14px; }
   .confirm-modal-actions { flex-direction: column; }
-  .modal-cancel-btn, .modal-confirm-btn { width: 100%; }
+  /* .modal-cancel-btn, .modal-confirm-btn { width: 100%; } */
 }
 
 @media (max-width: 480px) {

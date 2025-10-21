@@ -1241,7 +1241,8 @@ margin: 8px 0 14px;
 }
 
 .modal-cancel-btn,
-.modal-confirm-btn {
+.modal-confirm-btn,
+.modal-delete-btn {
   padding: 10px 16px;
   border: none;
   border-radius: 10px;
@@ -1250,6 +1251,12 @@ margin: 8px 0 14px;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 200ms ease, background-color 160ms ease;
 }
+
+.modal-delete-btn {
+  background: #dc3545;
+  color: #ffffff;
+}
+.modal-delete-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(220, 53, 69, 0.35); }
 
 .modal-cancel-btn {
   background: #f3f4f6;

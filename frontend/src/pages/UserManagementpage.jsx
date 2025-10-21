@@ -325,8 +325,8 @@ function UserManagementPage() {
                 {deleteTargetUser?.email ? ` (${deleteTargetUser.email})` : ''}?
               </p>
               <div className="popup-actions">
-                <button className="btn-secondary" onClick={cancelDeleteUser}>Cancel</button>
-                <button className="btn-primary" onClick={confirmDeleteUser}>Delete</button>
+                <button className="modal-cancel-btn" onClick={cancelDeleteUser}>Cancel</button>
+                <button className="modal-delete-btn" onClick={confirmDeleteUser}>Delete</button>
               </div>
             </div>
             </div>
@@ -349,8 +349,8 @@ function UserManagementPage() {
                   )}
                 </div>
                 <div className="popup-actions">
-                  <button className="btn-secondary" onClick={cancelSave}>Cancel</button>
-                  <button className="btn-primary" onClick={confirmSave}>Confirm</button>
+                  <button className="modal-cancel-btn" onClick={cancelSave}>Cancel</button>
+                  <button className="modal-confirm-btn" onClick={confirmSave}>Confirm</button>
                 </div>
               </div>
             </div>

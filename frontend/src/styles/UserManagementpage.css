@@ -363,6 +363,27 @@
   z-index: 999;
 }
 
+.confirm-change-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  color: #007bff; 
+}
+
+@media (max-width: 600px) {
+  .confirm-change-row {
+    flex-direction: column;
+    margin-bottom: 20px;  
+    align-items: flex-start;
+    font-size: 14px;
+  }
+}
+
+.confirm-change-row span {
+  color: #333;
+}
+
 /* Modal overlay refinements */
 .popup-overlay {
   backdrop-filter: blur(2px);

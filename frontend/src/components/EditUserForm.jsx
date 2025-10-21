@@ -16,6 +16,11 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
 
   const { accessToken } = useAuth();
 
+  // NEW: Confirmation modal state
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState(null);
+  const [confirmChanges, setConfirmChanges] = useState([]);
+
   useEffect(() => {
     if (user) {
       const [firstName, ...lastName] = user.name.split(' ');
@@ -43,6 +48,43 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
     return toAscii.replace(/\D/g, '');
   };
 
+  // Helper to list changed fields (shown in confirmation modal)
+  const computeChanges = (from, toForm) => {
+    if (!from) return [];
+    const normalizeDigits = (v) => {
+      if (v == null) return '';
+      const s = String(v);
+      const toAscii = s.replace(/[\uFF10-\uFF19]/g, (ch) =>
+        String.fromCharCode(ch.charCodeAt(0) - 0xFF10 + 0x30)
+      );
+      return toAscii.replace(/\D/g, '');
+    };
+
+    const labelsMap = {
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      role: 'Role',
+      companyName: 'Company Name',
+      companyRegistrationNo: 'Company Registration No.',
+    };
+
+    const fields = ['firstName', 'lastName', 'role'];
+    const isBusiness = (toForm.role || '').toLowerCase() === 'business';
+    if (isBusiness) {
+      fields.push('companyName', 'companyRegistrationNo');
+    }
+
+    const changes = [];
+    for (const key of fields) {
+      const fromVal = key === 'companyRegistrationNo' ? normalizeDigits(from[key]) : from[key] ?? '';
+      const toVal = key === 'companyRegistrationNo' ? normalizeDigits(toForm[key]) : toForm[key] ?? '';
+      if (String(fromVal) !== String(toVal)) {
+        changes.push({ label: labelsMap[key], from: fromVal || '—', to: toVal || '—' });
+      }
+    }
+    return changes;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     let next = value;
@@ -58,6 +100,36 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
     }
 
     setFormData(prev => ({ ...prev, [name]: next }));
+  };
+
+  // Extracted update call (used after confirmation)
+  const performUpdate = async (payload) => {
+    try {
+      const response = await ky.put(`/api/userManagement/users/${user.id}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        json: payload,
+      }).json();
+
+      if (response.success) {
+        toast.success(response.message || 'User updated successfully!');
+        onUserUpdate(user.id, { 
+          ...response.user, 
+          // Reconstruct the 'name' field for the table UI
+          name: `${response.user.firstName} ${response.user.lastName}`,
+          // Pass all other fields from the response
+          id: response.user._id
+        });
+        setIsConfirmOpen(false);
+        setPendingPayload(null);
+        onClose();
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      const errorResponse = await error.response?.json();
+      toast.error(errorResponse?.message || 'Failed to update user.');
+      console.error("Update error: ", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -89,35 +161,16 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
       payload.companyRegistrationNo = regNo;
     }
 
+    // If parent provided a custom confirm handler, delegate to it
     if (onRequestSave) {
       onRequestSave({ userId: user.id, payload, original: initialData });
       return;
     }
 
-    try {
-      const response = await ky.put(`/api/userManagement/users/${user.id}`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-        json: payload,
-      }).json();
-
-      if (response.success) {
-        toast.success(response.message || 'User updated successfully!');
-        onUserUpdate(user.id, { 
-          ...response.user, 
-          // Reconstruct the 'name' field for the table UI
-          name: `${response.user.firstName} ${response.user.lastName}`,
-          // Pass all other fields from the response
-          id: response.user._id
-        });
-        onClose();
-      } else {
-        toast.error(response.message);
-      }
-    } catch (error) {
-      const errorResponse = await error.response?.json();
-      toast.error(errorResponse?.message || 'Failed to update user.');
-      console.error("Update error: ", error);
-    }
+    // Otherwise, open local confirmation modal
+    setPendingPayload(payload);
+    setConfirmChanges(computeChanges(initialData, formData));
+    setIsConfirmOpen(true);
   };
 
   if (!user) return null;
@@ -261,11 +314,51 @@ function EditUserForm({ user, onClose, onUserUpdate, onRequestSave }) {
           )}
 
           <div className="popup-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary">Save Changes</button>
+            <button type="button" className="modal-cancel-btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="modal-confirm-btn">Save Changes</button>
           </div>
         </form>
       </div>
+
+      {/* NEW: Confirmation Modal */}
+      {isConfirmOpen && (
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <h3 className="form-section-title">Confirm Changes</h3>
+            {confirmChanges.length > 0 ? (
+              <div className="confirm-changes-list">
+                {confirmChanges.map((c, idx) => (
+                  <div key={idx} className="confirm-change-row">
+                    <strong>{c.label}:</strong>
+                    <span>{c.from}</span>&nbsp;→&nbsp;<span>{c.to}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No field changes detected.</p>
+            )}
+            <div className="popup-actions">
+              <button
+                type="button"
+                className="modal-cancel-btn"
+                onClick={() => {
+                  setIsConfirmOpen(false);
+                  setPendingPayload(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="modal-confirm-btn"
+                onClick={() => pendingPayload && performUpdate(pendingPayload)}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
