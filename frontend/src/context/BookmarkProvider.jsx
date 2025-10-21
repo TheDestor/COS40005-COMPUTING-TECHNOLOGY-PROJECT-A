@@ -13,31 +13,35 @@ export const UseBookmarkContext = () => {
 
 export const BookmarkProvider = ({ children }) => {
     const [bookmarks, setBookmarks] = useState(() => {
-        const storedBookmarks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_BOOKMARKS_KEY));
-        return storedBookmarks ? storedBookmarks : [];
+        try {
+            const storedItem = localStorage.getItem(LOCAL_STORAGE_BOOKMARKS_KEY);
+            if (storedItem === null || storedItem === "null") {
+                return [];
+            }
+            return JSON.parse(storedItem);
+        } catch (error) {
+            console.error("Error parsing bookmarks from localStorage:", error);
+            return [];
+        }
     });
 
     useEffect(() => {
-        try {
-            const storedBookmarks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_BOOKMARKS_KEY));
-            setBookmarks(storedBookmarks);
-        } catch (error) {
-            console.error("Error getting bookmarks:", error);
+        if (bookmarks) {
+            localStorage.setItem(LOCAL_STORAGE_BOOKMARKS_KEY, JSON.stringify(bookmarks));
         }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem(LOCAL_STORAGE_BOOKMARKS_KEY, JSON.stringify(bookmarks));
     }, [bookmarks]);
 
     const addBookmark = (newBookmark) => {
-        if (!bookmarks.find(bm => bm.name === newBookmark.name)) {
-            setBookmarks((prevBookmarks) => [...prevBookmarks, newBookmark]);
-        }
+        setBookmarks((prevBookmarks = []) => {
+            if (!prevBookmarks.find(bm => bm.name === newBookmark.name)) {
+                return [...prevBookmarks, newBookmark];
+            }
+            return prevBookmarks;
+        });
     }
 
     const removeBookmark = (bookmark) => {
-        setBookmarks((prev) => prev.filter(b => b.name !== bookmark.name));
+        setBookmarks((prevBookmarks = []) => prevBookmarks.filter(b => b.name !== bookmark.name));
     }
 
     const value = {
