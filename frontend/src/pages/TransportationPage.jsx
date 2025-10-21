@@ -1,3 +1,4 @@
+// Top-level imports
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
@@ -8,6 +9,7 @@ import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 import { FaPhone } from 'react-icons/fa';
 import { useInstantData } from '../hooks/useInstantData.jsx';
+import { FaSearch, FaArrowUp } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'wr0h2Y4pBdQ'; 
 
@@ -18,6 +20,17 @@ const TransportationPage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Transportation');
   const [showLoading, setShowLoading] = useState(true); // 🚀 ADDED for instant loading
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Fetch business locations with category "Transportation" - KEPT ORIGINAL
   const fetchBusinessTransportation = async () => {
@@ -622,6 +635,7 @@ const TransportationPage = () => {
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar-mj">
+            <FaSearch className="search-icon-mj" />
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
@@ -735,7 +749,15 @@ const TransportationPage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
 
-      {/* Ai Chatbot */}
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn-mj"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+        >
+          <FaArrowUp aria-hidden="true" />
+        </button>
+      )}
       <AIChatbot />
       <Footer />
     </div>

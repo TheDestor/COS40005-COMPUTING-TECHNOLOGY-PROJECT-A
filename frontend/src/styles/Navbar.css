@@ -83,7 +83,7 @@
 ============================ */
 .town-selector {
   padding: 6px 10px;
-  background: #3498db;
+  background: linear-gradient(135deg, #6c5dd3 0%, #3b82f6 100%);
   color: white;
   border: none;
   border-radius: 25px;
@@ -93,7 +93,7 @@
 }
 
 .town-selector:hover {
-  background: #2980b9;
+  background: linear-gradient(135deg, #5a48c4 0%, #2a73f5 100%);
 }
 
 /* ============================
@@ -114,7 +114,7 @@
   left: auto;
   z-index: 10060; /* higher than searchbar (.styled-searchbar-container) and .pac-container */
   pointer-events: auto; /* keep clickable when over the map */
-  background: #f5edf9;
+  background: linear-gradient(135deg, #f5edf9 0%, #e8e0f5 100%);
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   padding: 16px 20px;
@@ -325,6 +325,36 @@
 
   .dropdown-item, .current-location {
     font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .date-time-weather-container {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.6rem;
+    gap: 0.15rem;
+    border-radius: 20px;
+  }
+
+  .date-time {
+    font-size: 0.7rem;
+  }
+
+  .weather-info {
+    font-size: 0.7rem;
+  }
+
+  .weather-icon {
+    font-size: 1rem;
+  }
+
+  .date-time .logo {
+    height: 14px;
+  }
+
+  .town-selector {
+    font-size: 0.6rem;
+    padding: 2px 5px;
   }
 }
 

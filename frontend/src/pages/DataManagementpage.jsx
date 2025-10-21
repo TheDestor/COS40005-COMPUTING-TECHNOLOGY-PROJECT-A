@@ -325,12 +325,32 @@ const DataManagementPage = () => {
     const hideTooltip = () => tooltip.style('visibility', 'hidden');
   
     svg
-      .append('g')
-      .attr('transform', `translate(0,${y.range()[1]})`)
-      .call(d3.axisBottom(x).ticks(small ? 3 : 5).tickFormat((d) => `${d3.format('.1f')(d)} ${unitLabel}`))
-      .selectAll('text')
-      .style('font-size', small ? '11px' : '14px')
-      .style('fill', '#333');
+    .append('g')
+    .attr('class', 'x-grid')
+    .attr('transform', `translate(0,${y.range()[1]})`)
+    .call(
+      d3
+        .axisBottom(x)
+        .ticks(small ? 3 : 5)
+        .tickSize(-y.range()[1]) // extend grid lines across chart height
+        .tickFormat(() => '')    // hide tick text (grid only)
+    )
+    .call((g) => g.select('.domain').remove())
+    .call((g) =>
+      g
+        .selectAll('line')
+        .style('stroke', '#e5e7eb')
+        .style('stroke-dasharray', '2,2')
+        .style('opacity', 1)
+    );
+
+    svg
+    .append('g')
+    .attr('transform', `translate(0,${y.range()[1]})`)
+    .call(d3.axisBottom(x).ticks(small ? 3 : 5).tickFormat((d) => `${d3.format('.1f')(d)} ${unitLabel}`))
+    .selectAll('text')
+    .style('font-size', small ? '11px' : '14px')
+    .style('fill', '#333');
   
     svg
       .append('g')
@@ -348,35 +368,60 @@ const DataManagementPage = () => {
       })
       .on('mouseout', hideTooltip);
   
-    svg
-      .selectAll('.bar')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', 0)
-      .attr('y', (d) => y(d.name))
-      .attr('width', (d) => x(d.bytes * unitFactor))
-      .attr('height', y.bandwidth())
-      .attr('rx', small ? 3 : 4)
-      .attr('fill', (d) => d.color)
-      .on('mouseover', showTooltip)
-      .on('mousemove', showTooltip)
-      .on('mouseout', hideTooltip);
-  
-    svg
-      .selectAll('.pct-label')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('class', 'pct-label')
-      .attr('x', (d) => Math.min(x(d.bytes * unitFactor) + 6, width - 24))
-      .attr('y', (d) => y(d.name) + y.bandwidth() / 2)
-      .attr('dy', '0.35em')
-      .text((d) => `${((d.bytes / total) * 100).toFixed(1)}%`)
-      .style('font-size', small ? '11px' : '14px')
-      .style('fill', '#555')
-      .style('color', '#333');
+    const bars = svg
+    .selectAll('.bar')
+    .data(data)
+    .enter()
+    .append('rect')
+    .attr('class', 'bar')
+    .attr('x', 0)
+    .attr('y', (d) => y(d.name))
+    .attr('width', 0) // start collapsed
+    .attr('height', y.bandwidth())
+    .attr('rx', small ? 3 : 4)
+    .attr('fill', (d) => d.color)
+    .on('mouseover', showTooltip)
+    .on('mousemove', showTooltip)
+    .on('mouseout', hideTooltip);
+    
+    bars
+    .transition()
+    .duration(900)
+    .ease(d3.easeCubicOut)
+    .delay((d, i) => i * 120)
+    .attr('width', (d) => x(d.bytes * unitFactor))
+    .on('end', function (d) {
+      const xVal = x(d.bytes * unitFactor);
+      const labelGap = small ? 6 : 8;
+      const maxRight = width - 24;
+
+      const localUnitLabel = d.bytes >= MB ? 'MB' : 'KB';
+      const localUnitFactor = d.bytes >= MB ? 1 / MB : 1 / KB;
+      const sizeVal = d.bytes * localUnitFactor;
+
+      // Final value label (shown only after animation), placed to the right of bar
+      const valueLabelX = Math.min(xVal + labelGap, maxRight);
+      const valueLabelY = y(d.name) + y.bandwidth() / 2;
+
+      svg
+        .append('text')
+        .attr('class', 'value-label')
+        .attr('x', valueLabelX)
+        .attr('y', valueLabelY)
+        .attr('text-anchor', 'start')
+        .style('dominant-baseline', 'middle')
+        .style('font-size', small ? '11px' : '14px')
+        .style('fill', '#333')
+        .style('font-weight', '500')
+        .style('pointer-events', 'none')
+        .style('opacity', 0)
+        .text(`${d3.format('.1f')(sizeVal)} ${localUnitLabel}`)
+        .transition()
+        .duration(250)
+        .style('opacity', 1);
+    });
+
+    svg.selectAll('.pct-label, .value-label').remove();
   
     svg
       .append('text')

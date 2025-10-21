@@ -6,7 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
-import { FaPhone } from 'react-icons/fa';
+import { FaPhone, FaSearch, FaArrowUp } from 'react-icons/fa';
 import { useInstantData } from '../hooks/useInstantData.jsx';
 
 const HERO_VIDEO_ID = 'f8NnjAeb304'; 
@@ -18,6 +18,17 @@ const ShoppingLeisurePage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Shopping & Leisure');
   const [showLoading, setShowLoading] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Fetch business locations with category "Shopping & Leisure" - KEPT ORIGINAL
   const fetchBusinessShopping = async () => {
@@ -322,6 +333,7 @@ const ShoppingLeisurePage = () => {
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar-mj">
+            <FaSearch className="search-icon-mj" />
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
@@ -434,7 +446,15 @@ const ShoppingLeisurePage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
 
-      {/* Ai Chatbot */}
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn-mj"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+        >
+          <FaArrowUp aria-hidden="true" />
+        </button>
+      )}
       <AIChatbot />
       <Footer />
     </div>

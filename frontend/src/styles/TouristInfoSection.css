@@ -322,6 +322,7 @@
 /* ================================
    9. SCROLL DOWN INDICATOR SECTION
 ================================== */
+/* .scroll-down-indicator */
 .scroll-down-indicator {
   position: absolute;
   bottom: 10px;
@@ -331,7 +332,8 @@
   text-align: center;
   z-index: 2;
   /* animation: shineBackground 3s infinite alternate; */
-  animation: 3s infinite alternate;
+  animation: jumping 1.8s ease-in-out infinite; /* 👈 add jumping animation */
+  will-change: transform; /* perf hint for smoother animation */
   padding: 6px 10px;
   border-radius: 10px;
   background: none;
@@ -378,12 +380,32 @@
   }
 }
 
+@keyframes jumping {
+  0%   { transform: translateX(-50%) translateY(0); }
+  20%  { transform: translateX(-50%) translateY(-8px); }
+  40%  { transform: translateX(-50%) translateY(0); }
+  60%  { transform: translateX(-50%) translateY(-6px); }
+  80%  { transform: translateX(-50%) translateY(0); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+
 @keyframes fadeText {
   0%, 100% {
     opacity: 0.8;
   }
   50% {
     opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-down-indicator {
+    animation: none;
+    transform: translateX(-50%);
+  }
+  .scroll-down-indicator span,
+  .scroll-down-indicator p {
+    animation: none;
   }
 }
 
@@ -593,5 +615,16 @@
 
   .channel, .caption {
     text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-down-indicator {
+    animation: none;
+    transform: translateX(-50%);
+  }
+  .scroll-down-indicator span,
+  .scroll-down-indicator p {
+    animation: none;
   }
 }

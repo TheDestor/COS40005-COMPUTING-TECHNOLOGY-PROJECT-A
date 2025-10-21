@@ -6,7 +6,7 @@ import LoginPage from './Loginpage';
 import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
-import { FaPhone } from 'react-icons/fa';
+import { FaPhone, FaSearch, FaArrowUp } from 'react-icons/fa';
 import { useInstantData } from '../hooks/useInstantData';
 
 const HERO_VIDEO_ID = 'dPGp9T7iyiE'; 
@@ -18,6 +18,17 @@ const AttractionsPage = () => {
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Attractions');
   const [showLoading, setShowLoading] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // ✅ Get coordinates dynamically (e.g., from geolocation)
   const getCurrentLocation = () => {
@@ -337,6 +348,7 @@ const AttractionsPage = () => {
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar-mj">
+            <FaSearch className="search-icon-mj" aria-hidden="true" />
             <input
               type="text"
               placeholder={`Search ${currentCategory}...`}
@@ -449,8 +461,16 @@ const AttractionsPage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
 
-      {/* Ai Chatbot */}
       <AIChatbot />
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn-mj"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+        >
+          <FaArrowUp aria-hidden="true" />
+        </button>
+      )}
       <Footer />
     </div>
   );

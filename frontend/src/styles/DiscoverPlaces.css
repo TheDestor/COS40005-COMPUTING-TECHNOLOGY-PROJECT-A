@@ -675,6 +675,7 @@
 /* Address text */
 .address-dp {
   color: #555;
+  text-align: left;
   font-size: 0.85rem;
   margin-top: auto;
   line-height: 1.4;
@@ -1062,3 +1063,17 @@
   .refresh-btn-dp, .cache-refresh-link-dp, .load-more-btn-dp, .view-all-btn-dp { display: none !important; }
   .map-container-dp { height: 300px !important; }
 } 
+
+@media (max-width: 400px) {
+  .load-more-btn-dp, .view-all-btn-dp {
+    font-size: 0.8rem;
+  }
+  .places-grid-dp { 
+    padding: 0;
+  }
+
+  .category-btn-dp {
+    padding: 0;
+    min-width: 0;
+  }
+}

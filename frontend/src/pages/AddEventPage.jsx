@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight, FaChevronUp } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Sidebar from '../components/Sidebar';
@@ -419,7 +419,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
               </button> */}
             </div>
             <div className="modal-body edit-modal-body">
-              <div className="event-form-container edit-event-form">
+              <div className="event-form-container-ae edit-event-form">
                 <div className="event-form-left">
                   <div className="form-group-ae">
                     <label>Event Name</label>
@@ -574,41 +574,6 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                         <span className="custom-checkbox"></span>
                         Local Business
                       </label>
-                      {/* <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={
-                            editForm.targetAudience?.split(', ').some(a => 
-                              a && !['Tourist', 'Local Business'].includes(a)
-                            ) || false
-                          }
-                          onChange={(e) => {
-                            const audiences = editForm.targetAudience?.split(', ').filter(a => a) || [];
-                            const hasOther = audiences.some(a => !['Tourist', 'Local Business'].includes(a));
-                            
-                            if (e.target.checked && !hasOther) {
-                              // Add a placeholder for other audiences
-                              audiences.push('Other');
-                            } else if (!e.target.checked && hasOther) {
-                              // Remove all non-standard audiences
-                              const filtered = audiences.filter(a => 
-                                ['Tourist', 'Local Business'].includes(a)
-                              );
-                              setEditForm(prev => ({
-                                ...prev,
-                                targetAudience: filtered.join(', ')
-                              }));
-                              return;
-                            }
-                            setEditForm(prev => ({
-                              ...prev,
-                              targetAudience: audiences.join(', ')
-                            }));
-                          }}
-                        />
-                        <span className="custom-checkbox"></span>
-                        Other
-                      </label> */}
                     </div>
                     {editForm.targetAudience?.split(', ').some(a => 
                       a && !['Tourist', 'Local Business'].includes(a)
@@ -667,15 +632,16 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                 <div className="event-form-right">
                   <div className="calendar-section">
                     <div className="form-group-ae">
-                      <label>Start Date</label>
-                      <input
-                        type="date"
-                        name="startDate"
-                        value={editForm.startDate || ''}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      />
-                    </div>
+                    <label>Start Date</label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={editForm.startDate || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      min={new Date().toLocaleDateString('en-CA')}
+                    />
+                  </div>
 
                     <div className="form-group-ae">
                       <label>Start Time</label>
@@ -689,15 +655,16 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     </div>
 
                     <div className="form-group-ae">
-                      <label>End Date</label>
-                      <input
-                        type="date"
-                        name="endDate"
-                        value={editForm.endDate || ''}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      />
-                    </div>
+                    <label>End Date</label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={editForm.endDate || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      min={editForm.startDate || new Date().toLocaleDateString('en-CA')}
+                    />
+                  </div>
 
                     <div className="form-group-ae">
                       <label>End Time</label>
@@ -942,6 +909,21 @@ const AddEventPage = () => {
   const [registrationRequired, setRegistrationRequired] = useState('No');
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const contentRef = useRef(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      setShowScrollTop(el.scrollTop > 200);
+    };
+
+    el.addEventListener('scroll', onScroll);
+    onScroll(); // initialize visibility
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
   
   // Date and Time states
   const [showStartCalendar, setShowStartCalendar] = useState(false);
@@ -996,6 +978,26 @@ const AddEventPage = () => {
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredEvents.length);
   
   const fileInputRef = useRef(null);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (contentRef.current) {
+        setShowScrollTop(contentRef.current.scrollTop > 300);
+      }
+    };
+    
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('scroll', handleScroll);
+      return () => contentElement.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+  
+  const scrollToTop = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const tabs = ['Add Event', 'Past Events', 'Schedule Upcoming Events', 'On-going Events'];
   
@@ -1105,11 +1107,11 @@ const AddEventPage = () => {
   const isDateDisabled = (date, calendarType) => {
     const today = getToday();
     
-    // Disable past dates for both calendars
-    if (date <= today) {
+    // Disable past dates (strictly before today)
+    if (date < today) {
       return true;
     }
-    
+
     // For end date calendar, disable dates before selected start date
     if (calendarType === 'end' && startDate && date < startDate) {
       return true;
@@ -1868,7 +1870,7 @@ const AddEventPage = () => {
   const renderContent = () => {
     if (activeTab === 'Add Event') {
       return (
-        <div className="event-form-container">
+        <div className="event-form-container-ae">
           <div className="event-form-left">
             <div className="form-group-ae">
               <label>Event Name</label>
@@ -2198,7 +2200,7 @@ const AddEventPage = () => {
   return (
     <div className="add-event-container">
       <Sidebar />
-      <div className="add-event-content">
+      <div className="add-event-content" ref={contentRef}>
         <div className="add-event-header">
           <div className="greeting">
             <h3>Add Event</h3>
@@ -2280,6 +2282,15 @@ const AddEventPage = () => {
       )}
 
       {renderContent()}
+
+        <button
+          className={`scroll-to-top-btn ${showScrollTop ? 'visible' : ''}`}
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          title="Scroll to top"
+        >
+          <FaChevronUp className="scroll-to-top-icon" />
+        </button>
 
         {activeTab === 'Add Event' && (
           <button 

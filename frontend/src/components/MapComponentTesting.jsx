@@ -1017,7 +1017,7 @@ function MapComponentTesting({  }) {
             top: '50%',
             left: '350px',
             transform: 'translateY(-50%)',
-            zIndex: 10000
+            zIndex: 10
           }}
         >
           <CustomInfoWindow

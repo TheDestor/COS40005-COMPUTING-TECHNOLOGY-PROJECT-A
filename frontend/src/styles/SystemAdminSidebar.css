@@ -612,6 +612,16 @@
   
   /* Mobile (480px and below) */
   @media (max-width: 480px) {
+    .data-table-sa td {
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .data-table-sa th {
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
     .username {
       font-size: 0.9rem;
       margin-left: 10px;
@@ -1463,13 +1473,6 @@
   vertical-align: middle;
 }
 
-/* User cell alignment */
-.user-cell-sa {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .user-avatar-sa {
   width: 36px;
   height: 36px;
@@ -1703,5 +1706,5 @@
   /* keep headings readable but compact */
   .table-header-admin h3,
   .table-header-sa h3,
-  .summary-box h3 { font-size: 15px; }
+  .summary-box h3 { font-size: 14px; }
 }

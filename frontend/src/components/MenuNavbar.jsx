@@ -107,6 +107,15 @@ const MenuNavbar = ({
 
   const currentPath = location.pathname;
 
+  // Keep mobile dropdown selection in sync with current route
+  useEffect(() => {
+    const activeItem = menuItems.find((item) => item.path === location.pathname);
+    if (activeItem) {
+      setSelectedMobileMenuItem(activeItem);
+      setIsDropdownOpen(false); // close dropdown when route changes
+    }
+  }, [location.pathname]);
+
   return (
     <div className="mapview-navbar">
       <Link to="/" className="nav-logo">
@@ -115,7 +124,10 @@ const MenuNavbar = ({
 
       {isMobile ? (
         <div className="mobile-menu-dropdown-wrapper">
-          <button className="dropdown-toggle-button" onClick={handleDropdownToggle}>
+          <button
+            className={`dropdown-toggle-button ${selectedMobileMenuItem ? 'active' : ''}`}
+            onClick={handleDropdownToggle}
+          >
             <span className="dropdown-toggle-text">{selectedMobileMenuItem.name}</span>
             <span className="dropdown-toggle-icon">
               {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
@@ -128,6 +140,7 @@ const MenuNavbar = ({
                   key={item.name}
                   to={item.path}
                   className={`dropdown-menu-item ${selectedMobileMenuItem.name === item.name ? 'active-dropdown-item' : ''}`}
+                  aria-current={selectedMobileMenuItem.name === item.name ? 'page' : undefined}
                   onClick={() => handleMobileMenuClick(item)}
                 >
                   <span className="dropdown-item-icon">{item.icon}</span>

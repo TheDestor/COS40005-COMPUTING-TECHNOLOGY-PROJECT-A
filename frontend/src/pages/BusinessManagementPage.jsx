@@ -1622,6 +1622,7 @@ const BusinessManagement = () => {
           font-size: 0.8rem;
           cursor: pointer;
           transition: all 0.2s ease;
+          color: #374151;
         }
 
         .pagination-btn:hover:not(:disabled) {
@@ -1649,6 +1650,7 @@ const BusinessManagement = () => {
           transition: all 0.2s ease;
           min-width: 35px;
           text-align: center;
+          color: #374151;
         }
 
         .page-number:hover {

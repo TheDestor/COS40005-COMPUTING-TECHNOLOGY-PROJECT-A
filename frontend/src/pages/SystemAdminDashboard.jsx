@@ -234,22 +234,6 @@ function SystemAdminDashboard() {
     },
   ];
 
-  // User usage data for the bar chart
-  const monthlyUsageData = [
-    { month: "Jan", users: 2500 },
-    { month: "Feb", users: 3200 },
-    { month: "Mar", users: 4100 },
-    { month: "Apr", users: 5300 },
-    { month: "May", users: 4800 },
-    { month: "Jun", users: 6200 },
-    { month: "Jul", users: 7100 },
-    { month: "Aug", users: 8500 },
-    { month: "Sep", users: 7800 },
-    { month: "Oct", users: 6500 },
-    { month: "Nov", users: 5900 },
-    { month: "Dec", users: 7200 },
-  ];
-
   // Fetch data from backend
   useEffect(() => {
     const fetchUsers = async () => {
@@ -305,61 +289,56 @@ function SystemAdminDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Track extra-small screens (<= 400px) to switch from chart to table
+  const [isXsScreen, setIsXsScreen] = useState(false);
+  useEffect(() => {
+    const update = () => setIsXsScreen(window.innerWidth <= 400);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   const createBarChart = () => {
-    const margin = { top: 40, right: 30, bottom: 70, left: 80 };
-    const containerWidth = chartRef.current.clientWidth;
-    const width = containerWidth - margin.left - margin.right;
-    const height = 450 - margin.top - margin.bottom;
-
     const svgRoot = d3.select(chartRef.current);
-    svgRoot.select("svg").remove();
-    const svg = svgRoot
-      .append("svg")
-      .attr("width", containerWidth)
-      .attr("height", height + margin.top + margin.bottom)
-      .attr("preserveAspectRatio", "xMidYMid meet")
-      .attr(
-        "viewBox",
-        `0 0 ${width + margin.left + margin.right} ${
-          height + margin.top + margin.bottom
-        }`
-      )
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    svgRoot.selectAll("*").remove();
 
-    // Build data for requested period
+    const containerWidth = chartRef.current.clientWidth;
+    const containerHeight = chartRef.current.clientHeight || 450; // use actual vertical space
+
+    // Chart height now fills available container height with a sensible minimum
+    let chartHeight = Math.max(260, containerHeight);
+
+    // Responsive font sizes
+    const tickFontSize =
+      containerWidth <= 400 ? 10 :
+      containerWidth <= 480 ? 11 :
+      containerWidth <= 768 ? 12 : 13;
+    const axisLabelSize =
+      containerWidth <= 400 ? 11 :
+      containerWidth <= 480 ? 12 :
+      containerWidth <= 768 ? 13 : 14;
+    const titleFontSize =
+      containerWidth <= 400 ? 14 :
+      containerWidth <= 480 ? 15 :
+      containerWidth <= 768 ? 16 : 16;
+
     const now = new Date();
     const currentYear = now.getFullYear();
-    const MONTH_NAMES = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     let data = [];
     if (viewPeriod === "weekly") {
-      data = [1, 2, 3, 4].map((w) => {
+      data = [1,2,3,4].map((w) => {
         const found = chartData.find((d) => d.week === w);
         return { label: `Week ${w}`, total: found ? found.total : 0 };
       });
     } else if (viewPeriod === "monthly") {
       data = Array.from({ length: 12 }, (_, i) => {
         const m = i + 1;
-        const found = chartData.find(
-          (d) => d.month === m && d.year === currentYear
-        );
+        const found = chartData.find((d) => d.month === m && d.year === currentYear);
         return { label: MONTH_NAMES[i], total: found ? found.total : 0 };
       });
     } else if (viewPeriod === "yearly") {
-      const years = [2021, 2022, 2023, 2024, 2025];
+      const years = [2025,2026,2027,2028,2029];
       data = years.map((y) => {
         const found = chartData.find((d) => d.year === y);
         return { label: String(y), total: found ? found.total : 0 };
@@ -368,136 +347,256 @@ function SystemAdminDashboard() {
       data = chartData.length ? chartData : [];
     }
 
-    const x = d3
-      .scaleBand()
-      .domain(data.map((d) => d.label))
-      .range([0, width])
-      .padding(0.3);
-    const yMax = Math.max(1, d3.max(data, (d) => d.total) || 0) * 1.1;
-    const y = d3.scaleLinear().domain([0, yMax]).range([height, 0]);
+    // Orientation: horizontal for < 480px, vertical otherwise
+    const isHorizontal = containerWidth < 480;
 
-    svg
+    // Dynamic margins to preserve proportions and free up plot height
+    const longestLabelLen = data.reduce((m, d) => Math.max(m, (d.label || "").length), 0);
+    const estimatedLabelWidth = longestLabelLen * (tickFontSize * 0.6);
+    const margin = {
+      top: isHorizontal ? 36 : 40,
+      right: 30,
+      bottom: isHorizontal ? 72 : 64,
+      left: isHorizontal ? Math.max(84, estimatedLabelWidth + 24) : 80,
+    };
+
+    // NEW: Expand chart height to fit all y-axis labels (months/days) on small screens
+    const labels = data.map((d) => d.label);
+    if (isHorizontal) {
+      const perRow = Math.max(26, tickFontSize + 14); // line height per category
+      const requiredPlotHeight = labels.length * perRow;
+      const computedHeight = requiredPlotHeight + margin.top + margin.bottom;
+      chartHeight = Math.max(chartHeight, computedHeight);
+      // Ensure container grows to avoid clipping
+      chartRef.current.style.height = `${chartHeight}px`;
+    }
+
+    const width = containerWidth - margin.left - margin.right;
+    const height = chartHeight - margin.top - margin.bottom;
+
+    const svg = svgRoot
+      .append("svg")
+      .attr("width", containerWidth)
+      .attr("height", chartHeight)
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
       .append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x))
-      .selectAll("text")
-      .style("font-size", "12px")
-      .style("font-weight", "500")
-      .style("text-anchor", "middle");
-    svg
-      .append("g")
-      .call(d3.axisLeft(y).ticks(10))
-      .selectAll("text")
-      .style("font-size", "12px")
-      .style("text-anchor", "end");
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const yMax = Math.max(1, d3.max(data, (d) => d.total) || 0) * 1.1;
+
+    // Scales
+    const xLinear = d3.scaleLinear().domain([0, yMax]).range([0, width]);
+    const xBand = d3.scaleBand().domain(data.map((d) => d.label)).range([0, width]).padding(0.3);
+    const yLinear = d3.scaleLinear().domain([0, yMax]).range([height, 0]);
+    const yBand = d3.scaleBand().domain(labels).range([0, height]).padding(0.3);
 
     const xAxisLabel =
-      viewPeriod === "weekly"
-        ? "Week"
-        : viewPeriod === "monthly"
-        ? "Month"
-        : viewPeriod === "yearly"
-        ? "Year"
-        : "Day of Week";
-    svg
-      .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left + 20)
-      .attr("x", 0 - height / 2)
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("fill", "#555")
-      .text("Total Page Views");
-    svg
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", height + 40)
-      .attr("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("fill", "#555")
-      .text(xAxisLabel);
+      viewPeriod === "weekly" ? "Week" :
+      viewPeriod === "monthly" ? "Month" :
+      viewPeriod === "yearly" ? "Year" : "Day of Week";
 
     const baseColor = "#007bff";
     const hoverColor = "#0056b3";
+
+    // Axes and labels
+    if (isHorizontal) {
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xLinear).ticks(8).tickPadding(6))
+        .selectAll("text")
+        .style("font-size", `${tickFontSize}px`)
+        .style("text-anchor", "middle");
+
+      // UPDATED: Show full y-axis labels (no sampling)
+      svg
+        .append("g")
+        .call(d3.axisLeft(yBand).tickPadding(6))
+        .selectAll("text")
+        .style("font-size", `${tickFontSize}px`)
+        .style("text-anchor", "end");
+
+      // Bottom axis label
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 56)
+        .attr("text-anchor", "middle")
+        .style("font-size", `${axisLabelSize}px`)
+        .style("fill", "#555")
+        .text("Total Page Views");
+
+      // Left axis label
+      svg
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 28)
+        .attr("x", 0 - height / 2)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", `${axisLabelSize}px`)
+        .style("fill", "#555")
+        .text(xAxisLabel);
+    } else {
+      // Vertical layout axes
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xBand).tickPadding(6))
+        .selectAll("text")
+        .style("font-size", `${tickFontSize}px`)
+        .style("text-anchor", "middle");
+
+      svg
+        .append("g")
+        .call(d3.axisLeft(yLinear).ticks(10).tickPadding(6))
+        .selectAll("text")
+        .style("font-size", `${tickFontSize}px`)
+        .style("text-anchor", "end");
+
+      svg
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left + 28)
+        .attr("x", 0 - height / 2)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", `${axisLabelSize}px`)
+        .style("fill", "#555")
+        .text("Total Page Views");
+
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 44)
+        .attr("text-anchor", "middle")
+        .style("font-size", `${axisLabelSize}px`)
+        .style("fill", "#555")
+        .text(xAxisLabel);
+    }
 
     const tooltip = svgRoot
       .append("div")
       .attr("class", "chart-tooltip")
       .style("position", "absolute")
       .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.8)")
+      .style("background-color", "rgba(0, 0, 0, 0.85)")
       .style("color", "white")
       .style("padding", "8px 12px")
-      .style("border-radius", "4px")
+      .style("border-radius", "6px")
       .style("font-size", "14px")
       .style("pointer-events", "none")
-      .style("z-index", "10");
+      .style("z-index", "100");
 
     const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
-    const bars = svg
-      .selectAll(".bar")
-      .data(data)
-      .enter()
-      .append("rect")
-      .attr("class", "bar")
-      .attr("x", (d) => x(d.label))
-      .attr("width", x.bandwidth())
-      .attr("y", height)
-      .attr("height", 0)
-      .attr("rx", 3)
-      .attr("fill", baseColor)
-      .style("pointer-events", "none");
+    // Bars
+    if (isHorizontal) {
+      const bars = svg
+        .selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", 0)
+        .attr("y", (d) => yBand(d.label))
+        .attr("width", 0)
+        .attr("height", yBand.bandwidth())
+        .attr("rx", 3)
+        .attr("fill", baseColor)
+        .style("pointer-events", "none");
 
-    bars
-      .transition()
-      .duration(1000)
-      .delay((d, i) => i * 100)
-      .attr("y", (d) => y(d.total))
-      .attr("height", (d) => height - y(d.total))
-      .on("end", function () {
-        d3.select(this).style("pointer-events", "all");
-      });
+      bars
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 100)
+        .attr("width", (d) => xLinear(d.total))
+        .on("end", function () {
+          d3.select(this).style("pointer-events", "all");
+        });
 
-    bars
-      .on("mouseover", function () {
-        d3.select(this).attr("fill", hoverColor).attr("opacity", 1);
-        tooltip.style("visibility", "visible");
-      })
-      .on("mousemove", function (event, d) {
-        tooltip.html(
-          `<strong>${d.label}:</strong> ${d.total.toLocaleString()} views`
-        );
-        const containerRect = chartRef.current.getBoundingClientRect();
-        const tooltipNode = tooltip.node();
-        const tooltipRect = tooltipNode.getBoundingClientRect();
-        let left = event.clientX - containerRect.left - tooltipRect.width / 2;
-        let top = event.clientY - containerRect.top - tooltipRect.height - 12;
-        left = clamp(left, 8, containerRect.width - tooltipRect.width - 8);
-        top = clamp(top, 8, containerRect.height - tooltipRect.height - 8);
-        tooltip.style("left", `${left}px`).style("top", `${top}px`);
-      })
-      .on("mouseout", function () {
-        d3.select(this).attr("fill", baseColor).attr("opacity", 0.9);
-        tooltip.style("visibility", "hidden");
-      });
+      bars
+        .on("mouseover", function () {
+          d3.select(this).attr("fill", hoverColor).attr("opacity", 1);
+          tooltip.style("visibility", "visible");
+        })
+        .on("mousemove", function (event, d) {
+          tooltip.html(`<strong>${d.label}:</strong> ${d.total.toLocaleString()} views`);
+          const containerRect = chartRef.current.getBoundingClientRect();
+          const tooltipNode = tooltip.node();
+          const tooltipRect = tooltipNode.getBoundingClientRect();
+          let left = event.clientX - containerRect.left - tooltipRect.width / 2;
+          let top = event.clientY - containerRect.top - tooltipRect.height - 12;
+          left = clamp(left, 8, containerRect.width - tooltipRect.width - 8);
+          top = clamp(top, 8, containerRect.height - tooltipRect.height - 8);
+          tooltip.style("left", `${left}px`).style("top", `${top}px`);
+        })
+        .on("mouseout", function () {
+          d3.select(this).attr("fill", baseColor).attr("opacity", 0.9);
+          tooltip.style("visibility", "hidden");
+        });
+    } else {
+      const bars = svg
+        .selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", (d) => xBand(d.label))
+        .attr("width", xBand.bandwidth())
+        .attr("y", height)
+        .attr("height", 0)
+        .attr("rx", 3)
+        .attr("fill", baseColor)
+        .style("pointer-events", "none");
 
+      bars
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 100)
+        .attr("y", (d) => yLinear(d.total))
+        .attr("height", (d) => height - yLinear(d.total))
+        .on("end", function () {
+          d3.select(this).style("pointer-events", "all");
+        });
+
+      bars
+        .on("mouseover", function () {
+          d3.select(this).attr("fill", hoverColor).attr("opacity", 1);
+          tooltip.style("visibility", "visible");
+        })
+        .on("mousemove", function (event, d) {
+          tooltip.html(`<strong>${d.label}:</strong> ${d.total.toLocaleString()} views`);
+          const containerRect = chartRef.current.getBoundingClientRect();
+          const tooltipNode = tooltip.node();
+          const tooltipRect = tooltipNode.getBoundingClientRect();
+          let left = event.clientX - containerRect.left - tooltipRect.width / 2;
+          let top = event.clientY - containerRect.top - tooltipRect.height - 12;
+          left = clamp(left, 8, containerRect.width - tooltipRect.width - 8);
+          top = clamp(top, 8, containerRect.height - tooltipRect.height - 8);
+          tooltip.style("left", `${left}px`).style("top", `${top}px`);
+        })
+        .on("mouseout", function () {
+          d3.select(this).attr("fill", baseColor).attr("opacity", 0.9);
+          tooltip.style("visibility", "hidden");
+        });
+    }
+
+    // Centered title (always centered; explicitly emphasized for < 480px)
     svg
       .append("text")
-      .attr("x", width / 2)
+      .attr("x", width / 2) // centered inside the chart area
       .attr("y", 0 - margin.top / 2)
       .attr("text-anchor", "middle")
-      .style("font-size", "16px")
+      .style("font-size", `${titleFontSize}px`)
       .style("font-weight", "600")
       .style("fill", "#333")
       .style("dominant-baseline", "middle")
       .text(chartTitle);
 
-    svg
-      .selectAll(".tick line")
-      .style("stroke", "#ccc")
-      .style("stroke-dasharray", "2,2");
+    // Light gridline styling
+    svg.selectAll(".tick line").style("stroke", "#ccc").style("stroke-dasharray", "2,2");
   };
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -7,6 +7,7 @@ import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 import { useInstantData } from '../hooks/useInstantData.jsx'; // 🚀 Updated import
+import { FaArrowUp } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'KIQueYmDWEQ';
 
@@ -15,6 +16,17 @@ const MajorTownPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Define data fetching function
   const fetchMajorTowns = useCallback(async () => {
@@ -160,7 +172,7 @@ const MajorTownPage = () => {
                 key={item.slug || index}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
+                <div className={`card floating-card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
                   <img 
                     src={item.image} 
                     alt={item.name} 
@@ -218,6 +230,15 @@ const MajorTownPage = () => {
       {showLogin && <LoginPage onClose={closeLogin} />}
 
       <AIChatbot />
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn-mj"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+        >
+          <FaArrowUp aria-hidden="true" />
+        </button>
+      )}
       <Footer />
     </div>
   );

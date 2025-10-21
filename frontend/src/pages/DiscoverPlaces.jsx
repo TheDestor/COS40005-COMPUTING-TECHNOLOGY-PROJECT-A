@@ -6,7 +6,7 @@ import defaultImage from '../assets/default.png';
 import '../styles/DiscoverPlaces.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { FaMapMarkerAlt, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaArrowUp, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud } from 'react-icons/fa';
 import AIChatbot from '../components/AiChatbot.jsx';
 import LoginPage from '../pages/Loginpage.jsx';
 import L from 'leaflet';
@@ -47,6 +47,15 @@ const DiscoverPlaces = () => {
   const [showQuotaWarning, setShowQuotaWarning] = useState(false);
   const mapRef = useRef(null);
   const fetchTimeoutRef = useRef(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const categories = [
     { id: 'all', name: 'All', icon: <FaMapMarkerAlt /> },
@@ -743,6 +752,15 @@ const DiscoverPlaces = () => {
       {showLogin && (
         <LoginPage onClose={closeLogin} />
       )}
+
+      {/* Scroll to top button */}
+      <button
+        className={`scroll-to-top-btn-mj ${showScrollTop ? 'visible' : ''}`}
+        onClick={scrollToTop}
+        title="Scroll to top"
+      >
+        <FaArrowUp />
+      </button>
 
       <AIChatbot />
       <Footer />

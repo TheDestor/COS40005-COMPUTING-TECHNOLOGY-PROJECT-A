@@ -306,6 +306,8 @@ input.search-input-sp:focus { outline: none; border: none; transform: none; bord
   .pagination-sp { flex-wrap: nowrap !important; }
   .pagination-info { font-size: 13px; font-weight: 500; }
   .pagination-btn:disabled, .pagination-btn { padding: 8px 10px; font-size: 14px; }
+  .sessions-table tbody tr td { font-size: 0.8rem; }
+  .sessions-table thead tr th { font-size: 0.9rem; }
 }
 
 .pagination-sp {

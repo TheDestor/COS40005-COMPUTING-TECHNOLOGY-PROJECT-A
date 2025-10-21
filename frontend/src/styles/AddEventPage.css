@@ -6,6 +6,61 @@
   /* font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 }
 
+/* Scroll-to-top floating button */
+.scroll-to-top-btn {
+  position: fixed;
+  right: clamp(16px, 2.5vw, 32px);
+  bottom: clamp(16px, 2.5vh, 32px);
+  width: clamp(40px, 4.5vw, 56px);
+  height: clamp(40px, 4.5vw, 56px);
+  border-radius: 9999px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  color: white;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+  cursor: pointer;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease,
+              box-shadow 0.2s ease, background 0.2s ease;
+  pointer-events: none;
+}
+
+.scroll-to-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.scroll-to-top-btn:hover {
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.35);
+  filter: brightness(1.06);
+}
+
+.scroll-to-top-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35);
+}
+
+.scroll-to-top-icon {
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1;
+}
+
+/* Nudge position for very small screens so it doesn't overlap UI */
+@media (max-width: 640px) {
+  .scroll-to-top-btn {
+    right: clamp(12px, 3vw, 20px);
+    bottom: clamp(12px, 3vh, 20px);
+  }
+}
+
 .add-event-content {
   flex: 1; 
   padding: 30px;
@@ -263,7 +318,8 @@ p {
     gap: 12px;
   }
   .pagination-controls-ae {
-    justify-content: flex-end;
+    justify-content: center;
+    gap: 4px;
   }
 }
 
@@ -300,10 +356,12 @@ p {
   border-radius: 3px 3px 0 0;
 }
 
-.event-form-container {
+.event-form-container-ae {
   display: flex;
   gap: 32px;
   flex-wrap: wrap;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .event-form-left, .event-form-right {
@@ -1095,7 +1153,7 @@ p {
   padding: 0;
 }
 
-.time-input-native-ae::-webkit-calendar-picker-indicator {
+.time-input-native-ae::-webkit-calendar-picker-indicator, .form-input::-webkit-calendar-picker-indicator {
   filter: brightness(0) contrast(100%);
   opacity: 0.9;
 }
@@ -1539,7 +1597,7 @@ p {
   border-radius: 20px;
   max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
@@ -1579,6 +1637,7 @@ p {
 
 .modal-header h2{
   color: #1e293b;
+  margin-bottom: 0;
 }
 
 .modal-image {
@@ -1958,7 +2017,7 @@ p {
   }
   
   .form-actions {
-    flex-direction: column;
+    flex-direction: column !important;
   }
 
   .events-grid {
@@ -1999,7 +2058,7 @@ p {
   }
   
   .event-footer {
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: flex-start;
     gap: 8px;
   }
@@ -2062,7 +2121,7 @@ p {
     width:100%;
   }
 
-  .event-form-container {
+  .event-form-container-ae {
     flex-direction: column;
     gap: 24px;
   }
@@ -2209,6 +2268,41 @@ p {
 
   .leaflet-container {
     height: 160px;
+  }
+}
+
+@media (max-width: 400px) {
+  .edit-event-form .cancel-btn {
+    padding: 12px 24px;
+  }
+  .checkbox-group-av, .radio-group-av {
+    gap:4px;
+  }
+  .modal-header h2 {
+    font-size: 20px;
+    margin-top: 10px;
+  }
+  /* Smaller fonts for inputs on very small screens */
+  .form-input,
+  .form-textarea {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* Edit modal inputs use same classes; keep consistent sizing */
+  .edit-event-form .form-input,
+  .edit-event-form .form-textarea {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .edit-modal-body {
+    padding: 0;
+  }
+
+  /* Optional: slightly reduce label size in grouped fields */
+  .form-group-ae label {
+    font-size: 14px;
   }
 }
 

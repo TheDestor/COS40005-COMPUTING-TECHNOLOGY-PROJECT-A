@@ -1492,6 +1492,7 @@ const ViewInquiry = () => {
           font-size: 0.8rem;
           cursor: pointer;
           transition: all 0.2s ease;
+          color: #374151;
         }
 
         .pagination-btn:hover:not(:disabled) {

@@ -52,6 +52,23 @@
   background: white;
   border-radius: 8px;
   margin-top: 16px;
+  position: relative; /* ensure tooltip absolute positioning anchors here */
+}
+/* Tablet */
+@media (max-width: 768px) {
+  .chart-container { height: 350px; }
+}
+/* Small Tablet/Phablet */
+@media (max-width: 576px) {
+  .chart-container { height: 320px; padding: 16px 0; }
+}
+/* Mobile */
+@media (max-width: 480px) {
+  .chart-container { height: 280px; padding: 12px 0; }
+}
+/* Small Mobile */
+@media (max-width: 400px) {
+  .chart-container { height: 240px; padding: 10px 0; }
 }
 
 /* Table Header Styles */
