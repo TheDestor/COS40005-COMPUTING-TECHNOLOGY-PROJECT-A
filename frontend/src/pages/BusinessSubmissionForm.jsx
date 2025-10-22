@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   FaBuilding,
   FaUser,
@@ -58,6 +58,15 @@ const ClickToSet = ({ onPick }) => {
 const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Get auth context
   const { accessToken, user, isLoggedIn } = useAuth();
+  const containerRef = useRef(null);
+
+  const smoothScrollToTop = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // Check if user has business role
   if (!isLoggedIn || user?.role !== 'business') {
@@ -369,8 +378,8 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
         if (!formData.phone.trim()) {
           newErrors.phone = 'Phone number is required';
-        } else if (!/^\d{3}-(\d{3}|\d{4})-\d{4}$/.test(formData.phone)) {
-          newErrors.phone = 'Phone format should be XXX-XXX-XXXX or XXX-XXXX-XXXX';
+        } else if (!/^(\d{3}-\d{3}-\d{3}|\d{3}-\d{4}-\d{4})$/.test(formData.phone)) {
+          newErrors.phone = 'Phone format should be XXX-XXX-XXX or XXX-XXXX-XXXX';
         }
         break;
 
@@ -396,6 +405,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
     if (Object.keys(stepErrors).length === 0) {
       setCurrentStep(currentStep + 1);
+      smoothScrollToTop();
     } else {
       setErrors(stepErrors);
     }
@@ -404,11 +414,13 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
   // Move to previous step
   const handlePrevStep = () => {
     setCurrentStep(currentStep - 1);
+    smoothScrollToTop();
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    smoothScrollToTop();
     setSubmitAttempted(true);
 
     // Validate all steps before submitting
@@ -766,9 +778,9 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
               onKeyDown={handlePhoneKeyDown}
               onPaste={handlePhonePaste}
               inputMode="numeric"
-              placeholder="e.g., 555-123-4567 or 555-1234-5678"
-              pattern="^\d{3}-(\d{3}|\d{4})-\d{4}$"
-              title="Use XXX-XXX-XXXX or XXX-XXXX-XXXX"
+              placeholder="e.g., 555-123-123 or 555-1234-5678"
+              pattern="^\d{3}-\d{3}-\d{3}$|^\d{3}-\d{4}-\d{4}$"
+              title="Use XXX-XXX-XXX or XXX-XXXX-XXXX"
               className={errors.phone ? 'error' : ''}
             />
             {errors.phone && <div className="error-message-business">{errors.phone}</div>}
@@ -1140,7 +1152,7 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
   return (
     <div className="business-submission-overlay">
-      <div className="business-submission-container">
+      <div className="business-submission-container" ref={containerRef}>
         <div className="business-submission-form-wrapper">
           <div className="form-header">
             <h2>Business Submission Form</h2>

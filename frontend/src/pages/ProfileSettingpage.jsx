@@ -9,6 +9,7 @@ import PushNotificationPage from './PushNotificationpage.jsx';
 // import PushSubscriptionPage from './PushSuscriptionpage.jsx';
 import { useAuth } from '../context/AuthProvider.jsx';
 import ky from 'ky';
+import { toast } from 'sonner';
 
 const naCountryObject = { name: 'N/A', code: 'NA', flag: null };
 
@@ -218,6 +219,7 @@ const ProfileSettingsPage = () => {
   const [selectedCountry, setSelectedCountry] = useState(naCountryObject);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -259,11 +261,36 @@ const ProfileSettingsPage = () => {
     }
   }, [user]);
 
+  // Allow only A–Z, spaces, and '@' for names
+  const nameAllowedPattern = /^[A-Za-z@ ]*$/;
+  const sanitizeName = (val) => val.replace(/[^A-Za-z@ ]+/g, '');
+
+  const handleNameKeyDown = (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1 && !nameAllowedPattern.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleNamePaste = (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    const sanitized = sanitizeName(text);
+    if (sanitized !== text) {
+      e.preventDefault();
+      const target = e.target;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      const next = target.value.slice(0, start) + sanitized + target.value.slice(end);
+      setFormData(prev => ({ ...prev, [target.name]: next }));
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    const nextValue = (name === 'firstName' || name === 'lastName') ? sanitizeName(value) : value;
     setFormData(prevData => ({
       ...prevData,
-      [name]: value
+      [name]: nextValue
     }));
   };
 
@@ -287,38 +314,51 @@ const ProfileSettingsPage = () => {
   };
 
   const handleUpdateProfile = async () => {
-    const updatePayload = {
-      _id: user._id,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      nationality: selectedCountry.name,
-    };
+        const updatePayload = {
+            _id: user._id,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            nationality: selectedCountry.name,
+        };
 
-    try {
-      const response = await ky.post(
-        "/api/user/updateUserProfile",
-        {
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-          json: updatePayload,
-          credentials: 'include'
+        try {
+            const response = await ky.post(
+                "/api/user/updateUserProfile",
+                {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+                    json: updatePayload,
+                    credentials: 'include'
+                }
+            ).json();
+
+            const { success, message } = response;
+
+            if (success) {
+                if (updateUserContext && response) {
+                    updateUserContext(response.updatedUser)
+                }
+                toast.success('Profile updated successfully');
+                setIsEditingProfile(false);
+            } else {
+                toast.error(message || 'Failed to update profile');
+                console.error(message);
+            }
+        } catch (error) {
+            let msg = 'Failed to update profile';
+            if (error.response) {
+                try {
+                    const errJson = await error.response.json();
+                    msg = errJson?.message || msg;
+                } catch {}
+            } else {
+                msg = error.message || msg;
+            }
+            toast.error(msg);
+            console.error("Error updating profile:", error);
+        } finally {
+            setShowConfirmModal(false);
         }
-      ).json();
-
-      const { success, message } = response;
-
-      if (success) {
-        if (updateUserContext && response) {
-          updateUserContext(response.updatedUser)
-        }
-
-        setIsEditingProfile(false);
-      } else {
-        console.error(message);
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
     }
-  }
 
   const handleAvatarUploadSuccess = useCallback((newAvatarUrl) => {
     if (updateUserContext) {
@@ -401,12 +441,35 @@ const ProfileSettingsPage = () => {
             <div className="profile-fields">
               <div className="field-group">
                 <label>First name</label>
-                <input id="firstName" name="firstName" type="text" value={formData.firstName} onChange={handleInputChange} readOnly={!isEditingProfile} className="input-field" />
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  onKeyDown={handleNameKeyDown}
+                  onPaste={handleNamePaste}
+                  pattern="^[A-Za-z@ ]*$"
+                  inputMode="text"
+                  readOnly={!isEditingProfile}
+                  className="input-field"
+                />
               </div>
               <div className="field-group">
                 <label>Last name</label>
-                <input id="lastName" name="lastName" type="text" value={formData.lastName} onChange={handleInputChange} readOnly={!isEditingProfile}
-                  className="input-field" />
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  onKeyDown={handleNameKeyDown}
+                  onPaste={handleNamePaste}
+                  pattern="^[A-Za-z@ ]*$"
+                  inputMode="text"
+                  readOnly={!isEditingProfile}
+                  className="input-field"
+                />
               </div>
               <div className="field-group email-group">
                 <label>Email</label>
@@ -442,7 +505,7 @@ const ProfileSettingsPage = () => {
             {isEditingProfile && (
               <div className="profile-buttons">
                 <button className="cancel-btn6" onClick={handleCancelEdit}>Cancel</button>
-                <button className="update-btn" onClick={handleUpdateProfile}>Update</button>
+                <button className="update-btn" onClick={() => setShowConfirmModal(true)}>Update</button>
               </div>
             )}
           </div>
@@ -506,6 +569,18 @@ const ProfileSettingsPage = () => {
           currentAvatarUrl={user.avatarUrl || UserImage}
           accessToken={accessToken}
         />
+      )}
+      {showConfirmModal && (
+        <div className="confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-confirm-title">
+          <div className="confirm-modal">
+            <h4 id="profile-confirm-title">Save these profile changes?</h4>
+            <p>This will update your profile information.</p>
+            <div className="popup-actions">
+              <button className="modal-cancel-btn" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+              <button className="modal-confirm-btn" onClick={handleUpdateProfile}>Confirm</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

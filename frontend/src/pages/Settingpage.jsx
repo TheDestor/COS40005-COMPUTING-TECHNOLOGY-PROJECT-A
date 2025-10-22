@@ -169,24 +169,24 @@ function SettingsPage() {
           </div>
         );
 
-      case 'languages':
-        return (
-          <div className="content-section">
-            <h2><RiGlobalLine className="icon-setting" /> Languages</h2>
-            <ul className="language-list">
-              {['English', '简体中文', 'Melayu'].map((lang) => (
-                <li
-                  key={lang}
-                  className={`language-option ${selectedLanguage === lang ? 'selected' : ''}`}
-                  onClick={() => { setSelectedLanguage(lang); toast.info('Features coming soon.'); }}
-                >
-                  {lang}
-                  {selectedLanguage === lang && <span><FiCheck className="tick-mark"/></span>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
+      // case 'languages':
+      //   return (
+      //     <div className="content-section">
+      //       <h2><RiGlobalLine className="icon-setting" /> Languages</h2>
+      //       <ul className="language-list">
+      //         {['English', '简体中文', 'Melayu'].map((lang) => (
+      //           <li
+      //             key={lang}
+      //             className={`language-option ${selectedLanguage === lang ? 'selected' : ''}`}
+      //             onClick={() => { setSelectedLanguage(lang); toast.info('Features coming soon.'); }}
+      //           >
+      //             {lang}
+      //             {selectedLanguage === lang && <span><FiCheck className="tick-mark"/></span>}
+      //           </li>
+      //         ))}
+      //       </ul>
+      //     </div>
+      //   );
 
       case 'help':
         return (
@@ -232,12 +232,12 @@ function SettingsPage() {
           >
             <MdOutlineSettings className="sidebar-icon" /> General settings
           </div>
-          <div
+          {/* <div
             className={`sidebar-item ${activeSection === 'languages' ? 'active' : ''}`}
             onClick={() => handleSectionChange('languages')}
           >
             <RiGlobalLine className="sidebar-icon" /> Languages
-          </div>
+          </div> */}
           <div
             className={`sidebar-item ${activeSection === 'help' ? 'active' : ''}`}
             onClick={() => handleSectionChange('help')}

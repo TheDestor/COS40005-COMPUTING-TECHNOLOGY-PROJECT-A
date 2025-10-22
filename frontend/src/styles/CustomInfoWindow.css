@@ -470,6 +470,10 @@
   .info-header {
     padding: 12px 12px 8px 12px;
   }
+
+  .info-header h3 {
+    font-size: 16px;
+  }
   
   .info-tabs {
     padding: 0 12px 8px 12px;

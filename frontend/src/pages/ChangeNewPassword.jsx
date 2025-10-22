@@ -36,6 +36,8 @@ const ChangeNewPassword = ({ showProviderNote }) => {
 
   // ADD: modal state for delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // ADD: confirmation modal state for password change
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   // ADD: input/update helpers back in scope
   const handleInputChange = (e) => {
@@ -73,17 +75,22 @@ const ChangeNewPassword = ({ showProviderNote }) => {
       const { success, message } = response;
 
       if (success) {
-        console.log(message);
+        toast.success('Password updated successfully!', { duration: 3000 });
         handleClearForm();
       } else {
+        toast.error(message || 'Failed to update password', { duration: 3500 });
         console.log(message);
       }
     } catch (error) {
+      let msg = 'Failed to update password';
+      try {
+        const errorJson = await error.response?.json();
+        msg = errorJson?.message || msg;
+      } catch {}
+      toast.error(msg, { duration: 3500 });
       console.error(error);
-      if (error.response) {
-        const errorJson = await error.response.json();
-        console.log(errorJson.message);
-      }
+    } finally {
+      setShowPasswordConfirm(false);
     }
   };
 
@@ -191,7 +198,14 @@ const ChangeNewPassword = ({ showProviderNote }) => {
         {(currentPassword || newPassword || confirmPassword) && (
           <div className="action-buttons3 left-align">
             <button type="button" className="cancel-btn3" onClick={handleClearForm}>Cancel</button>
-            <button type="button" className="update-btn3" onClick={handleUpdatePassword} disabled={!isFormValid}>Update</button>
+            <button
+              type="button"
+              className="update-btn3"
+              onClick={() => setShowPasswordConfirm(true)}
+              disabled={!isFormValid}
+            >
+              Update
+            </button>
           </div>
         )}
   
@@ -203,6 +217,19 @@ const ChangeNewPassword = ({ showProviderNote }) => {
             </button>
           </div>
         </div>
+
+        {showPasswordConfirm && (
+          <div className="confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="password-confirm-title">
+            <div className="confirm-modal">
+              <h4 id="password-confirm-title">Change your password?</h4>
+              <p>This action will update your account password.</p>
+              <div className="popup-actions">
+                <button className="modal-cancel-btn" onClick={() => setShowPasswordConfirm(false)}>Cancel</button>
+                <button className="modal-confirm-btn" onClick={handleUpdatePassword} disabled={!isFormValid}>Confirm</button>
+              </div>
+            </div>
+          </div>
+        )}
   
         {showDeleteConfirm && (
           <div className="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
@@ -210,8 +237,8 @@ const ChangeNewPassword = ({ showProviderNote }) => {
               <h3 id="delete-account-title">Confirm Account Deletion</h3>
               <p>This will permanently remove your account and cannot be undone.</p>
               <div className="action-buttons3" style={{ justifyContent: "center", marginTop: "1rem" }}>
-                <button className="cancel-btn3" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                <button className="update-btn123" onClick={handleDeleteAccount}>Confirm Delete</button>
+                <button className="cancel-btn" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                <button className="modal-delete-btn" onClick={handleDeleteAccount}>Confirm Delete</button>
               </div>
             </div>
           </div>

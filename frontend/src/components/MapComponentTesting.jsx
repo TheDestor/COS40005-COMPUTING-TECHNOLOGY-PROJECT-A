@@ -135,6 +135,11 @@ const categoryIcons = {
 
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
+  {/* Normalize coords from either {latitude, longitude} or {coordinates.{latitude, longitude}} */}
+const searchLat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+const searchLng = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng);
+
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
     if (categoryIcons[location.type]) {
@@ -153,30 +158,30 @@ function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCat
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* Show search bar marker and its nearby places if a search bar place is selected */}
-      {selectedSearchBarPlace && selectedSearchBarPlace.latitude && selectedSearchBarPlace.longitude ? (
-        <>
-          <Marker
-            position={[selectedSearchBarPlace.coordinates?.latitude || selectedSearchBarPlace.latitude, selectedSearchBarPlace.coordinates?.longitude || selectedSearchBarPlace.longitude]}
-            icon={searchPlaceIcon}
-            eventHandlers={{
-              click: () => onMarkerClick(selectedSearchBarPlace)
-            }}
-          />
-          <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
-            {nearbyPlaces.map((loc, idx) => (
-              <Marker
-                key={`nearby-${loc.placeId}-${idx}`}
-                position={[loc.latitude, loc.longitude]}
-                icon={categoryIcons['Restaurant']}
-                eventHandlers={{
-                  click: () => onMarkerClick(loc)
-                }}
-              />
-            ))}
-          </MarkerClusterGroup>
-        </>
-      ) : (
+      {/* Show search marker and nearby places when we have valid coords */}
+      {hasSearchCoords ? (
+          <>
+            <Marker
+              position={[searchLat, searchLng]}
+              icon={searchPlaceIcon}
+              eventHandlers={{
+                click: () => onMarkerClick(selectedSearchBarPlace)
+              }}
+            />
+            <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
+              {nearbyPlaces.map((loc, idx) => (
+                <Marker
+                  key={`nearby-${loc.placeId}-${idx}`}
+                  position={[loc.latitude, loc.longitude]}
+                  icon={categoryIcons['Restaurant']}
+                  eventHandlers={{
+                    click: () => onMarkerClick(loc)
+                  }}
+                />
+              ))}
+            </MarkerClusterGroup>
+          </>
+        ) : (
         <>
           {/* Category/location markers */}
           {!selectedSearchBarPlace && !isRoutingActive && (

@@ -5,12 +5,15 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
   const map = useMap();
 
   useEffect(() => {
+    const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+    const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+
     if (!map || !selectedSearchBarPlace?.latitude || !selectedSearchBarPlace?.longitude) {
       return;
     }
 
-    const lat = selectedSearchBarPlace.latitude;
-    const lon = selectedSearchBarPlace.longitude;
+    // const lat = selectedSearchBarPlace.latitude;
+    // const lon = selectedSearchBarPlace.longitude;
     const radius = 500; // 500m radius
 
     // This is an Overpass QL query to find restaurants, cafes, and bars.
@@ -55,10 +58,12 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
   }, [map, selectedSearchBarPlace, setSearchNearbyPlaces]);
 
   useEffect(() => {
-    if (map && selectedSearchBarPlace?.latitude && selectedSearchBarPlace?.longitude) {
+    const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+    const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+    if (map && Number.isFinite(lat) && Number.isFinite(lon)) {
       setTimeout(() => {
         map.flyTo(
-          [selectedSearchBarPlace.latitude, selectedSearchBarPlace.longitude],
+          [lat, lon],
           17
         );
       }, 100); // 100ms delay

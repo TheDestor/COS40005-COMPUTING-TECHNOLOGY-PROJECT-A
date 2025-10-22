@@ -285,7 +285,7 @@
 }
 
 .faq-section h3 {
-  color: #333;
+  color: #007bff;
   font-size: 20px;
   margin-bottom: 15px;
 }
@@ -639,7 +639,7 @@
   }
 }
 .faq-title {
-  color: #333;
+  color: #007bff;
   font-size: 20px;
   margin-bottom: 15px;
 }
@@ -833,7 +833,7 @@
 }
 
 @media screen and (max-width: 480px) {
-  .faq-modal-title { font-size: 16px; }
+  .faq-modal-title { font-size: 14px;  }
   .faq-modal-body { font-size: 15px; }
 }
   

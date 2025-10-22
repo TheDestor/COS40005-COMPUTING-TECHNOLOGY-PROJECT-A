@@ -212,7 +212,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, businessData, loading }
   );
 };
 
-const ManageBusiness = () => {
+function ManageBusiness() {
   const { user, accessToken, isLoggedIn } = useAuth();
 
   // Check if user has business role
@@ -273,6 +273,10 @@ const ManageBusiness = () => {
     }
     return out;
   };
+
+  // Add: detect any run of 30 or more non-space characters
+  const hasConsecutiveNonSpaceRun = (s, max = 30) => /\S{30,}/.test(String(s || ''));
+
   const sanitizeInput = (val, type = 'text') => {
     let v = String(val ?? '');
     v = v.replace(/\s+/g, ' ').trimStart();
@@ -293,10 +297,17 @@ const ManageBusiness = () => {
     }
     return trimToLimitByNonSpace(v, LIMIT);
   };
+
   const validators = {
     name: (v) => countNonSpace(v) < 1 ? 'Name is required.' : '',
     description: (_) => '',
     address: (v) => countNonSpace(v) < 1 ? 'Address is required.' : '',
+    description: (v) => {
+      if (!v) return '';
+      return hasConsecutiveNonSpaceRun(v, 30)
+        ? 'Description must not contain a sequence of 30+ non-space characters.'
+        : '';
+    },
     phone: (v) => {
       if (!v) return '';
       return /^(\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4})$/.test(v) ? '' : 'Phone must be XXX-XXX-XXXX or XXX-XXXX-XXXX.';
@@ -581,7 +592,7 @@ const ManageBusiness = () => {
     <div className="mb-page">
       {/* HEADER */}
       <div className="mb-headerbar">
-        <div>
+        <div className="mb-header-content">
           <div className="mb-title">Manage Your Business</div>
           <p className="mb-subtitle">Review your submissions, update details, and request admin review.</p>
         </div>

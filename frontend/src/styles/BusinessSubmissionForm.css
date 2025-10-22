@@ -60,6 +60,7 @@
     overflow: hidden;
     overflow-y: auto;
     animation: fadeIn 0.3s ease-out;
+    scroll-behavior: smooth;
   }
   .business-submission-form-wrapper {
     position: relative;
@@ -168,6 +169,7 @@
   }
   .form-step p {
     margin: 0 0 16px;
+    text-align: left;
   }
   
   .form-row {
@@ -954,6 +956,27 @@
 
 /* Mobile: stack the button under the input */
 @media (max-width: 480px) {
+  .review-card-business .review-header .review-title {
+    font-size: 16px;
+  }
+
+  .review-body {
+    font-size: 14px;
+  }
+  
+
+  .business-submission-overlay {
+    padding: 0;
+  }
+
+  .form-step h3 {
+    font-size: 16px;
+  }
+
+  .form-step p {
+    font-size: 13px;
+  }
+
   .coord-input-wrapper {
     display: grid;
     gap: 8px;

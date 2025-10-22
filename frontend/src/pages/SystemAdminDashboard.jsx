@@ -255,6 +255,9 @@ function SystemAdminDashboard() {
               name: `${user.firstName} ${user.lastName}`,
               email: user.email,
               role: user.role,
+              // Persist business-specific fields in list items
+              companyName: user.companyName || "",
+              companyRegistrationNo: user.companyRegistrationNo || "",
               lastLogin: user.lastLogin || "N/A",
               image:
                 user.avatarUrl && user.avatarUrl.trim()

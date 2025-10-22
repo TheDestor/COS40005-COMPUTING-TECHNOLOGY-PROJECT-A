@@ -197,6 +197,7 @@
   color: #4a4a4a;
   font-size: clamp(0.9rem, 2vw, 1rem);
   margin-bottom: 1.5rem !important;
+  text-align: left;
 }
 
 /* =============================================

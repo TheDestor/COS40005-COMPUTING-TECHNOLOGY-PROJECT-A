@@ -2,6 +2,7 @@ import React from 'react';
 import { IoClose } from 'react-icons/io5';
 import { FaMap, FaRoute, FaBuilding, FaUsers, FaGlobe, FaTools, FaBullseye, FaPhone, FaStar } from 'react-icons/fa';
 import '../styles/AboutMapModal.css';
+import { RiRobot2Fill } from "react-icons/ri";
 
 const AboutMapModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -13,7 +14,7 @@ const AboutMapModal = ({ isOpen, onClose }) => {
         <div className="about-map-header">
           <h2>
             <FaMap className="modal-icon" />
-            About Sarawak Tourism Map
+            About Metaverse Trails 2.0
           </h2>
           <button className="close-button-amm" onClick={onClose}>
             <IoClose />
@@ -24,7 +25,7 @@ const AboutMapModal = ({ isOpen, onClose }) => {
           <div className="about-section">
             <h3><FaMap className="section-title-icon" /> Interactive Tourism Platform</h3>
             <p>
-              The Sarawak Tourism Map is a comprehensive digital platform designed to showcase 
+              Metaverse Trails 2.0 is a comprehensive digital platform designed to showcase 
               the beauty and diversity of Sarawak, Malaysia. Our interactive map provides 
               visitors and locals with detailed information about attractions, businesses, 
               and cultural sites across the state.
@@ -34,6 +35,22 @@ const AboutMapModal = ({ isOpen, onClose }) => {
           <div className="features-section">
             <h3><FaStar className="section-title-icon" /> Key Features</h3>
             <div className="features-grid">
+              <div className="feature-item">
+                <FaGlobe className="feature-icon" />
+                <div className="feature-content">
+                  <h4>Cultural Heritage</h4>
+                  <p>Explore Sarawak's rich cultural heritage, national parks, and historical sites</p>
+                </div>
+              </div>
+
+              <div className="feature-item">
+                <RiRobot2Fill className="feature-icon" />
+                <div className="feature-content">
+                  <h4>AI-powered Chatbot</h4>
+                  <p>Get recommendations to your questions about Sarawak's attractions, businesses, and cultural heritage</p>
+                </div>
+              </div>
+
               <div className="feature-item">
                 <FaRoute className="feature-icon" />
                 <div className="feature-content">
@@ -46,7 +63,7 @@ const AboutMapModal = ({ isOpen, onClose }) => {
                 <FaBuilding className="feature-icon" />
                 <div className="feature-content">
                   <h4>Business Directory</h4>
-                  <p>Discover local businesses, restaurants, hotels, and attractions with detailed information</p>
+                  <p>Discover local businesses, restaurants, tour guides, and attractions with detailed information</p>
                 </div>
               </div>
               
@@ -55,14 +72,6 @@ const AboutMapModal = ({ isOpen, onClose }) => {
                 <div className="feature-content">
                   <h4>Community Driven</h4>
                   <p>Local businesses can submit and manage their listings to reach more visitors</p>
-                </div>
-              </div>
-              
-              <div className="feature-item">
-                <FaGlobe className="feature-icon" />
-                <div className="feature-content">
-                  <h4>Cultural Heritage</h4>
-                  <p>Explore Sarawak's rich cultural heritage, national parks, and historical sites</p>
                 </div>
               </div>
             </div>

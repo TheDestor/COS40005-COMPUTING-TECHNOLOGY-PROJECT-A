@@ -311,7 +311,7 @@
 
 /* Footer Styles where subscribe button is placed */
 footer {
-    margin-top: 60px;
+    margin-top: 0px;
     padding: 40px 30px;
     background-color: #f9f9f9;
     /* border-radius: 12px; */
@@ -510,7 +510,7 @@ footer::before {
   }
 
   footer {
-    margin-top: 50px;
+    /* margin-top: 50px; */
     padding: 30px 20px; /* Adjust footer padding */
   }
 
@@ -648,7 +648,7 @@ footer::before {
   }
 
   footer {
-    margin-top: 40px;
+    /* margin-top: 40px; */
     padding: 25px 15px;
   }
 
@@ -778,17 +778,22 @@ footer::before {
   }
 
   footer {
-    margin-top: 30px;
+    margin-top: 0px;
     padding: 20px 10px;
   }
 
   .footer-content p {
-    font-size: 0.9em;
+    font-size: 0.8em;
   }
 
   .newsletter input,
   .newsletter button {
     padding: 8px 10px;
     font-size: 0.85em;
+  }
+
+  .newsletter button {
+    justify-content: center;
+    align-items: center;
   }
 }

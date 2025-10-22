@@ -7,7 +7,7 @@ import '../styles/CategoryPage.css';
 import defaultImage from '../assets/Kuching.png';
 import AIChatbot from '../components/AiChatbot.jsx';
 import { useInstantData } from '../hooks/useInstantData.jsx'; // 🚀 Updated import
-import { FaArrowUp } from 'react-icons/fa';
+import { FaArrowUp, FaSearch } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'KIQueYmDWEQ';
 
@@ -141,6 +141,7 @@ const MajorTownPage = () => {
       <div className="search-section">
         <div className="search-container">
           <div className="search-bar-mj">
+            <FaSearch className="search-icon-mj" />
             <input
               type="text"
               placeholder="Search Major Towns..."
