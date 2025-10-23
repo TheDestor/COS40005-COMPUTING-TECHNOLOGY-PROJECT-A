@@ -13,7 +13,7 @@
   background-color: #ece6f0;
   box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
   border-radius: 15px 0 0 0;
-  z-index: 90;
+  z-index: 20000; /* Raised to sit above page overlays */
   transition: transform 0.3s ease-in-out, background-color 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
@@ -46,7 +46,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 1000; /* Make sure it stays above everything */
+  z-index: 20001; /* Keep toggle above the panel */
 }
 
 
@@ -63,7 +63,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 90;
+  z-index: 20000; /* Raised wrapper to match panel */
 }
 
 

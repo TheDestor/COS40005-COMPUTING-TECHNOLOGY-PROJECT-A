@@ -24,13 +24,14 @@ const majorTowns = [
   'Betong'
 ];
 
+// In CustomInfoWindow component
 const CustomInfoWindow = ({ 
   location, 
   onCloseClick, 
   onShowReview, 
   addBookmark, 
   onOpenLoginModal,
-  onDirectionsClick // Add this new prop
+  onDirectionsClick
 }) => {
   const [activeFooter, setActiveFooter] = useState('');
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -765,7 +766,14 @@ const CustomInfoWindow = ({
 
   const renderLocationDetails = () => (
     <>
-      {/* {getPhoneNumber() && (
+      {location.address && (
+        <div className="info-row">
+          <span className="info-row-icon"><FaMapMarkerAlt /></span>
+          <span className="info-row-text">{location.address}</span>
+        </div>
+      )}
+
+      {getPhoneNumber() && (
         <div className="info-row">
           <span className="info-row-icon"><FaPhoneAlt /></span>
           <span 
@@ -776,7 +784,7 @@ const CustomInfoWindow = ({
             {formatPhoneNumber(getPhoneNumber()) || getPhoneNumber()}
           </span>
         </div>
-      )} */}
+      )}
 
       {getWebsiteUrl() && (
         <div className="info-row">

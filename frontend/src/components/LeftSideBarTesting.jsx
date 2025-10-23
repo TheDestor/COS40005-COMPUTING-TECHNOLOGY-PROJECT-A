@@ -10,6 +10,10 @@ import BusinessSubmissionForm from '../pages/BusinessSubmissionForm';
 import LoginModal from '../pages/Loginpage';
 import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
+import NearbyPlacesPanel from './NearbyPlacesPanel';
+import NearbyPlacesDrawer from './NearbyPlacesDrawer';
+// Add the correct import for the bookmarks context
+import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 
 // function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
 //   const [suggestions, setSuggestions] = useState([]);
@@ -821,14 +825,27 @@ async function fetchRouteWithAlternatives(start, end, waypoints = [], vehicle = 
 const LeftSidebarTesting = forwardRef(({ 
   onSearch, history, setHistory, showRecent, setShowRecent, setSelectedPlace, selectedPlace, 
   setOsrmRouteCoords, setOsrmWaypoints, setIsRoutingActive, onBasemapChange, 
-  setSelectedSearchBarPlace, onRouteAlternativesChange, onNearbyPlacesChange, 
+  setActiveSearchLocation, activeSearchLocation, onRouteAlternativesChange, onNearbyPlacesChange, 
   onRouteInfoChange, onClearAllRouting, onSetAddToRecentRef, onSetOpenRecentSectionRef, 
   onSetToggleBookmarkRef, isExpand, setIsExpand, destinationInput, setDestinationInput,
   // New props for auto-opening and setting destination
   autoOpen = false,
-  autoDestination = null
+  autoDestination = null,
+  // New props for nearby places drawer
+  selectedSearchBarPlace,
+  searchNearbyPlaces,
+  isSearchNearbyLoading,
+  searchNearbyError,
+  fetchSearchNearbyPlaces,
+  // Add missing filter props here to avoid re-destructuring from props later
+  nearbyFilterCategory,
+  onNearbyFilterCategoryChange,
+  // Add setter if parent passes it (used later in this file)
+  setSelectedSearchBarPlace
 }, ref) => {
   const { user, isLoggedIn } = useAuth();
+  // Add bookmark context to feed bookmarks into Nearby panel
+  const { bookmarks } = UseBookmarkContext();
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -859,6 +876,109 @@ const LeftSidebarTesting = forwardRef(({
   const autoCalculatedRef = useRef(false);
   const [isLocationFetching, setIsLocationFetching] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [nearbyError, setNearbyError] = useState(null);
+  const [isNearbyDrawerOpen, setIsNearbyDrawerOpen] = useState(false);
+
+  // Compute a robust anchor for distance: prefer search selection, then recent selection, then destination
+  const anchorCoords = useMemo(() => {
+    const resolveNum = (v) => (typeof v === 'string' ? parseFloat(v) : v);
+    const lat = (
+      selectedSearchBarPlace?.coordinates?.latitude ??
+      selectedSearchBarPlace?.latitude ??
+      activeSearchLocation?.coordinates?.latitude ??
+      activeSearchLocation?.latitude ??
+      destinationCoords?.lat
+    );
+    const lng = (
+      selectedSearchBarPlace?.coordinates?.longitude ??
+      selectedSearchBarPlace?.longitude ??
+      activeSearchLocation?.coordinates?.longitude ??
+      activeSearchLocation?.longitude ??
+      destinationCoords?.lng
+    );
+    const nlat = resolveNum(lat);
+    const nlng = resolveNum(lng);
+    return Number.isFinite(nlat) && Number.isFinite(nlng) ? { lat: nlat, lng: nlng } : null;
+  }, [selectedSearchBarPlace, activeSearchLocation, destinationCoords]);
+
+  // Helper: exclude the anchor itself from the nearby panel
+  const isSamePlaceAsAnchor = useCallback((place, anchor) => {
+    if (!anchor || !place) return false;
+    const plat =
+      (typeof place?.geometry?.location?.lat === 'function'
+        ? place.geometry.location.lat()
+        : place?.geometry?.location?.lat) ??
+      place?.latitude ??
+      place?.coordinates?.latitude ??
+      place?.lat;
+
+    const plng =
+      (typeof place?.geometry?.location?.lng === 'function'
+        ? place.geometry.location.lng()
+        : place?.geometry?.location?.lng) ??
+      place?.longitude ??
+      place?.coordinates?.longitude ??
+      place?.lng;
+
+    if (!Number.isFinite(plat) || !Number.isFinite(plng)) return false;
+    const EPS = 1e-5;
+    return Math.abs(plat - anchor.lat) < EPS && Math.abs(plng - anchor.lng) < EPS;
+  }, []);
+
+  // Close all panels
+  const closeAllPanels = () => {
+    setSidebarExpanded(false);
+    setShowBusiness(false);
+    setShowBookmarkpage(false);
+    setShowLayersPanel(false);
+    setShowRecentSection(false);
+    setIsNearbyDrawerOpen(false);
+    setActiveMenu('');
+    if (typeof setShowRecent === 'function') {
+      setShowRecent(false);
+    }
+  };
+
+  // Keyboard shortcut: Shift+N to reopen/toggle the drawer
+  useEffect(() => {
+    const handleKeydown = (e) => {
+      if (e.shiftKey && e.key.toLowerCase() === 'n') {
+        setIsNearbyDrawerOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, []);
+
+  const matchesCategoryInSidebar = (place, cat) => {
+    if (!cat || cat === 'all') return true;
+    const tokens = [
+      (place.category || ''),
+      (place.type || ''),
+      (place.subcategory || ''),
+      (place.class || ''),
+      ...(Array.isArray(place.categories) ? place.categories : []),
+      ...(Array.isArray(place.tags) ? place.tags : []),
+      ...(Array.isArray(place?.properties?.categories) ? place.properties.categories : []),
+    ].filter(Boolean).map((s) => String(s).toLowerCase());
+
+    if (cat === 'restaurant') {
+      return tokens.some((s) =>
+        s.includes('restaurant') || s.includes('food') || s.includes('cafe') || s.includes('eat')
+      );
+    }
+    if (cat === 'toilet') {
+      return tokens.some((s) =>
+        s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+      );
+    }
+    if (cat === 'pharmacy') {
+      return tokens.some((s) =>
+        s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
+      );
+    }
+    return false;
+  };
 
   // Use external expand state if provided, otherwise use internal state
   const sidebarExpanded = isExpand !== undefined ? isExpand : isExpanded;
@@ -921,6 +1041,42 @@ const LeftSidebarTesting = forwardRef(({
       }
     }
   }, [autoOpen, autoDestination]);
+
+  // NEW: Open the drawer when a place is selected via search.
+  useEffect(() => {
+    const lat =
+      selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+    const lng =
+      selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      setIsNearbyDrawerOpen(true);
+    } else if (!selectedSearchBarPlace) {
+      // Ensure clearing search does not open and also closes the drawer
+      setIsNearbyDrawerOpen(false);
+    }
+  }, [selectedSearchBarPlace]);
+
+  // NEW: Auto-open when recent/bookmark selection or destination changes
+  useEffect(() => {
+    const lat =
+      activeSearchLocation?.coordinates?.latitude ??
+      activeSearchLocation?.latitude ??
+      destinationCoords?.lat;
+    const lng =
+      activeSearchLocation?.coordinates?.longitude ??
+      activeSearchLocation?.longitude ??
+      destinationCoords?.lng;
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      setIsNearbyDrawerOpen(true);
+      setActiveMenu('nearby');
+    }
+  }, [activeSearchLocation, destinationCoords]);
+
+  const handleCloseNearbyDrawer = useCallback(() => {
+    setIsNearbyDrawerOpen(false);
+  }, []);
 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
@@ -1253,47 +1409,37 @@ const LeftSidebarTesting = forwardRef(({
 
   // Toggle functions
   function toggleRecentHistory() {
-    if (isExpanded) setIsExpanded(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-  
-    if (typeof setShowRecent === 'function') {
-      setShowRecent(prev => !prev);
-    } else {
-      // Fallback: use existing recent section state
-      setShowRecentSection(prev => !prev);
-      setActiveMenu(prev => (prev === 'recent' ? '' : 'recent'));
+    const wasOpen = showRecentSection;
+    closeAllPanels();
+    if (!wasOpen) {
+      setShowRecentSection(true);
+      setActiveMenu('recent');
     }
   }
 
    const toggleSidebar = () => {
-    if (showRecent && setShowRecent) setShowRecent(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-    if (showRecentSection) setShowRecentSection(false);
-    setActiveMenu('');
-    setSidebarExpanded((prev) => !prev);
+    const wasOpen = sidebarExpanded;
+    closeAllPanels();
+    if (!wasOpen) {
+      setSidebarExpanded(true);
+    }
   };
 
   const toggleRecentSection = () => {
-    if (sidebarExpanded) setSidebarExpanded(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-    if (showLayersPanel) setShowLayersPanel(false);
-    setShowRecentSection((prev) => {
-      const next = !prev;
-      setActiveMenu(next ? 'recent' : '');
-      return next;
-    });
+    const wasOpen = showRecentSection;
+    closeAllPanels();
+    if (!wasOpen) {
+      setShowRecentSection(true);
+      setActiveMenu('recent');
+    }
   };
 
   const toggleBusinessPanel = () => {
-    if (isExpanded) setIsExpanded(false);
-    if (showRecent && setShowRecent) setShowRecent(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-    if (showLayersPanel) setShowLayersPanel(false);
-    if (showRecentSection) setShowRecentSection(false);
-    setShowBusiness((prev) => !prev);
+    const wasOpen = showBusiness;
+    closeAllPanels();
+    if (!wasOpen) {
+      setShowBusiness(true);
+    }
   };
 
   const toggleBookmark = () => {
@@ -1308,20 +1454,30 @@ const LeftSidebarTesting = forwardRef(({
     }
     
     console.log('User is logged in, toggling bookmark panel');
-    if (isExpanded) setIsExpanded(false);
-    if (showRecent && setShowRecent) setShowRecent(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showRecentSection) setShowRecentSection(false);
-    setShowBookmarkpage((prev) => !prev);
+    const wasOpen = showBookmarkpage;
+    closeAllPanels();
+    if (!wasOpen) {
+      setShowBookmarkpage(true);
+      setActiveMenu('bookmark');
+    }
   };
 
   const toggleLayersPanel = () => {
-    if (isExpanded) setIsExpanded(false);
-    if (showRecent && setShowRecent) setShowRecent(false);
-    if (showBusiness) setShowBusiness(false);
-    if (showBookmarkpage) setShowBookmarkpage(false);
-    if (showRecentSection) setShowRecentSection(false);
-    setShowLayersPanel((prev) => !prev);
+    const wasOpen = showLayersPanel;
+    closeAllPanels();
+    if (!wasOpen) {
+      setShowLayersPanel(true);
+    }
+  };
+
+  // NEW: Toggle function for nearby drawer to be used in onClick
+  const toggleNearbyDrawer = () => {
+    const wasOpen = isNearbyDrawerOpen;
+    closeAllPanels();
+    if (!wasOpen) {
+      setIsNearbyDrawerOpen(true);
+      setActiveMenu('nearby');
+    }
   };
 
   const openLoginOverlay = () => {
@@ -1360,19 +1516,62 @@ const LeftSidebarTesting = forwardRef(({
     });
   };
 
-  // Function to handle recent location click
-  const handleRecentLocationClick = (location) => {
-    // Clear any existing search selection and route directions (sidebar + map)
+  // Drawer bookmark click handler: mirror bookmark plotting in BookmarkPage
+  const handleNearbyBookmarkClick = (bookmarkData) => {
     handleClearAllRouting();
-
-    // Derive coordinates from location flexible shape
-    const latitude = location.latitude ?? location.coordinates?.latitude;
-    const longitude = location.longitude ?? location.coordinates?.longitude;
-
-    // Reset current search selection before plotting the new recent location
     if (setSelectedSearchBarPlace) {
       setSelectedSearchBarPlace(null);
+    }
+
+    const latRaw = bookmarkData.latitude ?? bookmarkData.coordinates?.latitude;
+    const lngRaw = bookmarkData.longitude ?? bookmarkData.coordinates?.longitude;
+    const latitude = typeof latRaw === 'string' ? parseFloat(latRaw) : latRaw;
+    const longitude = typeof lngRaw === 'string' ? parseFloat(lngRaw) : lngRaw;
+
+    if (setSelectedSearchBarPlace) {
       setSelectedSearchBarPlace({
+        name: bookmarkData.name,
+        latitude,
+        longitude,
+        description: bookmarkData.description || '',
+        type: bookmarkData.type || 'Bookmark',
+        placeId: bookmarkData.placeId || bookmarkData.place_id
+      });
+    }
+
+    // Ensure only one anchor source is active
+    if (setActiveSearchLocation) {
+      setActiveSearchLocation(null);
+    }
+
+    if (setSelectedPlace) {
+      setSelectedPlace({
+        ...bookmarkData,
+        latitude,
+        longitude,
+      });
+    }
+    setIsNearbyDrawerOpen(true);
+    setActiveMenu('nearby');
+  };
+
+  // Function to handle recent location click
+  const handleRecentLocationClick = (location) => {
+    handleClearAllRouting();
+
+    // Clear any existing search bar selection to prevent conflicts
+    if (setSelectedSearchBarPlace) {
+      setSelectedSearchBarPlace(null);
+    }
+
+    const latRaw = location.latitude ?? location.coordinates?.latitude;
+    const lngRaw = location.longitude ?? location.coordinates?.longitude;
+    const latitude = typeof latRaw === 'string' ? parseFloat(latRaw) : latRaw;
+    const longitude = typeof lngRaw === 'string' ? parseFloat(lngRaw) : lngRaw;
+
+    if (setActiveSearchLocation) {
+      setActiveSearchLocation(null);
+      setActiveSearchLocation({
         name: location.name,
         latitude,
         longitude,
@@ -1381,7 +1580,6 @@ const LeftSidebarTesting = forwardRef(({
       });
     }
 
-    // Reflect the selection for info window and other UI consumers
     if (setSelectedPlace) {
       setSelectedPlace({
         ...location,
@@ -1390,9 +1588,10 @@ const LeftSidebarTesting = forwardRef(({
       });
     }
 
-    // Close Recent panel for a smooth transition
     setShowRecentSection(false);
     setActiveMenu('');
+    setIsNearbyDrawerOpen(true);
+    setActiveMenu('nearby');
   };
 
   // Function to delete selected recent locations
@@ -1443,47 +1642,68 @@ const LeftSidebarTesting = forwardRef(({
   };
 
   const handleNearbyPlaceClick = (place) => {
-    if (!place.geometry?.location) return;
-    
-    const location = {
-      lat: typeof place.geometry.location.lat === 'function' 
-        ? place.geometry.location.lat() 
-        : place.geometry.location.lat,
-      lng: typeof place.geometry.location.lng === 'function' 
-        ? place.geometry.location.lng() 
-        : place.geometry.location.lng
+    // Derive coordinates from multiple shapes (Google Places, backend, business)
+    const lat =
+      (typeof place?.geometry?.location?.lat === 'function'
+        ? place.geometry.location.lat()
+        : place?.geometry?.location?.lat) ??
+      place?.latitude ??
+      place?.coordinates?.latitude ??
+      place?.lat;
+
+    const lng =
+      (typeof place?.geometry?.location?.lng === 'function'
+        ? place.geometry.location.lng()
+        : place?.geometry?.location?.lng) ??
+      place?.longitude ??
+      place?.coordinates?.longitude ??
+      place?.lng;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    // Normalize details for CustomInfoWindow
+    const placeData = {
+      ...place,
+      latitude: lat,
+      longitude: lng,
+      name: place.name || place.title,
+      type: place.type || place.category || 'Nearby Place',
+      address:
+        place.address ||
+        place.vicinity ||
+        place.formatted_address,
+      phone:
+        place.phone ||
+        place.contact ||
+        place.formatted_phone_number ||
+        place.telephone ||
+        place.mobile,
+      website: place.website || place.url,
+      owner: place.owner,
+      ownerEmail: place.ownerEmail,
+      openingHours: place.openingHours,
+      businessImage: place.businessImage,
+      image: place.image || place.imageUrl,
+      description:
+        place.description ||
+        place.vicinity ||
+        place.type ||
+        'Nearby place',
     };
-    
-    const placeData = { 
-      ...place, 
-      location,
-      latitude: location.lat,
-      longitude: location.lng,
-      name: place.name,
-      type: place.type || 'Nearby Place',
-      description: place.vicinity || place.type || 'Nearby place'
-    };
-    
+
+    // Only highlight the clicked marker (scale), do NOT change the red anchor
     if (setSelectedPlace) {
       setSelectedPlace(placeData);
     }
-    
-    // Also set this as a selected search bar place to show on map
-    if (setSelectedSearchBarPlace) {
-      setSelectedSearchBarPlace({
-        name: place.name,
-        latitude: location.lat,
-        longitude: location.lng,
-        description: place.vicinity || place.type || 'Nearby place',
-        type: place.type || 'Nearby Place'
-      });
-    }
 
-    // Trigger a custom event to notify the map component to zoom and show info window
-    const customEvent = new CustomEvent('nearbyPlaceSelected', {
-      detail: placeData
-    });
+    // Stop promoting the nearby click to an anchor; keep routing and anchor untouched
+    // DO NOT set activeSearchLocation or selectedSearchBarPlace here
+
+    const customEvent = new CustomEvent('nearbyPlaceSelected', { detail: placeData });
     window.dispatchEvent(customEvent);
+
+    // Keep drawer open for continued exploration
+    // setIsNearbyDrawerOpen(false);
   };
 
   // Fetch nearby places using Overpass API (free alternative to Google Places)
@@ -1938,7 +2158,37 @@ useEffect(() => {
     }
   }, [routeAlternatives, selectedRouteIndex, onRouteAlternativesChange]);
 
-  // Notify parent component when nearby places change
+  // Fetch nearby places when a searched location is selected (no routing required)
+  useEffect(() => {
+    const lat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
+    const lng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+
+    let cancelled = false;
+    async function run() {
+      try {
+        setIsLoading(true);
+        setNearbyError(null);
+        const places = await fetchNearbyPlaces({ lat, lng }, 1000);
+        if (!cancelled) {
+          setNearbyPlaces(places || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setNearbyPlaces([]);
+          setNearbyError('Failed to load nearby places');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    run();
+    return () => { cancelled = true; };
+  }, [activeSearchLocation]);
+
+  // Keep map state synchronized with panel updates
   useEffect(() => {
     if (onNearbyPlacesChange) {
       onNearbyPlacesChange(nearbyPlaces);
@@ -1974,21 +2224,36 @@ useEffect(() => {
 
   return (
     <>
+      {/* Sliding drawer for search-selected location nearby places */}
+      <NearbyPlacesDrawer
+        isOpen={isNearbyDrawerOpen}
+        onToggle={setIsNearbyDrawerOpen}
+        headerTitle="Nearby Places"
+        selectedCategory={nearbyFilterCategory}
+        onCategoryChange={onNearbyFilterCategoryChange}
+      >
+        {/* Nearby Around Selection */}
+        <NearbyPlacesPanel
+          title="Nearby Around Selection"
+          places={(
+            ((activeSearchLocation || destinationCoords) ? nearbyPlaces : (searchNearbyPlaces || []))
+              .filter((p) => matchesCategoryInSidebar(p, nearbyFilterCategory))
+              // Exclude the anchor/bookmark location itself from the list
+              .filter((p) => !isSamePlaceAsAnchor(p, anchorCoords))
+          )}
+          anchorCoords={anchorCoords}
+          onItemClick={handleNearbyPlaceClick}
+          selectedPlaceId={selectedPlace?.place_id}
+        />
+      </NearbyPlacesDrawer>
+
       <div className="sidebar100">
         <div className="menu-icon100" onClick={toggleSidebar}>
           <FaBars />
         </div>
         <div
           className={`menu-item100${activeMenu === 'recent' ? ' active' : ''}`}
-          onClick={() => {
-            if (activeMenu === 'recent') {
-              setActiveMenu('');
-              toggleRecentSection();
-            } else {
-              setActiveMenu('recent');
-              toggleRecentSection();
-            }
-          }}
+          onClick={toggleRecentSection}
         >
           <FaClock className="icon100" />
           <span className="label100">Recent</span>
@@ -1996,25 +2261,29 @@ useEffect(() => {
       
         <div
           className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
-          onClick={() => {
-            // Check authentication first
-            if (!isLoggedIn) {
-              toast.info('Please login to access your bookmarks');
-              return;
-            }
-
-            if (activeMenu === 'bookmark') {
-              setActiveMenu('');
-              toggleBookmark();
-            } else {
-              setActiveMenu('bookmark');
-              toggleBookmark();
-            }
-          }}
+          onClick={toggleBookmark}
         >
           <FaBookmark className="icon100" />
           <span className="label100">Bookmark</span>
         </div>
+
+        <div
+          className={`menu-item100${activeMenu === 'nearby' ? ' active' : ''}`}
+          onClick={toggleNearbyDrawer}
+          role="button"
+          aria-label="Toggle nearby places"
+          title="Nearby Places"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              toggleNearbyDrawer();
+            }
+          }}
+        >
+          <FaCompass className="icon100" />
+          <span className="label100">Nearby</span>
+        </div>
+
         {isLoggedIn && user?.role === 'business' && (
           <div
             className={`menu-item100${activeMenu === 'business' ? ' active' : ''}`}
@@ -2253,38 +2522,72 @@ useEffect(() => {
           ) : (hasValidInputs && routeSummary) ? (
             <>
               {/* Explore Nearby (hidden until both inputs valid) */}
-              <div className="route-footer">
-                <div className="explore-nearby-text">
-                  <FaCompass className="explore-icon" />
-                  Explore Nearby
-                </div>
-                {nearbyPlaces.length > 0 ? (
-                  <div className="nearby-places-container100">
-                    {nearbyPlaces.map((place, index) => (
-                      <div 
-                        key={index} 
-                        className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
-                        onClick={() => handleNearbyPlaceClick(place)}
-                      >
-                        <div className="nearby-place-content100">
-                          <div className="place-header100">
-                            <div className="place-name100">{place.name}</div>
-                            <div className="place-type100">
-                              <FaMapPin className="place-type-icon" />
-                              {String(place.type || '').replace(/_/g, ' ')}
-                            </div>
-                          </div>
-                          <div className="place-address100">{place.vicinity}</div>
+          <div className="route-footer">
+            <div className="explore-nearby-text">
+              <FaCompass className="explore-icon" />
+              Explore Nearby
+            </div>
+            {nearbyPlaces.length > 0 ? (
+              <div className="nearby-places-container100">
+                {nearbyPlaces.map((place, index) => (
+                  <div 
+                    key={index} 
+                    className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
+                    onClick={() => handleNearbyPlaceClick(place)}
+                  >
+                    <div className="nearby-place-content100">
+                      <div className="place-header100">
+                        <div className="place-name100">{place.name}</div>
+                        <div className="place-type100">
+                          <FaMapPin className="place-type-icon" />
+                          {String(place.type || '').replace(/_/g, ' ')}
                         </div>
                       </div>
-                    ))}
+                      <div className="place-address100">{place.vicinity}</div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="no-nearby-places">
-                    No nearby places found around the destination.
-                  </div>
-                )}
+                ))}
               </div>
+            ) : (
+              <div className="no-nearby-places">
+                No nearby places found around the destination.
+              </div>
+            )}
+          </div>
+
+          {/* Nearby for searched location (shown when a search selection exists and route inputs are not both set) */}
+          {activeSearchLocation && !hasValidInputs && (
+            <div className="route-footer">
+              <div className="explore-nearby-text">
+                <FaCompass className="explore-icon" />
+                Explore Nearby
+              </div>
+              <NearbyPlacesPanel
+                title="Explore Nearby"
+                places={nearbyPlaces}
+                anchorCoords={{
+                  lat: activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude,
+                  lng: activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude
+                }}
+                isLoading={isLoading}
+                error={nearbyError}
+                onRetry={() => {
+                  const lat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
+                  const lng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+                  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    setNearbyError(null);
+                    setIsLoading(true);
+                    fetchNearbyPlaces({ lat, lng }, 1000)
+                      .then((p) => setNearbyPlaces(p || []))
+                      .catch(() => setNearbyError('Failed to load nearby places'))
+                      .finally(() => setIsLoading(false));
+                  }
+                }}
+                onItemClick={handleNearbyPlaceClick}
+                selectedPlaceId={selectedPlace?.place_id}
+              />
+            </div>
+          )}
 
               {/* Route Options (hidden until both inputs valid) */}
               {hasValidInputs && routeSummary && routeAlternatives.length > 0 && (
@@ -2406,10 +2709,13 @@ useEffect(() => {
               }}
               showLoginOverlay={openLoginOverlay}
               onBookmarkClick={(bookmarkData) => {
-                // Clear any existing search selection and route directions (sidebar + map)
                 handleClearAllRouting();
 
-                // Reset current search selection before plotting the new bookmark
+                // Always clear activeSearchLocation before setting bookmark anchor
+                if (setActiveSearchLocation) {
+                  setActiveSearchLocation(null);
+                }
+
                 if (setSelectedSearchBarPlace) {
                   setSelectedSearchBarPlace(null);
                   const latitude = bookmarkData.latitude ?? bookmarkData.coordinates?.latitude;
@@ -2423,12 +2729,10 @@ useEffect(() => {
                   });
                 }
 
-                // Optionally reflect the selection in the info window state
                 if (setSelectedPlace) {
                   setSelectedPlace(bookmarkData);
                 }
 
-                // Close the bookmark panel for a smooth transition
                 setShowBookmarkpage(false);
                 setActiveMenu('');
               }}

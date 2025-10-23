@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback, forwardRef } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
@@ -16,6 +16,7 @@ import museumIcon from '../assets/museum.gif';
 import tourIcon from '../assets/tour.gif';
 import eventIcon from '../assets/event.gif';
 import restaurantIcon from '../assets/restaurant.png';
+import bookmarkTownPng from '../assets/town.png';
 
 import MapViewMenu from './MapViewMenu';
 import CustomInfoWindow from './CustomInfoWindow';
@@ -83,8 +84,31 @@ const createIcon = (iconUrl) =>
     className: 'custom-leaflet-icon'
   });
 
+// NEW: scale a Leaflet icon for selected markers
+const scaleIcon = (baseIcon, scale = 3) => {
+  const { iconUrl, iconSize, iconAnchor, popupAnchor, className } = baseIcon.options;
+  const size = Array.isArray(iconSize) ? iconSize : [60, 60];
+  const anchor = Array.isArray(iconAnchor) ? iconAnchor : [size[0] / 2, size[1]];
+  const popup = Array.isArray(popupAnchor) ? popupAnchor : [0, -anchor[1]];
+  return new L.Icon({
+    iconUrl,
+    iconSize: [size[0] * scale, size[1] * scale],
+    iconAnchor: [anchor[0] * scale, anchor[1] * scale],
+    popupAnchor: [popup[0] * scale, popup[1] * scale],
+    className: `${className || ''} selected-marker-icon`.trim()
+  });
+};
+
 const searchPlaceIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
+  className: 'custom-leaflet-icon'
+});
+
+const bookmarkMarkerIcon = new L.Icon({
+  iconUrl: bookmarkTownPng,
   iconSize: [36, 36],
   iconAnchor: [18, 36],
   popupAnchor: [0, -36],
@@ -116,6 +140,21 @@ const waypointMarkerIcon = new L.Icon({
   className: 'custom-leaflet-icon'
 });
 
+const toiletMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+const pharmacyMarkerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  className: 'custom-leaflet-icon'
+});
+
 const categoryIcons = {
   'Major Town': createIcon(townIcon),
   'Accommodation': createIcon(homestayIcon),
@@ -128,18 +167,29 @@ const categoryIcons = {
   'Tour Guides': createIcon(tourIcon),
   'Events': createIcon(eventIcon),
   'Restaurant': createIcon(restaurantIcon),
+  'Toilet': toiletMarkerIcon,
+  'Pharmacy': pharmacyMarkerIcon,
   'Starting Point': startMarkerIcon,
   'Destination': endMarkerIcon,
   'Waypoint': waypointMarkerIcon,
 };
 
 // Separate component for map content to ensure proper context
-function MapContent({ locations, nearbyPlaces, selectedSearchBarPlace, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
+function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   {/* Normalize coords from either {latitude, longitude} or {coordinates.{latitude, longitude}} */}
-const searchLat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
-const searchLng = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+const rawLat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
+const rawLng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+const searchLat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+const searchLng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
 const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng);
 
+  const contextMenuItems = [
+        { 
+            label: 'View details', 
+            icon: 'info', 
+            click: () => onMarkerClick(activeSearchLocation) 
+        }
+    ];
   // Helper function to get the correct icon for a location
   const getIconForLocation = (location) => {
     if (categoryIcons[location.type]) {
@@ -161,50 +211,81 @@ const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng)
       {/* Show search marker and nearby places when we have valid coords */}
       {hasSearchCoords ? (
           <>
-            <Marker
-              position={[searchLat, searchLng]}
-              icon={searchPlaceIcon}
-              eventHandlers={{
-                click: () => onMarkerClick(selectedSearchBarPlace)
-              }}
-            />
-            <MarkerClusterGroup disableClusteringAtZoom={18} zoomToBoundsOnClick={true}>
-              {nearbyPlaces.map((loc, idx) => (
+            {/* Anchor marker at searched location: hide while routing to avoid duplicate with route end pin */}
+            {!isRoutingActive && (
+              <Marker
+                position={[searchLat, searchLng]}
+                // Use town.png for bookmark anchors, else retain the red icon
+                icon={(String(activeSearchLocation?.type || '').toLowerCase() === 'bookmark')
+                      ? bookmarkMarkerIcon
+                      : endMarkerIcon}
+                eventHandlers={{ click: () => onMarkerClick(activeSearchLocation) }}
+                riseOnHover={true}
+                zIndexOffset={1000}
+              />
+            )}
+            {/* Nearby markers: distinct icons, NO clustering */}
+            {nearbyPlaces.map((loc, idx) => {
+              const lc = [
+                (loc.category || ''),
+                (loc.type || ''),
+                (loc.subcategory || ''),
+                (loc.class || ''),
+                ...(Array.isArray(loc.categories) ? loc.categories : []),
+                ...(Array.isArray(loc.tags) ? loc.tags : []),
+                ...(Array.isArray(loc?.properties?.categories) ? loc.properties.categories : []),
+              ]
+                .filter(Boolean)
+                .map((s) => String(s).toLowerCase());
+
+              const isToilet = lc.some((s) =>
+                s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+              );
+              const isPharmacy = lc.some((s) =>
+                s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
+              );
+              const baseIcon = isToilet ? categoryIcons['Toilet'] : isPharmacy ? categoryIcons['Pharmacy'] : categoryIcons['Restaurant'];
+
+              const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
+              const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
+              const isSelected =
+                Number.isFinite(selLat) &&
+                Number.isFinite(selLng) &&
+                Math.abs(selLat - loc.latitude) < 1e-6 &&
+                Math.abs(selLng - loc.longitude) < 1e-6;
+
+              const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
+
+              return (
                 <Marker
-                  key={`nearby-${loc.placeId}-${idx}`}
+                  key={`nearby-${loc.placeId || loc.name || idx}-${idx}`}
                   position={[loc.latitude, loc.longitude]}
-                  icon={categoryIcons['Restaurant']}
-                  eventHandlers={{
-                    click: () => onMarkerClick(loc)
-                  }}
+                  icon={icon}
+                  eventHandlers={{ click: () => onMarkerClick(loc) }}
+                  riseOnHover={true}
+                  zIndexOffset={isSelected ? 1200 : 900}
                 />
-              ))}
-            </MarkerClusterGroup>
+              );
+            })}
           </>
         ) : (
         <>
           {/* Category/location markers */}
-          {!selectedSearchBarPlace && !isRoutingActive && (
+          {!activeSearchLocation && !isRoutingActive && (
             shouldCluster ? (
               <MarkerClusterGroup disableClusteringAtZoom={18} spiderfyOnMaxZoom={true} zoomToBoundsOnClick={true}>
                 {locations.map((loc, idx) => {
-                  const icon = getIconForLocation(loc);
-                  return (
-                    <Marker
-                      key={`${loc.name}-${idx}`}
-                      position={[loc.latitude, loc.longitude]}
-                      icon={icon}
-                      eventHandlers={{
-                        click: () => onMarkerClick(loc)
-                      }}
-                      className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
-                    />
-                  );
-                })}
-              </MarkerClusterGroup>
-            ) : (
-              locations.map((loc, idx) => {
-                const icon = getIconForLocation(loc);
+                const baseIcon = getIconForLocation(loc);
+                const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
+                const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
+                const isSelected =
+                  Number.isFinite(selLat) &&
+                  Number.isFinite(selLng) &&
+                  Math.abs(selLat - loc.latitude) < 1e-6 &&
+                  Math.abs(selLng - loc.longitude) < 1e-6;
+
+                const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
+
                 return (
                   <Marker
                     key={`${loc.name}-${idx}`}
@@ -214,6 +295,34 @@ const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng)
                       click: () => onMarkerClick(loc)
                     }}
                     className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
+                    zIndexOffset={isSelected ? 1100 : 0}
+                  />
+                );
+              })}
+              </MarkerClusterGroup>
+            ) : (
+              locations.map((loc, idx) => {
+                const baseIcon = getIconForLocation(loc);
+                const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
+                const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
+                const isSelected =
+                  Number.isFinite(selLat) &&
+                  Number.isFinite(selLng) &&
+                  Math.abs(selLat - loc.latitude) < 1e-6 &&
+                  Math.abs(selLng - loc.longitude) < 1e-6;
+
+                const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
+
+                return (
+                  <Marker
+                    key={`${loc.name}-${idx}`}
+                    position={[loc.latitude, loc.longitude]}
+                    icon={icon}
+                    eventHandlers={{
+                      click: () => onMarkerClick(loc)
+                    }}
+                    className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
+                    zIndexOffset={isSelected ? 1100 : 0}
                   />
                 );
               })
@@ -239,8 +348,10 @@ function MapComponentTesting({  }) {
   const [locations, setLocations] = useState([]);
   const [activeOption, setActiveOption] = useState('Major Town');
   const [selectedSearchPlace, setSelectedSearchPlace] = useState(null);
+  // Keep a single source of truth for the search-bar-selected place
   const [selectedSearchBarPlace, setSelectedSearchBarPlace] = useState(null);
-  const [searchNearbyPlaces, setSearchNearbyPlaces] = useState([]);
+  const [activeSearchLocation, setActiveSearchLocation] = useState(null);
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [zoomTrigger, setZoomTrigger] = useState(0);
   const [searchBarZoomTrigger, setSearchBarZoomTrigger] = useState(0);
@@ -249,7 +360,164 @@ function MapComponentTesting({  }) {
   const [isRoutingActive, setIsRoutingActive] = useState(false);
   const [routeAlternatives, setRouteAlternatives] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
-  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const [searchNearbyPlaces, setSearchNearbyPlaces] = useState([]);
+  // Keep backend-sourced nearby places separate, then combine
+  const [backendNearbyPlaces, setBackendNearbyPlaces] = useState([]);
+  // Default nearby filter: Restaurants
+  const [nearbyFilterCategory, setNearbyFilterCategory] = useState('restaurant');
+
+  // Merge and dedup helper: prefers backend entries first, then external "fetch" entries
+  const mergeAndDedupNearby = useCallback((externalArr = [], backendArr = []) => {
+    const result = [];
+    const seen = new Set();
+    const getLat = (p) =>
+      typeof p?.geometry?.location?.lat === 'function'
+        ? p.geometry.location.lat()
+        : p?.geometry?.location?.lat ?? p.latitude;
+    const getLng = (p) =>
+      typeof p?.geometry?.location?.lng === 'function'
+        ? p.geometry.location.lng()
+        : p?.geometry?.location?.lng ?? p.longitude;
+    const makeKey = (p) => {
+      const name = String(p?.name || '').toLowerCase().trim();
+      const lat = getLat(p);
+      const lng = getLng(p);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return `${name}|unknown`;
+      // Round to 6 decimals to avoid floating noise
+      return `${name}|${lat.toFixed(6)}|${lng.toFixed(6)}`;
+    };
+
+    // Backend first to preserve its precedence
+    for (const p of backendArr) {
+      const key = makeKey(p);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(p);
+      }
+    }
+    // External list next
+    for (const p of externalArr) {
+      const key = makeKey(p);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(p);
+      }
+    }
+    return result;
+  }, []);
+
+  // Fetch backend locations and approved businesses near the selected search place
+  useEffect(() => {
+    if (!selectedSearchBarPlace) {
+      setBackendNearbyPlaces([]);
+      return;
+    }
+
+    const lat =
+      selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+    const lng =
+      selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      setBackendNearbyPlaces([]);
+      return;
+    }
+
+    const backendUrl = import.meta.env.VITE_DEPLOYMENT_BACKEND || 'http://localhost:5050';
+    const radiusMeters = 1500;
+
+    // Local Haversine in meters
+    const distanceMeters = (aLat, aLng, bLat, bLng) => {
+      const toRad = (v) => (v * Math.PI) / 180;
+      const R = 6371000;
+      const dLat = toRad(bLat - aLat);
+      const dLon = toRad(bLng - aLng);
+      const lat1 = toRad(aLat);
+      const lat2 = toRad(bLat);
+      const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(h));
+    };
+
+    const fetchNearbyBackend = async () => {
+      try {
+        const [locRes, bizRes] = await Promise.all([
+          fetch(`${backendUrl}/api/locations`),
+          fetch(`${backendUrl}/api/businesses/approved`),
+        ]);
+
+        const locations = locRes.ok ? await locRes.json() : [];
+        const bizJson = bizRes.ok ? await bizRes.json() : null;
+        const businesses = Array.isArray(bizJson?.data) ? bizJson.data : [];
+
+        const nearbyLocations = locations
+          .filter((l) => Number.isFinite(l?.latitude) && Number.isFinite(l?.longitude))
+          .filter((l) => distanceMeters(lat, lng, l.latitude, l.longitude) <= radiusMeters)
+          .map((l) => ({
+            id: l._id ?? l.id,
+            place_id: l._id ?? l.id,
+            name: l.name,
+            latitude: l.latitude,
+            longitude: l.longitude,
+            category: l.category || l.type,
+            type: l.type || 'location',
+            vicinity: l.division || l.description || '',
+            description: l.description,
+            division: l.division,
+            url: l.url,
+            image: l.image, // Location image field
+            status: l.status,
+            source: 'backend_location',
+            // Additional metadata for display
+            createdAt: l.createdAt,
+            updatedAt: l.updatedAt,
+          }));
+
+        const nearbyBusinesses = businesses
+          .filter((b) => Number.isFinite(b?.latitude) && Number.isFinite(b?.longitude))
+          .filter((b) => distanceMeters(lat, lng, b.latitude, b.longitude) <= radiusMeters)
+          .map((b) => ({
+            id: b._id,
+            place_id: b._id,
+            name: b.name,
+            latitude: b.latitude,
+            longitude: b.longitude,
+            category: b.category,
+            type: 'business',
+            vicinity: b.address || '',
+            description: b.description,
+            address: b.address,
+            phone: b.phone,
+            website: b.website,
+            openingHours: b.openingHours,
+            owner: b.owner,
+            ownerEmail: b.ownerEmail,
+            businessImage: b.businessImage, // Business image field
+            ownerAvatar: b.ownerAvatar,
+            status: b.status,
+            priority: b.priority,
+            submissionDate: b.submissionDate,
+            source: 'backend_business',
+            // Additional metadata for display
+            createdAt: b.createdAt,
+            updatedAt: b.updatedAt,
+          }));
+
+        setBackendNearbyPlaces([...nearbyLocations, ...nearbyBusinesses]);
+      } catch (err) {
+        console.warn('Failed fetching backend nearby places:', err);
+        setBackendNearbyPlaces([]);
+      }
+    };
+
+    fetchNearbyBackend();
+  }, [selectedSearchBarPlace]);
+
+  // Combine external "fetch locations" with backend nearby and dedup
+  const combinedNearbyPlaces = useMemo(() => {
+    return mergeAndDedupNearby(searchNearbyPlaces, backendNearbyPlaces);
+  }, [searchNearbyPlaces, backendNearbyPlaces, mergeAndDedupNearby]);
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [destinationInput, setDestinationInput] = useState('');
@@ -380,6 +648,8 @@ function MapComponentTesting({  }) {
     if (leftSidebarRef.current && leftSidebarRef.current.clearAllRouting) {
       leftSidebarRef.current.clearAllRouting();
     }
+    setActiveSearchLocation(null);
+    setSelectedSearchBarPlace(null);
     setSelectedSearchBarPlace({ ...place });
   };
 
@@ -519,12 +789,53 @@ function MapComponentTesting({  }) {
     }
   }, [isRoutingActive]);
 
+  // Keep map view centered on search anchor when filter changes
+  useEffect(() => {
+    if (selectedSearchBarPlace && mapRef.current) {
+      const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
+      const lng = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        mapRef.current.panTo([lat, lng], { animate: true });
+      }
+    }
+  }, [nearbyFilterCategory, selectedSearchBarPlace]);
+
+  // Pan to activeSearchLocation as it changes (recent/bookmark selections)
+  useEffect(() => {
+    if (activeSearchLocation && mapRef.current) {
+      const lat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
+      const lng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        mapRef.current.panTo([lat, lng], { animate: true });
+      }
+    }
+  }, [activeSearchLocation]);
+
   // NEW: Clear search bar plotting when starting route direction
   useEffect(() => {
     if (routeInfo.startingPointCoords || routeInfo.destinationCoords || isRoutingActive) {
       setSelectedSearchBarPlace(null);
     }
   }, [routeInfo.startingPointCoords, routeInfo.destinationCoords, isRoutingActive]);
+
+  // Use route destination (or starting point) as anchor for nearby while routing
+  useEffect(() => {
+    if (!isRoutingActive) return;
+    const dest = routeInfo.destinationCoords || routeInfo.startingPointCoords;
+    const lat = dest?.lat;
+    const lng = dest?.lng;
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      setSelectedSearchBarPlace({
+        name: routeInfo.destination || 'Destination',
+        latitude: lat,
+        longitude: lng,
+        type: 'Destination'
+      });
+    } else {
+      setSelectedSearchBarPlace(null);
+    }
+  }, [isRoutingActive, routeInfo.destinationCoords, routeInfo.startingPointCoords, routeInfo.destination]);
 
   // Memoize callback functions to prevent infinite re-renders
   const handleRouteAlternativesChange = useCallback((alternatives, selectedIndex) => {
@@ -535,6 +846,49 @@ function MapComponentTesting({  }) {
   const handleNearbyPlacesChange = useCallback((places) => {
     setNearbyPlaces(places);
   }, []);
+
+  // Robust category matcher (Restaurants, Toilets, Pharmacies)
+  const matchesCategory = useCallback((place, cat) => {
+    if (!cat || cat === 'all') return true;
+    const tokens = [
+      (place.category || ''),
+      (place.type || ''),
+      (place.subcategory || ''),
+      (place.class || ''),
+      ...(Array.isArray(place.categories) ? place.categories : []),
+      ...(Array.isArray(place.tags) ? place.tags : []),
+      ...(Array.isArray(place?.properties?.categories) ? place.properties.categories : []),
+    ]
+      .filter(Boolean)
+      .map((s) => String(s).toLowerCase());
+
+    if (cat === 'restaurant') {
+      return tokens.some((s) =>
+        s.includes('restaurant') || s.includes('food') || s.includes('cafe') || s.includes('eat')
+      );
+    }
+    if (cat === 'toilet') {
+      return tokens.some((s) =>
+        s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+      );
+    }
+    if (cat === 'pharmacy') {
+      return tokens.some((s) =>
+        s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
+      );
+    }
+    if (cat === 'hotel') {
+      return tokens.some((s) =>
+        s.includes('hotel') || s.includes('accommodation') || s.includes('guest')
+      );
+    }
+    return false;
+  }, []);
+
+  // Filter nearby places around the search location by selected category (use combined)
+  const filteredNearbyPlaces = useMemo(() => {
+    return (combinedNearbyPlaces || []).filter((p) => matchesCategory(p, nearbyFilterCategory));
+  }, [combinedNearbyPlaces, nearbyFilterCategory, matchesCategory]);
 
   const handleRouteInfoChange = useCallback((info) => {
     setRouteInfo(info);
@@ -823,6 +1177,13 @@ function MapComponentTesting({  }) {
         setIsExpand={setIsSidebarExpanded}
         destinationInput={destinationInput}
         setDestinationInput={setDestinationInput}
+        selectedSearchBarPlace={selectedSearchBarPlace}
+        // Use combined list so backend+external stay together
+        searchNearbyPlaces={combinedNearbyPlaces}
+        nearbyFilterCategory={nearbyFilterCategory}
+        onNearbyFilterCategoryChange={setNearbyFilterCategory}
+        setActiveSearchLocation={setActiveSearchLocation}
+        activeSearchLocation={activeSearchLocation}
       />
 
       {/* Top Header Container */}
@@ -883,21 +1244,29 @@ function MapComponentTesting({  }) {
         zoomControl={false}
         scrollWheelZoom={true}
         ref={mapRef}
+        whenCreated={(mapInstance) => { mapRef.current = mapInstance; }}
       >
         <TileLayer key={baseLayer.id} url={baseLayer.url} attribution={baseLayer.attribution} />
         <MapContent
           locations={locations}
-          nearbyPlaces={searchNearbyPlaces}
-          selectedSearchBarPlace={selectedSearchBarPlace}
+          nearbyPlaces={filteredNearbyPlaces}
+          activeSearchLocation={activeSearchLocation || selectedSearchBarPlace}
           activeCategory={activeOption}
           isRoutingActive={isRoutingActive}
           onMarkerClick={handleMarkerClick}
           selectedLocation={selectedLocation}
         />
-        {/* NEW: Only render search plotting when not routing */}
-        {selectedSearchBarPlace && !isRoutingActive && (
+        {/* Allow nearby fetcher to run during routing so markers show */}
+        {selectedSearchBarPlace && (
           <SearchHandlerTesting
             selectedSearchBarPlace={selectedSearchBarPlace}
+            setSearchNearbyPlaces={setSearchNearbyPlaces}
+            searchBarZoomTrigger={searchBarZoomTrigger}
+          />
+        )}
+        {activeSearchLocation && (
+          <SearchHandlerTesting
+            selectedSearchBarPlace={activeSearchLocation}
             setSearchNearbyPlaces={setSearchNearbyPlaces}
             searchBarZoomTrigger={searchBarZoomTrigger}
           />
@@ -1022,7 +1391,7 @@ function MapComponentTesting({  }) {
             top: '50%',
             left: '350px',
             transform: 'translateY(-50%)',
-            zIndex: 10
+            zIndex: 20000
           }}
         >
           <CustomInfoWindow

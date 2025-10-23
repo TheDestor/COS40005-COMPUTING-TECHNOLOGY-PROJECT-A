@@ -1071,6 +1071,26 @@
 }
 
 @media (max-width: 480px) {
+  .sidebar100 {
+    height: 60px;
+    padding: 0 8px;
+  }
+
+  .menu-icon100,
+  .menu-item100,
+  .menu-item101 {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+
+  .icon100,
+  .menu-icon100 > svg {
+    font-size: 22px;
+    margin-bottom: 0;
+  }
+
   .side-panel100 {
     height: 50vh;
   }

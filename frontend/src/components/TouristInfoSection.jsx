@@ -69,7 +69,7 @@ const CacheDebugPanel = () => {
   );
 };
 
-const TouristInfoSection = ({ selectedLocation }) => {
+function TouristInfoSection({ selectedLocation }) {
   const [reels, setReels] = useState([]);
   const [containerStyle, setContainerStyle] = useState({ top: '60px' });
   const [loading, setLoading] = useState(false);
@@ -368,7 +368,7 @@ const TouristInfoSection = ({ selectedLocation }) => {
 
       <div 
         className={`tourist-info-container ${isCollapsed ? 'collapsed' : ''}`}
-        style={containerStyle}
+        style={{ ...containerStyle, zIndex: 20000 }}
       >
         
 

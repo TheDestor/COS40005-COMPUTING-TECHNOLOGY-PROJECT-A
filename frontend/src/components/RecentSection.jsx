@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import "../styles/RecentSection.css";
 import { FaArrowLeft, FaMap, FaClock, FaTrashAlt } from "react-icons/fa";
-import fallbackImage from "../assets/Kuching.png";
+import fallbackImage from "../assets/default.png";
 import { toast } from "sonner";
 
 function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) {
@@ -91,11 +91,11 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
           <div className="recent-list">
             {history.map((item, index) => (
               <div
-                key={index}
-                className="recent-item"
-                onClick={() => {
-                  onItemClick(item);
-                  toast.success(`Plotted "${item.name}" on the map`);
+                  key={index}
+                  className="recent-item"
+                  onClick={() => {
+                      onItemClick(item);
+                      toast.success(`Plotted "${item.name}" on the map`);
                 }}
               >
                 <input
