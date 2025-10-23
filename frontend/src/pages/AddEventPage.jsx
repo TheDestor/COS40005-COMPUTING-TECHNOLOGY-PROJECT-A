@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight, FaChevronUp } from 'react-icons/fa';
+import { FaCamera, FaCalendar, FaMapMarkerAlt, FaClock, FaTimes, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight, FaChevronUp, FaCircle } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Sidebar from '../components/Sidebar';
@@ -97,15 +97,25 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
 };
 
 // Event Card Component for Past and Upcoming Events
-const EventCard = ({ event, type, onEdit, onDelete, onClick }) => {
+const EventCard = ({ event, type, onEdit, onDelete, onClick, isNew = false, onMarkAsSeen }) => {
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-  const formatTimeRange = (startTime, endTime) => {
-    if (!startTime || !endTime) return 'Time not specified';
-    return `${startTime} - ${endTime}`;
+  // Prefer dailySchedule times if present; fallback to uniform start/end
+  const formatTimeRange = () => {
+    const ds = Array.isArray(event.dailySchedule)
+      ? event.dailySchedule.filter(e => e?.startTime && e?.endTime)
+      : [];
+
+    if (ds.length > 0) {
+      const earliest = ds.slice().sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      return `${earliest.startTime} - ${earliest.endTime}`;
+    }
+
+    if (!event.startTime || !event.endTime) return 'Time not specified';
+    return `${event.startTime} - ${event.endTime}`;
   };
 
   const copyToClipboard = (text) => {
@@ -116,13 +126,24 @@ const EventCard = ({ event, type, onEdit, onDelete, onClick }) => {
     });
   };
 
+  const handleCardClick = (e) => {
+    // Mark event as seen if it's new
+    if (isNew && onMarkAsSeen) {
+      onMarkAsSeen(event._id);
+    }
+    onClick(e);
+  };
+
   return (
     <div 
-      className="event-card"
-      onClick={onClick}
+      className="event-card ae-event-card"
+      onClick={handleCardClick}
     >
       <div className="event-image">
         <img src={event.imageUrl} alt={event.name} />
+        {isNew && (
+          <div className="event-new-indicator"></div>
+        )}
         <div className="event-date-badge">
           <FaCalendar className="date-icon-ae" />
           <span>{formatDate(event.startDate)}</span>
@@ -199,7 +220,7 @@ const EventCard = ({ event, type, onEdit, onDelete, onClick }) => {
             <FaClock className="detail-icon" />
             <div className="detail-content">
               <span className="detail-label">Time</span>
-              <span className="detail-value">{formatTimeRange(event.startTime, event.endTime)}</span>
+              <span className="detail-value">{formatTimeRange()}</span>
             </div>
           </div>
         </div>
@@ -275,7 +296,100 @@ const MapModal = ({ latitude, longitude }) => {
 const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditForm, uploadedImage, setUploadedImage, imageFile, setImageFile }) => {
   const [isEditMode, setIsEditMode] = useState(type === 'edit');
   const eventTypes = ['Festival', 'Workshop & Seminars', 'Community & Seasonal Bazaars', 'Music, Arts & Performance', 'Food & Culinary', 'Sporting', 'Art & Performance'];
-  
+
+  // Per-day schedule helpers and state for edit modal
+  const toYMDModal = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const fromYMDModal = (str) => {
+    const [y, m, d] = (str || '').split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const getDbTimesForKeyModal = (keyYmd) => {
+    const match = event?.dailySchedule?.find(ds => {
+      const k = toYMDModal(new Date(ds.date));
+      return k === keyYmd;
+    });
+    return match && match.startTime && match.endTime
+      ? { startTime: match.startTime, endTime: match.endTime }
+      : null;
+  };
+
+  const getDatesInRangeModal = (startStr, endStr) => {
+    const s = fromYMDModal(startStr);
+    const e = fromYMDModal(endStr);
+    const out = [];
+    if (!s || !e) return out;
+    const d = new Date(s);
+    d.setHours(0, 0, 0, 0);
+    const e0 = new Date(e);
+    e0.setHours(0, 0, 0, 0);
+    while (d <= e0) {
+      out.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  };
+
+  const formatTimeDisplayModal = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+
+  const [editTimeMode, setEditTimeMode] = useState('uniform'); // 'uniform' | 'advanced'
+  const [modalDailyTimes, setModalDailyTimes] = useState({}); // { 'YYYY-MM-DD': { startTime, endTime } }
+  const [selectedScheduleDateModal, setSelectedScheduleDateModal] = useState(null);
+  const [perDayDropdownOpenModal, setPerDayDropdownOpenModal] = useState(false);
+
+  // Add: summary toggle state and date formatter
+  const [isModalScheduleSummaryOpen, setModalScheduleSummaryOpen] = useState(false);
+  const formatSelectedDateModal = (date) => {
+    if (!date) return '';
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  // Helper: min start time for today is current time + 1 minute
+  const getMinStartTimeForDateModal = (dateStr) => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    if (dateStr === todayStr) {
+      let hh = now.getHours();
+      let mm = now.getMinutes() + 1; // strictly later than now
+      if (mm >= 60) { hh += 1; mm = 0; }
+      if (hh >= 24) { hh = 23; mm = 59; } // clamp near day end
+      return `${pad(hh)}:${pad(mm)}`;
+    }
+    return undefined;
+  };
+
+  useEffect(() => {
+    if (editTimeMode === 'advanced' && editForm.startDate && editForm.endDate) {
+        const dates = getDatesInRangeModal(editForm.startDate, editForm.endDate);
+        if (!selectedScheduleDateModal && dates.length) {
+            setSelectedScheduleDateModal(toYMDModal(dates[0]));
+        }
+    }
+  }, [editTimeMode, editForm.startDate, editForm.endDate, selectedScheduleDateModal]);
+
+  // Lock page scroll when modal summary overlay is open
+  useEffect(() => {
+    if (isModalScheduleSummaryOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isModalScheduleSummaryOpen]);
+
   useEffect(() => {
     if (type === 'edit' && event) {
       setIsEditMode(true);
@@ -297,11 +411,10 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
         return `${year}-${month}-${day}`;
       };
 
-      // Get tomorrow's date for past events
-      const getTomorrowDate = () => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return formatDateForInput(tomorrow);
+      // Get today's date for past events
+      const getTodayDate = () => {
+        const today = new Date();
+        return formatDateForInput(today);
       };
 
       // Create initial form data object
@@ -311,15 +424,16 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
         eventType: event.eventType,
         targetAudience: event.targetAudience.join(', '),
         registrationRequired: event.registrationRequired,
-        // For past events, use tomorrow's date. For upcoming events, use existing dates
-        startDate: isPastEvent ? getTomorrowDate() : formatDateForInput(event.startDate),
-        endDate: isPastEvent ? getTomorrowDate() : formatDateForInput(event.endDate),
+        // For past events, use today's date. For upcoming events, use existing dates
+        startDate: isPastEvent ? getTodayDate() : formatDateForInput(event.startDate),
+        endDate: isPastEvent ? getTodayDate() : formatDateForInput(event.endDate),
         startTime: event.startTime,
         endTime: event.endTime,
         latitude: event.coordinates?.latitude || 1.5533,
         longitude: event.coordinates?.longitude || 110.3592,
         eventOrganizers: event.eventOrganizers || '',
-        eventHashtags: event.eventHashtags || ''
+        eventHashtags: event.eventHashtags || '',
+        dailySchedule: event.dailySchedule || []
       };
 
       // For past events, store the original image URL
@@ -330,34 +444,112 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
       // Set the form data and uploaded image
       setEditForm(initialFormData);
       setUploadedImage(event.imageUrl);
+
+      // Set time mode based on presence of per-day schedule in backend
+      const hasDaily = Array.isArray(event.dailySchedule) && event.dailySchedule.length > 0;
+      setEditTimeMode(hasDaily ? 'advanced' : 'uniform');
+
+      // Seed per-day times directly from backend schedule (no defaults here)
+      setModalDailyTimes(() => {
+        const next = {};
+        if (hasDaily) {
+          event.dailySchedule.forEach((entry) => {
+            const k = toYMDModal(new Date(entry.date));
+            if (entry.startTime && entry.endTime) {
+              next[k] = { startTime: entry.startTime, endTime: entry.endTime };
+            }
+          });
+        } else if (isPastEvent) {
+          // Past event without daily schedule: show uniform times across current range
+          const rangeDates = getDatesInRangeModal(initialFormData.startDate, initialFormData.endDate);
+          rangeDates.forEach((d) => {
+            const k = toYMDModal(d);
+            next[k] = {
+              startTime: event.startTime || '',
+              endTime: event.endTime || '',
+            };
+          });
+        }
+        return next;
+      });
+
+      const rangeDates = getDatesInRangeModal(editForm.startDate, editForm.endDate);
+      setSelectedScheduleDateModal(rangeDates.length ? toYMDModal(rangeDates[0]) : null);
     } else {
       setIsEditMode(false);
     }
   }, [event, type]);
 
+  // If advanced mode is enabled but state is empty, rehydrate from backend
+  useEffect(() => {
+    if (editTimeMode === 'advanced' && event?.dailySchedule?.length && Object.keys(modalDailyTimes || {}).length === 0) {
+      const next = {};
+      event.dailySchedule.forEach((entry) => {
+        const k = toYMDModal(new Date(entry.date));
+        if (entry.startTime && entry.endTime) {
+          next[k] = { startTime: entry.startTime, endTime: entry.endTime };
+        }
+      });
+      setModalDailyTimes(next);
+    }
+  }, [editTimeMode, event, modalDailyTimes]);
+
+  // Keep editForm.dailySchedule in sync with modal edits
+  useEffect(() => {
+    if (editTimeMode === 'advanced') {
+      const payload = Object.entries(modalDailyTimes).map(([k, t]) => ({
+        date: new Date(fromYMDModal(k)).toISOString(),
+        startTime: t.startTime,
+        endTime: t.endTime,
+      }));
+      setEditForm((prev) => ({ ...prev, dailySchedule: payload }));
+    } else {
+      setEditForm((prev) => ({ ...prev, dailySchedule: [] }));
+    }
+  }, [editTimeMode, modalDailyTimes, setEditForm]);
+
+  const togglePerDayDropdownModal = () => setPerDayDropdownOpenModal((o) => !o);
+  const selectPerDayDayModal = (d) => {
+    const k = toYMDModal(d);
+    setSelectedScheduleDateModal(k);
+    setPerDayDropdownOpenModal(false);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'eventHashtags') {
-      const allowedChars = /^[A-Za-z0-9#,]*$/;
-      const tagFormat = /^#?[A-Za-z0-9]+$/;
-
+      // Allow letters, numbers, commas, spaces, and '#'
+      const allowedChars = /^[A-Za-z0-9#,\s]*$/;
       if (value && !allowedChars.test(value)) {
-        toast.error('Only letters, numbers, commas, and # are allowed.');
+        toast.error('Only letters, numbers, commas, spaces, and # are allowed.');
         return;
       }
-
-      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-      if (tags.some(t => !tagFormat.test(t))) {
-        toast.error('Each hashtag must be alphanumeric, optionally starting with #.');
-        return;
-      }
+      // Do not enforce per-tag format while typing
     }
 
     setEditForm(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // If in advanced mode and date changes, update per-day schedule
+    if (editTimeMode === 'advanced' && (name === 'startDate' || name === 'endDate')) {
+      const updatedForm = { ...editForm, [name]: value };
+      if (updatedForm.startDate && updatedForm.endDate) {
+        const dates = getDatesInRangeModal(updatedForm.startDate, updatedForm.endDate);
+        const newDailyTimes = {};
+        dates.forEach((d) => {
+          const k = toYMDModal(d);
+          // Keep existing times if they exist, otherwise use default
+          newDailyTimes[k] = modalDailyTimes[k] || {
+            startTime: editForm.startTime || '09:00',
+            endTime: editForm.endTime || '17:00',
+          };
+        });
+        setModalDailyTimes(newDailyTimes);
+      }
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -397,9 +589,73 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
   };
 
   const formatTimeRange = (startTime, endTime) => {
-    if (!startTime || !endTime) return 'Time not specified';
-    return `${startTime} - ${endTime}`;
+    const s = formatTimeDisplayModal(startTime);
+    const e = formatTimeDisplayModal(endTime);
+    return s && e ? `${s} - ${e}` : (s || e || '');
   };
+
+  // Always show a time range, even if event hasn't started or has ended
+  const getTodaysTime = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const eventStartDate = new Date(event.startDate);
+    eventStartDate.setHours(0, 0, 0, 0);
+    const eventEndDate = new Date(event.endDate);
+    eventEndDate.setHours(0, 0, 0, 0);
+
+    const hasDaily = Array.isArray(event.dailySchedule) && event.dailySchedule.length > 0;
+    const uniform = formatTimeRange(event.startTime, event.endTime);
+
+    const findScheduleTimeForDate = (date) => {
+      if (!hasDaily) return null;
+      const entry = event.dailySchedule.find((d) => {
+        if (!d?.date) return false;
+        const dd = new Date(d.date);
+        dd.setHours(0, 0, 0, 0);
+        return dd.getTime() === date.getTime();
+      });
+      return entry?.startTime && entry?.endTime ? `${entry.startTime} - ${entry.endTime}` : null;
+    };
+
+    if (today < eventStartDate) {
+      if (hasDaily) {
+        const first = event.dailySchedule
+          .slice()
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .find((d) => d.startTime && d.endTime);
+        if (first) return `${first.startTime} - ${first.endTime}`;
+      }
+      return uniform;
+    }
+
+    if (today > eventEndDate) {
+      if (hasDaily) {
+        const last = event.dailySchedule
+          .slice()
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .reverse()
+          .find((d) => d.startTime && d.endTime);
+        if (last) return `${last.startTime} - ${last.endTime}`;
+      }
+      return uniform;
+    }
+
+    return findScheduleTimeForDate(today) || uniform;
+  };
+
+  // State for view schedule modal
+  const [isViewScheduleModalOpen, setViewScheduleModalOpen] = useState(false);
+
+  // Lock page scroll when view schedule modal is open
+  useEffect(() => {
+    if (isViewScheduleModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isViewScheduleModalOpen]);
 
   if (!isOpen || !event) return null;
 
@@ -420,7 +676,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
             </div>
             <div className="modal-body edit-modal-body">
               <div className="event-form-container-ae edit-event-form">
-                <div className="event-form-left">
+                <div className="event-form-left ae-form-left">
                   <div className="form-group-ae">
                     <label>Event Name</label>
                     <input
@@ -460,15 +716,24 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                   <div className="form-group-ae">
                     <label>Event Hashtags</label>
                     <input
-                      type="text"
-                      name="eventHashtags"
-                      value={editForm.eventHashtags || ''}
-                      onChange={handleInputChange}
-                      className="form-input"
-                      placeholder="e.g., #Festival, #Sarawak, #Culture"
-                      pattern="^[A-Za-z0-9#,]+$"
-                      title="Only alphanumeric characters, commas, and # allowed."
-                    />
+                    type="text"
+                    name="eventHashtags"
+                    value={editForm.eventHashtags || ''}
+                    onChange={handleInputChange}
+                    onBlur={(e) => {
+                      const normalized = (e.target.value || '')
+                        .split(',')
+                        .map(t => t.trim())
+                        .filter(Boolean)
+                        .map(t => `#${t.replace(/^#+/, '')}`)
+                        .join(', ');
+                      setEditForm(prev => ({ ...prev, eventHashtags: normalized }));
+                    }}
+                    className="form-input"
+                    placeholder="e.g., #Festival, #Sarawak, #Culture"
+                    pattern="^[A-Za-z0-9#,\s]+$"
+                    title="Only alphanumeric characters, commas, spaces, and # allowed."
+                  />
                     <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                       Separate multiple hashtags with commas
                     </small>
@@ -524,112 +789,9 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       }}
                     />
                   </div>
-
-                  <div className="form-group-ae">
-                    <label>Target Audience</label>
-                    <div className="checkbox-group-av">
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={editForm.targetAudience?.includes('Tourist') || false}
-                          onChange={(e) => {
-                            const audiences = editForm.targetAudience?.split(', ').filter(a => a) || [];
-                            if (e.target.checked) {
-                              if (!audiences.includes('Tourist')) {
-                                audiences.push('Tourist');
-                              }
-                            } else {
-                              const index = audiences.indexOf('Tourist');
-                              if (index > -1) audiences.splice(index, 1);
-                            }
-                            setEditForm(prev => ({
-                              ...prev,
-                              targetAudience: audiences.join(', ')
-                            }));
-                          }}
-                        />
-                        <span className="custom-checkbox"></span>
-                        Tourist
-                      </label>
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={editForm.targetAudience?.includes('Local Business') || false}
-                          onChange={(e) => {
-                            const audiences = editForm.targetAudience?.split(', ').filter(a => a) || [];
-                            if (e.target.checked) {
-                              if (!audiences.includes('Local Business')) {
-                                audiences.push('Local Business');
-                              }
-                            } else {
-                              const index = audiences.indexOf('Local Business');
-                              if (index > -1) audiences.splice(index, 1);
-                            }
-                            setEditForm(prev => ({
-                              ...prev,
-                              targetAudience: audiences.join(', ')
-                            }));
-                          }}
-                        />
-                        <span className="custom-checkbox"></span>
-                        Local Business
-                      </label>
-                    </div>
-                    {editForm.targetAudience?.split(', ').some(a => 
-                      a && !['Tourist', 'Local Business'].includes(a)
-                    ) && (
-                      <input
-                        type="text"
-                        placeholder="Specify other audiences (comma-separated)"
-                        value={editForm.targetAudience?.split(', ').filter(a => 
-                          a && !['Tourist', 'Local Business'].includes(a)
-                        ).join(', ') || ''}
-                        onChange={(e) => {
-                          const otherAudiences = e.target.value.split(',').map(a => a.trim()).filter(a => a);
-                          const standardAudiences = (editForm.targetAudience || '').split(', ').filter(a => 
-                            ['Tourist', 'Local Business'].includes(a)
-                          );
-                          setEditForm(prev => ({
-                            ...prev,
-                            targetAudience: [...standardAudiences, ...otherAudiences].join(', ')
-                          }));
-                        }}
-                        className="other-input form-input"
-                        style={{ marginTop: '10px' }}
-                      />
-                    )}
-                  </div>
-
-                  <div className="form-group-ae">
-                    <label>Registration Required?</label>
-                    <div className="radio-group-av">
-                      <label className="radio-label">
-                        <input
-                          type="radio"
-                          name="registrationRequired"
-                          value="Yes"
-                          checked={editForm.registrationRequired === 'Yes'}
-                          onChange={handleInputChange}
-                        />
-                        <span className="custom-radio"></span>
-                        Yes
-                      </label>
-                      <label className="radio-label">
-                        <input
-                          type="radio"
-                          name="registrationRequired"
-                          value="No"
-                          checked={editForm.registrationRequired === 'No'}
-                          onChange={handleInputChange}
-                        />
-                        <span className="custom-radio"></span>
-                        No
-                      </label>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="event-form-right">
+                <div className="event-form-right ae-form-right">
                   <div className="calendar-section">
                     <div className="form-group-ae">
                     <label>Start Date</label>
@@ -644,13 +806,16 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                   </div>
 
                     <div className="form-group-ae">
-                      <label>Start Time</label>
+                      <label>Start Time {editTimeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
                       <input
                         type="time"
                         name="startTime"
                         value={editForm.startTime || ''}
                         onChange={handleInputChange}
-                        className="form-input"
+                        className={`form-input ${editTimeMode === 'advanced' ? 'disabled-input' : ''}`}
+                        disabled={editTimeMode === 'advanced'}
+                        lang="en-GB"
+                        min={getMinStartTimeForDateModal(editForm.startDate)}
                       />
                     </div>
 
@@ -667,14 +832,177 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                   </div>
 
                     <div className="form-group-ae">
-                      <label>End Time</label>
+                      <label>End Time {editTimeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
                       <input
                         type="time"
                         name="endTime"
                         value={editForm.endTime || ''}
                         onChange={handleInputChange}
-                        className="form-input"
+                        className={`form-input ${editTimeMode === 'advanced' ? 'disabled-input' : ''}`}
+                        disabled={editTimeMode === 'advanced'}
+                        lang="en-GB"
                       />
+                    </div>
+
+                    {/* Per-day schedule toggle + inputs */}
+                    <div className="form-group-ae">
+                      <div className="edit-per-day-group">
+                        <div className="time-mode-toggle">
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={editTimeMode === 'advanced'}
+                              onChange={(e) => {
+                                const isAdvanced = e.target.checked;
+                                setEditTimeMode(isAdvanced ? 'advanced' : 'uniform');
+                                if (isAdvanced) {
+                                  // Keep existing entries; only prefill if none
+                                  if (Object.keys(modalDailyTimes || {}).length > 0) return;
+                                  const dates = getDatesInRangeModal(editForm.startDate, editForm.endDate);
+                                  const next = {};
+                                  dates.forEach((d) => {
+                                    const k = toYMDModal(d);
+                                    next[k] = {
+                                      startTime: event?.startTime || '09:00',
+                                      endTime: event?.endTime || '17:00',
+                                    };
+                                  });
+                                  setModalDailyTimes(next);
+                                  setSelectedScheduleDateModal(toYMDModal(dates[0]));
+                                } else {
+                                  setModalDailyTimes({});
+                                  setSelectedScheduleDateModal(null);
+                                }
+                              }}
+                            />
+                            Set different time per day
+                          </label>
+                        </div>
+
+                        {editTimeMode === 'advanced' && (
+                          <div className="per-day-schedule-compact">
+                            <div className="per-day-selector">
+                              <label className="per-day-selector-label">Select event day</label>
+                              <div className="custom-dropdown">
+                                <div
+                                  className="dropdown-selected"
+                                  onClick={togglePerDayDropdownModal}
+                                >
+                                  {selectedScheduleDateModal
+                                    ? new Date(fromYMDModal(selectedScheduleDateModal)).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                                    : 'Select event day'}
+                                  <span className={`dropdown-arrow ${perDayDropdownOpenModal ? 'open' : ''}`}>▼</span>
+                                </div>
+                                {perDayDropdownOpenModal && (
+                                  <div className="dropdown-options">
+                                    {getDatesInRangeModal(editForm.startDate, editForm.endDate).map((d) => {
+                                      const k = toYMDModal(d);
+                                      const isSelected = selectedScheduleDateModal === k;
+                                      return (
+                                        <div
+                                          key={k}
+                                          className={`dropdown-option ${isSelected ? 'selected' : ''}`}
+                                          onClick={() => selectPerDayDayModal(d)}
+                                        >
+                                          {d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="per-day-time-inputs">
+                              <input
+                                type="time"
+                                className="per-day-time-input"
+                                value={(modalDailyTimes[selectedScheduleDateModal]?.startTime) || ''}
+                                onChange={(e) =>
+                                  setModalDailyTimes(prev => ({
+                                    ...prev,
+                                    [selectedScheduleDateModal]: {
+                                      ...(prev[selectedScheduleDateModal] || {}),
+                                      startTime: e.target.value
+                                    }
+                                  }))
+                                }
+                                lang="en-GB"
+                                min={getMinStartTimeForDateModal(selectedScheduleDateModal)}
+                              />
+                              <span className="time-separator">—</span>
+                              <input
+                                type="time"
+                                className="per-day-time-input"
+                                value={(modalDailyTimes[selectedScheduleDateModal]?.endTime) || ''}
+                                min={(modalDailyTimes[selectedScheduleDateModal]?.startTime) || ''}
+                                onChange={(e) =>
+                                  setModalDailyTimes(prev => ({
+                                    ...prev,
+                                    [selectedScheduleDateModal]: {
+                                      ...(prev[selectedScheduleDateModal] || {}),
+                                      endTime: e.target.value
+                                    }
+                                  }))
+                                }
+                                lang="en-GB"
+                              />
+                            </div>
+                            
+                            <div className="admin-schedule-actions">
+                              <button
+                                type="button"
+                                className="schedule-summary-btn"
+                                onClick={() => setModalScheduleSummaryOpen(true)}
+                                aria-expanded={isModalScheduleSummaryOpen}
+                              >
+                                View Per-Day Schedule
+                              </button>
+                            </div>
+
+                            {isModalScheduleSummaryOpen && (
+                              <div
+                                className="ae-schedule-summary-overlay"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="aeScheduleSummaryTitle"
+                                onClick={() => setModalScheduleSummaryOpen(false)}
+                              >
+                                <div className="ae-schedule-summary-modal" onClick={e => e.stopPropagation()}>
+                                  <div className="ae-schedule-summary-header">
+                                    <h3 id="aeScheduleSummaryTitle">Per-Day Schedule Summary</h3>
+                                    <button
+                                      type="button"
+                                      className="ae-schedule-summary-close"
+                                      onClick={() => setModalScheduleSummaryOpen(false)}
+                                      aria-label="Close summary"
+                                      title="Close"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                  <div className="ae-schedule-summary-list">
+                                    {getDatesInRangeModal(editForm.startDate, editForm.endDate).map((d) => {
+                                      const k = toYMDModal(d);
+                                      const t = modalDailyTimes[k] || {};
+                                      return (
+                                        <div key={k} className="ae-summary-row">
+                                          <div className="ae-summary-date">{formatSelectedDateModal(d)}</div>
+                                          <div className="ae-summary-times">
+                                            {(t.startTime ? formatTimeDisplayModal(t.startTime) : '—')}
+                                            {' — '}
+                                            {(t.endTime ? formatTimeDisplayModal(t.endTime) : '—')}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -739,25 +1067,34 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                           if (eventEndDate < currentDate) {
                             // This is a past event - create new event instead of updating
                             const newEventData = {
-                              name: editForm.name,
-                              description: editForm.description,
-                              eventType: editForm.eventType,
-                              targetAudience: editForm.targetAudience?.split(',').map(a => a.trim()).filter(a => a) || [],
-                              registrationRequired: editForm.registrationRequired,
-                              startDate: editForm.startDate,
-                              endDate: editForm.endDate,
-                              startTime: editForm.startTime,
-                              endTime: editForm.endTime,
-                              latitude: parseFloat(editForm.latitude) || 1.5533,
-                              longitude: parseFloat(editForm.longitude) || 110.3592,
-                              eventOrganizers: editForm.eventOrganizers,
-                              // Fix: Handle both string and array formats for eventHashtags
-                              eventHashtags: typeof editForm.eventHashtags === 'string' 
-                                ? editForm.eventHashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
-                                : editForm.eventHashtags || [],
-                              imageFile: imageFile,
-                              originalImageUrl: editForm.originalImageUrl || event.imageUrl
-                            };
+              name: editForm.name,
+              description: editForm.description,
+              eventType: editForm.eventType,
+              targetAudience: editForm.targetAudience?.split(',').map(a => a.trim()).filter(a => a) || [],
+              registrationRequired: editForm.registrationRequired,
+              startDate: editForm.startDate,
+              endDate: editForm.endDate,
+              startTime: editForm.startTime,
+              endTime: editForm.endTime,
+              latitude: parseFloat(editForm.latitude) || 1.5533,
+              longitude: parseFloat(editForm.longitude) || 110.3592,
+              eventOrganizers: editForm.eventOrganizers,
+              // Fix: Handle both string and array formats for eventHashtags
+              eventHashtags: typeof editForm.eventHashtags === 'string' 
+                ? editForm.eventHashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
+                : editForm.eventHashtags || [],
+              imageFile: imageFile,
+              originalImageUrl: editForm.originalImageUrl || event.imageUrl
+            };
+
+            // Add normalized dailySchedule if present
+            if (Array.isArray(editForm.dailySchedule) && editForm.dailySchedule.length > 0) {
+              newEventData.dailySchedule = editForm.dailySchedule.map(entry => ({
+                date: new Date(entry.date).toISOString(),
+                startTime: entry.startTime,
+                endTime: entry.endTime
+              }));
+            }
 
                             // Check if we have an image (either new upload or existing)
                             if (!imageFile && !editForm.originalImageUrl && !event.imageUrl) {
@@ -812,7 +1149,33 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                   
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Time</span>
-                    <span className="modal-detail-value">{formatTimeRange(event.startTime, event.endTime)}</span>
+                    <span className="modal-detail-value">
+                      {(() => {
+                        const hasDailyTimes =
+                          Array.isArray(event.dailySchedule) &&
+                          event.dailySchedule.some(ds => ds?.startTime && ds?.endTime);
+
+                        const timeText = hasDailyTimes
+                          ? getTodaysTime()
+                          : formatTimeRange(event.startTime, event.endTime);
+
+                        return (
+                          <>
+                            {timeText}
+                            {!hasDailyTimes && ' (every date same time)'}
+                            {hasDailyTimes && (
+                              <button
+                                className="ae-view-schedule-btn"
+                                onClick={() => setViewScheduleModalOpen(true)}
+                                title="View all daily schedule times"
+                              >
+                                View Schedule
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </span>
                   </div>
                   
                   <div className="modal-detail-item">
@@ -879,6 +1242,48 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
             </div>
           </>
         )}
+
+        {/* View Schedule Modal Overlay */}
+        {isViewScheduleModalOpen && (
+          <div
+            className="ae-schedule-summary-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="viewScheduleModalTitle"
+            onClick={() => setViewScheduleModalOpen(false)}
+          >
+            <div className="ae-schedule-summary-modal" onClick={e => e.stopPropagation()}>
+              <div className="ae-schedule-summary-header">
+                <h3 id="viewScheduleModalTitle">Daily Schedule</h3>
+                <button
+                  type="button"
+                  className="ae-schedule-summary-close"
+                  onClick={() => setViewScheduleModalOpen(false)}
+                  aria-label="Close schedule summary"
+                  title="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="ae-schedule-summary-list">
+                {event.dailySchedule && Array.isArray(event.dailySchedule) && event.dailySchedule.map((entry) => (
+                  <div key={entry._id || entry.date} className="ae-summary-row">
+                    <div className="ae-summary-date ae-summary-date-view">
+                      {new Date(entry.date).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </div>
+                    <div className="ae-summary-times">
+                      {entry.startTime || '—'} — {entry.endTime || '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -891,6 +1296,25 @@ const AddEventPage = () => {
     const savedTab = localStorage.getItem('addEventPageActiveTab');
     return savedTab || 'Add Event';
   });
+
+  // NEW: time mode and per-day schedule
+  const [timeMode, setTimeMode] = useState('uniform'); // 'uniform' | 'advanced'
+  const [dailyTimes, setDailyTimes] = useState({}); // { 'YYYY-MM-DD': { startTime, endTime } }
+
+  // Must be declared BEFORE any useEffect that references them
+  const [isScheduleSummaryOpen, setScheduleSummaryOpen] = useState(false);
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState(null);
+  const [perDayDropdownOpen, setPerDayDropdownOpen] = useState(false);
+
+  // Prevent page scroll when modal is open
+  useEffect(() => {
+    if (isScheduleSummaryOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isScheduleSummaryOpen]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null); // 'clear' | 'publish' | 'delete'
   const [pendingDeleteEventId, setPendingDeleteEventId] = useState(null);
@@ -912,6 +1336,99 @@ const AddEventPage = () => {
   const contentRef = useRef(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+
+
+  // Enable summary button only when all per-day times are configured
+  const isAdvancedScheduleComplete = () => {
+    if (timeMode !== 'advanced' || !startDate || !endDate) return false;
+    const dates = getDatesInRange(startDate, endDate);
+    return dates.every(d => {
+      const k = toYMD(d);
+      const t = dailyTimes[k] || {};
+      return !!t.startTime && !!t.endTime;
+    });
+  };
+
+  // NEW: helpers for per-day schedule
+  const toYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const fromYMD = (str) => {
+    const [y, m, d] = (str || '').split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const getDatesInRange = (start, end) => {
+    if (!start || !end) return [];
+    const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const list = [];
+    for (let dt = new Date(s); dt <= e; dt.setDate(dt.getDate() + 1)) {
+      list.push(new Date(dt));
+    }
+    return list;
+  };
+
+  // Date and Time states
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // NEW: sync per-day entries when date range changes
+  useEffect(() => {
+    if (!startDate || !endDate) return;
+    const dates = getDatesInRange(startDate, endDate);
+    setDailyTimes(prev => {
+      const next = { ...prev };
+      const keysInRange = new Set(dates.map(d => toYMD(d)));
+      // add missing dates
+      dates.forEach(d => {
+        const k = toYMD(d);
+        if (!next[k]) {
+          next[k] = { startTime: startTime || '09:00', endTime: endTime || '17:00' };
+        }
+      });
+      // remove dates outside range
+      Object.keys(next).forEach(k => {
+        if (!keysInRange.has(k)) delete next[k];
+      });
+      return next;
+    });
+  }, [startDate, endDate, startTime, endTime]);
+
+  // Keep selected day within the current date range
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setSelectedScheduleDate(null);
+      return;
+    }
+    const dates = getDatesInRange(startDate, endDate);
+    const firstKey = dates.length ? toYMD(dates[0]) : null;
+    setSelectedScheduleDate(prev =>
+      prev && dates.some(d => toYMD(d) === prev) ? prev : firstKey
+    );
+  }, [startDate, endDate]);
+
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
@@ -924,28 +1441,6 @@ const AddEventPage = () => {
     onScroll(); // initialize visibility
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
-  
-  // Date and Time states
-  const [showStartCalendar, setShowStartCalendar] = useState(false);
-  const [showEndCalendar, setShowEndCalendar] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-
-  const [startDate, setStartDate] = useState(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow;
-  });
-  const [endDate, setEndDate] = useState(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow;
-  });
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   
   // Coordinates state
   const [latitude, setLatitude] = useState(1.5533);
@@ -967,6 +1462,34 @@ const AddEventPage = () => {
   const [editForm, setEditForm] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
+  
+  // State for tracking new events and seen status
+  const [newEvents, setNewEvents] = useState({
+    'Past Events': [],
+    'Schedule Upcoming Events': [],
+    'On-going Events': []
+  });
+  const [seenEvents, setSeenEvents] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('addEventPageSeenEvents')) || [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('addEventPageSeenEvents', JSON.stringify(seenEvents));
+  }, [seenEvents]);
+
+  // NEW: helper to normalize hashtags on blur/submit
+  const normalizeHashtags = (raw) => {
+    return (raw || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+      .map(t => `#${t.replace(/^#+/, '')}`)
+      .join(', ');
+  };
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
   const paginatedEvents = filteredEvents.slice(
@@ -1011,6 +1534,20 @@ const AddEventPage = () => {
   }, [activeTab]);
 
   useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    if (
+      activeTab === 'Past Events' ||
+      activeTab === 'Schedule Upcoming Events' ||
+      activeTab === 'On-going Events'
+    ) {
+      fetchEvents();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     const currentImage = uploadedImage;
     return () => {
       if (currentImage && currentImage.startsWith('blob:')) {
@@ -1026,15 +1563,22 @@ const AddEventPage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const q = (searchQuery ?? '').toLowerCase();
-
-    const filtered = events.filter((event) => 
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = events.filter(event =>
       ((event?.name ?? '').toLowerCase().includes(q)) ||
       ((event?.description ?? '').toLowerCase().includes(q)) ||
       ((event?.location ?? '').toLowerCase().includes(q))
     );
-
-    setFilteredEvents(filtered);
+    // NEW: keep search results sorted by latest updated first
+    const sorted = [...filtered].sort((a, b) => {
+      const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      if (bUpdated !== aUpdated) return bUpdated - aUpdated;
+      const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bCreated - aCreated;
+    });
+    setFilteredEvents(sorted);
     setCurrentPage(1);
   }, [searchQuery, events]);
 
@@ -1057,36 +1601,73 @@ const AddEventPage = () => {
     try {
       setLoading(true);
       const response = await ky.get('/api/event/getAllEvents').json();
-      
+
       const currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0); // Set to beginning of today
-      
+      currentDate.setHours(0, 0, 0, 0);
+
       let filteredEvents;
-      
+
       if (activeTab === 'Past Events') {
-        filteredEvents = response.events.filter(event => 
-          new Date(event.endDate) < currentDate
+        filteredEvents = response.events.filter(
+          (event) => new Date(event.endDate) < currentDate
         );
       } else if (activeTab === 'On-going Events') {
-        filteredEvents = response.events.filter(event => {
+        filteredEvents = response.events.filter((event) => {
           const eventStartDate = new Date(event.startDate);
           const eventEndDate = new Date(event.endDate);
           eventStartDate.setHours(0, 0, 0, 0);
           eventEndDate.setHours(0, 0, 0, 0);
-          
-          // Event is ongoing if current date is between start date and end date (inclusive)
           return currentDate >= eventStartDate && currentDate <= eventEndDate;
         });
       } else if (activeTab === 'Schedule Upcoming Events') {
-        filteredEvents = response.events.filter(event => {
+        filteredEvents = response.events.filter((event) => {
           const eventStartDate = new Date(event.startDate);
           eventStartDate.setHours(0, 0, 0, 0);
-          
-          // Event is upcoming if start date is after current date (haven't started yet)
           return eventStartDate > currentDate;
         });
+      } else {
+        // NEW: safe fallback for "Add Event" tab
+        filteredEvents = [];
       }
-      
+
+      // NEW: sort by latest updated first, fallback to created
+      filteredEvents = filteredEvents.sort((a, b) => {
+        const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        if (bUpdated !== aUpdated) return bUpdated - aUpdated;
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bCreated - aCreated;
+      });
+
+      // Compute dots for all tabs based on unseen events
+      setNewEvents((prev) => {
+        const updatedNewEvents = { ...prev };
+        ['Past Events', 'Schedule Upcoming Events', 'On-going Events'].forEach((tab) => {
+          let tabEvents;
+          if (tab === 'Past Events') {
+            tabEvents = response.events.filter((event) => new Date(event.endDate) < currentDate);
+          } else if (tab === 'On-going Events') {
+            tabEvents = response.events.filter((event) => {
+              const eventStartDate = new Date(event.startDate);
+              const eventEndDate = new Date(event.endDate);
+              eventStartDate.setHours(0, 0, 0, 0);
+              eventEndDate.setHours(0, 0, 0, 0);
+              return currentDate >= eventStartDate && currentDate <= eventEndDate;
+            });
+          } else {
+            tabEvents = response.events.filter((event) => {
+              const eventStartDate = new Date(event.startDate);
+              eventStartDate.setHours(0, 0, 0, 0);
+              return eventStartDate > currentDate;
+            });
+          }
+          const newTabEvents = tabEvents.filter((event) => !seenEvents.includes(event._id));
+          updatedNewEvents[tab] = newTabEvents.map((event) => event._id);
+        });
+        return updatedNewEvents;
+      });
+
       setEvents(filteredEvents);
       setFilteredEvents(filteredEvents);
     } catch (error) {
@@ -1121,7 +1702,9 @@ const AddEventPage = () => {
   };
 
   const handleTabClick = (tab) => {
+    // Only switch tab; do not mark events as seen here
     setActiveTab(tab);
+    // No automatic clearing of red dots on tab navigation
   };
 
   const toggleEventTypeDropdown = () => {
@@ -1129,9 +1712,19 @@ const AddEventPage = () => {
     setLocationDropdownOpen(false);
   };
 
+  const togglePerDayDropdown = () => {
+    setPerDayDropdownOpen(!perDayDropdownOpen);
+  };
+
   const selectEventType = (type) => {
     setSelectedEventType(type);
     setEventTypeDropdownOpen(false);
+  };
+
+  const selectPerDayDay = (dateObj) => {
+    const k = toYMD(dateObj);
+    setSelectedScheduleDate(k);
+    setPerDayDropdownOpen(false);
   };
 
   const handleTargetAudienceChange = (audience) => {
@@ -1290,17 +1883,38 @@ const AddEventPage = () => {
       return;
     }
     
+    let newStartDate = startDate;
+    let newEndDate = endDate;
+    
     if (calendarType === 'start') {
+      newStartDate = date;
       setStartDate(date);
       setShowStartCalendar(false);
       
       // If end date is before new start date, reset end date
       if (endDate && endDate < date) {
+        newEndDate = null;
         setEndDate(null);
       }
     } else {
+      newEndDate = date;
       setEndDate(date);
       setShowEndCalendar(false);
+    }
+
+    // If in advanced mode and both dates are set, update per-day schedule
+    if (timeMode === 'advanced' && newStartDate && newEndDate) {
+      const dates = getDatesInRange(newStartDate, newEndDate);
+      const newDailyTimes = {};
+      dates.forEach((d) => {
+        const k = toYMD(d);
+        // Keep existing times if they exist, otherwise use current start/end times
+        newDailyTimes[k] = dailyTimes[k] || {
+          startTime: startTime || '09:00',
+          endTime: endTime || '17:00',
+        };
+      });
+      setDailyTimes(newDailyTimes);
     }
   };
 
@@ -1340,9 +1954,7 @@ const AddEventPage = () => {
   const formatTimeDisplayAe = (time) => {
     if (!time) return '';
     const [hh, mm] = time.split(':').map(Number);
-    const ampm = hh >= 12 ? 'PM' : 'AM';
-    const hour12 = hh % 12 === 0 ? 12 : hh % 12;
-    return `${String(hour12).padStart(2, '0')}:${String(mm).padStart(2, '0')} ${ampm}`;
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   };
 
   // Check if end time should be disabled
@@ -1358,16 +1970,40 @@ const AddEventPage = () => {
   };
 
   // Get min time for end time when dates are the same
-  const getMinEndTime = () => {
-    if (!startTime || !startDate || !endDate) return '';
-    
-    // Only enforce min time if dates are the same
-    if (startDate.getTime() === endDate.getTime()) {
-      return startTime;
-    }
-    
-    return '';
-  };
+const getMinEndTime = () => {
+  if (!startTime || !startDate || !endDate) return '';
+  
+  // Only enforce min time if dates are the same
+  if (startDate.getTime() === endDate.getTime()) {
+    return startTime;
+  }
+  
+  return '';
+};
+
+// Helper: min start time for today is current time + 1 minute
+const getMinStartTimeForDate = (dateOrYmd) => {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+  let dateStr = '';
+  if (dateOrYmd instanceof Date) {
+    dateStr = `${dateOrYmd.getFullYear()}-${pad(dateOrYmd.getMonth() + 1)}-${pad(dateOrYmd.getDate())}`;
+  } else if (typeof dateOrYmd === 'string') {
+    dateStr = dateOrYmd;
+  }
+
+  if (dateStr === todayStr) {
+    let hh = now.getHours();
+    let mm = now.getMinutes() + 1; // strictly later than now
+    if (mm >= 60) { hh += 1; mm = 0; }
+    if (hh >= 24) { hh = 23; mm = 59; } // clamp at end of day
+    return `${pad(hh)}:${pad(mm)}`;
+  }
+
+  return '';
+};
 
   // Time change handler
   const handleTimeChange = (time, timeType) => {
@@ -1496,21 +2132,38 @@ const AddEventPage = () => {
 
     if (!startDate || !(startDate instanceof Date)) errors.push('Start date is required.');
     if (!endDate || !(endDate instanceof Date)) errors.push('End date is required.');
-    if (!startTime) errors.push('Start time is required.');
-    if (!endTime) errors.push('End time is required.');
-
-    const timeRegex = /^\d{2}:\d{2}$/;
-    if (startTime && !timeRegex.test(startTime)) errors.push('Start time must be HH:MM.');
-    if (endTime && !timeRegex.test(endTime)) errors.push('End time must be HH:MM.');
 
     if (endDate && startDate && endDate < startDate) {
       errors.push('End date cannot be before start date.');
     }
-    if (
-      startDate && endDate && startDate.getTime() === endDate.getTime() &&
-      startTime && endTime && endTime < startTime
-    ) {
-      errors.push('End time cannot be before start time on the same day.');
+
+    if (timeMode === 'uniform') {
+      if (!startTime) errors.push('Start time is required.');
+      if (!endTime) errors.push('End time is required.');
+      const timeRegex = /^\d{2}:\d{2}$/;
+      if (startTime && !timeRegex.test(startTime)) errors.push('Start time must be HH:MM.');
+      if (endTime && !timeRegex.test(endTime)) errors.push('End time must be HH:MM.');
+      if (
+        startDate && endDate && startDate.getTime() === endDate.getTime() &&
+        startTime && endTime && endTime < startTime
+      ) {
+        errors.push('End time cannot be before start time on the same day.');
+      }
+    } else {
+      // Advanced mode: validate each day
+      const dates = getDatesInRange(startDate, endDate);
+      const timeRegex = /^\d{2}:\d{2}$/;
+      dates.forEach(d => {
+        const k = toYMD(d);
+        const t = dailyTimes[k] || {};
+        if (!t.startTime || !t.endTime) {
+          errors.push(`Time is required for ${formatSelectedDate(d)}.`);
+        } else {
+          if (!timeRegex.test(t.startTime)) errors.push(`Start time for ${formatSelectedDate(d)} must be HH:MM.`);
+          if (!timeRegex.test(t.endTime)) errors.push(`End time for ${formatSelectedDate(d)} must be HH:MM.`);
+          if (t.endTime < t.startTime) errors.push(`End time before start time on ${formatSelectedDate(d)}.`);
+        }
+      });
     }
 
     if (typeof latitude !== 'number' || typeof longitude !== 'number') {
@@ -1523,11 +2176,12 @@ const AddEventPage = () => {
     }
 
     if (eventHashtags) {
-      const allowedChars = /^[A-Za-z0-9#,]+$/;
+      // Allow letters, numbers, '#', commas, and spaces
+      const allowedChars = /^[A-Za-z0-9#,\s]+$/;
       const tagFormat = /^#?[A-Za-z0-9]+$/;
 
       if (!allowedChars.test(eventHashtags)) {
-        errors.push('Hashtags: only letters, numbers, commas, and #.');
+        errors.push('Hashtags: only letters, numbers, commas, spaces, and #.');
       } else {
         const tags = eventHashtags.split(',').map(t => t.trim()).filter(Boolean);
         if (tags.some(t => !tagFormat.test(t))) {
@@ -1569,6 +2223,30 @@ const AddEventPage = () => {
       return false;
     }
 
+    // Today-only validation: start time must be strictly later than now
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const nowHHMM = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    if (timeMode === 'uniform') {
+      const startYmd = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
+      if (startYmd === todayStr && startTime && startTime <= nowHHMM) {
+        toast.error('For today, start time must be later than the current time.');
+        return false;
+      }
+    } else {
+      const dates = getDatesInRange(startDate, endDate);
+      const invalidTodayStart = dates.some(d => {
+        const k = toYMD(d);
+        return k === todayStr && dailyTimes[k]?.startTime && dailyTimes[k].startTime <= nowHHMM;
+      });
+      if (invalidTodayStart) {
+        toast.error('For today, start time must be later than the current time.');
+        return false;
+      }
+    }
+
     const formData = new FormData();
     formData.append('name', eventName);
     formData.append('description', eventDescription);
@@ -1576,7 +2254,8 @@ const AddEventPage = () => {
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
     formData.append('eventOrganizers', eventOrganizers);
-    formData.append('eventHashtags', eventHashtags);
+    // Normalize hashtags before sending (covers any leftover raw input)
+    formData.append('eventHashtags', normalizeHashtags(eventHashtags));
 
     const selectedAudiences = [];
     if (targetAudience.tourist) selectedAudiences.push('Tourist');
@@ -1585,10 +2264,29 @@ const AddEventPage = () => {
     formData.append('targetAudience', JSON.stringify(selectedAudiences));
 
     formData.append('registrationRequired', registrationRequired);
-    formData.append('startDate', startDate.toISOString());
-    formData.append('endDate', endDate.toISOString());
-    formData.append('startTime', startTime);
-    formData.append('endTime', endTime);
+    formData.append('startDate', toYMD(startDate));
+    formData.append('endDate', toYMD(endDate));
+
+    if (timeMode === 'uniform') {
+      formData.append('startTime', startTime);
+      formData.append('endTime', endTime);
+    } else {
+      const dates = getDatesInRange(startDate, endDate);
+      const schedule = dates.map(d => {
+        const k = toYMD(d);
+        const t = dailyTimes[k] || {};
+        return {
+          date: d.toISOString(),
+          startTime: t.startTime || '09:00',
+          endTime: t.endTime || '17:00'
+        };
+      });
+      formData.append('dailySchedule', JSON.stringify(schedule));
+      // Add global times too in advanced mode
+      formData.append('startTime', startTime);
+      formData.append('endTime', endTime);
+    }
+
     formData.append('image', imageFile);
 
     try {
@@ -1682,37 +2380,71 @@ const AddEventPage = () => {
 
   const updateEvent = async (eventId) => {
     try {
+      // Validation: today's start time must be strictly later than now
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const nowHHMM = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const hasAdvancedSchedule = Array.isArray(editForm.dailySchedule) && editForm.dailySchedule.length > 0;
+
+      if (hasAdvancedSchedule) {
+        const invalidTodayStart = editForm.dailySchedule.some(entry => {
+          const d = new Date(entry.date);
+          const ymd = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+          return ymd === todayStr && entry.startTime && entry.startTime <= nowHHMM;
+        });
+        if (invalidTodayStart) {
+          toast.error('For today, start time must be later than the current time.');
+          return;
+        }
+      } else {
+        if (editForm.startDate === todayStr && editForm.startTime && editForm.startTime <= nowHHMM) {
+          toast.error('For today, start time must be later than the current time.');
+          return;
+        }
+      }
+
       const formData = new FormData();
-      
-      // Add all fields to formData
+
+      // Core fields
       formData.append('name', editForm.name);
       formData.append('description', editForm.description);
       formData.append('eventType', editForm.eventType);
       formData.append('latitude', editForm.latitude.toString());
       formData.append('longitude', editForm.longitude.toString());
       formData.append('eventOrganizers', editForm.eventOrganizers);
-      formData.append('eventHashtags', editForm.eventHashtags);
-      
-      // Handle target audience correctly
-      const audiences = editForm.targetAudience?editForm.targetAudience.split(',').map(a => a.trim()).filter(a => a) : [];
+      // Normalize edit hashtags before sending
+      const normalizedEditHashtags = (editForm.eventHashtags || '')
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `#${t.replace(/^#+/, '')}`)
+        .join(', ');
+      formData.append('eventHashtags', normalizedEditHashtags);
+
+      // Audience
+      const audiences = editForm.targetAudience ? editForm.targetAudience.split(',').map(a => a.trim()).filter(a => a) : [];
       formData.append('targetAudience', JSON.stringify(audiences));
-      
+
       formData.append('registrationRequired', editForm.registrationRequired);
-      
-      // Format dates correctly for the backend
+
+      // Dates
       if (editForm.startDate) {
-        const startDateObj = new Date(editForm.startDate);
-        formData.append('startDate', startDateObj.toISOString());
+        formData.append('startDate', editForm.startDate);
       }
-      
       if (editForm.endDate) {
-        const endDateObj = new Date(editForm.endDate);
-        formData.append('endDate', endDateObj.toISOString());
+        formData.append('endDate', editForm.endDate);
       }
-      
-      formData.append('startTime', editForm.startTime);
-      formData.append('endTime', editForm.endTime);
-      
+
+      // Advanced schedule
+      if (hasAdvancedSchedule) {
+        formData.append('dailySchedule', JSON.stringify(editForm.dailySchedule));
+      }
+
+      // Always include global times
+      formData.append('startTime', editForm.startTime || '');
+      formData.append('endTime', editForm.endTime || '');
+
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -1720,52 +2452,77 @@ const AddEventPage = () => {
       const response = await ky.put(
         `/api/event/updateEvent/${eventId}`,
         {
-          headers: { 
-            'Authorization': `Bearer ${accessToken}`,
-          },
+          headers: { 'Authorization': `Bearer ${accessToken}` },
           body: formData
         }
       ).json();
 
       if (response.success) {
-        // Update local state
-        const updatedEvents = events.map(event => 
-          event._id === eventId ? response.event : event
-        );
-        setEvents(updatedEvents);
-        setFilteredEvents(updatedEvents);
+        const updatedEvents = events.map(event => event._id === eventId ? response.event : event);
+        // NEW: sort by latest updated first, fallback to created
+        const sortedEvents = [...updatedEvents].sort((a, b) => {
+          const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          if (bUpdated !== aUpdated) return bUpdated - aUpdated;
+          const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bCreated - aCreated;
+        });
+        setEvents(sortedEvents);
+        setFilteredEvents(sortedEvents);
+
+        // Re-mark the edited event as "new" so the red dot shows again
+        try {
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+          const start = new Date(response.event.startDate);
+          const end = new Date(response.event.endDate);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+
+          let targetTab;
+          if (end < currentDate) {
+            targetTab = 'Past Events';
+          } else if (currentDate >= start && currentDate <= end) {
+            targetTab = 'On-going Events';
+          } else {
+            targetTab = 'Schedule Upcoming Events';
+          }
+
+          const updatedSeen = seenEvents.filter(id => id !== eventId);
+          setSeenEvents(updatedSeen);
+          localStorage.setItem('addEventPageSeenEvents', JSON.stringify(updatedSeen));
+
+          setNewEvents(prev => ({
+            ...prev,
+            [targetTab]: Array.from(new Set([...(prev[targetTab] || []), eventId]))
+          }));
+        } catch (_) {}
+
         closeEventModal();
-        toast.success('Event updated successfully!');
+        toast.success('Event updated successfully', { duration: 2500 });
+      } else {
+        toast.error(response?.message || 'Failed to update event');
       }
     } catch (error) {
       console.error('Error updating event:', error);
-      let msg = 'Error updating event.';
-      try {
-        const data = await error.response?.json();
-        if (data?.message) msg = data.message;
-      } catch {}
-      toast.error(msg);
+      toast.error('Failed to update event');
     }
   };
 
   const handleHashtagsChange = (e) => {
-      const value = e.target.value;
-      const allowedChars = /^[A-Za-z0-9#,]*$/;
-      const tagFormat = /^#?[A-Za-z0-9]+$/;
+    const value = e.target.value;
+    // Allow letters, numbers, commas, spaces, and '#'
+    const allowedChars = /^[A-Za-z0-9#,\s]*$/;
 
-      if (value && !allowedChars.test(value)) {
-        toast.error('Only letters, numbers, commas, and # are allowed.');
-        return;
-      }
+    if (value && !allowedChars.test(value)) {
+      toast.error('Only letters, numbers, commas, spaces, and # are allowed.');
+      return;
+    }
 
-      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-      if (tags.some(t => !tagFormat.test(t))) {
-        toast.error('Each hashtag must be alphanumeric, optionally starting with #.');
-        return;
-      }
-
-      setEventHashtags(value);
-    };
+    // Update raw so typing comma isn't blocked
+    setEventHashtags(value);
+  };
 
   const createNewEventFromPast = async (eventData) => {
     try {
@@ -1804,6 +2561,10 @@ const AddEventPage = () => {
       
       formData.append('startTime', eventData.startTime);
       formData.append('endTime', eventData.endTime);
+
+      if (Array.isArray(eventData.dailySchedule) && eventData.dailySchedule.length > 0) {
+        formData.append('dailySchedule', JSON.stringify(eventData.dailySchedule));
+      }
       
       // Handle image - this is the key fix
       if (eventData.imageFile) {
@@ -1907,14 +2668,15 @@ const AddEventPage = () => {
             <div className="form-group-ae">
               <label>Event Hashtags</label>
               <input
-                type="text"
-                placeholder="e.g., #Festival, #Sarawak, #Culture"
-                value={eventHashtags}
-                onChange={handleHashtagsChange}
-                className="form-input"
-                pattern="^[A-Za-z0-9#,]+$"
-                title="Only alphanumeric characters, commas, and # allowed."
-              />
+                    type="text"
+                    placeholder="e.g., #Festival, #Sarawak, #Culture"
+                    value={eventHashtags}
+                    onChange={handleHashtagsChange}
+                    onBlur={(e) => setEventHashtags(normalizeHashtags(e.target.value))}
+                    className="form-input"
+                    pattern="^[A-Za-z0-9#,\s]+$"
+                    title="Only alphanumeric characters, commas, spaces, and # allowed."
+                  />
               <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                 Separate multiple hashtags with commas
               </small>
@@ -2051,14 +2813,17 @@ const AddEventPage = () => {
             </div>
 
             <div className="form-group-ae time-selection-container-ae">
-              <label>Start Time</label>
+              <label>Start Time {timeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
               <div className="time-display-ae">
                 <input
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => handleTimeChange(e.target.value, 'start')}
-                  className="time-input-native-ae"
-                />
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => handleTimeChange(e.target.value, 'start')}
+                        className={`time-input-native-ae ${timeMode === 'advanced' ? 'disabled-input' : ''}`}
+                        disabled={timeMode === 'advanced'}
+                        lang="en-GB"
+                        min={getMinStartTimeForDate(startDate)}
+                      />
               </div>
             </div>
           </div>
@@ -2086,22 +2851,186 @@ const AddEventPage = () => {
                 </div>
 
                 <div className="form-group-ae time-selection-container-ae">
-                  <label>End Time</label>
+                  <label>End Time {timeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
                   <div className="time-display-ae">
                     <input
                       type="time"
                       value={endTime}
                       onChange={(e) => handleTimeChange(e.target.value, 'end')}
-                      className="time-input-native-ae"
+                      className={`time-input-native-ae ${timeMode === 'advanced' ? 'disabled-input' : ''}`}
                       min={getMinEndTime()}
-                      disabled={isEndTimeDisabled() && !startTime}
+                      disabled={timeMode === 'advanced' || (isEndTimeDisabled() && !startTime)}
+                      lang="en-GB"
                     />
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="form-group-ae">
+                <div className="ae-per-day-group">
+                  <div className="time-mode-toggle">
+                    <label>
+                        <input
+                          type="checkbox"
+                          checked={timeMode === 'advanced'}
+                          onChange={(e) => {
+                            const isAdvanced = e.target.checked;
+                            setTimeMode(isAdvanced ? 'advanced' : 'uniform');
+                            
+                            if (isAdvanced) {
+                              // Keep existing entries; only prefill if none
+                              if (Object.keys(dailyTimes || {}).length > 0) return;
+
+                              const dates = getDatesInRange(startDate, endDate);
+                              const newDailyTimes = {};
+                              dates.forEach((d) => {
+                                const k = toYMD(d);
+                                // Prefer existing local state times; otherwise default to uniform times
+                                newDailyTimes[k] = dailyTimes[k] || {
+                                  startTime: startTime || '09:00',
+                                  endTime: endTime || '17:00',
+                                };
+                              });
+                              setDailyTimes(newDailyTimes);
+                            } else {
+                              setDailyTimes({});
+                            }
+                          }}
+                        />
+                        Set different time per day
+                      </label>
+                  </div>
+
+                  {timeMode === 'advanced' && (
+                    <div className="per-day-schedule-compact">
+                      <div className="per-day-selector">
+                        <label className="per-day-selector-label">Select event day</label>
+                        <div className="custom-dropdown">
+                          <div
+                            className="dropdown-selected"
+                            onClick={togglePerDayDropdown}
+                          >
+                            {selectedScheduleDate
+                              ? formatSelectedDate(fromYMD(selectedScheduleDate))
+                              : 'Select event day'}
+                            <span className={`dropdown-arrow ${perDayDropdownOpen ? 'open' : ''}`}>▼</span>
+                          </div>
+                          {perDayDropdownOpen && (
+                            <div className="dropdown-options">
+                              {getDatesInRange(startDate, endDate).map((d) => {
+                                const k = toYMD(d);
+                                const isSelected = selectedScheduleDate === k;
+                                return (
+                                  <div
+                                    key={k}
+                                    className={`dropdown-option ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => selectPerDayDay(d)}
+                                  >
+                                    {formatSelectedDate(d)}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="per-day-time-inputs">
+                        <input
+                          type="time"
+                          className="per-day-time-input"
+                          value={(dailyTimes[selectedScheduleDate]?.startTime) || ''}
+                          onChange={(e) =>
+                            setDailyTimes(prev => ({
+                              ...prev,
+                              [selectedScheduleDate]: {
+                                ...(prev[selectedScheduleDate] || {}),
+                                startTime: e.target.value
+                              }
+                            }))
+                          }
+                          lang="en-GB"
+                          min={getMinStartTimeForDate(selectedScheduleDate)}
+                        />
+                        <span className="time-separator">—</span>
+                        <input
+                          type="time"
+                          className="per-day-time-input"
+                          value={(dailyTimes[selectedScheduleDate]?.endTime) || ''}
+                          min={(dailyTimes[selectedScheduleDate]?.startTime) || ''}
+                          onChange={(e) =>
+                            setDailyTimes(prev => ({
+                              ...prev,
+                              [selectedScheduleDate]: {
+                                ...(prev[selectedScheduleDate] || {}),
+                                endTime: e.target.value
+                              }
+                            }))
+                          }
+                          lang="en-GB"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {timeMode === 'advanced' && (
+                    <div className="admin-schedule-actions">
+                      <button
+                        type="button"
+                        className="schedule-summary-btn"
+                        disabled={!isAdvancedScheduleComplete()}
+                        onClick={() => setScheduleSummaryOpen(true)}
+                      >
+                        View Per-Day Schedule
+                      </button>
+                    </div>
+                  )}
+
+                  {isScheduleSummaryOpen && (
+                    <div
+                      className="ae-schedule-summary-overlay"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="aeScheduleSummaryTitle"
+                      onClick={() => setScheduleSummaryOpen(false)}
+                    >
+                      <div className="ae-schedule-summary-modal" onClick={e => e.stopPropagation()}>
+                        <div className="ae-schedule-summary-header">
+                          <h3 id="aeScheduleSummaryTitle">Per-Day Schedule Summary</h3>
+                          <button
+                            type="button"
+                            className="ae-schedule-summary-close"
+                            onClick={() => setScheduleSummaryOpen(false)}
+                            aria-label="Close summary"
+                            title="Close"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="ae-schedule-summary-list">
+                          {getDatesInRange(startDate, endDate).map((d) => {
+                            const k = toYMD(d);
+                            // For Add Event tab, only use the local state times
+                            const stateTimes = dailyTimes[k];
+                            const t = stateTimes || {};
+                            return (
+                              <div key={k} className="ae-summary-row">
+                                <div className="ae-summary-date">{formatSelectedDate(d)}</div>
+                                <div className="ae-summary-times">
+                                  {(t.startTime ? formatTimeDisplayAe(t.startTime) : '—')}
+                                  {' — '}
+                                  {(t.endTime ? formatTimeDisplayAe(t.endTime) : '—')}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+            </div>
+          </div>
+
+          <div className="form-group-ae">
               <label>Event Type</label>
               <div className="custom-dropdown">
                 <div 
@@ -2183,13 +3112,23 @@ const AddEventPage = () => {
         ) : (
           paginatedEvents.map((event) => (
             <EventCard
-              key={event._id}
-              event={event}
-              type={activeTab === 'Schedule Upcoming Events' ? 'upcoming' : 'past'}
-              onEdit={(event) => openEventModal(event, 'edit')}
-              onDelete={deleteEvent}
-              onClick={() => openEventModal(event, 'view')}
-            />
+                  key={event._id}
+                  event={event}
+                  type={activeTab === 'Schedule Upcoming Events' ? 'upcoming' : 'past'}
+                  onEdit={(event) => openEventModal(event, 'edit')}
+                  onDelete={deleteEvent}
+                  onClick={() => openEventModal(event, 'view')}
+                  isNew={newEvents[activeTab]?.includes(event._id) || false}
+                  onMarkAsSeen={() => {
+                    const updatedSeenEvents = [...seenEvents, event._id];
+                    setSeenEvents(updatedSeenEvents);
+                    localStorage.setItem('addEventPageSeenEvents', JSON.stringify(updatedSeenEvents));
+                    setNewEvents(prev => ({
+                      ...prev,
+                      [activeTab]: prev[activeTab].filter(id => id !== event._id)
+                    }));
+                  }}
+                />
           ))
         )}
       </div>
@@ -2198,9 +3137,9 @@ const AddEventPage = () => {
   };
 
   return (
-    <div className="add-event-container">
+    <div className="add-event-container ae-page">
       <Sidebar />
-      <div className="add-event-content" ref={contentRef}>
+      <div className="add-event-content ae-content" ref={contentRef}>
         <div className="add-event-header">
           <div className="greeting">
             <h3>Add Event</h3>
@@ -2216,6 +3155,9 @@ const AddEventPage = () => {
               onClick={() => handleTabClick(tab)}
             >
               {tab}
+              {newEvents[tab] && newEvents[tab].length > 0 && (
+            <div className="tab-new-indicator"></div>
+          )}
             </div>
           ))}
         </div>
@@ -2327,8 +3269,22 @@ const AddEventPage = () => {
                 <button type="button" className="modal-cancel-btn" onClick={closeConfirm}>
                   Cancel
                 </button>
-                <button type="button" className="modal-confirm-btn" onClick={handleConfirm}>
-                  Confirm
+                <button
+                  type="button"
+                  className={
+                    confirmAction === 'publish'
+                      ? 'modal-confirm-btn'
+                      : confirmAction === 'delete'
+                        ? 'modal-delete-btn'
+                        : 'modal-confirm-btn'
+                  }
+                  onClick={handleConfirm}
+                >
+                  {confirmAction === 'publish'
+                    ? 'Confirm'
+                    : confirmAction === 'delete'
+                      ? 'Delete'
+                      : 'Clear'}
                 </button>
               </div>
             </div>
@@ -2358,6 +3314,8 @@ const AddEventPage = () => {
             setImageFile={setImageFile}
           />
         )}
+
+
       </div>
     </div>
   );

@@ -28,13 +28,14 @@ export const getAllEvents = async (req, res) => {
 
 export const addEvent = async (req, res) => {
     try {
-        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags } = req.body;
+        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule } = req.body;
         const imageFile = req.file;
 
         console.log('Request body:', req.body);
         console.log('Image file:', imageFile);
         
-        if (!name || !description || !eventType || !targetAudience || !registrationRequired || !startDate || !endDate || !startTime || !endTime) {
+        // Remove unconditional uniform time requirement; allow advanced schedule
+        if (!name || !description || !eventType || !targetAudience || !registrationRequired || !startDate || !endDate) {
             return res.status(400).json({ message: "All fields must be filled in", success: false });
         }
 
@@ -46,17 +47,32 @@ export const addEvent = async (req, res) => {
         const endDateObj = new Date(endDate);
         const currentDate = new Date();
         
-        if (endDateObj < startDateObj) {
+        // Compare by calendar day (local), not time-of-day
+        const pad = (n) => String(n).padStart(2, '0');
+        const toYmdLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const startYmd = typeof startDate === 'string' ? startDate.slice(0, 10) : toYmdLocal(startDateObj);
+        const endYmd = typeof endDate === 'string' ? endDate.slice(0, 10) : toYmdLocal(endDateObj);
+        const todayYmd = toYmdLocal(currentDate);
+
+        if (endYmd < startYmd) {
             return res.status(400).json({ message: "End date cannot be before start date", success: false });
         }
-        if (startDateObj < currentDate) {
+        if (startYmd < todayYmd) {
             return res.status(400).json({ message: "Start date cannot be in the past", success: false });
         }
 
-        const blob = await put(imageFile.originalname, imageFile.buffer, {
-            access: 'public',
-            addRandomSuffix: true,
-        });
+        // Use token and guard upload with try/catch
+        let blob;
+        try {
+            blob = await put(imageFile.originalname, imageFile.buffer, {
+                access: 'public',
+                addRandomSuffix: true,
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            });
+        } catch (uploadErr) {
+            console.error("Error uploading image to Vercel Blob:", uploadErr);
+            return res.status(500).json({ message: "Image upload failed. Please try again.", success: false });
+        }
 
         let parsedTargetAudience;
         try {
@@ -71,9 +87,37 @@ export const addEvent = async (req, res) => {
             .map(h => h.trim())
             .filter(Boolean);
 
-        let finalEndTime = endTime;
-        if (startDateObj.toDateString() === endDateObj.toDateString() && !endTime) {
-            finalEndTime = '23:59';
+        // Parse dailySchedule
+        let parsedDailySchedule = null;
+        if (dailySchedule) {
+            try {
+                const ds = JSON.parse(dailySchedule);
+                if (Array.isArray(ds) && ds.length > 0) {
+                    const timeRegex = /^\d{2}:\d{2}$/;
+                    parsedDailySchedule = ds.map(entry => {
+                        if (!entry?.date || !entry?.startTime || !entry?.endTime) {
+                            throw new Error('Invalid dailySchedule entry');
+                        }
+                        if (!timeRegex.test(entry.startTime) || !timeRegex.test(entry.endTime)) {
+                            throw new Error('dailySchedule times must be HH:MM');
+                        }
+                        const d = new Date(entry.date);
+                        if (isNaN(d.getTime())) throw new Error('Invalid dailySchedule date');
+                        return { date: d, startTime: entry.startTime, endTime: entry.endTime };
+                    });
+                }
+            } catch (e) {
+                return res.status(400).json({ message: "Invalid format for dailySchedule.", success: false });
+            }
+        }
+
+        // Accept either uniform or advanced
+        const timeRegex = /^\d{2}:\d{2}$/;
+        const hasUniformTimes = Boolean(startTime && endTime && timeRegex.test(startTime) && timeRegex.test(endTime));
+        const hasAdvancedSchedule = Array.isArray(parsedDailySchedule) && parsedDailySchedule.length > 0;
+
+        if (!hasUniformTimes && !hasAdvancedSchedule) {
+            return res.status(400).json({ message: "Provide either uniform start/end time or a valid daily schedule.", success: false });
         }
 
         const newEventData = {
@@ -83,8 +127,6 @@ export const addEvent = async (req, res) => {
             registrationRequired,
             startDate: startDateObj,
             endDate: endDateObj,
-            startTime,
-            endTime: finalEndTime,
             eventType,
             imageUrl: blob.url,
             coordinates: {
@@ -93,8 +135,25 @@ export const addEvent = async (req, res) => {
             },
             eventOrganizers: eventOrganizers || '',
             eventHashtags: hashtagsArray
+        };
+
+        if (hasAdvancedSchedule) {
+            newEventData.dailySchedule = parsedDailySchedule;
+            // Also store global times if provided (optional)
+            if (hasUniformTimes) {
+                const isSameDay = startDateObj.toDateString() === endDateObj.toDateString();
+                const finalEndTime = isSameDay && !endTime ? '23:59' : endTime;
+                newEventData.startTime = startTime;
+                newEventData.endTime = finalEndTime;
+            }
+        } else {
+            // Uniform mode: store global times only
+            const isSameDay = startDateObj.toDateString() === endDateObj.toDateString();
+            const finalEndTime = isSameDay && !endTime ? '23:59' : endTime;
+            newEventData.startTime = startTime;
+            newEventData.endTime = finalEndTime;
         }
-        
+
         const event = await eventModel.create(newEventData);
         console.log('Event created successfully:', event);
         return res.status(201).json({ message: "Event added successfully", success: true, event });
@@ -110,7 +169,7 @@ export const addEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags } = req.body;
+        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule } = req.body;
         const imageFile = req.file;
 
         const existingEvent = await eventModel.findById(id);
@@ -125,8 +184,6 @@ export const updateEvent = async (req, res) => {
             registrationRequired,
             startDate: new Date(startDate),
             endDate: new Date(endDate),
-            startTime,
-            endTime,
             coordinates: {
                 latitude: parseFloat(latitude),
                 longitude: parseFloat(longitude)
@@ -148,6 +205,50 @@ export const updateEvent = async (req, res) => {
                 console.error("Error parsing targetAudience:", parseError);
                 return res.status(400).json({ message: "Invalid format for targetAudience.", success: false });
             }
+        }
+
+        // Parse dailySchedule if provided
+        let parsedDailySchedule = null;
+        if (dailySchedule) {
+            try {
+                const ds = JSON.parse(dailySchedule);
+                if (Array.isArray(ds) && ds.length > 0) {
+                    const timeRegex = /^\d{2}:\d{2}$/;
+                    parsedDailySchedule = ds.map(entry => {
+                        if (!entry?.date || !entry?.startTime || !entry?.endTime) {
+                            throw new Error('Invalid dailySchedule entry');
+                        }
+                        if (!timeRegex.test(entry.startTime) || !timeRegex.test(entry.endTime)) {
+                            throw new Error('dailySchedule times must be HH:MM');
+                        }
+                        const d = new Date(entry.date);
+                        if (isNaN(d.getTime())) throw new Error('Invalid dailySchedule date');
+                        return { date: d, startTime: entry.startTime, endTime: entry.endTime };
+                    });
+                    updateData.dailySchedule = parsedDailySchedule;
+                } else {
+                    updateData.dailySchedule = [];
+                }
+            } catch (e) {
+                return res.status(400).json({ message: "Invalid format for dailySchedule.", success: false });
+            }
+        }
+
+        // Decide uniform vs advanced
+        const timeRegex = /^\d{2}:\d{2}$/;
+        const hasUniformTimes = Boolean(startTime && endTime && timeRegex.test(startTime) && timeRegex.test(endTime));
+        const hasAdvancedSchedule = Array.isArray(updateData.dailySchedule) && updateData.dailySchedule.length > 0;
+
+        if (hasAdvancedSchedule) {
+            // Advanced mode: keep per-day; also store global times if provided
+            if (hasUniformTimes) {
+                updateData.startTime = startTime;
+                updateData.endTime = endTime;
+            }
+        } else if (hasUniformTimes) {
+            // Uniform mode: set global times
+            updateData.startTime = startTime;
+            updateData.endTime = endTime;
         }
 
         if (imageFile) {

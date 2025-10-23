@@ -6,6 +6,33 @@
   /* font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 }
 
+/* Unique page scope and content container */
+.ae-page {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.ae-content {
+  box-sizing: border-box;
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Form columns — unique names */
+.ae-form-left,
+.ae-form-right {
+  box-sizing: border-box;
+}
+
+/* Event card — unique name and resilient sizing */
+.ae-event-card {
+  box-sizing: border-box;
+  width: 100%;
+}
+
 /* Scroll-to-top floating button */
 .scroll-to-top-btn {
   position: fixed;
@@ -417,6 +444,39 @@ p {
   color: #94a3b8;
 }
 
+.form-input.disabled-input {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-input.disabled-input:focus {
+  border-color: #e2e8f0;
+  box-shadow: none;
+  background-color: #f1f5f9;
+}
+
+.disabled-label {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  font-weight: normal;
+}
+
+.time-input-native-ae.disabled-input {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.time-input-native-ae.disabled-input:focus {
+  border-color: #e2e8f0;
+  box-shadow: none;
+  background-color: #f1f5f9;
+}
+
 .form-textarea {
   min-height: 140px;
   resize: vertical;
@@ -438,6 +498,7 @@ p {
 
 .custom-dropdown {
   position: relative;
+  overflow: visible;
 }
 
 .dropdown-selected {
@@ -478,11 +539,31 @@ p {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 20;
-  max-height: 220px;
+  z-index: 50;
+  max-height: min(320px, calc(100vh - 160px));
   overflow-y: auto;
   opacity: 0;
   animation: fadeIn 0.2s ease-out forwards;
+  -ms-overflow-style: auto;
+  scrollbar-width: auto;
+}
+
+.dropdown-options::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dropdown-options::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 12px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  border-radius: 12px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.05);
 }
 
 @keyframes fadeIn {
@@ -1014,6 +1095,58 @@ p {
   background-color: white;
 }
 
+/* Red dot notification styles */
+.event-new-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;  /* was 14px */
+  height: 20px; /* was 14px */
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tab-new-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;  /* was 10px */
+  height: 16px; /* was 10px */
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  animation: pulse 2s infinite;
+}
+
+.event-tab {
+  position: relative;
+}
+
+.event-image {
+  position: relative;
+}
+
 .time-selection-container-ae .time-picker-ae {
   position: absolute;
   top: 100%;
@@ -1195,6 +1328,358 @@ p {
   outline: none;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
   background-color: white;
+}
+
+.time-mode-toggle {
+  margin-top: 8px;
+  display: flex;
+  align-items: center; /* centered vertically */
+  gap: 12px;
+  font-size: 14px;
+  min-height: 28px;
+}
+
+.per-day-schedule-compact {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.admin-schedule-actions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.schedule-summary-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: transform 0.05s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.schedule-summary-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
+}
+
+.schedule-summary-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.schedule-summary-btn:disabled {
+  background: #cbd5e1;
+  color: #334155;
+  cursor: default;
+  box-shadow: none;
+}
+
+.ae-schedule-summary-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ae-schedule-summary-modal {
+  background: #ffffff;
+  color: #1a1a1a; /* Force readable dark text */
+  width: min(720px, 92vw);
+  max-height: 70vh;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
+}
+
+.schedule-summary-content {
+  position: relative;
+  box-sizing: border-box;
+  background: #ffffff;
+  width: 92%;
+  max-width: 600px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(2, 8, 23, 0.25);
+  overflow: hidden;
+}
+
+.ae-schedule-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.ae-schedule-summary-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a; /* Ensure header text is dark */
+}
+
+.ae-schedule-summary-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #444;
+}
+
+.ae-schedule-summary-close:hover {
+  color: #000;
+}
+
+.ae-schedule-summary-list {
+  padding: 12px 16px;
+  overflow: auto;
+  max-height: 58vh;
+}
+
+.ae-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.ae-summary-date {
+  flex: 1 1 auto;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+/* Specific left alignment for dates in the View Schedule modal */
+.ae-summary-date-view {
+  text-align: left;
+}
+
+/* Spacing for the View Schedule button in event pop-out details */
+.ae-view-schedule-btn {
+  margin-left: 12px;
+  display: inline-block;
+}
+
+/* Slightly smaller gap on very small screens */
+@media (max-width: 480px) {
+  .ae-view-schedule-btn {
+    margin-left: 8px;
+  }
+}
+
+.ae-summary-times {
+  flex: 0 0 auto;
+  color: #1a1a1a; /* Force readable dark text */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.per-day-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.per-day-selector .custom-dropdown {
+  width: 100%;
+}
+
+.per-day-selector-label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.per-day-select {
+  width: 100%;
+  max-width: 340px;
+  padding: 14px 18px;
+  padding-right: 34px; /* room for arrow */
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  color: #1e293b;
+  background-color: #f9fafb;
+  transition: all 0.3s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.per-day-select:hover {
+  border-color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.per-day-select:focus {
+  border-color: #8b5cf6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  background-color: #fff;
+}
+
+.per-day-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.per-day-time-input {
+  padding: 8px 10px;
+  border: 1px solid #dfe3e8;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.time-separator {
+  color: #6b7280;
+}
+
+.time-mode-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #0f172a;
+  border-radius: 4px;
+  background: #ffffff;
+  position: relative;
+  cursor: pointer;
+  accent-color: #2563eb;
+  margin: 0;
+  align-self: center; /* center the box */
+}
+
+.time-mode-toggle input[type="checkbox"]:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.time-mode-toggle input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+}
+
+.time-mode-toggle input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+.time-mode-toggle input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+/* Selected day info under the checkbox */
+.selected-day-inline-info {
+  margin-top: 10px;
+  padding-left: 28px; /* aligns under checkbox label text */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selected-day-inline-info .day-badge {
+  background: #f8f9fa;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  padding: 6px 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.selected-day-inline-info .time-range {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.time-mode-toggle label,
+.time-mode-toggle span {
+  color: #1e40af;
+  font-weight: 600;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 22px;
+}
+
+.per-day-schedule {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.per-day-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid #e4e6eb;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.per-day-date {
+  font-weight: 600;
+}
+
+.per-day-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.per-day-time-input {
+  padding: 8px 10px;
+  border: 1px solid #dfe3e8;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Select event day wrapper mimics custom dropdown */
+.per-day-select-wrapper {
+  position: relative;
+}
+
+.per-day-select-wrapper .dropdown-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #8b5cf6;
+  pointer-events: none;
+}
+
+.time-separator {
+  color: #6b7280;
 }
 
 .time-input {
@@ -1943,7 +2428,7 @@ p {
 
 .edit-event-form .calendar-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* grid-template-columns: 1fr 1fr; */
   gap: 15px;
 }
 
@@ -1984,6 +2469,94 @@ p {
   .edit-event-form .event-form-left,
   .edit-event-form .event-form-right {
     min-width: 100%;
+  }
+}
+
+/* Desktop default (>= 1025px) */
+@media (min-width: 1025px) {
+  .ae-content {
+    max-width: 1200px;
+    padding: 20px;
+    /* if there is a fixed sidebar, keep safe margin left */
+    margin-left: 280px;
+  }
+
+  .ae-form-left,
+  .ae-form-right {
+    width: 50%;
+    padding: 0 12px;
+  }
+
+  .ae-event-card {
+    /* allow card grid/list to look clean on wide screens */
+    max-width: 100%;
+  }
+}
+
+/* Laptop (769px–1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ae-content {
+    max-width: 960px;
+    padding: 18px;
+    margin-left: 240px; /* narrower sidebar offset */
+  }
+
+  .ae-form-left,
+  .ae-form-right {
+    width: 50%;
+    padding: 0 10px;
+  }
+
+  .ae-event-card {
+    max-width: 100%;
+  }
+}
+
+/* Tablet (481px–768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .ae-content {
+    max-width: 720px;
+    padding: 16px;
+    margin-left: 0; /* remove sidebar offset on smaller screens */
+  }
+
+  .ae-form-left,
+  .ae-form-right {
+    width: 100%;
+    padding: 0;
+    margin-bottom: 16px;
+  }
+
+  .ae-event-card {
+    width: 100%;
+  }
+}
+
+/* Phone (<= 480px) */
+@media (max-width: 480px) {
+  .ae-content {
+    max-width: 100%;
+    padding: 12px;
+    margin-left: 0;
+  }
+
+  .ae-form-left,
+  .ae-form-right {
+    width: 100%;
+    padding: 0;
+    margin-bottom: 14px;
+  }
+
+  .ae-event-card {
+    width: 100%;
+  }
+
+  /* Make inputs/buttons readable on small screens */
+  .ae-page input,
+  .ae-page select,
+  .ae-page textarea,
+  .ae-page button {
+    max-width: 100%;
   }
 }
 
@@ -2442,6 +3015,65 @@ p {
 @keyframes toastSlideUp {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Isolated group below End Time row for per-day scheduling */
+.ae-per-day-group {
+  display: block;
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.ae-per-day-group .time-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ae-per-day-group .per-day-schedule-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.ae-per-day-group .per-day-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Isolated group for per-day scheduling in Edit modal */
+.edit-per-day-group {
+  display: block;
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Compact spacing and alignment inside the edit modal group */
+.edit-per-day-group .time-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.edit-per-day-group .per-day-schedule-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.edit-per-day-group .per-day-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Make disabled hint sit nicely next to the label */
+.form-group-ae label .disabled-label {
+  margin-left: 8px;
 }
 
 /* Responsive adjustments for confirmation modal */
