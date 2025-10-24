@@ -323,6 +323,394 @@
   box-sizing: border-box;
 }
 
+.cards-section.cards-section--one {
+  grid-template-columns: minmax(280px, 1fr);
+  justify-items: center;
+}
+
+/* ADDED: EventPage schedule modal styles */
+.ep-schedule-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: epOverlayFade 160ms ease-out;
+}
+
+@keyframes epOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ep-schedule-modal {
+  background: #ffffff;
+  border-radius: 12px;     /* remove rounded corners */
+  box-shadow: none;     /* remove shadow */
+  width: 90%;
+  max-width: 1000px;
+  max-height: 92vh;
+  overflow: hidden;
+  border: none;         /* remove outer border */
+  animation: epModalPop 240ms ease-out;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+  display: flex;              /* stack header + content */
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@keyframes epModalPop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ep-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f3f5;
+  background:#3b82f6;
+  color: #fff;
+}
+
+.ep-schedule-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.ep-schedule-close {
+  background: transparent;
+  padding: 0;
+  color: #ffffff;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.ep-schedule-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.ep-schedule-close:focus-visible {
+  outline: 2px solid #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+.ep-schedule-list {
+  padding: 0;           /* no inner padding around content */
+  display: flex;
+  flex-direction: column;
+  gap: 0;               /* no spacing between inner blocks */
+  overflow: auto;
+  overflow-y: auto;           /* fix broken 'overflow-' */
+  flex: 1 1 auto;             /* scrollable content area */
+  min-height: 0;              /* enable shrink for scroll */
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.ep-schedule-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(147, 197, 253, 0.10), rgba(219, 234, 254, 0.10));
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.ep-schedule-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15);
+  border-color: #dbe7ff;
+}
+
+.ep-schedule-date {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ep-schedule-time {
+  text-align: right;
+  font-weight: 600;
+  color: #374151;
+}
+
+@media (max-width: 600px) {
+  .ep-schedule-modal {
+    width: 95%;
+    max-width: 560px;
+    max-height: 80vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .ep-schedule-row {
+    grid-template-columns: 1fr;
+  }
+  .ep-schedule-time {
+    text-align: left;
+    color: #1f2937;
+  }
+}
+
+/* Calendar view */
+.ep-weekdays span:last-child {
+  border-right: none;
+}
+
+.ep-calendar-wrapper {
+  width: 100%;
+}
+
+.ep-calendar-header {
+  display: flex;
+  flex-direction: column;
+  /* gap: 10px;      */
+  margin-bottom: 0;     /* remove gap below header */
+}
+
+.ep-month-label {
+  font-weight: 700;
+  font-size: 1rem;
+  display: block;
+  background: #eef2ff;        /* soft indigo-tinted background */
+  color: #1f2937;             /* dark text for contrast */
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;           /* keep square to match modal style */
+}
+
+.ep-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;               /* remove spacing between weekday labels */
+  font-size: 0.85rem;
+  background: #d3d3d3;        /* subtle header background */
+  color: #334155;             /* slate/dark text for good contrast */
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ep-weekdays span {
+  text-align: center;
+  font-weight: 600;
+  padding: 12px 0;            /* comfortable touch target */
+  border-right: 1px solid #e5e7eb;
+  text-transform: none;
+  color: inherit;             /* inherit from container for consistency */
+}
+
+.ep-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;                               /* eliminate gaps between cells */
+  border-left: 1px solid #eef2f7;       /* grid lines without double borders */
+  border-top: 1px solid #eef2f7;
+}
+
+.ep-day-cell {
+  position: relative;
+  min-height: 84px;
+  border-radius: 0;                      /* square corners for flush look */
+  border-right: 1px solid #eef2f7;       /* single-pixel grid lines */
+  border-bottom: 1px solid #eef2f7;
+  background: #ffffff;
+  box-shadow: none;                      /* remove cell drop shadow */
+  transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+
+.ep-day-cell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.12);
+  border-color: #e3eaf6;
+}
+
+.ep-day-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.ep-event-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;                      /* ensure highlight spans edge-to-edge */
+  background: #dbeafe;        /* blue-100 style solid highlight */
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 10px;
+}
+
+.ep-time-chip {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #dbe7ff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.18);
+}
+
+/* Visual hierarchy */
+.ep-day-cell--in-range .ep-day-label {
+  color: #1f2937;
+  z-index: 1;
+}
+
+.ep-day-cell--past {
+  background: #f3f4f6;        /* light gray background */
+  color: #9ca3af;             /* muted text */
+  opacity: 0.4;              /* subtle reduction without over-dimming */
+}
+
+.ep-day-cell--out-month {
+  background: #f8fafc;        /* very light background */
+  color: #94a3b8;             /* softer slate text */
+  opacity: 0.5;              /* distinguish from active month cells */
+}
+
+@media (max-width: 630px) {
+  /* Hide weekday row, simplify header spacing */
+  .ep-weekdays {
+    display: none;
+  }
+  .ep-calendar-header {
+    margin-bottom: 0;
+  }
+  .ep-month-label {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+
+  /* Convert calendar grid to a vertical list */
+  .ep-calendar-grid {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e5e7eb;
+    border-left: none;
+    border-top: none;
+    gap: 0;
+  }
+
+  /* Each day: two-column layout (date | times) */
+  .ep-day-cell {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+    position: static;
+    min-height: auto;
+    padding: 12px 10px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+    box-shadow: none;
+    transition: none;
+  }
+
+  /* Keep hover stable on touch devices */
+  .ep-day-cell:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #e5e7eb;
+  }
+
+  /* Date: left column */
+  .ep-day-label {
+    position: static;
+    grid-column: 1;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1f2937;
+    padding-right: 8px;
+  }
+
+  /* Times: right column */
+  .ep-event-highlight {
+    position: static;
+    inset: auto;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    background: transparent;
+    padding: 0;
+    gap: 6px;
+  }
+
+  /* Highlight in-range days with a subtle chip container */
+  .ep-day-cell--in-range .ep-event-highlight {
+    background: #dbeafe;
+    padding: 8px;
+  }
+
+  /* Time chips sizing for mobile */
+  .ep-time-chip {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #c8d7ff;
+    border-radius: 12px;
+    box-shadow: none;
+    width: fit-content;
+  }
+
+  /* De-emphasis states */
+  .ep-day-cell--past {
+    background: #f3f4f6;
+    color: #9ca3af;
+    opacity: 0.5;
+    display: none;
+  }
+  .ep-day-cell--out-month {
+    opacity: 0.35;
+    display: none;
+  }
+
+  /* Ensure smooth internal scrolling on mobile */
+  .ep-schedule-list {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+}
+
+@media (max-width: 600px) {
+  .ep-day-cell { min-height: 72px; }
+  .ep-time-chip { font-size: 0.74rem; padding: 5px 8px; }
+}
+
+.cards-section.cards-section--two {
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  justify-content: center;
+  gap: 2rem;
+}
+
 .card-wrapper {
   animation: fadeInUp 0.5s ease forwards;
   opacity: 0;
@@ -421,6 +809,7 @@
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -698,6 +1087,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 1.5rem;
     gap: 1.5rem;
+  }
+
+  .cards-section.cards-section--one {
+    grid-template-columns: minmax(260px, 1fr);
+  }
+  .cards-section.cards-section--two {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
   }
   
   .search-container {
@@ -933,6 +1329,7 @@
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1123,6 +1520,53 @@
   margin: 0;
 }
 
+@media (max-width: 600px) {
+  .cards-section,
+  .cards-section.cards-section--one,
+  .cards-section.cards-section--two {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 1rem;
+    gap: 1.2rem;
+  }
+}
+
+/* ADDED: Event schedule buttons on EventPage cards */
+.daily-schedule-ep {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.schedule-btn-ep {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.schedule-btn-ep:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.35);
+}
+
+.schedule-btn-ep:focus-visible {
+  outline: 2px solid #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.35);
+}
+
+.schedule-fallback-ep {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
 .reset-filters-btn {
   background: linear-gradient(135deg, #007bff, #0056b3);
   color: white;
@@ -1241,7 +1685,53 @@
   }
 }
 
+@media (max-width: 480px) {
+  .ep-day-cell { min-height: 64px; }
+  .ep-day-label { font-size: 0.8rem; top: 6px; left: 8px; }
+  .ep-time-chip { font-size: 0.7rem; padding: 5px 7px; max-width: 94%; }
+}
+
 @media (max-width: 768px) {
+  .ep-schedule-modal {
+    width: 90vw;
+    max-width: none;
+    height: 100vh;
+    max-height: 80vh;
+    border: none;
+    box-shadow: none;
+  }
+
+  .ep-schedule-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 12px 14px;
+  }
+
+  .ep-month-label {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+
+  .ep-weekdays span {
+    font-size: 0.78rem;
+    padding: 10px 0;
+  }
+
+  .ep-day-cell {
+    min-height: 72px;         /* bigger tap targets */
+  }
+
+  .ep-day-label {
+    font-size: 0.85rem;
+  }
+
+  .ep-time-chip {
+    font-size: 0.74rem;
+    padding: 5px 8px;
+    max-width: 92%;
+  }
+
   .hero-banner {
     height: 400px;
   }

@@ -814,10 +814,12 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       .filter(item => item?.coordinates?.latitude != null && item?.coordinates?.longitude != null)
       .slice(0, 500)
       .map(item => ({
+        _id: item._id, // add event id for DB fetch on navigation
         name: item.name,
         latitude: Number(item.coordinates.latitude),
         longitude: Number(item.coordinates.longitude),
         image: item.imageUrl || defaultImage,
+        imageUrl: item.imageUrl, // ensure imageUrl is carried through
         description: item.description || 'Event',
         type: 'Events',
         source: 'events',
@@ -1033,10 +1035,12 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         .filter(item => item?.coordinates?.latitude != null && item?.coordinates?.longitude != null)
         .slice(0, 500)
         .map(item => ({
+          _id: item._id,
           name: item.name,
           latitude: Number(item.coordinates.latitude),
           longitude: Number(item.coordinates.longitude),
           image: item.imageUrl || defaultImage,
+          imageUrl: item.imageUrl,
           description: item.description || 'Event',
           type: 'Events',
           source: 'events',
@@ -1044,6 +1048,8 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           endDate: item.endDate,
           startTime: item.startTime,
           endTime: item.endTime,
+          // Add dailySchedule from backend
+          dailySchedule: Array.isArray(item.dailySchedule) ? item.dailySchedule : [],
           eventType: item.eventType,
           registrationRequired: item.registrationRequired,
           targetAudience: item.targetAudience || [],

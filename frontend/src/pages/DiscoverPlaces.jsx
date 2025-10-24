@@ -6,7 +6,8 @@ import defaultImage from '../assets/default.png';
 import '../styles/DiscoverPlaces.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { FaMapMarkerAlt, FaArrowUp, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarAlt, FaArrowUp, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud, FaCalendar, FaUsers } from 'react-icons/fa';
+import { FaMapLocationDot } from 'react-icons/fa6';
 import AIChatbot from '../components/AiChatbot.jsx';
 import LoginPage from '../pages/Loginpage.jsx';
 import L from 'leaflet';
@@ -21,7 +22,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-const DiscoverPlaces = () => {
+function DiscoverPlaces() {
   const { slug } = useParams();
   const [locationData, setLocationData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,54 @@ const DiscoverPlaces = () => {
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  
+  const [showScheduleSection, setShowScheduleSection] = useState(true);
+  const [scheduleSearchQuery, setScheduleSearchQuery] = useState('');
+  const [scheduleFilterFilledOnly, setScheduleFilterFilledOnly] = useState(false);
+
+  // Define event-derived fields BEFORE any helpers that use them
+  const eventType = locationData?.eventType || locationData?.type || selectedPlace?.eventType || selectedPlace?.type || null;
+  const eventOrganizers = locationData?.eventOrganizers || selectedPlace?.eventOrganizers || null;
+  const eventHashtags = locationData?.eventHashtags || selectedPlace?.eventHashtags || null;
+  const dailySchedule = locationData?.dailySchedule || selectedPlace?.dailySchedule || [];
+  
+  // Event-only details flag for conditional rendering (hide category/type/division/website)
+  const isEventDetail = Boolean(
+    eventType ||
+    locationData?.type === 'Event' ||
+    locationData?.registrationRequired ||
+    locationData?.startDate || locationData?.endDate ||
+    (Array.isArray(dailySchedule) && dailySchedule.length > 0)
+  );
+
+  const formatTimeDisplayDP = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = String(time).split(':');
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+
+  const getFilteredScheduleEntries = useCallback(() => {
+    const q = (scheduleSearchQuery || '').toLowerCase();
+    const entries = Array.isArray(dailySchedule) ? dailySchedule.slice() : [];
+    entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    return entries.filter((entry) => {
+      const filled = entry?.startTime && entry?.endTime;
+      const label = new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).toLowerCase();
+      return (!scheduleFilterFilledOnly || filled) && (!q || label.includes(q));
+    });
+  }, [dailySchedule, scheduleSearchQuery, scheduleFilterFilledOnly]);
+
+  const handleCopyScheduleDP = useCallback(() => {
+    const lines = getFilteredScheduleEntries().map((entry) => {
+      const label = new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const start = formatTimeDisplayDP(entry.startTime) || '—';
+      const end = formatTimeDisplayDP(entry.endTime) || '—';
+      return `${label}: ${start} - ${end}`;
+    });
+    navigator.clipboard.writeText(lines.join('\n'))
+      .then(() => toast.success('Schedule copied to clipboard'))
+      .catch(() => toast.error('Failed to copy schedule'));
+  }, [getFilteredScheduleEntries]);
 
   const categories = [
     { id: 'all', name: 'All', icon: <FaMapMarkerAlt /> },
@@ -140,13 +189,59 @@ const DiscoverPlaces = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.state, slug]);
 
-  // Load data based on slug or location state
+  // useEffect: Load data based on slug or location state — add eventId-first fetch
   useEffect(() => {
     let isMounted = true;
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        
+  
+        // Priority 0: If coming from CustomInfoWindow with eventId, fetch event from DB
+        if (location.state?.eventId) {
+          const id = location.state.eventId;
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const res = await axios.get(`/api/event/getEvent/${id}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+  
+            if (res?.data?.event) {
+              const ev = res.data.event;
+              const lat = Number(ev?.coordinates?.latitude) || (Array.isArray(location.state.coordinates) ? Number(location.state.coordinates[0]) : 1.5533);
+              const lng = Number(ev?.coordinates?.longitude) || (Array.isArray(location.state.coordinates) ? Number(location.state.coordinates[1]) : 110.3592);
+  
+              const processed = processLocationData({
+                name: ev.name,
+                description: ev.description,
+                image: ev.imageUrl || defaultImage,
+                latitude: lat,
+                longitude: lng,
+                // Event details for Discover Places
+                eventType: ev.eventType,
+                eventOrganizers: ev.eventOrganizers,
+                eventHashtags: ev.eventHashtags,
+                dailySchedule: Array.isArray(ev.dailySchedule) ? ev.dailySchedule : [],
+                startDate: ev.startDate,
+                endDate: ev.endDate,
+                startTime: ev.startTime,
+                endTime: ev.endTime,
+                // Optional: treat as event category/type
+                category: 'Events',
+                type: 'Event'
+              });
+  
+              if (isMounted) {
+                setLocationData(processed);
+                setLoading(false);
+              }
+              return;
+            }
+          } catch (err) {
+            console.error('Failed to fetch event by ID:', err);
+            // Fall through to existing state handling if DB fetch fails
+          }
+        }
+  
         // Priority 1: Check if we have location data from navigation (place click)
         if (location.state) {
           console.log('Loading from navigation state:', location.state);
@@ -157,7 +252,7 @@ const DiscoverPlaces = () => {
           }
           return;
         }
-
+  
         // Priority 2: Handle slug-based location lookup
         if (slug) {
           console.log('Loading from slug:', slug);
@@ -194,7 +289,7 @@ const DiscoverPlaces = () => {
           }
           return;
         }
-
+  
         // Priority 3: Fallback to geolocation or default
         try {
           const position = await new Promise((resolve, reject) => {
@@ -247,7 +342,7 @@ const DiscoverPlaces = () => {
         if (isMounted) setLoading(false);
       }
     };
-
+  
     loadInitialData();
     return () => { 
       isMounted = false;
@@ -540,7 +635,6 @@ const DiscoverPlaces = () => {
             <div className="hero-overlay-dp">
               <h1>{locationData?.name?.toUpperCase()}</h1>
               <p>Exploring {locationData?.name} area</p>
-              {/* {slug && <p className="slug-indicator">Slug: {slug}</p>} */}
             </div>
           </div>
 
@@ -549,32 +643,80 @@ const DiscoverPlaces = () => {
               <div className="text-content-dp">
                 <h2>About {locationData?.name}</h2>
                 <p className="overview-text-dp">{locationData?.description || "No description available"}</p>
-                <div className="category-info-dp">
-                  <p className="category-detail-dp">
-                    <FaTag className="detail-icon-dp" /> {locationData?.category || "No category"}
-                  </p>
-                  <p className="category-detail-dp">
-                    <FaLandmark className="detail-icon-dp" /> {locationData?.type || "No type"}
-                  </p>
-                  <p className="category-detail-dp">
-                    <FaMapMarkerAlt className="detail-icon-dp" /> {locationData?.division || "No division"}
-                  </p>
-                </div>
-                <div className="location-info-dp">
-                  <p className="location-detail-dp">
-                    <FaMapMarkerAlt className="detail-icon-dp" /> {locationData?.name || "No name"}
-                  </p>
-                  <p className="location-detail-dp">
-                    <FaMapMarkerAlt className="detail-icon-dp" /> 
-                    <span>
-                      {locationData?.latitude?.toFixed(5) ?? "N/A"}, {locationData?.longitude?.toFixed(5) ?? "N/A"}
-                    </span>
-                  </p>
-                </div>
-                <div className="website-info-dp">
-                  <p className="website-details-dp">
-                    <FaGlobe className="detail-icon-dp" /> <a href={locationData?.url} target="_blank" rel="noopener noreferrer">{locationData?.url || "Website not available"}</a>
-                  </p>
+
+                {/* Responsive info cards grid */}
+                <div className="info-cards-grid-dp">
+
+                  {/* Combined Details card: Location + Event details */}
+                  <div className="info-card-dp">
+                    <div className="info-card-header-dp">Place Details</div>
+                    <div className="info-card-body-dp">
+                      <div className="details-info-dp">
+                        {/* Category card: hidden for event details */}
+                        {!isEventDetail && (
+                              <div className="category-info-dp">
+                                <p className="category-detail-dp">
+                                  <FaTag className="detail-icon-dp" /> {locationData?.category || "No category"}
+                                </p>
+                                <p className="category-detail-dp">
+                                  <FaLandmark className="detail-icon-dp" /> {locationData?.type || "No type"}
+                                </p>
+                                <p className="category-detail-dp">
+                                  <FaMapMarkerAlt className="detail-icon-dp" /> {locationData?.division || "No division"}
+                                </p>
+                              </div>
+                        )}
+
+                        {/* Event details (shown if present) */}
+                        {eventType && (
+                          <p className="event-detail-dp">
+                            <FaCalendarAlt className="detail-icon-dp" /> {eventType}
+                          </p>
+                        )}
+                        {eventOrganizers && (
+                          <p className="event-detail-dp">
+                            <FaUsers className="detail-icon-dp" /> {eventOrganizers}
+                          </p>
+                        )}
+                        {eventHashtags && (
+                          <div className="event-detail-dp event-hashtags-dp">
+                            <FaTag className="detail-icon-dp" /> 
+                            <span className="hashtags-container-dp">
+                              {String(eventHashtags)
+                                .split(',')
+                                .map(h => h.trim())
+                                .filter(Boolean)
+                                .map((h, idx) => (
+                                  <span key={`${h}-${idx}`} className="hashtag-badge-dp">{h}</span>
+                                ))}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Location details */}
+                        <div className="location-info-dp">
+                          <p className="location-detail-dp">
+                            <FaMapLocationDot className="detail-icon-dp" /> {locationData?.name || "No name"}
+                          </p>
+                          <p className="location-detail-dp">
+                            <FaMapMarkerAlt className="detail-icon-dp" /> 
+                            <span>
+                              {locationData?.latitude?.toFixed(5) ?? "N/A"}, {locationData?.longitude?.toFixed(5) ?? "N/A"}
+                            </span>
+                          </p>
+                        </div>
+
+                        {/* Website card: hidden for event details */}
+                        {!isEventDetail && (
+                          <div className="website-info-dp">
+                            <p className="website-details-dp">
+                              <FaGlobe className="detail-icon-dp" /> <a href={locationData?.url} target="_blank" rel="noopener noreferrer">{locationData?.url || "Website not available"}</a>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="image-content-dp">
@@ -591,6 +733,68 @@ const DiscoverPlaces = () => {
           </div>
 
           <div className="nearby-places-section-dp">
+            <div className="daily-schedule-dp">
+              <div className="schedule-header-dp">
+                <h3>Daily Schedule</h3>
+                <button
+                  className="toggle-schedule-btn-dp"
+                  onClick={() => setShowScheduleSection(s => !s)}
+                  title={showScheduleSection ? 'Hide schedule' : 'Show schedule'}
+                >
+                  {showScheduleSection ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {showScheduleSection && (
+                <>
+                  <div className="schedule-toolbar-dp">
+                    <div className="toolbar-left-dp">
+                      <div className="toolbar-input-wrap-dp">
+                        <FaSearch className="toolbar-icon-dp" />
+                        <input
+                          type="text"
+                          className="schedule-search-input-dp"
+                          placeholder="Search date..."
+                          value={scheduleSearchQuery}
+                          onChange={(e) => setScheduleSearchQuery(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="toolbar-actions-dp">
+                      <button
+                        className="schedule-copy-btn-dp"
+                        onClick={handleCopyScheduleDP}
+                      >
+                        Copy Schedule
+                      </button>
+                    </div>
+                  </div>
+
+                  {Array.isArray(dailySchedule) && getFilteredScheduleEntries().length > 0 ? (
+                    <div className="daily-schedule-table-dp">
+                      {getFilteredScheduleEntries().map((entry, idx) => {
+                        const dateLabel = new Date(entry.date).toLocaleDateString('en-US', {
+                          year: 'numeric', month: 'long', day: 'numeric'
+                        });
+                        return (
+                          <div key={idx} className="schedule-row-dp">
+                            <span className="schedule-date-dp">{dateLabel}</span>
+                            <span className="schedule-time-dp">
+                              {formatTimeDisplayDP(entry.startTime)} - {formatTimeDisplayDP(entry.endTime)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="schedule-empty-dp">
+                      No per-day times. Same time every day or not provided.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             {/* Map Section */}
             <div className="map-section-dp">
               <h2>Location Map</h2>

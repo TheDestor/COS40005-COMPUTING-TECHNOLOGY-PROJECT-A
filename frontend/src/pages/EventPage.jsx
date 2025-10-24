@@ -1,5 +1,5 @@
 // Top-level imports
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import MenuNavbar from '../components/MenuNavbar';
 import Footer from '../components/Footer';
@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthProvider.jsx';
 
 const HERO_VIDEO_ID = 'VduPZPPIvHA'; 
 
-const EventPage = () => {
+function EventPage () {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -27,6 +27,93 @@ const EventPage = () => {
   });
   const [showLoading, setShowLoading] = useState(true); 
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const toYMD = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatMonthYear = (d) =>
+    d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+  const mondayIndex = (d) => {
+    // JS: 0=Sun -> convert to Monday-first (0=Mon)
+    return (d.getDay() + 6) % 7;
+  };
+
+  const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+  const buildCalendarDays = (anchorDate, event) => {
+    const monthStart = startOfMonth(anchorDate);
+    const monthEnd = endOfMonth(anchorDate);
+
+    const offset = mondayIndex(monthStart);
+    const firstCellDate = new Date(monthStart);
+    firstCellDate.setDate(monthStart.getDate() - offset);
+
+    // 6 weeks grid = 42 cells
+    const cellsCount = 42;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const eventStart = event?.startDate ? new Date(event.startDate) : null;
+    const eventEnd = event?.endDate ? new Date(event.endDate) : null;
+    if (eventStart) eventStart.setHours(0, 0, 0, 0);
+    if (eventEnd) eventEnd.setHours(0, 0, 0, 0);
+
+    // Map per-day schedule
+    const timeMap = {};
+    if (Array.isArray(event?.dailySchedule)) {
+      for (const ds of event.dailySchedule) {
+        const dd = new Date(ds.date);
+        dd.setHours(0, 0, 0, 0);
+        const k = toYMD(dd);
+        timeMap[k] = (ds.startTime && ds.endTime)
+          ? `${ds.startTime} - ${ds.endTime}`
+          : null;
+      }
+    }
+    const uniformTime =
+      event?.startTime && event?.endTime
+        ? `${event.startTime} - ${event.endTime}`
+        : null;
+
+    const days = [];
+    for (let i = 0; i < cellsCount; i++) {
+      const cellDate = new Date(firstCellDate);
+      cellDate.setDate(firstCellDate.getDate() + i);
+
+      const inCurrentMonth =
+        cellDate.getMonth() === monthStart.getMonth() &&
+        cellDate.getFullYear() === monthStart.getFullYear();
+
+      const isPast = cellDate < today;
+      const inEventRange =
+        eventStart &&
+        eventEnd &&
+        cellDate >= eventStart &&
+        cellDate <= eventEnd;
+
+      const k = toYMD(cellDate);
+      const timeText =
+        timeMap[k] !== undefined
+          ? timeMap[k] || '—'
+          : (inEventRange ? (uniformTime || '—') : null);
+
+      days.push({
+        date: cellDate,
+        inCurrentMonth,
+        isPast,
+        inEventRange,
+        timeText,
+      });
+    }
+
+    return { days, monthLabel: formatMonthYear(monthStart) };
+  };
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -88,26 +175,31 @@ const EventPage = () => {
             return eventAudiences.includes('Tourist');
           }
         })
-        .map(item => ({
-          id: item._id?.toString() || Math.random().toString(36).substr(2, 9),
-          name: item.name || 'Unnamed Event',
-          desc: item.description || 'Description not available',
-          slug: (item.name || 'event').toLowerCase().replace(/\s+/g, '-'),
-          image: item.imageUrl || defaultImage,
-          type: item.eventType || 'Event',
-          // Event specific fields from backend
-          startDate: item.startDate ? new Date(item.startDate) : null,
-          endDate: item.endDate ? new Date(item.endDate) : null,
-          startTime: item.startTime || '',
-          endTime: item.endTime || '',
-          registrationRequired: item.registrationRequired || 'No',
-          targetAudience: item.targetAudience || [],
-          eventOrganizers: item.eventOrganizers || '',
-          eventHashtags: item.eventHashtags || [],
-          coordinates: item.coordinates || {},
-          category: 'Events',
-          source: 'event-api'
-        }));
+        .map(item => {
+          const evtType = item.eventType || item.type || 'Event';
+          return {
+            id: item._id?.toString() || Math.random().toString(36).substr(2, 9),
+            name: item.name || 'Unnamed Event',
+            desc: item.description || 'Description not available',
+            slug: (item.name || 'event').toLowerCase().replace(/\s+/g, '-'),
+            image: item.imageUrl || defaultImage,
+            type: evtType,
+            eventType: evtType, // ensure eventType is available explicitly
+            // Event specific fields from backend
+            startDate: item.startDate ? new Date(item.startDate) : null,
+            endDate: item.endDate ? new Date(item.endDate) : null,
+            startTime: item.startTime || '',
+            endTime: item.endTime || '',
+            registrationRequired: item.registrationRequired || 'No',
+            targetAudience: item.targetAudience || [],
+            eventOrganizers: item.eventOrganizers || '',
+            eventHashtags: item.eventHashtags || [],
+            dailySchedule: Array.isArray(item.dailySchedule) ? item.dailySchedule : [], // ADDED
+            coordinates: item.coordinates || {},
+            category: 'Events',
+            source: 'event-api'
+          };
+        });
 
       setData(processedData);
     } catch (error) {
@@ -235,6 +327,46 @@ const EventPage = () => {
   };
 
   const { ongoingEvents, upcomingEvents } = categorizeEvents();
+  const [isScheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleEvent, setScheduleEvent] = useState(null);
+  const scheduleModalRef = useRef(null);
+
+  // Lock main page scroll when modal is open; restore on close/unmount
+  useEffect(() => {
+    if (isScheduleModalOpen) {
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => { scheduleModalRef.current?.focus(); }, 0);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isScheduleModalOpen]);
+
+  // Close on Escape key while modal is open
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setScheduleModalOpen(false);
+    };
+    if (isScheduleModalOpen) {
+      document.addEventListener('keydown', onKeyDown);
+    }
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isScheduleModalOpen]);
+
+  // Helper to format a date string for schedule rows
+  const formatScheduleDateEP = (dateStr) => {
+    if (!dateStr) return 'Unknown date';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   // Get events based on active tab
   const getActiveTabEvents = () => {
@@ -248,27 +380,12 @@ const EventPage = () => {
     return matchesSearch && matchesSort;
   });
 
-  // 🚀 COMMENTED OUT: Blocking loading condition (keep the code but don't use it)
-  /* if (loading) {
-    return (
-      <div className="loading-spinner">
-        <div className="spinner"></div>
-        <p>Loading Events...</p>
-      </div>
-    );
-  } */
+  // Determine how many cards are displayed to adjust layout
+  const displayedCount = Math.min(visibleItems, filteredData.length);
 
   return (
     <div className="category-page">
       <MenuNavbar onLoginClick={handleLoginClick} />
-
-      {/* 🚀 ADDED: Loading overlay only during initial load */}
-      {/* {showLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Loading Events...</p>
-        </div>
-      )} */}
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -394,16 +511,12 @@ const EventPage = () => {
       </div>
 
       {/* 🚀 UPDATED: Cards section with better loading logic */}
-      <div className="cards-section">
+      <div className={`cards-section ${displayedCount === 1 ? 'cards-section--one' : displayedCount === 2 ? 'cards-section--two' : ''}`}>
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)
             .map((item, index) => (
-              <div
-                className="card-wrapper"
-                key={`${item.source}-${item.id}-${index}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
+              <div className="card-wrapper" key={`${item.source}-${item.id}-${index}`} style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className={`card ${index % 2 === 0 ? 'tall-card' : 'short-card'}`}>
                   <img 
                     src={item.image} 
@@ -416,7 +529,6 @@ const EventPage = () => {
                     <h3>{highlightMatch(item.name)}</h3>
                     <div className="card-meta">
                       <span className="type-badge">{item.type}</span>
-                      {/* Remove the date badge from here */}
                       {/* Add status badge */}
                       <span 
                         className="status-badge"
@@ -442,7 +554,7 @@ const EventPage = () => {
                       <p>{item.desc}</p>
                     </div>
 
-                    {/* Event Details Section */}
+                    {/* Event Details Section (Time row with inline button) */}
                     <div className="event-details">
                       <div className="event-detail-item">
                         <span className="event-detail-label">Date:</span>
@@ -454,8 +566,28 @@ const EventPage = () => {
                         <span className="event-detail-label">Time:</span>
                         <span className="event-detail-value">
                           {formatTimePeriod(item.startTime, item.endTime)}
+                          {Array.isArray(item.dailySchedule) && item.dailySchedule.some(ds => ds?.startTime && ds?.endTime) ? (
+                            <button
+                              type="button"
+                              className="schedule-btn-ep"
+                              style={{ marginLeft: '8px' }}
+                              onClick={() => {
+                                setScheduleEvent(item);
+                                setScheduleModalOpen(true);
+                              }}
+                              title="View all daily schedule times"
+                            >
+                              View Schedule
+                            </button>
+                          ) : (
+                            <span className="schedule-fallback-ep" style={{ marginLeft: '8px' }}>
+                              (same time every day)
+                            </span>
+                          )}
                         </span>
                       </div>
+
+                      {/* removed the separate schedule button block that was below Time */}
                       <div className="event-detail-item">
                         <span className="event-detail-label">Event Type:</span>
                         <span className="event-detail-value">{item.type}</span>
@@ -470,7 +602,7 @@ const EventPage = () => {
                           <span className="event-detail-value">{item.eventOrganizers}</span>
                         </div>
                       )}
-                      {/* Remove audience section as requested */}
+
                     </div>
 
                     <div className="button-container">
@@ -491,7 +623,10 @@ const EventPage = () => {
                           registrationRequired: item.registrationRequired,
                           targetAudience: item.targetAudience,
                           eventOrganizers: item.eventOrganizers,
-                          eventHashtags: item.eventHashtags
+                          eventHashtags: item.eventHashtags,
+                          // Added for DiscoverPlaces schedule rendering
+                          eventId: item.id,
+                          dailySchedule: item.dailySchedule
                         }}
                         className="explore-btn"
                       >
@@ -531,6 +666,99 @@ const EventPage = () => {
 
       {showLogin && <LoginPage onClose={closeLogin} />}
 
+      {/* Schedule Modal Overlay */}
+      // Inside EventPage component, replace the schedule list modal content
+      {isScheduleModalOpen && scheduleEvent && (
+      <div
+        className="ep-schedule-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="epScheduleTitle"
+        onClick={() => setScheduleModalOpen(false)}
+      >
+        <div
+          className="ep-schedule-modal"
+          onClick={(e) => e.stopPropagation()}
+          role="document"
+          aria-describedby="epScheduleDesc"
+          tabIndex={-1}
+          ref={scheduleModalRef}
+        >
+          <div className="ep-schedule-header">
+            <h3 id="epScheduleTitle">Daily Schedule Calendar</h3>
+            <button
+              type="button"
+              className="ep-schedule-close"
+              onClick={() => setScheduleModalOpen(false)}
+              aria-label="Close schedule modal"
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+      
+          <div className="ep-schedule-list" id="epScheduleDesc">
+            {
+              (() => {
+                // Choose month anchor: show current month if inside event range, otherwise start month
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const start = scheduleEvent?.startDate ? new Date(scheduleEvent.startDate) : today;
+                const end = scheduleEvent?.endDate ? new Date(scheduleEvent.endDate) : today;
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+                const inRange = today >= start && today <= end;
+                const anchor = inRange ? today : start;
+      
+                const { days, monthLabel } = buildCalendarDays(anchor, scheduleEvent);
+      
+                return (
+                  <div className="ep-calendar-wrapper">
+                    <div className="ep-calendar-header">
+                      <div className="ep-month-label">{monthLabel}</div>
+                      <div className="ep-weekdays">
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                        <span>Sun</span>
+                      </div>
+                    </div>
+      
+                    <div className="ep-calendar-grid">
+                      {days.map((d, idx) => {
+                        const cellClasses = [
+                          'ep-day-cell',
+                          d.inCurrentMonth ? '' : 'ep-day-cell--out-month',
+                          d.isPast ? 'ep-day-cell--past' : '',
+                          d.inEventRange ? 'ep-day-cell--in-range' : '',
+                        ].filter(Boolean).join(' ');
+      
+                        return (
+                          <div key={idx} className={cellClasses}>
+                            <div className="ep-day-label">{d.date.getDate()}</div>
+      
+                            {d.inEventRange && (
+                              <div className="ep-event-highlight">
+                                {d.timeText && (
+                                  <span className="ep-time-chip">{d.timeText}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </div>
+        </div>
+      </div>
+      )}
       {showScrollTop && (
         <button
           className="scroll-to-top-btn-mj"

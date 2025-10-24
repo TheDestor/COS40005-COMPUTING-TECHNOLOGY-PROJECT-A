@@ -2851,18 +2851,20 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                 </div>
 
                 <div className="form-group-ae time-selection-container-ae">
-                  <label>End Time {timeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
-                  <div className="time-display-ae">
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => handleTimeChange(e.target.value, 'end')}
-                      className={`time-input-native-ae ${timeMode === 'advanced' ? 'disabled-input' : ''}`}
-                      min={getMinEndTime()}
-                      disabled={timeMode === 'advanced' || (isEndTimeDisabled() && !startTime)}
-                      lang="en-GB"
-                    />
-                  </div>
+              <label>End Time {timeMode === 'advanced' && <span className="disabled-label">(Disabled - Using per-day schedule)</span>}</label>
+              <div className="time-display-ae">
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => handleTimeChange(e.target.value, 'end')}
+                  className={`time-input-native-ae ${timeMode === 'advanced' ? 'disabled-input' : ''}`}
+                  min={getMinEndTime()}
+                  disabled={timeMode === 'advanced' || (isEndTimeDisabled() && !startTime)}
+                  lang="en-GB"
+                />
+              </div>
+
+              
                 </div>
 
                 <div className="ae-per-day-group">
@@ -2937,14 +2939,14 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                         <input
                           type="time"
                           className="per-day-time-input"
-                          value={(dailyTimes[selectedScheduleDate]?.startTime) || ''}
+                          value={(dailyTimes[selectedScheduleDate] || {}).startTime || ''}
                           onChange={(e) =>
-                            setDailyTimes(prev => ({
+                            setDailyTimes((prev) => ({
                               ...prev,
                               [selectedScheduleDate]: {
                                 ...(prev[selectedScheduleDate] || {}),
-                                startTime: e.target.value
-                              }
+                                startTime: e.target.value,
+                              },
                             }))
                           }
                           lang="en-GB"
@@ -2954,15 +2956,14 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                         <input
                           type="time"
                           className="per-day-time-input"
-                          value={(dailyTimes[selectedScheduleDate]?.endTime) || ''}
-                          min={(dailyTimes[selectedScheduleDate]?.startTime) || ''}
+                          value={(dailyTimes[selectedScheduleDate] || {}).endTime || ''}
                           onChange={(e) =>
-                            setDailyTimes(prev => ({
+                            setDailyTimes((prev) => ({
                               ...prev,
                               [selectedScheduleDate]: {
                                 ...(prev[selectedScheduleDate] || {}),
-                                endTime: e.target.value
-                              }
+                                endTime: e.target.value,
+                              },
                             }))
                           }
                           lang="en-GB"
