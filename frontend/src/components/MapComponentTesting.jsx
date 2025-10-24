@@ -176,12 +176,12 @@ const categoryIcons = {
 
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
-  {/* Normalize coords from either {latitude, longitude} or {coordinates.{latitude, longitude}} */}
-const rawLat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
-const rawLng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
-const searchLat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
-const searchLng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
-const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng);
+  // Normalize coords from either {latitude, longitude} or {coordinates.{latitude, longitude}}
+  const rawLat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
+  const rawLng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+  const searchLat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+  const searchLng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
+  const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng);
 
   const contextMenuItems = [
         { 
@@ -208,44 +208,102 @@ const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng)
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* Show search marker and nearby places when we have valid coords */}
-      {hasSearchCoords ? (
-          <>
-            {/* Anchor marker at searched location: hide while routing to avoid duplicate with route end pin */}
-            {!isRoutingActive && (
-              <Marker
-                position={[searchLat, searchLng]}
-                // Use town.png for bookmark anchors, else retain the red icon
-                icon={(String(activeSearchLocation?.type || '').toLowerCase() === 'bookmark')
-                      ? bookmarkMarkerIcon
-                      : endMarkerIcon}
-                eventHandlers={{ click: () => onMarkerClick(activeSearchLocation) }}
-                riseOnHover={true}
-                zIndexOffset={1000}
-              />
-            )}
-            {/* Nearby markers: distinct icons, NO clustering */}
-            {nearbyPlaces.map((loc, idx) => {
-              const lc = [
-                (loc.category || ''),
-                (loc.type || ''),
-                (loc.subcategory || ''),
-                (loc.class || ''),
-                ...(Array.isArray(loc.categories) ? loc.categories : []),
-                ...(Array.isArray(loc.tags) ? loc.tags : []),
-                ...(Array.isArray(loc?.properties?.categories) ? loc.properties.categories : []),
-              ]
-                .filter(Boolean)
-                .map((s) => String(s).toLowerCase());
+      {/* Anchor marker at searched location: hide while routing to avoid duplicate with route end pin */}
+      {hasSearchCoords && !isRoutingActive && (
+        <Marker
+          position={[searchLat, searchLng]}
+          icon={(String(activeSearchLocation?.type || '').toLowerCase() === 'bookmark')
+                ? bookmarkMarkerIcon
+                : endMarkerIcon}
+          eventHandlers={{ click: () => onMarkerClick(activeSearchLocation) }}
+          riseOnHover={true}
+          zIndexOffset={1000}
+        />
+      )}
 
-              const isToilet = lc.some((s) =>
-                s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
-              );
-              const isPharmacy = lc.some((s) =>
-                s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
-              );
-              const baseIcon = isToilet ? categoryIcons['Toilet'] : isPharmacy ? categoryIcons['Pharmacy'] : categoryIcons['Restaurant'];
+      {/* Nearby markers: render whenever an item has valid coords, independent of search anchor */}
+      {Array.isArray(nearbyPlaces) && nearbyPlaces.map((loc, idx) => {
+          // normalize coordinates from various shapes
+          const rawLat =
+            loc?.latitude ??
+            loc?.coordinates?.latitude ??
+            (typeof loc?.geometry?.location?.lat === 'function'
+              ? loc.geometry.location.lat()
+              : loc?.geometry?.location?.lat) ??
+            loc?.lat;
+          const rawLng =
+            loc?.longitude ??
+            loc?.coordinates?.longitude ??
+            (typeof loc?.geometry?.location?.lng === 'function'
+              ? loc.geometry.location.lng()
+              : loc?.geometry?.location?.lng) ??
+            loc?.lng ??
+            loc?.lon;
 
+          const lat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+          const lng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return null; // skip invalid entries
+          }
+
+          // category tokens to decide icon
+          const lc = [
+            (loc.category || ''),
+            (loc.type || ''),
+            (loc.subcategory || ''),
+            (loc.class || ''),
+            ...(Array.isArray(loc.categories) ? loc.categories : []),
+            ...(Array.isArray(loc.tags) ? loc.tags : []),
+            ...(Array.isArray(loc?.properties?.categories) ? loc.properties.categories : []),
+          ]
+            .filter(Boolean)
+            .map((s) => String(s).toLowerCase());
+
+          const isToilet = lc.some((s) =>
+            s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+          );
+          const isPharmacy = lc.some((s) =>
+            s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
+          );
+
+          // BASE icon for nearby marker
+          const baseIcon = isToilet
+            ? categoryIcons['Toilet']
+            : isPharmacy
+              ? categoryIcons['Pharmacy']
+              : categoryIcons['Restaurant'];
+
+          // selected state for nearby marker
+          const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
+          const selLng = selectedLocation?.longitude ?? selectedLocation?.lng ?? selectedLocation?.lon;
+          const isSelected =
+            Number.isFinite(selLat) &&
+            Number.isFinite(selLng) &&
+            Math.abs(selLat - lat) < 1e-6 &&
+            Math.abs(selLng - lng) < 1e-6;
+
+          const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
+
+          return (
+            <Marker
+              key={`nearby-${idx}`}
+              position={[lat, lng]}
+              icon={icon}
+              eventHandlers={{ click: () => onMarkerClick(loc) }}
+              className={isSelected ? 'highlighted-marker' : ''}
+              zIndexOffset={isSelected ? 1100 : 0}
+              riseOnHover={true}
+            />
+          );
+        })}
+
+      {/* Category/location markers: show when no active search anchor and not routing */}
+      {!activeSearchLocation && !isRoutingActive && (
+        shouldCluster ? (
+          <MarkerClusterGroup disableClusteringAtZoom={18} spiderfyOnMaxZoom={true} zoomToBoundsOnClick={true}>
+            {locations.map((loc, idx) => {
+              const baseIcon = getIconForLocation(loc);
               const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
               const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
               const isSelected =
@@ -258,77 +316,41 @@ const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng)
 
               return (
                 <Marker
-                  key={`nearby-${loc.placeId || loc.name || idx}-${idx}`}
+                  key={`${loc.name}-${idx}`}
                   position={[loc.latitude, loc.longitude]}
                   icon={icon}
                   eventHandlers={{ click: () => onMarkerClick(loc) }}
-                  riseOnHover={true}
-                  zIndexOffset={isSelected ? 1200 : 900}
+                  className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
+                  zIndexOffset={isSelected ? 1100 : 0}
                 />
               );
             })}
-          </>
+          </MarkerClusterGroup>
         ) : (
-        <>
-          {/* Category/location markers */}
-          {!activeSearchLocation && !isRoutingActive && (
-            shouldCluster ? (
-              <MarkerClusterGroup disableClusteringAtZoom={18} spiderfyOnMaxZoom={true} zoomToBoundsOnClick={true}>
-                {locations.map((loc, idx) => {
-                const baseIcon = getIconForLocation(loc);
-                const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
-                const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
-                const isSelected =
-                  Number.isFinite(selLat) &&
-                  Number.isFinite(selLng) &&
-                  Math.abs(selLat - loc.latitude) < 1e-6 &&
-                  Math.abs(selLng - loc.longitude) < 1e-6;
+          locations.map((loc, idx) => {
+            const baseIcon = getIconForLocation(loc);
+            const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
+            const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
+            const isSelected =
+              Number.isFinite(selLat) &&
+              Number.isFinite(selLng) &&
+              Math.abs(selLat - loc.latitude) < 1e-6 &&
+              Math.abs(selLng - loc.longitude) < 1e-6;
 
-                const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
+            const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
 
-                return (
-                  <Marker
-                    key={`${loc.name}-${idx}`}
-                    position={[loc.latitude, loc.longitude]}
-                    icon={icon}
-                    eventHandlers={{
-                      click: () => onMarkerClick(loc)
-                    }}
-                    className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
-                    zIndexOffset={isSelected ? 1100 : 0}
-                  />
-                );
-              })}
-              </MarkerClusterGroup>
-            ) : (
-              locations.map((loc, idx) => {
-                const baseIcon = getIconForLocation(loc);
-                const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
-                const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
-                const isSelected =
-                  Number.isFinite(selLat) &&
-                  Number.isFinite(selLng) &&
-                  Math.abs(selLat - loc.latitude) < 1e-6 &&
-                  Math.abs(selLng - loc.longitude) < 1e-6;
-
-                const icon = isSelected ? scaleIcon(baseIcon, 1.7) : baseIcon;
-
-                return (
-                  <Marker
-                    key={`${loc.name}-${idx}`}
-                    position={[loc.latitude, loc.longitude]}
-                    icon={icon}
-                    eventHandlers={{
-                      click: () => onMarkerClick(loc)
-                    }}
-                    className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
-                    zIndexOffset={isSelected ? 1100 : 0}
-                  />
-                );
-              })
-            )
-          )}
-        </>
+            return (
+              <Marker
+                key={`${loc.name}-${idx}`}
+                position={[loc.latitude, loc.longitude]}
+                icon={icon}
+                eventHandlers={{ click: () => onMarkerClick(loc) }}
+                className={selectedLocation && selectedLocation.name === loc.name ? 'highlighted-marker' : ''}
+                zIndexOffset={isSelected ? 1100 : 0}
+              />
+            );
+          })
+        )
       )}
     </>
   );
@@ -588,23 +610,24 @@ function MapComponentTesting({  }) {
   const fetchMajorTowns = useCallback(async () => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      
-      const res = await fetch('/api/locations', {
-        signal: controller.signal
-      });
-      
+      const timeoutId = setTimeout(() => controller.abort('timeout'), 12000);
+
+      const backendUrl = import.meta.env.VITE_DEPLOYMENT_BACKEND || '';
+      const url = backendUrl ? `${backendUrl}/api/locations` : '/api/locations';
+
+      const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) return [];
+
       const data = await res.json();
 
       // Filter to only include Major Town locations
       const majorTowns = data
-        .filter(item => 
-          item && 
-          item.latitude != null && 
-          item.longitude != null && 
+        .filter(item =>
+          item &&
+          item.latitude != null &&
+          item.longitude != null &&
           (item.category === 'Major Town' || item.type === 'Major Town')
         )
         .map(item => ({
@@ -622,18 +645,44 @@ function MapComponentTesting({  }) {
 
       return majorTowns;
     } catch (error) {
-      console.error('Major Towns fetch error:', error);
-      return [];
+      // Graceful fallback on timeout/abort/any network failure
+      console.warn('Major Towns fetch error, using static fallback:', error);
+
+      // Build static towns from townCoordinates.js
+      const staticTowns = Object.entries(townCoordinates).map(([name, coord]) => ({
+        name,
+        latitude: Number(coord.lat),
+        longitude: Number(coord.lon),
+        image: undefined,
+        description: 'Major Town in Sarawak',
+        type: 'Major Town',
+        source: 'static',
+        division: '',
+        url: '',
+        category: 'Major Town'
+      }));
+
+      return staticTowns;
     }
   }, []);
 
   // Handler for when MapViewMenu selects a category
   const handleMenuSelect = (category, data) => {
     closeInfoWindow();
+
+    // Clear any previous search anchor and its nearby places
     setSelectedSearchBarPlace(null);
+    setActiveSearchLocation(null);
+    setSelectedSearchPlace(null);
+    setSearchNearbyPlaces([]);
+    setBackendNearbyPlaces([]);
+
+    // Activate the selected category and render its markers
     setActiveOption(category);
     setLocations(data || []);
     setZoomTrigger(z => z + 1);
+
+    // Ensure routing UI/markers are cleared
     clearAllRoutingData();
   };
 
@@ -651,6 +700,8 @@ function MapComponentTesting({  }) {
     setActiveSearchLocation(null);
     setSelectedSearchBarPlace(null);
     setSelectedSearchBarPlace({ ...place });
+    // NEW: also set activeSearchLocation to the selected place so downstream logic stays in sync
+    setActiveSearchLocation({ ...place });
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
@@ -899,18 +950,6 @@ function MapComponentTesting({  }) {
     const handleNearbyPlaceSelected = (event) => {
       const placeData = event.detail;
       setSelectedLocation(placeData);
-      
-      if (mapRef.current) {
-        const map = mapRef.current;
-        const markerPosition = [placeData.latitude, placeData.longitude];
-        const currentZoom = map.getZoom();
-        const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18)); 
-        
-        map.flyTo(markerPosition, optimalZoom, {
-          duration: 1.8,
-          easeLinearity: 0.25
-        });
-      }
     };
 
     window.addEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
@@ -918,6 +957,40 @@ function MapComponentTesting({  }) {
       window.removeEventListener('nearbyPlaceSelected', handleNearbyPlaceSelected);
     };
   }, []);
+
+  // NEW: Fly to any newly selected location (from sidebar or marker)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !selectedLocation) return;
+
+    const rawLat =
+      selectedLocation?.coordinates?.latitude ??
+      selectedLocation?.latitude ??
+      (typeof selectedLocation?.geometry?.location?.lat === 'function'
+        ? selectedLocation.geometry.location.lat()
+        : selectedLocation?.geometry?.location?.lat) ??
+      selectedLocation?.lat;
+    const rawLng =
+      selectedLocation?.coordinates?.longitude ??
+      selectedLocation?.longitude ??
+      (typeof selectedLocation?.geometry?.location?.lng === 'function'
+        ? selectedLocation.geometry.location.lng()
+        : selectedLocation?.geometry?.location?.lng) ??
+      selectedLocation?.lng ??
+      selectedLocation?.lon;
+
+    const lat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+    const lng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const currentZoom = map.getZoom();
+      const optimalZoom = Math.max(15, Math.min(currentZoom + 4, 18));
+      map.flyTo([lat, lng], optimalZoom, {
+        duration: 1.8,
+        easeLinearity: 0.25
+      });
+    }
+  }, [selectedLocation]);
 
   useEffect(() => {
     const routingActive =
@@ -1250,7 +1323,8 @@ function MapComponentTesting({  }) {
         <MapContent
           locations={locations}
           nearbyPlaces={filteredNearbyPlaces}
-          activeSearchLocation={activeSearchLocation || selectedSearchBarPlace}
+          // UPDATED: prefer the fresh selectedSearchBarPlace as the anchor; fallback to activeSearchLocation.
+          activeSearchLocation={selectedSearchBarPlace || activeSearchLocation}
           activeCategory={activeOption}
           isRoutingActive={isRoutingActive}
           onMarkerClick={handleMarkerClick}

@@ -8,15 +8,12 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
     const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
     const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
 
-    if (!map || !selectedSearchBarPlace?.latitude || !selectedSearchBarPlace?.longitude) {
+    // UPDATED: use numeric validation, not truthiness, to avoid first-run race and string issues
+    if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) {
       return;
     }
 
-    // const lat = selectedSearchBarPlace.latitude;
-    // const lon = selectedSearchBarPlace.longitude;
     const radius = 500; // 500m radius
-
-    // This is an Overpass QL query to find restaurants, cafes, and bars.
     const query = `
       [out:json][timeout:25];
       (
@@ -28,7 +25,6 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
       >;
       out skel qt;
     `;
-
     const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
     fetch(url)
@@ -43,12 +39,12 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
             latitude: element.lat || element.center?.lat,
             longitude: element.lon || element.center?.lon,
             placeId: element.id,
-            type: 'Restaurant' // So we can use an icon
+            type: 'Restaurant'
           }))
-          .filter(place => place.name && place.latitude && place.longitude); // Filter out incomplete results
+          .filter(place => place.name && place.latitude && place.longitude);
 
         if (setSearchNearbyPlaces) {
-          setSearchNearbyPlaces(nearbyPlaces.slice(0, 20)); // Limit to 20 results
+          setSearchNearbyPlaces(nearbyPlaces.slice(0, 20));
         }
       })
       .catch(error => {
@@ -62,11 +58,8 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
     const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
     if (map && Number.isFinite(lat) && Number.isFinite(lon)) {
       setTimeout(() => {
-        map.flyTo(
-          [lat, lon],
-          17
-        );
-      }, 100); // 100ms delay
+        map.flyTo([lat, lon], 17);
+      }, 100);
     }
   }, [map, selectedSearchBarPlace, searchBarZoomTrigger]);
 

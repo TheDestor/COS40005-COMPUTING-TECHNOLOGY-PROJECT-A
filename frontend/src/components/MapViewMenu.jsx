@@ -14,6 +14,20 @@ import { useAuth } from '../context/AuthProvider';
 const RADIUS_KM = 10;
 const DEFAULT_CENTER = { lat: 1.5533, lng: 110.3592 };
 
+// Static town coordinates for fallback
+const townCoordinates = {
+  'Kuching': { lat: 1.5533, lon: 110.3592 },
+  'Miri': { lat: 4.3995, lon: 113.9914 },
+  'Sibu': { lat: 2.2870, lon: 111.8307 },
+  'Bintulu': { lat: 3.1713, lon: 113.0419 },
+  'Limbang': { lat: 4.7500, lon: 115.0000 },
+  'Sarikei': { lat: 2.1167, lon: 111.5167 },
+  'Kapit': { lat: 2.0167, lon: 112.9333 },
+  'Mukah': { lat: 2.9000, lon: 112.0833 },
+  'Betong': { lat: 1.4167, lon: 111.5167 },
+  'Sri Aman': { lat: 1.2333, lon: 111.4667 }
+};
+
 // Enhanced SWR-like cache system with 24-hour persistence and auto-refresh
 const createSWRCache = () => {
   const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -402,15 +416,39 @@ const useParallelPreload = () => {
       // BATCH 1: Load Major Towns + Events in PARALLEL (Core data)
       setPreloadMessage('Loading core map data...');
       const batch1Promises = [
-        // Major Towns
-        fetchWithOptimizedTimeout('/api/locations').then(majorTowns => {
-          globalCache.set('major_towns', majorTowns);
-          globalCache.set('backend_locations', majorTowns);
-          return majorTowns;
-        }).catch(error => {
-          console.error('Failed to pre-load major towns:', error);
-          return [];
-        }),
+    // Major Towns
+    fetchWithOptimizedTimeout('/api/locations').then(majorTowns => {
+      globalCache.set('major_towns', majorTowns);
+      globalCache.set('backend_locations', majorTowns);
+      return majorTowns;
+    }).catch(error => {
+      console.error('Failed to pre-load major towns:', error);
+
+      // Fallback 1: Try cached instant loader
+      let fallback = getInstantMajorTowns();
+
+      // Fallback 2: Static list if cache is empty
+      if (!fallback || fallback.length === 0) {
+        const staticTowns = Object.entries(townCoordinates).map(([name, coord]) => ({
+          name,
+          latitude: Number(coord.lat),
+          longitude: Number(coord.lon),
+          image: defaultImage,
+          description: 'Major Town in Sarawak',
+          type: 'Major Town',
+          source: 'static',
+          division: '',
+          url: '',
+          category: 'Major Town'
+        }));
+        fallback = staticTowns;
+      }
+
+      // Cache fallback for instant experience next time
+      globalCache.set('major_towns', fallback);
+      globalCache.set('backend_locations', fallback);
+      return fallback;
+    }),
 
         // Events
         fetchWithOptimizedTimeout('/api/event/getAllEvents').then(events => {
@@ -883,32 +921,32 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
   const fetchMajorTowns = useCallback(async () => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      
-      const res = await fetch('/api/locations', {
-        signal: controller.signal
-      });
-      
+      const timeoutId = setTimeout(() => controller.abort('timeout'), 12000);
+
+      const backendUrl = import.meta.env.VITE_DEPLOYMENT_BACKEND || '';
+      const url = backendUrl ? `${backendUrl}/api/locations` : '/api/locations';
+
+      const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
-      
+
       if (!res.ok) {
         if (res.status === 401) {
-          console.log('🔐 401 Unauthorized - User not logged in, using cached data');
-          return getInstantMajorTowns();
+          console.log('🔐 401 Unauthorized - using cached or static data');
+          const cached = getInstantMajorTowns();
+          if (cached.length) return cached;
         }
-        return [];
+        throw new Error(`HTTP ${res.status}`);
       }
-      const data = await res.json();
 
-      // Cache the data for instant loading next time
+      const data = await res.json();
       dataCacheRef.current.set('major_towns', data);
       dataCacheRef.current.set('backend_locations', data);
-      
+
       return data
-        .filter(item => 
-          item && 
-          item.latitude != null && 
-          item.longitude != null && 
+        .filter(item =>
+          item &&
+          item.latitude != null &&
+          item.longitude != null &&
           (item.category === 'Major Town' || item.type === 'Major Town')
         )
         .map(item => ({
@@ -924,8 +962,26 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           category: item.category || 'Major Town'
         }));
     } catch (error) {
-      console.error('Major Towns fetch error:', error);
-      return getInstantMajorTowns(); // Fallback to cached data
+      console.warn('Major Towns fetch error, using static fallback:', error);
+
+      const staticTowns = Object.entries(townCoordinates).map(([name, coord]) => ({
+        name,
+        latitude: Number(coord.lat),
+        longitude: Number(coord.lon),
+        image: defaultImage,
+        description: 'Major Town in Sarawak',
+        type: 'Major Town',
+        source: 'static',
+        division: '',
+        url: '',
+        category: 'Major Town'
+      }));
+
+      // Cache for instant experience later
+      dataCacheRef.current.set('major_towns', staticTowns);
+      dataCacheRef.current.set('backend_locations', staticTowns);
+
+      return staticTowns;
     }
   }, [getInstantMajorTowns]);
 

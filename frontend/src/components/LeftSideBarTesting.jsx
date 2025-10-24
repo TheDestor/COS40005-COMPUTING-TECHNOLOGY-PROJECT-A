@@ -377,9 +377,9 @@ async function geocodeAddressNominatim(address) {
 }
 
 // helper: snap to road
-async function snapToRoadOSRM(lng, lat, profile = 'driving') {
+async function snapToRoadOSRM(lng, lat, profile = 'driving', signal) {
   const url = `https://router.project-osrm.org/nearest/v1/${profile}/${lng},${lat}?number=1`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     return { lng, lat }; // fall back to original
   }
@@ -392,11 +392,11 @@ async function snapToRoadOSRM(lng, lat, profile = 'driving') {
 }
 
 // OSRM routing helper (existing)
-async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
-  const snappedStart = await snapToRoadOSRM(start.lng, start.lat, profile);
-  const snappedEnd = await snapToRoadOSRM(end.lng, end.lat, profile);
+async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving', signal) {
+  const snappedStart = await snapToRoadOSRM(start.lng, start.lat, profile, signal);
+  const snappedEnd = await snapToRoadOSRM(end.lng, end.lat, profile, signal);
   const snappedWaypoints = await Promise.all(
-    waypoints.map(wp => snapToRoadOSRM(wp.lng, wp.lat, profile))
+    waypoints.map(wp => snapToRoadOSRM(wp.lng, wp.lat, profile, signal))
   );
 
   const coords = [
@@ -410,7 +410,7 @@ async function fetchOSRMRoute(start, end, waypoints = [], profile = 'driving') {
   
   console.log(`Fetching route for ${profile}:`, url);
   
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`OSRM request failed for ${profile}:`, response.status, errorText);
@@ -878,6 +878,7 @@ const LeftSidebarTesting = forwardRef(({
   const [currentLocation, setCurrentLocation] = useState(null);
   const [nearbyError, setNearbyError] = useState(null);
   const [isNearbyDrawerOpen, setIsNearbyDrawerOpen] = useState(false);
+  const routeAbortRef = useRef(null);
 
   // Compute a robust anchor for distance: prefer search selection, then recent selection, then destination
   const anchorCoords = useMemo(() => {
@@ -1642,42 +1643,38 @@ const LeftSidebarTesting = forwardRef(({
   };
 
   const handleNearbyPlaceClick = (place) => {
-    // Derive coordinates from multiple shapes (Google Places, backend, business)
-    const lat =
-      (typeof place?.geometry?.location?.lat === 'function'
+    const resolveLat = () =>
+      typeof place?.geometry?.location?.lat === 'function'
         ? place.geometry.location.lat()
-        : place?.geometry?.location?.lat) ??
-      place?.latitude ??
-      place?.coordinates?.latitude ??
-      place?.lat;
+        : place?.geometry?.location?.lat ?? place?.latitude;
 
-    const lng =
-      (typeof place?.geometry?.location?.lng === 'function'
+    const resolveLng = () =>
+      typeof place?.geometry?.location?.lng === 'function'
         ? place.geometry.location.lng()
-        : place?.geometry?.location?.lng) ??
-      place?.longitude ??
-      place?.coordinates?.longitude ??
-      place?.lng;
+        : place?.geometry?.location?.lng ?? place?.longitude;
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const lat = resolveLat();
+    const lng = resolveLng();
 
-    // Normalize details for CustomInfoWindow
     const placeData = {
-      ...place,
-      latitude: lat,
-      longitude: lng,
-      name: place.name || place.title,
-      type: place.type || place.category || 'Nearby Place',
-      address:
-        place.address ||
-        place.vicinity ||
-        place.formatted_address,
-      phone:
-        place.phone ||
-        place.contact ||
-        place.formatted_phone_number ||
-        place.telephone ||
-        place.mobile,
+      place_id: place.place_id || place.id,
+      name: place.name,
+      vicinity: place.vicinity || 'Nearby area',
+      rating: place.rating || null,
+      user_ratings_total: place.user_ratings_total || 0,
+      // normalized coordinates for map usage
+      latitude: typeof lat === 'string' ? parseFloat(lat) : lat,
+      longitude: typeof lng === 'string' ? parseFloat(lng) : lng,
+      // add redundant formats so any consumer can read them
+      lat: typeof lat === 'string' ? parseFloat(lat) : lat,
+      lng: typeof lng === 'string' ? parseFloat(lng) : lng,
+      coordinates: { latitude: typeof lat === 'string' ? parseFloat(lat) : lat,
+                     longitude: typeof lng === 'string' ? parseFloat(lng) : lng },
+      type: place.type || 'place',
+      categories: place.categories,
+      tags: place.tags,
+      properties: place.properties,
+      phone: place.phone,
       website: place.website || place.url,
       owner: place.owner,
       ownerEmail: place.ownerEmail,
@@ -1691,23 +1688,16 @@ const LeftSidebarTesting = forwardRef(({
         'Nearby place',
     };
 
-    // Only highlight the clicked marker (scale), do NOT change the red anchor
     if (setSelectedPlace) {
       setSelectedPlace(placeData);
     }
 
-    // Stop promoting the nearby click to an anchor; keep routing and anchor untouched
-    // DO NOT set activeSearchLocation or selectedSearchBarPlace here
-
     const customEvent = new CustomEvent('nearbyPlaceSelected', { detail: placeData });
     window.dispatchEvent(customEvent);
-
-    // Keep drawer open for continued exploration
-    // setIsNearbyDrawerOpen(false);
   };
 
   // Fetch nearby places using Overpass API (free alternative to Google Places)
-const fetchNearbyPlaces = async (locationCoords, radius = 500) => {
+const fetchNearbyPlaces = async (locationCoords, radius = 5000) => {
   const { lat, lng } = locationCoords;
   
   // Convert radius from meters to degrees (approximate)
@@ -1822,74 +1812,88 @@ const handleVehicleClick = async (vehicle) => {
       })
     ).then(arr => arr.filter(Boolean));
 
-    // Fetch multiple route alternatives for the selected vehicle
-    const routeData = await fetchRouteWithAlternatives(startCoords, endCoords, waypointsCoords, vehicle);
+    // Abort any in-flight route requests
+    if (routeAbortRef.current) routeAbortRef.current.abort();
+    routeAbortRef.current = new AbortController();
+    const { signal } = routeAbortRef.current;
 
-    if (routeData.routes && routeData.routes.length > 0) {
-      // Process all route alternatives
-      const alternatives = routeData.routes.map((route, index) => {
-        
-        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]); // Convert from [lng, lat] to [lat, lng] for Leaflet
-        
-        return {
-          index,
-          distance: route.distance,
-          duration: route.duration,
-          coords,
-          vehicle,
-          roadInfo: route.roadInfo || []
-        };
+    // FAST PATH: render a basic OSRM route first for instant feedback
+    const fastProfile = travelModes[vehicle]?.fallbackProfile || travelModes[vehicle]?.profile || 'driving';
+    let fastData;
+    try {
+      fastData = await fetchOSRMRoute(startCoords, endCoords, waypointsCoords, fastProfile, signal);
+    } catch (e) {
+      console.warn('Fast OSRM route failed, continuing to fallback:', e?.message);
+      fastData = null;
+    }
+
+    if (fastData?.routes?.length) {
+      const first = fastData.routes[0];
+      const coords = first.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+
+      setRouteAlternatives([{
+        index: 0, distance: first.distance, duration: first.duration,
+        coords, vehicle, roadInfo: first.roadInfo || []
+      }]);
+      setSelectedRouteIndex(0);
+
+      if (setOsrmRouteCoords) setOsrmRouteCoords(coords);
+      if (setOsrmWaypoints) setOsrmWaypoints(waypointsCoords);
+      setRouteSummary({
+        distance: first.distance,
+        duration: first.duration,
+        vehicle,
+        roadInfo: first.roadInfo || []
       });
+    }
 
-      setRouteAlternatives(alternatives);
-      setSelectedRouteIndex(0); // Select the first (fastest) route by default
-      
-      // Set the first route as active
-      const firstRoute = alternatives[0];
-      
-      // Ensure we have valid coordinates
-      if (firstRoute.coords && firstRoute.coords.length > 0) {
-        if (setOsrmRouteCoords) {
-          setOsrmRouteCoords(firstRoute.coords);
-        }
-        if (setOsrmWaypoints) {
-          // Populate waypoint marker positions from resolved waypointCoords
-          setOsrmWaypoints(waypointsCoords);
-        }
-        setRouteSummary({ 
-          distance: firstRoute.distance, 
-          duration: firstRoute.duration,
-          vehicle: firstRoute.vehicle,
-          roadInfo: firstRoute.roadInfo
-        });
-      } else {
-        console.error('First route has no coordinates!');
-        toast.error('Route calculation failed: No coordinates found');
-      }
-      
-      // Fetch nearby places around the destination
+    // End loading early so map draws immediately
+    setIsLoading(false);
+
+    // Fetch nearby places only if the drawer is open (avoid slow Overpass calls)
+    if (isNearbyDrawerOpen) {
       try {
-        const nearbyPlaces = await fetchNearbyPlaces(endCoords, 500);
-        setNearbyPlaces(nearbyPlaces);
+        const nearby = await fetchNearbyPlaces(endCoords, 500);
+        setNearbyPlaces(nearby);
       } catch (error) {
         console.warn('Failed to fetch nearby places:', error);
         setNearbyPlaces([]);
       }
-      
-      // Show success message with transport mode
-      const message = alternatives.length > 1 
-        ? `${vehicle} routes calculated successfully! ${alternatives.length} options available.`
-        : `${vehicle} route calculated successfully!`;
-      toast.success(message);
-    } else {
-      console.error('No routes found in routeData:', routeData);
-      setRouteSummary(null);
-      if (setOsrmRouteCoords) setOsrmRouteCoords([]);
-      setRouteAlternatives([]);
-      setSelectedRouteIndex(0);
-      setNearbyPlaces([]);
-      toast.error(`No routes found for ${vehicle} transport mode`);
     }
+
+    // BACKGROUND: compute richer alternatives; don't block the UI
+    Promise.resolve().then(async () => {
+      try {
+        const routeData = await fetchRouteWithAlternatives(startCoords, endCoords, waypointsCoords, vehicle);
+        if (routeData.routes && routeData.routes.length > 0) {
+          const alternatives = routeData.routes.map((route, index) => ({
+            index,
+            distance: route.distance,
+            duration: route.duration,
+            coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+            vehicle,
+            roadInfo: route.roadInfo || []
+          }));
+          setRouteAlternatives(alternatives);
+          setSelectedRouteIndex(0);
+          // Keep summary in sync with the best route
+          const best = alternatives[0];
+          setRouteSummary({
+            distance: best.distance,
+            duration: best.duration,
+            vehicle: best.vehicle,
+            roadInfo: best.roadInfo
+          });
+          toast.success(
+            alternatives.length > 1
+              ? `${vehicle} routes updated: ${alternatives.length} options available.`
+              : `${vehicle} route updated.`
+          );
+        }
+      } catch (err) {
+        console.warn('Background alternatives failed:', err?.message);
+      }
+    });
   } catch (error) {
     console.error('Routing error:', error);
     
@@ -1947,7 +1951,7 @@ const handleVehicleClick = async (vehicle) => {
 };
 
 // Coordinate-based auto-calc: keep guard; no default vehicle means it won't run
-useEffect(() => {
+  useEffect(() => {
     const shouldAutoCalculate = 
       startingPointCoords &&
       destinationCoords &&
@@ -1962,6 +1966,21 @@ useEffect(() => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startingPointCoords, destinationCoords, isLoading, routeAlternatives.length]);
+
+  // NEW: Recalculate route automatically when waypoint coordinates change
+  useEffect(() => {
+    // Only run when we have start, destination and a chosen vehicle
+    const hasStart = !!(startingPointCoords?.lat && startingPointCoords?.lng);
+    const hasEnd = !!(destinationCoords?.lat && destinationCoords?.lng);
+    const hasVehicle = !!selectedVehicle;
+
+    if (!hasStart || !hasEnd || !hasVehicle) return;
+    if (isLoading) return;
+
+    // Trigger a route recalculation to refresh route and waypoint markers
+    handleVehicleClick(selectedVehicle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waypointCoords]);
 
 // Input-based auto-calc effect: disable unless a vehicle is selected
 useEffect(() => {
