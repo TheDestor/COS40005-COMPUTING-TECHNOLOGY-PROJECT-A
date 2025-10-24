@@ -28,6 +28,73 @@ import { useAuth } from '../context/AuthProvider'; // Fixed import path
 import defaultBusinessImage from '../assets/default-business.jpg';
 import defaultAvatarImage from '../assets/default-avatar.png';
 
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const SARAWAK_BOUNDS = L.latLngBounds([0.8, 108.8], [5.5, 115.5]);
+
+const clampToBounds = (lat, lng) => {
+  const sw = SARAWAK_BOUNDS.getSouthWest();
+  const ne = SARAWAK_BOUNDS.getNorthEast();
+  const clampedLat = Math.min(ne.lat, Math.max(sw.lat, lat));
+  const clampedLng = Math.min(ne.lng, Math.max(sw.lng, lng));
+  return [clampedLat, clampedLng];
+};
+
+// LEAFLET ICON CONFIGURATION
+const defaultIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+
+// Map Modal Component for showing coordinates
+const MapModal = ({ latitude, longitude }) => {
+  const [markerPos, setMarkerPos] = useState([latitude, longitude]);
+
+  useEffect(() => {
+    const [clat, clng] = clampToBounds(latitude, longitude);
+    setMarkerPos([clat, clng]);
+  }, [latitude, longitude]);
+
+  const RecenterMap = ({ center }) => {
+    const map = useMap();
+    useEffect(() => {
+      const [clat, clng] = clampToBounds(center[0], center[1]);
+      map.setView([clat, clng]);
+    }, [center, map]);
+    return null;
+  };
+
+  return (
+    <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+      <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </div>
+      <MapContainer
+        center={[latitude, longitude]}
+        zoom={14}
+        style={{ width: '100%', height: '100%' }}
+        maxBounds={SARAWAK_BOUNDS}
+        maxBoundsViscosity={1.0}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        <RecenterMap center={[latitude, longitude]} />
+        <Marker
+          position={markerPos}
+          icon={defaultIcon}
+        />
+      </MapContainer>
+    </div>
+  );
+};
+
 const BusinessManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -1206,6 +1273,15 @@ const BusinessManagement = () => {
                     <div className="meta-item address-item compact-address">
                       <span className="meta-label">Coordinate:</span>
                       <span className="meta-value">{selectedBusiness.latitude}, {selectedBusiness.longitude}</span>
+                    </div>
+
+                    {/* NEW: Add Location Map */}
+                    <div className="business-location-map">
+                      <h4>Location Map</h4>
+                      <MapModal 
+                        latitude={selectedBusiness.latitude} 
+                        longitude={selectedBusiness.longitude} 
+                      />
                     </div>
                   </div>
                   
