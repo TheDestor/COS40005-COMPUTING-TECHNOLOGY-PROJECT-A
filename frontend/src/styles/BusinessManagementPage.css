@@ -1523,15 +1523,68 @@
     max-height: none;
   }
   
+  /* FIXED: Better spacing and structure for mobile header */
   .business-detail-header {
-    padding: 16px;
-    gap: 16px;
+    padding: 12px;
+    gap: 12px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
+  /* Back button styling - takes its own space */
+  .back-button,
+  .mobile-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #f4f5f7;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #2c3345;
+    transition: background-color 0.2s ease;
+    width: fit-content;
+    margin-bottom: 8px;
+  }
+
+  .back-button:hover,
+  .mobile-back-btn:hover {
+    background-color: #e2e8f0;
+  }
+
+  /* Business actions in its own section below back button */
+  .business-actions {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+  }
+  
+  .business-action-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 13px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  
+  .business-action-btn svg {
+    font-size: 14px;
+  }
+
+  /* Business info section with visual separator */
   .business-info {
     width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
   
   .business-main-image {
@@ -1544,24 +1597,6 @@
   .detail-name {
     font-size: 20px;
     margin-bottom: 6px;
-  }
-  
-  .business-actions {
-    gap: 8px;
-    width: 100%;
-    flex-wrap: wrap;
-  }
-  
-  .business-action-btn {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 14px;
-    font-size: 13px;
-    min-height: 42px;
-  }
-  
-  .business-action-btn svg {
-    font-size: 14px;
   }
 
   /* Print dropdown mobile fix */
@@ -1852,14 +1887,18 @@
     font-size: 14px;
   }
   
+  /* FIXED: Better spacing for smaller screens */
   .business-detail-header {
     padding: 12px;
+    gap: 12px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .business-info {
     width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
   }
   
   .business-main-image {
@@ -1870,15 +1909,28 @@
   .detail-name {
     font-size: 18px;
   }
+
+  /* Back button on very small screens */
+  .back-button,
+  .mobile-back-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
   
-  /* Stack action buttons vertically on very small screens */
+  /* Stack action buttons on very small screens but keep them compact */
   .business-actions {
-    flex-direction: column;
+    gap: 6px;
     width: 100%;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
   }
   
   .business-action-btn {
-    width: 100%;
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 12px;
   }
   
   .business-detail-content {
