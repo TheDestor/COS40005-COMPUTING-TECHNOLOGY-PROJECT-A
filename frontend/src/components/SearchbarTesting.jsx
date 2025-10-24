@@ -499,56 +499,125 @@ useEffect(() => {
     return response.json();
   };
 
+  // Helper: build a full location object consistent with CustomInfoWindow
+  const buildLocationFromPlace = (place) => {
+    const src = (place?.source || '').toLowerCase();
+    const full = place?.full || {};
+    const latitude = Number(place.latitude ?? full.latitude);
+    const longitude = Number(place.longitude ?? full.longitude);
+
+    const base = {
+      name: place.name,
+      description: place.description || full.description || '',
+      latitude,
+      longitude,
+      type: place.type || full.type || 'Location',
+      source: place.source || full.source || src || 'search',
+      // Common optional fields
+      image: place.image || full.image,
+      businessImage: place.businessImage || full.businessImage,
+      website: place.website || full.website || full.url,
+      address: place.address || full.address,
+      phone: place.phone || full.phone,
+      rating: place.rating ?? full.rating,
+      division: place.division || full.division,
+    };
+
+    if (src === 'business') {
+      return {
+        ...base,
+        category: place.category || full.category,
+        openingHours: place.openingHours || full.openingHours,
+        owner: full.owner,
+        ownerEmail: place.ownerEmail || full.ownerEmail,
+        status: place.status || full.status,
+      };
+    }
+
+    // Event fields if present
+    if (full.startDate || full.eventType || full.registrationRequired || base.type === 'Events') {
+      return {
+        ...base,
+        eventType: full.eventType,
+        startDate: full.startDate,
+        endDate: full.endDate,
+        startTime: full.startTime,
+        endTime: full.endTime,
+        registrationRequired: full.registrationRequired,
+        dailySchedule: full.dailySchedule,
+        eventHashtags: full.eventHashtags,
+        eventOrganizer: full.eventOrganizer,
+      };
+    }
+
+    // Major town fallback: keep division/name; otherwise leave as base
+    return base;
+  };
+
   const handlePlace = (place) => {
     if (!place.latitude || !place.longitude) {
       console.error('No geometry found for selected place');
       return;
     }
     console.log('Selected place:', place);
-    onPlaceSelected && onPlaceSelected(place);
-    updateRecentSearches(place);
-    
-    // Add to recent locations in the sidebar
+
+    const locationData = buildLocationFromPlace(place);
+
+    onPlaceSelected && onPlaceSelected(locationData);
+    updateRecentSearches(locationData);
     if (onAddToRecent) {
-      onAddToRecent(place);
+      onAddToRecent(locationData);
     }
+
+    // Immediately open pop-out details and video in map
+    try {
+      window.dispatchEvent(new CustomEvent('nearbyPlaceSelected', { detail: locationData }));
+    } catch {}
   };
 
-  const updateRecentSearches = (place) => {
+  const updateRecentSearches = (locationData) => {
+    // Persist in component recent state (preview list below input)
     setRecentSearches((prev) => {
-      const normalized = {
-        name: place.name,
-        description: place.description, // keep original, do not modify
-        latitude: place.latitude,
-        longitude: place.longitude,
-        placeId: place.placeId || `${place.name}-${place.latitude}-${place.longitude}`,
-        source: place.source || 'recent'
-      };
-      const exists = prev.some((p) => p.placeId === normalized.placeId);
+      const placeId =
+        locationData.placeId ||
+        `${locationData.name}-${locationData.latitude}-${locationData.longitude}`;
+      const normalized = { ...locationData, placeId };
+      const exists = prev.some((p) => p.placeId === placeId);
       const next = exists ? prev : [normalized, ...prev].slice(0, 5);
       return next;
     });
 
+    // Persist to localStorage with full object the pop-out expects
     try {
       const saved = localStorage.getItem('sarawakTourismRecentLocations');
       const list = saved ? JSON.parse(saved) : [];
-      const exists = list.some((p) =>
-        p.name === place.name &&
-        Math.abs(p.latitude - place.latitude) < 0.0001 &&
-        Math.abs(p.longitude - place.longitude) < 0.0001
+
+      const exists = list.some(
+        (p) =>
+          p.name === locationData.name &&
+          Math.abs(Number(p.latitude) - Number(locationData.latitude)) < 0.0001 &&
+          Math.abs(Number(p.longitude) - Number(locationData.longitude)) < 0.0001
       );
+
       if (!exists) {
-        const merged = [{
-          name: place.name,
-          latitude: place.latitude,
-          longitude: place.longitude,
-          description: place.description || '', // keep original
-          type: place.type || 'Location',
-          timestamp: new Date().toISOString(),
-          source: place.source || 'search'
-        }, ...list].slice(0, 20);
-        localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(merged));
-        window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'add', item: place } }));
+        const merged = [
+          {
+            ...locationData,
+            type: locationData.type || 'Location',
+            timestamp: new Date().toISOString(),
+          },
+          ...list,
+        ].slice(0, 20);
+
+        localStorage.setItem(
+          'sarawakTourismRecentLocations',
+          JSON.stringify(merged)
+        );
+        window.dispatchEvent(
+          new CustomEvent('recentLocationsUpdated', {
+            detail: { action: 'add', item: locationData },
+          })
+        );
       }
     } catch (error) {
       console.error('Error updating localStorage:', error);

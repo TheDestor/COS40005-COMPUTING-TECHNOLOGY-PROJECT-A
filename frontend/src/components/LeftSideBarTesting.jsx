@@ -1492,28 +1492,68 @@ const LeftSidebarTesting = forwardRef(({
   };
 
   // Function to add a location to recent locations
-  const addToRecentLocations = (location) => {
-    if (!location || !location.name || !location.latitude || !location.longitude) {
-      return;
-    }
+  const normalizeRecentLocation = (raw) => {
+    const full = raw.full || {};
+    const latRaw = raw.latitude ?? raw.lat ?? full.latitude;
+    const lngRaw = raw.longitude ?? raw.lng ?? full.longitude;
+    const latitude = typeof latRaw === 'string' ? parseFloat(latRaw) : latRaw;
+    const longitude = typeof lngRaw === 'string' ? parseFloat(lngRaw) : lngRaw;
 
-    const locationData = {
-      name: location.name,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      description: location.description || '',
-      type: location.type || 'Location',
-      timestamp: new Date().toISOString(),
-      source: location.source || 'search'
+    const base = {
+      name: raw.name || full.name,
+      description: raw.description || full.description || '',
+      latitude,
+      longitude,
+      type: raw.type || full.type || 'Location',
+      source: raw.source || full.source || 'search',
+      image: raw.image || full.image,
+      businessImage: raw.businessImage || full.businessImage,
+      website: raw.website || full.website || full.url,
+      address: raw.address || full.address,
+      phone: raw.phone || full.phone,
+      openingHours: raw.openingHours || full.openingHours,
+      ownerEmail: raw.ownerEmail || full.ownerEmail,
+      owner: raw.owner || full.owner,
+      category: raw.category || full.category,
+      status: raw.status || full.status,
+      rating: raw.rating ?? full.rating,
+      division: raw.division || full.division,
+      eventType: raw.eventType || full.eventType,
+      startDate: raw.startDate || full.startDate,
+      endDate: raw.endDate || full.endDate,
+      startTime: raw.startTime || full.startTime,
+      endTime: raw.endTime || full.endTime,
+      registrationRequired: raw.registrationRequired || full.registrationRequired,
+      dailySchedule: raw.dailySchedule || full.dailySchedule,
+      eventHashtags: raw.eventHashtags || full.eventHashtags,
+      eventOrganizer: raw.eventOrganizer || full.eventOrganizer,
     };
 
+    return {
+      ...base,
+      placeId: raw.placeId || full._id || `${base.name}-${latitude}-${longitude}`,
+      timestamp: new Date().toISOString(),
+    };
+  };
+
+  const addToRecentLocations = (location) => {
+    if (!location || !location.name) return;
+
+    const normalized = normalizeRecentLocation(location);
+
     setRecentLocations(prev => {
-      const filtered = prev.filter(item => 
-        !(item.name === locationData.name && 
-          Math.abs(item.latitude - locationData.latitude) < 0.0001 &&
-          Math.abs(item.longitude - locationData.longitude) < 0.0001)
+      const near = 0.0001;
+      const filtered = prev.filter(item =>
+        !(item.name === normalized.name &&
+          Math.abs(Number(item.latitude) - Number(normalized.latitude)) < near &&
+          Math.abs(Number(item.longitude) - Number(normalized.longitude)) < near)
       );
-      return [locationData, ...filtered].slice(0, 20);
+      const next = [normalized, ...filtered].slice(0, 20);
+      try {
+        localStorage.setItem('sarawakTourismRecentLocations', JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent('recentLocationsUpdated', { detail: { action: 'add', item: normalized } }));
+      } catch {}
+      return next;
     });
   };
 
@@ -1560,25 +1600,27 @@ const LeftSidebarTesting = forwardRef(({
   const handleRecentLocationClick = (location) => {
     handleClearAllRouting();
 
-    // Clear any existing search bar selection to prevent conflicts
-    if (setSelectedSearchBarPlace) {
-      setSelectedSearchBarPlace(null);
-    }
-
     const latRaw = location.latitude ?? location.coordinates?.latitude;
     const lngRaw = location.longitude ?? location.coordinates?.longitude;
     const latitude = typeof latRaw === 'string' ? parseFloat(latRaw) : latRaw;
     const longitude = typeof lngRaw === 'string' ? parseFloat(lngRaw) : lngRaw;
 
-    if (setActiveSearchLocation) {
-      setActiveSearchLocation(null);
-      setActiveSearchLocation({
+    // Use the same pattern as bookmark handlers for consistent behavior
+    if (setSelectedSearchBarPlace) {
+      setSelectedSearchBarPlace(null);
+      setSelectedSearchBarPlace({
         name: location.name,
         latitude,
         longitude,
-        description: location.description,
-        type: location.type || 'Recent'
+        description: location.description || '',
+        type: location.type || 'Recent',
+        placeId: location.placeId || location.place_id
       });
+    }
+
+    // Clear activeSearchLocation to ensure only one anchor source is active
+    if (setActiveSearchLocation) {
+      setActiveSearchLocation(null);
     }
 
     if (setSelectedPlace) {
