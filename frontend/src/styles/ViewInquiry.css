@@ -44,6 +44,7 @@
 
 .filter-dropdown-container {
   position: relative;
+  z-index: 50;
 }
 
 .filter-button {
