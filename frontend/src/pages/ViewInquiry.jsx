@@ -448,162 +448,189 @@ const ViewInquiry = () => {
             .inquiry-info { margin-bottom: 20px; }
             .label { font-weight: bold; color: #555; }
             .value { margin-left: 10px; }
-            .message-section { margin-top: 30px; }
+            .message { margin-top: 30px; }
             .message-content { 
-              background: #f9f9f9; 
-              padding: 15px; 
+              background: #f5f5f5; 
+              padding: 20px; 
               border-radius: 5px; 
               margin-top: 10px;
               line-height: 1.6;
             }
-            .status-badge {
-              padding: 4px 8px;
-              border-radius: 4px;
-              font-size: 12px;
-              font-weight: bold;
-              text-transform: uppercase;
+            @media print {
+              body { margin: 20px; }
             }
-            .status-unread { background: #fef3c7; color: #92400e; }
-            .status-progress { background: #dbeafe; color: #1e40af; }
-            .status-resolved { background: #d1fae5; color: #065f46; }
           </style>
         </head>
         <body>
           <div class="header">
-            <h1>Customer Inquiry Details</h1>
-            <p>Generated on ${new Date().toLocaleDateString()}</p>
+            <h1>Inquiry Details</h1>
           </div>
-          
           <div class="inquiry-info">
-            <p><span class="label">Inquiry ID:</span><span class="value">${selectedInquiry.id}</span></p>
-            <p><span class="label">Customer Name:</span><span class="value">${selectedInquiry.name}</span></p>
+            <p><span class="label">From:</span><span class="value">${selectedInquiry.name}</span></p>
             <p><span class="label">Email:</span><span class="value">${selectedInquiry.email}</span></p>
             <p><span class="label">Subject:</span><span class="value">${selectedInquiry.subject}</span></p>
-            <p><span class="label">Date Submitted:</span><span class="value">${formatDate(selectedInquiry.date)}</span></p>
-            <p><span class="label">Status:</span><span class="value">
-              <span class="status-badge status-${selectedInquiry.status.toLowerCase().replace('-', '')}">
-                ${selectedInquiry.status === 'in-progress' ? 'In Progress' : selectedInquiry.status}
-              </span>
-            </span></p>
-            <p><span class="label">Priority:</span><span class="value">${selectedInquiry.priority.charAt(0).toUpperCase() + selectedInquiry.priority.slice(1)}</span></p>
+            <p><span class="label">Date:</span><span class="value">${formatDate(selectedInquiry.date)}</span></p>
+            <p><span class="label">Status:</span><span class="value">${selectedInquiry.status}</span></p>
+            <p><span class="label">Priority:</span><span class="value">${selectedInquiry.priority}</span></p>
           </div>
-          
-          <div class="message-section">
-            <h3>Customer Message:</h3>
-            <div class="message-content">
-              ${selectedInquiry.message}
-            </div>
+          <div class="message">
+            <h3>Message:</h3>
+            <div class="message-content">${selectedInquiry.message}</div>
           </div>
         </body>
       </html>
     `;
 
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '', 'height=600,width=800');
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-    
-    setShowPrintOptions(false);
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
-  const handleSaveInquiry = () => {
-    if (!selectedInquiry) return;
+  const handlePrintAll = () => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>All Inquiries Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .inquiry { 
+              border: 1px solid #ddd; 
+              padding: 15px; 
+              margin-bottom: 20px;
+              page-break-inside: avoid;
+            }
+            .inquiry-header { 
+              display: flex;
+              justify-content: space-between;
+              border-bottom: 1px solid #eee;
+              padding-bottom: 10px;
+              margin-bottom: 10px;
+            }
+            .label { font-weight: bold; color: #555; }
+            .message { 
+              background: #f5f5f5; 
+              padding: 10px; 
+              border-radius: 5px; 
+              margin-top: 10px;
+            }
+            @media print {
+              body { margin: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>All Inquiries Report</h1>
+            <p>Total Inquiries: ${filteredInquiries.length}</p>
+          </div>
+          ${filteredInquiries.map(inquiry => `
+            <div class="inquiry">
+              <div class="inquiry-header">
+                <div>
+                  <p><span class="label">From:</span> ${inquiry.name}</p>
+                  <p><span class="label">Email:</span> ${inquiry.email}</p>
+                  <p><span class="label">Subject:</span> ${inquiry.subject}</p>
+                </div>
+                <div>
+                  <p><span class="label">Date:</span> ${formatDate(inquiry.date)}</p>
+                  <p><span class="label">Status:</span> ${inquiry.status}</p>
+                  <p><span class="label">Priority:</span> ${inquiry.priority}</p>
+                </div>
+              </div>
+              <div class="message">
+                ${inquiry.message}
+              </div>
+            </div>
+          `).join('')}
+        </body>
+      </html>
+    `;
 
-    const inquiryData = {
-      id: selectedInquiry.id,
-      name: selectedInquiry.name,
-      email: selectedInquiry.email,
-      subject: selectedInquiry.subject,
-      message: selectedInquiry.message,
-      date: selectedInquiry.date,
-      status: selectedInquiry.status,
-      priority: selectedInquiry.priority
-    };
-
-    const dataStr = JSON.stringify(inquiryData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `inquiry_${selectedInquiry.id}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    setShowPrintOptions(false);
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
+  // Filter and search inquiries
   const filteredInquiries = inquiries.filter(inquiry => {
-    const matchesSearch =
+    const matchesSearch = 
       inquiry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.message.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = filterStatus === 'all' || inquiry.status.toLowerCase() === filterStatus;
-    const matchesPriority = filterPriority === 'all' || inquiry.priority === filterPriority;
+    const matchesStatus = 
+      filterStatus === 'all' || 
+      inquiry.status.toLowerCase() === filterStatus;
+
+    const matchesPriority = 
+      filterPriority === 'all' || 
+      inquiry.priority.toLowerCase() === filterPriority;
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
+  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentInquiries = filteredInquiries.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
     }
   };
 
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        pageNumbers.push(currentPage - 1);
+        pageNumbers.push(currentPage);
+        pageNumbers.push(currentPage + 1);
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
     }
+    
+    return pageNumbers;
   };
 
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filterStatus, filterPriority]);
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'Unread':
-        return 'status-badge-unread';
-      case 'in-progress':
-        return 'status-badge-progress';
-      case 'Resolved':
-        return 'status-badge-resolved';
-      default:
-        return '';
-    }
-  };
-
-  const getPriorityBadgeClass = (priority) => {
-    switch (priority) {
-      case 'high':
-        return 'priority-badge-high';
-      case 'medium':
-        return 'priority-badge-medium';
-      case 'low':
-        return 'priority-badge-low';
-      default:
-        return '';
-    }
-  };
-
-  const renderPriorityIcon = (priority) => {
+  const getPriorityIcon = (priority) => {
     switch (priority) {
       case 'high':
         return <FaExclamationTriangle className="priority-icon priority-high" />;
@@ -756,11 +783,12 @@ const ViewInquiry = () => {
                     </div>
 
                     <button
-                      className="clear-filters"
                       onClick={() => {
                         setFilterStatus('all');
                         setFilterPriority('all');
+                        setShowFilterMenu(false);
                       }}
+                      className="clear-filters"
                     >
                       Clear Filters
                     </button>
@@ -770,34 +798,32 @@ const ViewInquiry = () => {
             </div>
           </div>
 
-          <div className={`inquiry-container no-scroll-container ${isMobile && showInquiryDetail ? 'mobile-detail-active' : ''}`}>
+          <div className={`inquiry-container ${isMobile && showInquiryDetail ? 'mobile-detail-active' : ''}`}>
             <div className="inquiry-list compact-list">
               {currentInquiries.length > 0 ? (
                 <>
-                  {currentInquiries.map(inquiry => (
+                  {currentInquiries.map((inquiry) => (
                     <div
                       key={inquiry.id}
-                      className={`inquiry-item compact-item ${selectedInquiry && selectedInquiry.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'Unread' ? 'unread' : ''}`}
+                      className={`inquiry-item ${selectedInquiry?.id === inquiry.id ? 'selected' : ''} ${inquiry.status === 'Unread' ? 'unread' : ''}`}
                       onClick={() => handleSelectInquiry(inquiry)}
                     >
-                      <div className="inquiry-avatar compact-avatar">
-                        <img src={inquiry.avatar} alt={`${inquiry.name}'s avatar`} />
+                      <div className="inquiry-avatar">
+                        <img src={inquiry.avatar} alt={inquiry.name} />
                       </div>
                       <div className="inquiry-brief">
                         <div className="inquiry-header">
                           <h4 className="inquiry-name">{inquiry.name}</h4>
-                          <span className="inquiry-date compact-date">{formatDate(inquiry.date)}</span>
+                          <span className="inquiry-date">{formatDate(inquiry.date)}</span>
                         </div>
-                        <div className="inquiry-subject compact-subject">{inquiry.subject}</div>
-                        <div className="inquiry-message-preview compact-preview">
-                          {inquiry.message.substring(0, 40)}...
-                        </div>
+                        <div className="inquiry-subject">{inquiry.subject}</div>
+                        <p className="inquiry-message-preview">{inquiry.message}</p>
                         <div className="inquiry-status">
-                          <span className={`status-badge ${getStatusBadgeClass(inquiry.status)}`}>
-                            {inquiry.status === 'in-progress' ? 'In Progress' : inquiry.status}
+                          <span className={`status-badge status-badge-${inquiry.status.toLowerCase().replace(' ', '')}`}>
+                            {inquiry.status}
                           </span>
-                          <span className={`priority-badge ${getPriorityBadgeClass(inquiry.priority)}`}>
-                            {renderPriorityIcon(inquiry.priority)}
+                          <span className={`priority-badge priority-badge-${inquiry.priority}`}>
+                            {getPriorityIcon(inquiry.priority)}
                             {inquiry.priority.charAt(0).toUpperCase() + inquiry.priority.slice(1)}
                           </span>
                         </div>
@@ -805,7 +831,7 @@ const ViewInquiry = () => {
                     </div>
                   ))}
                   
-                  {/* Pagination Controls */}
+                  {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="pagination-container">
                       <div className="pagination-info">
@@ -814,40 +840,28 @@ const ViewInquiry = () => {
                       <div className="pagination-controls">
                         <button
                           className="pagination-btn"
-                          onClick={handlePrevious}
+                          onClick={() => paginate(currentPage - 1)}
                           disabled={currentPage === 1}
                         >
-                          <FaChevronLeft /> Previous
+                          <FaChevronLeft /> Prev
                         </button>
                         
                         <div className="page-numbers">
-                          {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
-                            let pageNumber;
-                            if (totalPages <= 5) {
-                              pageNumber = index + 1;
-                            } else if (currentPage <= 3) {
-                              pageNumber = index + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNumber = totalPages - 4 + index;
-                            } else {
-                              pageNumber = currentPage - 2 + index;
-                            }
-                            
-                            return (
-                              <button
-                                key={pageNumber}
-                                className={`page-number ${currentPage === pageNumber ? 'active' : ''}`}
-                                onClick={() => handlePageChange(pageNumber)}
-                              >
-                                {pageNumber}
-                              </button>
-                            );
-                          })}
+                          {getPageNumbers().map((number, index) => (
+                            <button
+                              key={index}
+                              className={`page-number ${currentPage === number ? 'active' : ''} ${number === '...' ? 'ellipsis' : ''}`}
+                              onClick={() => number !== '...' && paginate(number)}
+                              disabled={number === '...'}
+                            >
+                              {number}
+                            </button>
+                          ))}
                         </div>
                         
                         <button
                           className="pagination-btn"
-                          onClick={handleNext}
+                          onClick={() => paginate(currentPage + 1)}
                           disabled={currentPage === totalPages}
                         >
                           Next <FaChevronRight />
@@ -858,621 +872,244 @@ const ViewInquiry = () => {
                 </>
               ) : (
                 <div className="no-inquiries">
-                  <p>No inquiries match your criteria</p>
+                  <p>No inquiries found</p>
                 </div>
               )}
             </div>
 
-            {selectedInquiry ? (
+            {selectedInquiry && (
               <div className="inquiry-detail compact-detail">
-                <div className="inquiry-detail-header compact-detail-header">
-                  <div className="header-top-row">
-                    {isMobile && (
-                      <button className="back-button" onClick={handleBackToList}>
+                <div className="inquiry-detail-header">
+                  {isMobile && (
+                    <div className="header-top-row">
+                      <button 
+                        className="back-button"
+                        onClick={handleBackToList}
+                      >
                         <FaArrowLeft /> Back
                       </button>
-                    )}
-                    <div className="inquiry-actions compact-actions">
-                      <button
-                        className={`inquiry-action-btn resolve-btn ${selectedInquiry.status === 'Resolved' ? 'disabled' : ''}`}
-                        onClick={() => handleMarkResolved(selectedInquiry.id)}
-                        disabled={selectedInquiry.status === 'Resolved'}
-                      >
-                        <FaCheck /> {selectedInquiry.status === 'Resolved' ? 'Resolved' : 'Mark Resolved'}
-                      </button>
-                      <button
-                        className="inquiry-action-btn delete-btn"
-                        onClick={() => handleDeleteInquiry(selectedInquiry.id)}
-                      >
-                        <FaTrash /> Delete
-                      </button>
-                      <div
-                        className="print-actions"
-                        ref={printOptionsRef}
-                      >
-                        <button
-                          className="inquiry-action-btn print-btn"
-                          onClick={() => setShowPrintOptions(!showPrintOptions)}
+                      <div className="inquiry-actions">
+                        <button 
+                          className="inquiry-action-btn resolve-btn"
+                          onClick={() => handleMarkResolved(selectedInquiry.id)}
+                          title="Mark as Resolved"
                         >
-                          <FaPrint />
+                          <FaCheck />
                         </button>
-                        <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
-                          <button onClick={handlePrintInquiry}>Print Inquiry</button>
-                          <button onClick={handleSaveInquiry}>Save as File</button>
+                        <div className="print-options-wrapper" ref={printOptionsRef}>
+                          <button 
+                            className="inquiry-action-btn print-btn more-actions"
+                            onClick={() => setShowPrintOptions(!showPrintOptions)}
+                            title="More actions"
+                          >
+                            <FaPrint />
+                          </button>
+                          {showPrintOptions && (
+                            <div className="print-dropdown">
+                              <button onClick={handlePrintInquiry}>
+                                <FaPrint /> Print This Inquiry
+                              </button>
+                              <button onClick={handlePrintAll}>
+                                <FaPrint /> Print All Inquiries
+                              </button>
+                            </div>
+                          )}
                         </div>
+                        <button 
+                          className="inquiry-action-btn delete-btn"
+                          onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                          title="Delete Inquiry"
+                        >
+                          <FaTrash />
+                        </button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="inquiry-user-info compact-user-info">
-                    <img src={selectedInquiry.avatar} alt={`${selectedInquiry.name}'s avatar`} className="detail-avatar" />
-                    <div>
+                  )}
+                  
+                  <div className="inquiry-user-info">
+                    <img src={selectedInquiry.avatar} alt={selectedInquiry.name} className="detail-avatar" />
+                    <div className="user-details">
                       <h3 className="detail-name">{selectedInquiry.name}</h3>
                       <p className="detail-email">{selectedInquiry.email}</p>
                     </div>
                   </div>
+
+                  {!isMobile && (
+                    <div className="inquiry-actions">
+                      <button 
+                        className="inquiry-action-btn resolve-btn"
+                        onClick={() => handleMarkResolved(selectedInquiry.id)}
+                        title="Mark as Resolved"
+                      >
+                        <FaCheck /> Resolve
+                      </button>
+                      <div className="print-options-wrapper" ref={printOptionsRef}>
+                        <button 
+                          className="inquiry-action-btn print-btn"
+                          onClick={() => setShowPrintOptions(!showPrintOptions)}
+                          title="Print options"
+                        >
+                          <FaPrint /> Print
+                        </button>
+                        {showPrintOptions && (
+                          <div className="print-dropdown">
+                            <button onClick={handlePrintInquiry}>
+                              <FaPrint /> Print This Inquiry
+                            </button>
+                            <button onClick={handlePrintAll}>
+                              <FaPrint /> Print All Inquiries
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        className="inquiry-action-btn delete-btn"
+                        onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                        title="Delete Inquiry"
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="inquiry-detail-content compact-detail-content">
-                  <div className="inquiry-meta compact-meta">
-                    <div className="meta-row">
-                      <div className="meta-item">
-                        <span className="meta-label">Date:</span>
-                        <span className="meta-value">{formatDate(selectedInquiry.date)}</span>
-                      </div>
-                      <div className="meta-item">
-                        <span className="meta-label">Subject:</span>
-                        <span className="meta-value">{selectedInquiry.subject}</span>
-                      </div>
+                  <div className="inquiry-meta">
+                    <div className="meta-item">
+                      <span className="meta-label">Subject:</span>
+                      <span className="meta-value">{selectedInquiry.subject}</span>
                     </div>
-                    <div className="meta-row">
-                      <div className="meta-item">
-                        <span className="meta-label">Status:</span>
-                        <span className={`meta-value status-badge ${getStatusBadgeClass(selectedInquiry.status)}`}>
-                          {selectedInquiry.status === 'in-progress' ? 'In Progress' : selectedInquiry.status}
-                        </span>
-                      </div>
-                      <div className="meta-item">
-                        <span className="meta-label">Priority:</span>
-                        <span className={`meta-value priority-badge ${getPriorityBadgeClass(selectedInquiry.priority)}`}>
-                          {renderPriorityIcon(selectedInquiry.priority)}
-                          {selectedInquiry.priority.charAt(0).toUpperCase() + selectedInquiry.priority.slice(1)}
-                        </span>
-                      </div>
+                    <div className="meta-item">
+                      <span className="meta-label">Date:</span>
+                      <span className="meta-value">{formatDate(selectedInquiry.date)}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">Status:</span>
+                      <span className={`status-badge status-badge-${selectedInquiry.status.toLowerCase().replace(' ', '')}`}>
+                        {selectedInquiry.status}
+                      </span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">Priority:</span>
+                      <span className={`priority-badge priority-badge-${selectedInquiry.priority}`}>
+                        {getPriorityIcon(selectedInquiry.priority)}
+                        {selectedInquiry.priority.charAt(0).toUpperCase() + selectedInquiry.priority.slice(1)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="inquiry-message compact-message">
-                    <h4>Message:</h4>
+                    <h4>Message</h4>
                     <div className="message-body compact-message-body">
                       {selectedInquiry.message}
                     </div>
                   </div>
 
-                  <div className="inquiry-reply compact-reply">
-                    <h4>Reply:</h4>
+                  <div className="inquiry-reply">
+                    <h4>Reply</h4>
                     <form onSubmit={handleSubmitReply}>
                       <textarea
-                        className="compact-textarea"
-                        placeholder="Type your reply here..."
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        disabled={selectedInquiry.status === 'Resolved'}
-                      ></textarea>
-                      <div className="reply-actions">
-                        <button
-                          type="submit"
-                          className="send-reply-btn"
-                          disabled={selectedInquiry.status === 'Resolved' || !replyText.trim()}
-                        >
-                          <FaReply /> Send Reply
-                        </button>
-                      </div>
+                        placeholder="Type your reply here..."
+                        rows="6"
+                      />
+                      <button type="submit" className="reply-btn">
+                        <FaReply /> Send Reply
+                      </button>
                     </form>
                   </div>
                 </div>
               </div>
-            ) : (
-              !isMobile && (
-                <div className="no-inquiry-selected">
-                  <p>Select an inquiry to view details</p>
-                </div>
-              )
             )}
           </div>
         </div>
       </div>
 
-      <style jsx>{`
-        /* Notification Styles */
-        .notification-wrapper {
+      {/* Embedded styles for mobile responsiveness */}
+      <style>{`
+        /* Mobile overflow prevention */
+        * {
+          box-sizing: border-box;
+        }
+
+        .dashboard-header,
+        .dashboard-actions,
+        .search-bar {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* Search bar and icon positioning for desktop */
+        .search-bar {
           position: relative;
         }
 
-        .notification-icon {
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .notification-icon:hover .action-icon {
-          color: #3b82f6;
-          transform: scale(1.1);
-        }
-
-        .notification-dropdown {
+        .search-icon {
           position: absolute;
-          top: 100%;
-          right: 0;
-          width: 380px;
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          z-index: 1000;
-          max-height: 500px;
-          overflow: hidden;
-          animation: slideDown 0.2s ease-out;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #9ca3af;
+          font-size: 1rem;
+          pointer-events: none;
+          z-index: 1;
         }
 
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .dropdown-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e5e7eb;
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-          border-radius: 12px 12px 0 0;
-        }
-
-        .dropdown-header h4 {
-          margin: 0;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .mark-all-read {
-          background: none;
-          border: none;
-          color: #3b82f6;
-          cursor: pointer;
-          font-size: 0.85rem;
-          font-weight: 500;
-          padding: 4px 8px;
-          border-radius: 6px;
-          transition: all 0.2s ease;
-        }
-
-        .mark-all-read:hover {
-          color: #2563eb;
-          background: #eff6ff;
-        }
-
-        .notification-list {
-          max-height: 400px;
-          overflow-y: auto;
-        }
-
-        .notification-item {
-          display: flex;
-          align-items: flex-start;
-          padding: 14px 20px;
-          border-bottom: 1px solid #f3f4f6;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          position: relative;
-        }
-
-        .notification-item:hover {
-          background: #f9fafb;
-        }
-
-        .notification-item:last-child {
-          border-bottom: none;
-        }
-
-        .notification-item.unread {
-          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-          border-left: 4px solid #3b82f6;
-        }
-
-        .notification-item.unread:hover {
-          background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-        }
-
-        .notification-content {
-          flex: 1;
-        }
-
-        .notification-message {
-          margin: 0 0 6px 0;
-          font-size: 0.9rem;
-          line-height: 1.4;
-          color: #374151;
-          font-weight: 500;
-        }
-
-        .notification-time {
-          font-size: 0.8rem;
-          color: #6b7280;
-          font-weight: 400;
-        }
-
-        .notification-type-indicator {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          margin-left: 12px;
-          margin-top: 6px;
-          flex-shrink: 0;
-        }
-
-        .notification-info .notification-type-indicator {
-          background: #3b82f6;
-        }
-
-        .notification-success .notification-type-indicator {
-          background: #10b981;
-        }
-
-        .notification-warning .notification-type-indicator {
-          background: #f59e0b;
-        }
-
-        .notification-error .notification-type-indicator {
-          background: #ef4444;
-        }
-
-        .notification-item.read .notification-type-indicator {
-          background: #d1d5db;
-        }
-
-        .no-notifications {
-          padding: 40px 20px;
-          text-align: center;
-          color: #6b7280;
-        }
-
-        .no-notifications p {
-          margin: 0;
-          font-size: 0.9rem;
-        }
-
-        /* Refresh Button Styles */
-        .refresh-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          background: white;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: #059669;
-          font-size: 0.9rem;
-          margin-right: 8px;
-        }
-
-        .refresh-btn:hover {
-          background: #f0fdf4;
-          border-color: #059669;
-          transform: translateY(-1px);
-        }
-
-        /* Enhanced badge styles */
-        .badge {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          color: white;
-          border-radius: 12px;
-          padding: 2px 6px;
-          font-size: 0.7rem;
-          font-weight: 600;
-          min-width: 18px;
-          height: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          }
-          50% {
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
-          }
-          100% {
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          }
-        }
-
-        .icon-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 6px;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-        }
-
-        .action-icon {
-          font-size: 1.2rem;
-          color: #6b7280;
-          transition: all 0.2s ease;
-        }
-
-        /* Compact Layout Styles for No-Scroll Design */
-        .dashboard-content {
-          height: 100vh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .compact-header {
-          padding: 10px 20px;
-          min-height: 70px;
-          flex-shrink: 0;
-        }
-
-        .compact-header h3 {
-          font-size: 1.4rem;
-          margin-bottom: 2px;
-        }
-
-        .compact-header p {
-          font-size: 0.9rem;
-          margin: 0;
+        .search-bar input {
+          padding-left: 40px;
         }
 
         .no-scroll-layout {
-          flex: 1;
           display: flex;
           flex-direction: column;
+          height: calc(100vh - 180px);
           overflow: hidden;
+        }
+
+        .compact-header {
+          min-height: 90px;
+          padding: 15px 20px;
+          overflow-x: hidden;
         }
 
         .compact-options {
-          padding: 8px 20px;
           flex-shrink: 0;
         }
 
-        .inquiry-statistics {
-          gap: 15px;
-        }
-
-        .stat {
-          padding: 8px 12px;
-        }
-
-        .stat-value {
-          font-size: 1.2rem;
-        }
-
-        .stat-label {
-          font-size: 0.8rem;
-        }
-
-        .no-scroll-container {
+        .inquiry-container {
           flex: 1;
-          display: flex;
+          min-height: 0;
           overflow: hidden;
-          margin: 0 20px 20px 20px;
-          border-radius: 8px;
-          border: 1px solid #e5e7eb;
-          min-height: 0; /* Important for flex children */
         }
 
-        .compact-list {
-          width: 40%;
+        .compact-list, .compact-detail {
+          height: 100%;
           overflow-y: auto;
-          max-height: none;
-          border-right: 1px solid #e5e7eb;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .compact-item {
-          padding: 10px;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .compact-avatar img {
-          width: 35px;
-          height: 35px;
-        }
-
-        .inquiry-brief {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .inquiry-name {
-          font-size: 0.95rem;
-          margin-bottom: 2px;
-        }
-
-        .compact-date {
-          font-size: 0.75rem;
-        }
-
-        .compact-subject {
-          font-size: 0.85rem;
-          margin: 2px 0;
-        }
-
-        .compact-preview {
-          font-size: 0.8rem;
-          line-height: 1.3;
-          margin: 3px 0;
-        }
-
-        .inquiry-status {
-          gap: 6px;
-          margin-top: 4px;
-        }
-
-        .status-badge, .priority-badge {
-          font-size: 0.7rem;
-          padding: 2px 6px;
-        }
-
-        .compact-detail {
-          width: 60%;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .compact-detail-header {
-          padding: 12px 15px;
-          flex-shrink: 0;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .compact-actions {
-          gap: 8px;
-        }
-
-        .inquiry-action-btn {
-          padding: 6px 12px;
-          font-size: 0.8rem;
-        }
-
-        .compact-user-info {
-          margin-top: 8px;
-        }
-
-        .compact-user-info .detail-avatar {
-          width: 35px;
-          height: 35px;
-        }
-
-        .detail-name {
-          font-size: 1.1rem;
-          margin-bottom: 2px;
-        }
-
-        .detail-email {
-          font-size: 0.85rem;
-          margin: 0;
         }
 
         .compact-detail-content {
-          flex: 1;
-          padding: 15px;
           overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .compact-meta {
-          background: #f9fafb;
-          border-radius: 6px;
-          padding: 10px;
-        }
-
-        .meta-row {
-          display: flex;
-          gap: 20px;
-          margin-bottom: 6px;
-        }
-
-        .meta-row:last-child {
-          margin-bottom: 0;
-        }
-
-        .meta-item {
           flex: 1;
-          min-width: 0;
-        }
-
-        .meta-label {
-          font-size: 0.8rem;
-          color: #6b7280;
-          display: block;
-          margin-bottom: 2px;
-        }
-
-        .meta-value {
-          font-size: 0.85rem;
-          font-weight: 500;
-        }
-
-        .compact-message h4 {
-          font-size: 1rem;
-          margin-bottom: 8px;
         }
 
         .compact-message-body {
-          background: #f9fafb;
-          border-radius: 6px;
-          padding: 10px;
-          font-size: 0.9rem;
-          line-height: 1.4;
-          max-height: 120px;
+          max-height: 200px;
           overflow-y: auto;
         }
 
-        .compact-reply {
-          margin-top: auto;
-        }
-
-        .compact-reply h4 {
-          font-size: 1rem;
-          margin-bottom: 8px;
-        }
-
-        .compact-textarea {
-          width: 100%;
-          height: 80px;
-          padding: 8px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          resize: none;
-          font-size: 0.9rem;
-          font-family: inherit;
-        }
-
-        .send-reply-btn {
-          padding: 8px 16px;
-          font-size: 0.85rem;
-          margin-top: 8px;
-        }
-
-        /* Pagination Styles */
+        /* Pagination styling */
         .pagination-container {
-          border-top: 1px solid #e5e7eb;
           padding: 15px;
-          background: #f9fafb;
-          margin-top: auto;
+          border-top: 1px solid #e5e7eb;
+          background: white;
         }
 
         .pagination-info {
-          font-size: 0.8rem;
-          color: #6b7280;
-          margin-bottom: 10px;
           text-align: center;
+          font-size: 0.875rem;
+          color: #6b7280;
+          margin-bottom: 12px;
         }
 
         .pagination-controls {
@@ -1485,20 +1122,21 @@ const ViewInquiry = () => {
         .pagination-btn {
           display: flex;
           align-items: center;
-          gap: 5px;
-          padding: 6px 12px;
-          border: 1px solid #d1d5db;
-          background: white;
+          gap: 6px;
+          padding: 8px 12px;
+          background-color: white;
+          border: 1px solid #e5e7eb;
           border-radius: 6px;
-          font-size: 0.8rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          font-size: 0.875rem;
           color: #374151;
+          transition: all 0.2s ease;
         }
 
         .pagination-btn:hover:not(:disabled) {
-          background: #f3f4f6;
-          border-color: #9ca3af;
+          background-color: #f9fafb;
+          border-color: #6c5dd3;
+          color: #6c5dd3;
         }
 
         .pagination-btn:disabled {
@@ -1512,116 +1150,281 @@ const ViewInquiry = () => {
         }
 
         .page-number {
-          padding: 6px 10px;
-          border: 1px solid #d1d5db;
-          background: white;
+          padding: 8px 12px;
+          background-color: white;
+          border: 1px solid #e5e7eb;
           border-radius: 6px;
-          font-size: 0.8rem;
           cursor: pointer;
-          transition: all 0.2s ease;
-          min-width: 35px;
-          text-align: center;
+          font-size: 0.875rem;
           color: #374151;
+          min-width: 40px;
+          text-align: center;
+          transition: all 0.2s ease;
         }
 
-        .page-number:hover {
-          background: #f3f4f6;
-          border-color: #9ca3af;
+        .page-number:hover:not(:disabled):not(.active) {
+          background-color: #f9fafb;
+          border-color: #6c5dd3;
+          color: #6c5dd3;
         }
 
         .page-number.active {
-          background: #3b82f6;
+          background-color: #6c5dd3;
           color: white;
-          border-color: #3b82f6;
+          border-color: #6c5dd3;
         }
 
-        /* Print Actions Styles */
-        .print-actions {
-          position: relative;
-        }
-
-        .print-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #059669;
-          color: white;
+        .page-number.ellipsis {
           border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-width: 40px;
+          cursor: default;
         }
 
-        .print-btn:hover {
-          background: #047857;
-          transform: translateY(-1px);
+        .page-number.ellipsis:hover {
+          background-color: white;
+          color: #374151;
+        }
+
+        /* Print dropdown styling */
+        .print-options-wrapper {
+          position: relative;
         }
 
         .print-dropdown {
           position: absolute;
-          top: 100%;
+          top: calc(100% + 10px);
           right: 0;
           background: white;
-          border: 1px solid #e5e7eb;
           border-radius: 8px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-          min-width: 140px;
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-10px);
-          transition: all 0.2s ease;
-        }
-
-        .print-dropdown.active {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          padding: 8px;
+          z-index: 100;
+          min-width: 180px;
         }
 
         .print-dropdown button {
-          display: block;
           width: 100%;
-          padding: 8px 12px;
-          border: none;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
           background: none;
-          text-align: left;
+          border: none;
+          border-radius: 6px;
           cursor: pointer;
-          font-size: 0.85rem;
-          color: #374151;
+          font-size: 14px;
+          color: #2c3345;
+          text-align: left;
           transition: background-color 0.2s ease;
         }
 
-        .print-dropdown button:first-child {
-          border-radius: 8px 8px 0 0;
-        }
-
-        .print-dropdown button:last-child {
-          border-radius: 0 0 8px 8px;
-          border-bottom: none;
-        }
-
         .print-dropdown button:hover {
-          background: #f3f4f6;
+          background-color: #f4f5f7;
         }
 
-        .print-dropdown button:not(:last-child) {
+        /* Notification styling */
+        .notification-wrapper {
+          position: relative;
+          z-index: 100;
+        }
+
+        .icon-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .icon-wrapper:hover {
+          background-color: #f4f5f7;
+        }
+
+        .action-icon {
+          font-size: 1.2rem;
+          color: #2c3345;
+        }
+
+        .badge {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background-color: #ef4444;
+          color: white;
+          font-size: 0.7rem;
+          font-weight: 600;
+          min-width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px 5px;
+        }
+
+        .notification-dropdown {
+          position: absolute;
+          top: calc(100% + 10px);
+          right: 0;
+          width: 380px;
+          max-height: 500px;
+          background-color: white;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
+          overflow: hidden;
+        }
+
+        .notification-dropdown::before {
+          content: '';
+          position: absolute;
+          top: -8px;
+          right: 20px;
+          width: 16px;
+          height: 16px;
+          background-color: white;
+          transform: rotate(45deg);
+          box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .dropdown-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
           border-bottom: 1px solid #e5e7eb;
+          position: relative;
+          z-index: 2;
         }
 
-        /* Mobile responsive adjustments */
+        .dropdown-header h4 {
+          margin: 0;
+          font-size: 1.1rem;
+          color: #2c3345;
+        }
+
+        .mark-all-read {
+          background: none;
+          border: none;
+          color: #6c5dd3;
+          font-size: 0.875rem;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+        }
+
+        .mark-all-read:hover {
+          background-color: rgba(108, 93, 211, 0.1);
+        }
+
+        .notification-list {
+          max-height: 400px;
+          overflow-y: auto;
+          position: relative;
+          z-index: 2;
+        }
+
+        .notification-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 12px 20px;
+          border-bottom: 1px solid #f3f4f6;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          position: relative;
+        }
+
+        .notification-item:hover {
+          background-color: #f9fafb;
+        }
+
+        .notification-item.unread {
+          background-color: rgba(108, 93, 211, 0.05);
+        }
+
+        .notification-content {
+          flex: 1;
+        }
+
+        .notification-message {
+          margin: 0 0 4px 0;
+          font-size: 0.9rem;
+          color: #2c3345;
+          line-height: 1.4;
+        }
+
+        .notification-time {
+          font-size: 0.8rem;
+          color: #9ca3af;
+        }
+
+        .notification-type-indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          margin-top: 6px;
+        }
+
+        .notification-item.unread .notification-type-indicator {
+          background-color: #6c5dd3;
+        }
+
+        .notification-info .notification-type-indicator {
+          background-color: #3b82f6;
+        }
+
+        .notification-success .notification-type-indicator {
+          background-color: #10b981;
+        }
+
+        .notification-warning .notification-type-indicator {
+          background-color: #f59e0b;
+        }
+
+        .notification-error .notification-type-indicator {
+          background-color: #ef4444;
+        }
+
+        .no-notifications {
+          padding: 40px 20px;
+          text-align: center;
+          color: #9ca3af;
+        }
+
+        /* Refresh button styling */
+        .refresh-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 16px;
+          background-color: #f4f5f7;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          color: #2c3345;
+          transition: all 0.2s ease;
+          margin-right: 10px;
+        }
+
+        .refresh-btn:hover {
+          background-color: #e2e8f0;
+        }
+
+        .refresh-btn:active {
+          transform: rotate(180deg);
+        }
+
+        /* Mobile responsive styles - FIXED VERSION */
         @media (max-width: 768px) {
-          .compact-list {
-            width: 100%;
-          }
-          
-          .compact-detail {
-            width: 100%;
-          }
-          
-          .no-scroll-container.mobile-detail-active .compact-list {
-            display: none;
+          .dashboard-header {
+            padding: 12px 15px !important;
+            min-height: 100px !important;
           }
 
           .pagination-controls {
@@ -1654,9 +1457,10 @@ const ViewInquiry = () => {
         @media (max-width: 600px) {
           .dashboard-header {
             flex-direction: column;
-            gap: 10px;
-            padding: 10px 15px !important;
+            gap: 12px;
+            padding: 12px 15px !important;
             min-height: auto !important;
+            overflow: hidden;
           }
 
           .greeting {
@@ -1674,42 +1478,131 @@ const ViewInquiry = () => {
 
           .dashboard-actions {
             width: 100%;
-            flex-direction: column;
-            gap: 8px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            box-sizing: border-box;
           }
 
           .search-bar {
-            width: 100%;
+            flex: 1;
+            min-width: 0;
             margin: 0;
+            position: relative;
+            max-width: calc(100% - 100px);
           }
 
           .search-bar input {
             width: 100%;
             font-size: 0.85rem;
-            padding: 8px 8px 8px 35px;
+            padding: 10px 10px 10px 36px;
+            box-sizing: border-box;
+          }
+
+          .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1;
           }
 
           .action-icons {
-            width: 100%;
-            justify-content: flex-end;
-            gap: 8px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
           }
 
           .refresh-btn {
-            padding: 8px;
+            padding: 10px;
             margin-right: 0;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            justify-content: center;
+            flex-shrink: 0;
           }
 
           .icon-wrapper {
-            padding: 8px;
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
           }
 
           .notification-dropdown {
-            width: calc(100vw - 30px);
-            right: -15px;
-            left: auto;
-            max-width: 380px;
+            position: fixed;
+            top: 120px;
+            right: 10px;
+            left: 10px;
+            width: auto;
+            max-width: none;
+            z-index: 9999;
+          }
+
+          .notification-dropdown::before {
+            right: 30px;
+          }
+
+          /* Filter dropdown mobile fix */
+          .filter-dropdown-container {
+            position: relative;
+            z-index: 100;
+          }
+
+          .filter-dropdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 300px;
+            z-index: 9999;
+          }
+
+          .filter-dropdown::before {
+            display: none;
+          }
+
+          /* Print dropdown mobile fix */
+          .print-dropdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 250px;
+            z-index: 9999;
+          }
+
+          /* Filter group styling for mobile */
+          .filter-group {
+            margin-bottom: 12px;
+          }
+
+          .filter-group label {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+          }
+
+          .filter-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.9rem;
+          }
+
+          .clear-filters {
+            width: 100%;
+            padding: 10px;
+            font-size: 0.9rem;
           }
 
           .notification-list {
@@ -1751,30 +1644,44 @@ const ViewInquiry = () => {
 
         @media (max-width: 480px) {
           .dashboard-header {
-            padding: 8px 10px !important;
+            padding: 10px 12px !important;
+            overflow: hidden;
           }
 
           .greeting h3 {
             font-size: 1.1rem !important;
           }
 
+          .dashboard-actions {
+            gap: 4px;
+          }
+
+          .search-bar {
+            max-width: calc(100% - 90px);
+          }
+
           .search-bar input {
             font-size: 0.8rem;
-            padding: 6px 6px 6px 30px;
+            padding: 8px 8px 8px 32px;
           }
 
           .search-icon {
-            font-size: 0.9rem;
-            left: 8px;
+            font-size: 0.85rem;
+            left: 10px;
           }
 
           .refresh-btn {
-            padding: 6px;
-            font-size: 0.8rem;
+            padding: 8px;
+            font-size: 0.85rem;
+            min-width: 36px;
+            width: 36px;
+            height: 36px;
           }
 
           .icon-wrapper {
-            padding: 6px;
+            padding: 8px;
+            width: 36px;
+            height: 36px;
           }
 
           .action-icon {
@@ -1791,6 +1698,69 @@ const ViewInquiry = () => {
           .notification-dropdown {
             width: calc(100vw - 20px);
             right: -10px;
+          }
+
+          .notification-dropdown {
+            position: fixed;
+            top: 100px;
+            right: 10px;
+            left: 10px;
+            width: auto;
+            max-width: none;
+            z-index: 9999;
+          }
+
+          /* Filter dropdown mobile fix */
+          .filter-dropdown-container {
+            position: relative;
+            z-index: 100;
+          }
+
+          .filter-dropdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 280px;
+            z-index: 9999;
+          }
+
+          .filter-dropdown::before {
+            display: none;
+          }
+
+          /* Print dropdown mobile fix */
+          .print-dropdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 230px;
+            z-index: 9999;
+          }
+
+          /* Filter group styling for mobile */
+          .filter-group {
+            margin-bottom: 10px;
+          }
+
+          .filter-group label {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+          }
+
+          .filter-group select {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.85rem;
+          }
+
+          .clear-filters {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.85rem;
           }
 
           .dropdown-header {
@@ -1817,14 +1787,14 @@ const ViewInquiry = () => {
           }
 
           .pagination-btn {
-            padding: 4px 8px;
-            font-size: 0.65rem;
+            padding: 6px 10px;
+            font-size: 0.7rem;
           }
 
           .page-number {
-            padding: 4px 6px;
-            font-size: 0.65rem;
-            min-width: 26px;
+            padding: 6px 8px;
+            font-size: 0.7rem;
+            min-width: 30px;
           }
         }
 
