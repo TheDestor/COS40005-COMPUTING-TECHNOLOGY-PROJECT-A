@@ -816,12 +816,17 @@
 
   /* For screens smaller than 600px (e.g., standard phones) */
   @media (max-width: 600px) {
+    .inquiry-content {
+      margin-top: 10px;
+    }
+
     .inquiry-container {
       /* Revert grid-template-columns to 1fr from 992px breakpoint */
       grid-template-columns: 1fr;
       overflow: hidden; /* Hide overflow for sliding panels */
       position: relative; /* Essential for absolutely positioned children */
-      height: calc(100vh - 230px); /* Maintain fixed height for the container */
+      height: calc(100vh - 280px); /* Adjusted height to account for header */
+      margin: 0 10px 10px 10px;
     }
 
     /* Apply absolute positioning and transforms for sliding effect */
@@ -919,6 +924,79 @@
     .inquiry-actions .more-actions{
       width: 35px;
       height: 35px;
+    }
+
+    /* Mobile header fixes */
+    .compact-options {
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+
+    .inquiry-statistics {
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .stat {
+      padding: 6px 8px;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+    }
+
+    .filter-button {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    /* Mobile list improvements */
+    .compact-list {
+      width: 100%;
+      border-right: none;
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .pagination-container {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      padding: 10px;
+      z-index: 10;
+    }
+
+    .pagination-info {
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+    }
+
+    .pagination-controls {
+      flex-direction: row;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pagination-btn {
+      padding: 5px 10px;
+      font-size: 0.7rem;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 3px;
+    }
+
+    .page-number {
+      padding: 5px 8px;
+      font-size: 0.7rem;
+      min-width: 30px;
     }
   }
 
