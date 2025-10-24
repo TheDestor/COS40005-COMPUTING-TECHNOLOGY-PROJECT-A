@@ -1127,15 +1127,17 @@ function MapComponentTesting({  }) {
                   phone: closestEvent.phone || routeInfo.phone || '',
                   ownerEmail: closestEvent.ownerEmail || routeInfo.ownerEmail || '',
                   image: closestEvent.imageUrl || null,
-                  
+
                   // Event-specific details
                   startDate: closestEvent.startDate || routeInfo.startDate || '',
                   endDate: closestEvent.endDate || routeInfo.endDate || '',
                   startTime: closestEvent.startTime || routeInfo.startTime || '',
                   endTime: closestEvent.endTime || routeInfo.endTime || '',
+                  // Include dailySchedule
+                  dailySchedule: Array.isArray(closestEvent.dailySchedule) ? closestEvent.dailySchedule : (Array.isArray(routeInfo.dailySchedule) ? routeInfo.dailySchedule : []),
                   eventType: closestEvent.eventType || routeInfo.eventType || '',
                   registrationRequired: closestEvent.registrationRequired || routeInfo.registrationRequired || '',
-                  
+
                   source: 'backend_event'
                 };
                 

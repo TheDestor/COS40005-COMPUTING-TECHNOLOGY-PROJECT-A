@@ -1279,6 +1279,7 @@ const ViewInquiry = () => {
           margin: 0 20px 20px 20px;
           border-radius: 8px;
           border: 1px solid #e5e7eb;
+          min-height: 0; /* Important for flex children */
         }
 
         .compact-list {
@@ -1624,12 +1625,15 @@ const ViewInquiry = () => {
           }
 
           .pagination-controls {
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 6px;
           }
 
           .page-numbers {
-            order: -1;
+            order: 0;
+            width: 100%;
+            justify-content: center;
           }
 
           .pagination-info {
@@ -1644,6 +1648,183 @@ const ViewInquiry = () => {
           .action-icons {
             flex-direction: row;
             gap: 4px;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .dashboard-header {
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px 15px !important;
+            min-height: auto !important;
+          }
+
+          .greeting {
+            width: 100%;
+          }
+
+          .greeting h3 {
+            font-size: 1.2rem !important;
+            margin-bottom: 2px !important;
+          }
+
+          .greeting p {
+            font-size: 0.8rem !important;
+          }
+
+          .dashboard-actions {
+            width: 100%;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .search-bar {
+            width: 100%;
+            margin: 0;
+          }
+
+          .search-bar input {
+            width: 100%;
+            font-size: 0.85rem;
+            padding: 8px 8px 8px 35px;
+          }
+
+          .action-icons {
+            width: 100%;
+            justify-content: flex-end;
+            gap: 8px;
+          }
+
+          .refresh-btn {
+            padding: 8px;
+            margin-right: 0;
+            font-size: 0.85rem;
+          }
+
+          .icon-wrapper {
+            padding: 8px;
+          }
+
+          .notification-dropdown {
+            width: calc(100vw - 30px);
+            right: -15px;
+            left: auto;
+            max-width: 380px;
+          }
+
+          .notification-list {
+            max-height: 300px;
+          }
+
+          .dropdown-header h4 {
+            font-size: 1rem;
+          }
+
+          .notification-item {
+            padding: 10px 15px;
+          }
+
+          .notification-message {
+            font-size: 0.85rem;
+          }
+
+          .notification-time {
+            font-size: 0.75rem;
+          }
+
+          /* Ensure inquiry list can scroll properly */
+          .compact-list {
+            max-height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          /* Make sure pagination is visible and scrollable */
+          .pagination-container {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            z-index: 10;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .dashboard-header {
+            padding: 8px 10px !important;
+          }
+
+          .greeting h3 {
+            font-size: 1.1rem !important;
+          }
+
+          .search-bar input {
+            font-size: 0.8rem;
+            padding: 6px 6px 6px 30px;
+          }
+
+          .search-icon {
+            font-size: 0.9rem;
+            left: 8px;
+          }
+
+          .refresh-btn {
+            padding: 6px;
+            font-size: 0.8rem;
+          }
+
+          .icon-wrapper {
+            padding: 6px;
+          }
+
+          .action-icon {
+            font-size: 1rem;
+          }
+
+          .badge {
+            font-size: 0.65rem;
+            min-width: 16px;
+            height: 16px;
+            padding: 1px 4px;
+          }
+
+          .notification-dropdown {
+            width: calc(100vw - 20px);
+            right: -10px;
+          }
+
+          .dropdown-header {
+            padding: 12px 15px;
+          }
+
+          .dropdown-header h4 {
+            font-size: 0.95rem;
+          }
+
+          .mark-all-read {
+            font-size: 0.75rem;
+          }
+
+          .inquiry-statistics {
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 6px;
+          }
+
+          .stat {
+            min-width: calc(50% - 6px);
+            padding: 5px;
+          }
+
+          .pagination-btn {
+            padding: 4px 8px;
+            font-size: 0.65rem;
+          }
+
+          .page-number {
+            padding: 4px 6px;
+            font-size: 0.65rem;
+            min-width: 26px;
           }
         }
 

@@ -1354,7 +1354,7 @@ p {
 }
 
 .schedule-summary-btn {
-  background: #2563eb;
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -1367,7 +1367,7 @@ p {
 }
 
 .schedule-summary-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
   box-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
 }
 
@@ -1430,7 +1430,9 @@ p {
 }
 
 .ae-schedule-summary-close {
-  background: transparent;
+  background: #f3f4f6;
+  border-radius: 50%;
+  padding: 12px 16px;
   border: none;
   font-size: 20px;
   line-height: 1;
@@ -1458,7 +1460,7 @@ p {
 }
 
 .ae-summary-date {
-  flex: 1 1 auto;
+  /* flex: 1 1 auto; */
   font-weight: 500;
   color: #1a1a1a;
 }
@@ -1710,6 +1712,38 @@ p {
   border-radius: 50%;
   animation: spin-ae 0.8s linear infinite;
   margin-left: 8px;
+}
+
+/* ADDED: Inline actions under time inputs */
+.time-actions-inline-ae {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.same-time-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1e40af;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.time-actions-inline-ae .schedule-summary-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.time-actions-inline-ae .selected-day-inline-info {
+  margin-top: 0;
+  padding-left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 @keyframes spin-ae {
@@ -2534,6 +2568,49 @@ p {
 
 /* Phone (<= 480px) */
 @media (max-width: 480px) {
+  .edit-event-form .calendar-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .edit-per-day-group .per-day-schedule-compact {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: normal;
+  }
+
+  .ae-schedule-summary-header h3 {
+    font-size: 16px;
+  }
+
+  .ae-schedule-summary-close {
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 10px;
+    background: #f3f4f6;
+    border-radius: 99px;
+  }
+
+  .ae-schedule-summary-list {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .per-day-time-input {
+    width: 100%;
+    padding: 8px 4px;
+  }
+
+  .custom-dropdown {
+    width: 100%;
+  }
+
+  .modal-content.edit-modal{
+    padding: 0;
+    margin: 0;
+  }
+
   .ae-content {
     max-width: 100%;
     padding: 12px;
@@ -2880,6 +2957,10 @@ p {
 }
 
 @media (max-width: 768px) {
+  .ae-summary-date {
+    flex: none;
+  }
+
   .modal-detail-row {
     grid-template-columns: 1fr;
     gap: 8px;

@@ -88,6 +88,7 @@ const CustomInfoWindow = ({
       .replace(/-+/g, '-');
   };
 
+  // Inside CustomInfoWindow component: update handleExploreClick to pass eventId for events
   const handleExploreClick = () => {
     const isMajorTown = majorTowns.includes(location.name);
     const slug = generateSlug(location.name);
@@ -95,6 +96,19 @@ const CustomInfoWindow = ({
     const path = isMajorTown 
       ? `/towns/${slug}`
       : `/discover/${slug}`;
+  
+    // For events, pass eventId so DiscoverPlaces can fetch from DB
+    if (locationType === 'event') {
+      navigate(path, {
+        state: {
+          eventId: location._id, // use backend event id
+          name: location.name,
+          image: imageUrl,
+          coordinates: [location.latitude || location.lat, location.longitude || location.lng]
+        }
+      });
+      return;
+    }
 
     navigate(path, {
       state: {
@@ -258,6 +272,9 @@ const CustomInfoWindow = ({
             startTime: location.startTime,
             endTime: location.endTime,
             registrationRequired: location.registrationRequired,
+            dailySchedule: location.dailySchedule,
+            eventHashtags: location.eventHashtags,
+            eventOrganizer: location.eventOrganizer,
             
             // Additional fields
             rating: location.rating,
@@ -370,6 +387,77 @@ const CustomInfoWindow = ({
       return `Until ${formatTime(location.endTime)}`;
     }
     
+    return 'N/A';
+  };
+
+  // Helpers to match today's date against dailySchedule (handles ISO and YYYY-MM-DD)
+  const toLocalYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const normalizeEntryDateYMD = (val) => {
+    if (!val) return null;
+    try {
+      // Support ISO strings like 'YYYY-MM-DDTHH:mm:ssZ' and plain 'YYYY-MM-DD'
+      const iso = String(val);
+      const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3]);
+        // Construct local date to avoid timezone shifts
+        return toLocalYMD(new Date(y, mo - 1, d));
+      }
+      const dt = new Date(val);
+      if (!isNaN(dt)) return toLocalYMD(dt);
+    } catch {}
+    return null;
+  };
+
+  // Build YYYY-MM-DD in UTC to match DB’s ISO date behaviour
+  const toUTCYMD = (d) => {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  
+  // Normalize DB date value (ISO string or Date) to YYYY-MM-DD in UTC
+  const normalizeDbYMD = (val) => {
+    if (!val) return null;
+    // Prefer direct regex for ISO strings: 'YYYY-MM-DDTHH:mm:ssZ' -> 'YYYY-MM-DD'
+    const s = String(val);
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const dt = new Date(val);
+    return isNaN(dt) ? null : toUTCYMD(dt);
+  };
+  
+  const getTodayOpeningHours = () => {
+    // Use today's actual date without subtracting one day
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    ));
+    const searchDateYMD = toUTCYMD(todayUTC);
+
+    const daily = Array.isArray(location.dailySchedule) ? location.dailySchedule : [];
+    const entry = daily.find((e) => normalizeDbYMD(e?.date) === searchDateYMD);
+
+    if (entry?.startTime && entry?.endTime) {
+      return `${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}`;
+    }
+
+    // Fallbacks: standard operating hours
+    if (location.startTime && location.endTime) {
+      return `${formatTime(location.startTime)} - ${formatTime(location.endTime)}`;
+    }
+    if (location.startTime || location.endTime) {
+      return formatTimePeriod();
+    }
     return 'N/A';
   };
 
@@ -682,14 +770,14 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {(location.startTime || location.endTime) && (
+      {/* {(Array.isArray(location.dailySchedule) || location.startTime || location.endTime) && (
         <div className="info-row">
           <span className="info-row-icon"><FaClock /></span>
           <span className="info-row-text">
-            <strong>Period:</strong> {formatTimePeriod()}
+            <strong>Today Opening Hours:</strong> {getTodayOpeningHours()}
           </span>
         </div>
-      )}
+      )} */}
 
       {location.eventType && (
         <div className="info-row">

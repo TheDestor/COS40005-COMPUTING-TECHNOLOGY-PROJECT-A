@@ -1135,3 +1135,170 @@ svg {
     text-align: center;
   }
 }
+
+/* Mobile responsiveness for stat cards */
+@media (max-width: 768px) {
+  .stat-cards-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
+  }
+
+  .stat-card {
+    padding: 15px !important;
+  }
+
+  .stat-value {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-cards-container {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Responsive visualizations */
+@media (max-width: 1024px) {
+  .dashboard-visualizations {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .visualization-card {
+    min-height: 400px !important;
+  }
+}
+
+/* Mobile visualization adjustments */
+@media (max-width: 768px) {
+  .viz-content {
+    height: 350px !important;
+  }
+
+  .chart-wrapper {
+    flex-direction: column !important;
+  }
+
+  .donut-section,
+  .chart-section {
+    width: 100% !important;
+    height: 250px !important;
+  }
+
+  .indicators-section {
+    width: 100% !important;
+    padding: 15px 0 !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+  }
+
+  .indicators-section > div {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Improved tooltip positioning */
+.chart-tooltip {
+  position: fixed !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  max-width: 250px !important;
+  word-wrap: break-word !important;
+}
+
+/* Legend responsiveness */
+@media (max-width: 768px) {
+  .business-legend {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 10px !important;
+  }
+
+  .business-legend > div {
+    max-width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+}
+
+/* Mobile modal fixes */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95% !important;
+    max-height: 85vh !important;
+    margin: 20px !important;
+  }
+
+  .subscribers-table {
+    font-size: 0.85rem !important;
+  }
+
+  .subscribers-table th,
+  .subscribers-table td {
+    padding: 8px 6px !important;
+  }
+}
+
+/* Dashboard header responsive */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .greeting h3 {
+    font-size: 1.3rem !important;
+  }
+
+  .greeting p {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Fix for chart text on mobile */
+@media (max-width: 768px) {
+  .viz-header h3 {
+    font-size: 1.1rem !important;
+  }
+
+  .viz-header p {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* Ensure tooltips don't go off-screen */
+.chart-tooltip.tooltip-left {
+  transform: translateX(-100%) translateX(-10px) !important;
+}
+
+.chart-tooltip.tooltip-top {
+  transform: translateY(-100%) translateY(-10px) !important;
+}
+
+/* Scrollable table on small screens */
+@media (max-width: 600px) {
+  .modal-body {
+    overflow-x: auto !important;
+  }
+
+  .subscribers-table {
+    min-width: 500px !important;
+  }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  .stat-card {
+    min-height: 100px !important;
+  }
+
+  .modal-close {
+    padding: 10px !important;
+    font-size: 1.8rem !important;
+  }
+}

@@ -17,6 +17,19 @@ import { useAuth } from '../context/AuthProvider';
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { accessToken } = useAuth();
+  
+  // Added mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   const businessParticipationChartRef = useRef(null);
   const userEngagementChartRef = useRef(null);
 
@@ -173,7 +186,7 @@ const DashboardPage = () => {
     container.selectAll("*").remove();
 
     const containerWidth = businessParticipationChartRef.current.clientWidth;
-    const containerHeight = 340;
+    const containerHeight = isMobile ? 280 : 340;
 
     const chartWrapper = container
       .append("div")
@@ -303,15 +316,42 @@ const DashboardPage = () => {
               .outerRadius(radius * 1.05)
           )
           .style("opacity", 1);
-
+      
         tooltip.transition().duration(200).style("opacity", 0.9);
+        
+        const tooltipNode = tooltip.node();
         tooltip
           .html(
             `<div style="font-weight: bold; margin-bottom: 5px;">${d.data.name} Locations</div>
              <div>${d.data.value}% of total</div>`
-          )
-          .style("left", `${event.pageX + 10}px`)
-          .style("top", `${event.pageY - 40}px`);
+          );
+        
+        // Get tooltip dimensions
+        const tooltipWidth = tooltipNode.offsetWidth;
+        const tooltipHeight = tooltipNode.offsetHeight;
+        
+        // Calculate position to keep tooltip on screen
+        let left = event.pageX + 10;
+        let top = event.pageY - 40;
+        
+        // Check if tooltip goes off right edge
+        if (left + tooltipWidth > window.innerWidth) {
+          left = event.pageX - tooltipWidth - 10;
+        }
+        
+        // Check if tooltip goes off bottom edge
+        if (top + tooltipHeight > window.innerHeight) {
+          top = event.pageY - tooltipHeight - 10;
+        }
+        
+        // Check if tooltip goes off top edge
+        if (top < 0) {
+          top = event.pageY + 10;
+        }
+        
+        tooltip
+          .style("left", `${left}px`)
+          .style("top", `${top}px`);
       })
       .on("mouseout", function () {
         d3.select(this)
@@ -388,8 +428,8 @@ const DashboardPage = () => {
 
       const circle = indicator
         .append("div")
-        .style("width", "40px")
-        .style("height", "40px")
+        .style("width", isMobile ? "35px" : "40px")
+        .style("height", isMobile ? "35px" : "40px")
         .style("border-radius", "50%")
         .style("background-color", `${data.color}20`)
         .style("display", "flex")
@@ -498,7 +538,7 @@ const DashboardPage = () => {
     container.selectAll("*").remove();
 
     const containerWidth = userEngagementChartRef.current.clientWidth;
-    const containerHeight = 340;
+    const containerHeight = isMobile ? 300 : 340;
 
     const chartWrapper = container
       .append("div")
@@ -684,6 +724,8 @@ const DashboardPage = () => {
         .on("mouseover", function (event, d) {
           d3.select(this).transition().duration(200).attr("opacity", 0.8);
           tooltip.transition().duration(200).style("opacity", 0.9);
+          
+          const tooltipNode = tooltip.node();
           tooltip
             .html(
               `<div style="font-weight: bold; margin-bottom: 5px;">${d.month}</div>
@@ -691,9 +733,34 @@ const DashboardPage = () => {
                  <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${series.color}; margin-right: 8px;"></div>
                  <div>${series.name}: <b>${d[series.name].toLocaleString()}</b></div>
                </div>`
-            )
-            .style("left", `${event.pageX + 10}px`)
-            .style("top", `${event.pageY - 40}px`);
+            );
+          
+          // Get tooltip dimensions
+          const tooltipWidth = tooltipNode.offsetWidth;
+          const tooltipHeight = tooltipNode.offsetHeight;
+          
+          // Calculate position to keep tooltip on screen
+          let left = event.pageX + 10;
+          let top = event.pageY - 40;
+          
+          // Check if tooltip goes off right edge
+          if (left + tooltipWidth > window.innerWidth) {
+            left = event.pageX - tooltipWidth - 10;
+          }
+          
+          // Check if tooltip goes off bottom edge
+          if (top + tooltipHeight > window.innerHeight) {
+            top = event.pageY - tooltipHeight - 10;
+          }
+          
+          // Check if tooltip goes off top edge
+          if (top < 0) {
+            top = event.pageY + 10;
+          }
+          
+          tooltip
+            .style("left", `${left}px`)
+            .style("top", `${top}px`);
         })
         .on("mouseout", function () {
           d3.select(this).transition().duration(500).attr("opacity", 1);
@@ -759,8 +826,8 @@ const DashboardPage = () => {
 
       const circle = indicator
         .append("div")
-        .style("width", "40px")
-        .style("height", "40px")
+        .style("width", isMobile ? "35px" : "40px")
+        .style("height", isMobile ? "35px" : "40px")
         .style("border-radius", "50%")
         .style("background-color", `${data.color}20`)
         .style("display", "flex")
