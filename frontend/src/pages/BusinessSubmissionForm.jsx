@@ -378,8 +378,8 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
 
         if (!formData.phone.trim()) {
           newErrors.phone = 'Phone number is required';
-        } else if (!/^(\d{3}-\d{3}-\d{3}|\d{3}-\d{4}-\d{4})$/.test(formData.phone)) {
-          newErrors.phone = 'Phone format should be XXX-XXX-XXX or XXX-XXXX-XXXX';
+        } else if (!/^(\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4})$/.test(formData.phone)) {
+          newErrors.phone = 'Phone format should be XXX-XXX-XXXX or XXX-XXXX-XXXX';
         }
         break;
 

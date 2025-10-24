@@ -347,7 +347,7 @@ const EventNotificationPanel = () => {
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>
               Events in Sarawak
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9, color: 'white'}}>
               {eventCounts.ongoing > 0 && `${eventCounts.ongoing} happening now • `}
               {events.length} total event{events.length !== 1 ? 's' : ''}
             </p>

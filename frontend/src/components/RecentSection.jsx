@@ -8,6 +8,39 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
   const [selectedItems, setSelectedItems] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, kind: null });
 
+  // Read from localStorage if history prop empty
+  const [localHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sarawakTourismRecentLocations');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const effectiveHistory = (Array.isArray(history) && history.length > 0) ? history : localHistory;
+
+  const getBackendUrl = () => {
+    const url =
+      import.meta?.env?.VITE_DEPLOYMENT_BACKEND ||
+      import.meta?.env?.VITE_BACKEND_URL ||
+      "http://localhost:5050";
+    return url;
+  };
+
+  const getImageUrl = (item) => {
+    let imageSource = item.image || item.businessImage || fallbackImage;
+    if (
+      imageSource &&
+      imageSource !== fallbackImage &&
+      !String(imageSource).startsWith("http") &&
+      !String(imageSource).startsWith("data:")
+    ) {
+      const backendUrl = getBackendUrl();
+      imageSource = `${backendUrl}${imageSource.startsWith("/") ? "" : "/"}${imageSource}`;
+    }
+    return imageSource || fallbackImage;
+  };
+
   const toggleSelectItem = (item) => {
     setSelectedItems(prev =>
       prev.includes(item)
@@ -18,7 +51,7 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedItems([...history]);
+      setSelectedItems([...effectiveHistory]);
     } else {
       setSelectedItems([]);
     }
@@ -71,7 +104,7 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
           <label className="select-all-label">
             <input
               type="checkbox"
-              checked={selectedItems.length === history.length && history.length > 0}
+              checked={selectedItems.length === effectiveHistory.length && effectiveHistory.length > 0}
               onChange={handleSelectAll}
             />
             Select All
@@ -87,9 +120,9 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
 
       {/* Scrollable Content */}
       <div className="recent-list-container">
-        {history.length > 0 ? (
+        {effectiveHistory.length > 0 ? (
           <div className="recent-list">
-            {history.map((item, index) => (
+            {effectiveHistory.map((item, index) => (
               <div
                   key={index}
                   className="recent-item"
@@ -106,7 +139,7 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
                   className="recent-checkbox"
                 />
                 <img 
-                  src={(item && item.image) ? item.image : fallbackImage} 
+                  src={getImageUrl(item)}
                   alt={item.name} 
                   className="recent-item-image"
                   onError={(e) => {
@@ -115,7 +148,7 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
                 />
                 <div className="recent-item-info">
                   <span className="recent-item-name">{item.name}</span>
-                  <span className="recent-item-type">{item.type || 'Location'}</span>
+                  <span className="recent-item-type">{item.type || item.category || 'Location'}</span>
                 </div>
               </div>
             ))}
