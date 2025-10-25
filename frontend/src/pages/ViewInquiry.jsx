@@ -1224,7 +1224,7 @@ const ViewInquiry = () => {
         /* Notification styling */
         .notification-wrapper {
           position: relative;
-          z-index: 100;
+          z-index: 50;
         }
 
         .icon-wrapper {
@@ -1565,7 +1565,7 @@ const ViewInquiry = () => {
             transform: translate(-50%, -50%);
             width: 90%;
             max-width: 300px;
-            z-index: 9999;
+            z-index: 50;
           }
 
           .filter-dropdown::before {
@@ -1713,7 +1713,7 @@ const ViewInquiry = () => {
           /* Filter dropdown mobile fix */
           .filter-dropdown-container {
             position: relative;
-            z-index: 100;
+            z-index: 50;
           }
 
           .filter-dropdown {
