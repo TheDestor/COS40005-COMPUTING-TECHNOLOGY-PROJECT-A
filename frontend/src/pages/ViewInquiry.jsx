@@ -837,7 +837,7 @@ const ViewInquiry = () => {
                       <div className="pagination-info">
                         Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredInquiries.length)} of {filteredInquiries.length} inquiries
                       </div>
-                      <div className="pagination-controls">
+                      <div className="pagination-controls-vi">
                         <button
                           className="pagination-btn"
                           onClick={() => paginate(currentPage - 1)}
@@ -846,7 +846,7 @@ const ViewInquiry = () => {
                           <FaChevronLeft /> Prev
                         </button>
                         
-                        <div className="page-numbers">
+                        <div className="page-numbers-vi">
                           {getPageNumbers().map((number, index) => (
                             <button
                               key={index}
@@ -1112,7 +1112,7 @@ const ViewInquiry = () => {
           margin-bottom: 12px;
         }
 
-        .pagination-controls {
+        .pagination-controls-vi {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1144,7 +1144,7 @@ const ViewInquiry = () => {
           cursor: not-allowed;
         }
 
-        .page-numbers {
+        .page-numbers-vi {
           display: flex;
           gap: 4px;
         }
@@ -1427,15 +1427,15 @@ const ViewInquiry = () => {
             min-height: 100px !important;
           }
 
-          .pagination-controls {
+          .pagination-controls-vi {
             flex-direction: row;
-            flex-wrap: wrap;
+            // flex-wrap: wrap;
             gap: 6px;
           }
 
-          .page-numbers {
+          .page-numbers-vi {
             order: 0;
-            width: 100%;
+            // width: 100%;
             justify-content: center;
           }
 

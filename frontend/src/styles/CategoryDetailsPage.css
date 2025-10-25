@@ -734,7 +734,7 @@
 .carousel-description-section {
   width: 100%;
   max-width: 900px;
-  margin: 6rem auto 0 auto;
+  margin: 6rem auto 2rem auto;
   text-align: center;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);

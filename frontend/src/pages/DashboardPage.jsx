@@ -1007,15 +1007,15 @@ const DashboardPage = () => {
 
       {/* Newsletter Subscribers Modal */}
       {showNewsletterModal && (
-        <div className="modal-overlay" onClick={() => setShowNewsletterModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="modal-overlay-dh" onClick={() => setShowNewsletterModal(false)}>
+          <div className="modal-content-dh" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-dh">
               <h2>Newsletter Subscribers</h2>
-              <button className="modal-close" onClick={() => setShowNewsletterModal(false)}>
+              <button className="modal-close-dh" onClick={() => setShowNewsletterModal(false)}>
                 <FaTimes />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body-dh">
               {loadingSubscribers ? (
                 <div style={{ textAlign: 'center', padding: '40px' }}>
                   Loading subscribers...
@@ -1056,7 +1056,7 @@ const DashboardPage = () => {
 
       <style jsx>{`
         /* Modal Styles */
-        .modal-overlay {
+        .modal-overlay-dh {
           position: fixed;
           top: 0;
           left: 0;
@@ -1079,7 +1079,7 @@ const DashboardPage = () => {
           }
         }
 
-        .modal-content {
+        .modal-content-dh {
           background: white;
           border-radius: 12px;
           width: 90%;
@@ -1102,7 +1102,7 @@ const DashboardPage = () => {
           }
         }
 
-        .modal-header {
+        .modal-header-dh {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -1110,13 +1110,13 @@ const DashboardPage = () => {
           border-bottom: 1px solid #e5e7eb;
         }
 
-        .modal-header h2 {
+        .modal-header-dh h2 {
           margin: 0;
           font-size: 1.5rem;
           color: #1f2937;
         }
 
-        .modal-close {
+        .modal-close-dh {
           background: none;
           border: none;
           font-size: 1.5rem;
@@ -1130,12 +1130,12 @@ const DashboardPage = () => {
           transition: all 0.2s;
         }
 
-        .modal-close:hover {
+        .modal-close-dh:hover {
           background: #f3f4f6;
           color: #1f2937;
         }
 
-        .modal-body {
+        .modal-body-dh {
           padding: 20px 30px;
           overflow-y: auto;
           flex: 1;
@@ -1189,16 +1189,16 @@ const DashboardPage = () => {
 
         /* Responsive */
         @media (max-width: 768px) {
-          .modal-content {
+          .modal-content-dh {
             width: 95%;
             max-height: 90vh;
           }
 
-          .modal-header {
+          .modal-header-dh {
             padding: 15px 20px;
           }
 
-          .modal-body {
+          .modal-body-dh {
             padding: 15px 20px;
           }
 

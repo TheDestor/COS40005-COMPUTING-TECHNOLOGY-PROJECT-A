@@ -124,90 +124,156 @@ const AttractionsPage = () => {
     }
   };
 
+  const OVERPASS_CACHE_KEY = 'overpass_attractions_cache';
+  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+  const getCachedOverpassData = () => {
+    try {
+      const cached = localStorage.getItem(OVERPASS_CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          console.log('📦 Using cached Overpass data');
+          return data;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to read Overpass cache:', error);
+    }
+    return null;
+  };
+
+  const setCachedOverpassData = (data) => {
+    try {
+      localStorage.setItem(OVERPASS_CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+      console.log('💾 Cached Overpass data');
+    } catch (error) {
+      console.warn('Failed to cache Overpass data:', error);
+    }
+  };
+
   // Fetch attractions from Overpass API (OpenStreetMap)
   const fetchOverpassAttractions = async () => {
+    // Check cache first
+    const cachedData = getCachedOverpassData();
+    if (cachedData) {
+      return cachedData;
+    }
+
     try {
       // Sarawak bounding box (approximate)
       const sarawakBbox = '1.0,109.5,3.5,115.5';
       
       // Overpass query for tourist attractions in Sarawak
       const overpassQuery = `
-        [out:json][timeout:25];
+        [out:json][timeout:15];
         (
-          node["tourism"~"attraction|museum|zoo|theme_park|aquarium"]["name"](${sarawakBbox});
-          way["tourism"~"attraction|museum|zoo|theme_park|aquarium"]["name"](${sarawakBbox});
-          relation["tourism"~"attraction|museum|zoo|theme_park|aquarium"]["name"](${sarawakBbox});
-          
-          // Also include national parks and natural attractions
-          node["leisure"~"park|nature_reserve"]["name"](${sarawakBbox});
-          way["leisure"~"park|nature_reserve"]["name"](${sarawakBbox});
-          relation["leisure"~"park|nature_reserve"]["name"](${sarawakBbox});
-          
-          node["natural"~"beach|peak|waterfall"]["name"](${sarawakBbox});
-          way["natural"~"beach|peak|waterfall"]["name"](${sarawakBbox});
-          relation["natural"~"beach|peak|waterfall"]["name"](${sarawakBbox});
+          node["tourism"="attraction"]["name"](${sarawakBbox});
+          node["tourism"="museum"]["name"](${sarawakBbox});
+          node["leisure"="park"]["name"](${sarawakBbox});
         );
-        out center 100;
+        out center 50;
       `;
 
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        body: `data=${encodeURIComponent(overpassQuery)}`
-      });
+      // Try multiple Overpass servers with fallback
+      const overpassUrls = [
+        'https://overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter',
+        'https://lz4.overpass-api.de/api/interpreter'
+      ];
 
-      if (!response.ok) {
-        throw new Error(`Overpass API error: ${response.status}`);
+      for (const url of overpassUrls) {
+        try {
+          // Add delay between requests to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept-Language': 'en'
+            },
+            body: `data=${encodeURIComponent(overpassQuery)}`
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`✅ Successfully fetched from ${url}`);
+            
+            if (result && result.elements) {
+              const processedData = result.elements.map(element => {
+                const tags = element.tags || {};
+                const name = tags.name || 'Unnamed Attraction';
+                
+                // Determine coordinates
+                let lat, lon;
+                if (element.center) {
+                  lat = element.center.lat;
+                  lon = element.center.lon;
+                } else {
+                  lat = element.lat;
+                  lon = element.lon;
+                }
+
+                // Determine type based on OSM tags
+                let type = 'Other';
+                if (tags.tourism === 'museum') type = 'Museum';
+                else if (tags.tourism === 'zoo') type = 'Zoo';
+                else if (tags.tourism === 'aquarium') type = 'Aquarium';
+                else if (tags.tourism === 'theme_park') type = 'Theme Park';
+                else if (tags.leisure === 'park' || tags.leisure === 'nature_reserve') type = 'National Park';
+                else if (tags.natural === 'beach') type = 'Beach';
+                else if (tags.natural === 'waterfall') type = 'Waterfall';
+                else if (tags.tourism === 'attraction') type = 'Attraction';
+
+                // Create description from available tags
+                let description = tags.description || tags.wikipedia || '';
+                if (!description) {
+                  if (tags.tourism) description = `${tags.tourism.replace('_', ' ')}`;
+                  if (tags.operator) description += ` operated by ${tags.operator}`;
+                }
+
+                return {
+                  name: name,
+                  desc: description || `A ${type.toLowerCase()} in Sarawak`,
+                  slug: name.toLowerCase().replace(/\s+/g, '-'),
+                  image: defaultImage, // Overpass doesn't provide images
+                  type: type,
+                  division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
+                  latitude: lat,
+                  longitude: lon,
+                  url: tags.website || '',
+                  category: 'Attraction',
+                  source: 'overpass',
+                  osmTags: tags // Include all OSM tags for potential future use
+                };
+              });
+              
+              setCachedOverpassData(processedData);
+              return processedData;
+            }
+            
+            return [];
+          } else if (response.status === 429) {
+            console.warn(`⚠️ Rate limited by ${url}, trying next server...`);
+            continue; // Try next URL
+          } else {
+            console.warn(`⚠️ ${url} returned ${response.status}, trying next server...`);
+            continue; // Try next URL
+          }
+        } catch (error) {
+          console.warn(`⚠️ Error with ${url}:`, error.message);
+          continue; // Try next URL
+        }
       }
 
-      const result = await response.json();
+      // If all servers fail, return empty array
+      console.warn('❌ All Overpass servers failed, returning empty array');
+      return [];
       
-      return result.elements.map(element => {
-        const tags = element.tags || {};
-        const name = tags.name || 'Unnamed Attraction';
-        
-        // Determine coordinates
-        let lat, lon;
-        if (element.center) {
-          lat = element.center.lat;
-          lon = element.center.lon;
-        } else {
-          lat = element.lat;
-          lon = element.lon;
-        }
-
-        // Determine type based on OSM tags
-        let type = 'Other';
-        if (tags.tourism === 'museum') type = 'Museum';
-        else if (tags.tourism === 'zoo') type = 'Zoo';
-        else if (tags.tourism === 'aquarium') type = 'Aquarium';
-        else if (tags.tourism === 'theme_park') type = 'Theme Park';
-        else if (tags.leisure === 'park' || tags.leisure === 'nature_reserve') type = 'National Park';
-        else if (tags.natural === 'beach') type = 'Beach';
-        else if (tags.natural === 'waterfall') type = 'Waterfall';
-        else if (tags.tourism === 'attraction') type = 'Attraction';
-
-        // Create description from available tags
-        let description = tags.description || tags.wikipedia || '';
-        if (!description) {
-          if (tags.tourism) description = `${tags.tourism.replace('_', ' ')}`;
-          if (tags.operator) description += ` operated by ${tags.operator}`;
-        }
-
-        return {
-          name: name,
-          desc: description || `A ${type.toLowerCase()} in Sarawak`,
-          slug: name.toLowerCase().replace(/\s+/g, '-'),
-          image: defaultImage, // Overpass doesn't provide images
-          type: type,
-          division: tags['addr:city'] || tags['addr:state'] || 'Sarawak',
-          latitude: lat,
-          longitude: lon,
-          url: tags.website || '',
-          category: 'Attraction',
-          source: 'overpass',
-          osmTags: tags // Include all OSM tags for potential future use
-        };
-      });
     } catch (error) {
       console.error('Error fetching Overpass attractions:', error);
       return [];

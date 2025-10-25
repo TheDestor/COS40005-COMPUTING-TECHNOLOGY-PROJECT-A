@@ -382,9 +382,12 @@ function TouristInfoSection({ selectedLocation }) {
         <div className="reels-content">
           {loading && <p className="loading">Loading videos...</p>}
           {error && (
-            <p className={`error ${error.includes('cached data') ? 'warning' : ''}`}>
-              {error}
-            </p>
+            // <p className={`error ${error.includes('cached data') ? 'warning' : ''}`}>
+            //   {error}
+            // </p>
+            <div className="error-message">
+              <p>Oops something went wrong</p>
+            </div>
           )}
           
           {!loading && !error && (

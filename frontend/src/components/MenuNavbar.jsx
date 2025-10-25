@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   FaBed, FaPlaneDeparture, FaHospital, FaCalendarAlt, FaShoppingCart
@@ -28,6 +28,11 @@ const MenuNavbar = ({
   const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState({ name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' });
   const location = useLocation();
 
+  // 🚀 RATE LIMITING: Track last preload times for each category
+  const lastPreloadTimes = useRef({});
+  const preloadCooldown = 30000; // 30 seconds cooldown between preloads
+  const isPreloading = useRef(false);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 992);
@@ -49,37 +54,78 @@ const MenuNavbar = ({
     { name: 'Event', icon: <FaCalendarAlt />, path: '/event', onMouseEnter: onEventHover }
   ];
 
-  // 🚀 ENHANCEMENT: Aggressive preloading strategy
+  // 🚀 RATE LIMITED PRELOADING: Smart preloading with cooldowns
+  const rateLimitedPreload = (preloadFn, categoryName) => {
+    const now = Date.now();
+    const lastPreload = lastPreloadTimes.current[categoryName] || 0;
+    
+    // Check if enough time has passed since last preload
+    if (now - lastPreload < preloadCooldown) {
+      console.log(`⏳ Rate limited: ${categoryName} preload skipped (cooldown active)`);
+      return;
+    }
+
+    // Check if already preloading
+    if (isPreloading.current) {
+      console.log(`⏳ Rate limited: ${categoryName} preload skipped (another preload in progress)`);
+      return;
+    }
+
+    if (preloadFn && typeof preloadFn === 'function') {
+      isPreloading.current = true;
+      lastPreloadTimes.current[categoryName] = now;
+      
+      try {
+        console.log(`🚀 Preloading: ${categoryName}`);
+        preloadFn();
+      } catch (error) {
+        console.warn(`Preload error for ${categoryName}:`, error);
+      } finally {
+        // Reset preloading flag after a short delay
+        setTimeout(() => {
+          isPreloading.current = false;
+        }, 1000);
+      }
+    }
+  };
+
+  // 🚀 SMART PRELOADING: Only preload on initial mount, not repeatedly
   useEffect(() => {
     const preloadFunctions = [
-      onMajorTownHover,
-      onAttractionsHover,
-      onShoppingHover,
-      onFoodHover,
-      onTransportationHover,
-      onAccommodationHover,
-      onTourGuidesHover,
-      onEventHover
-    ].filter(Boolean);
+      { fn: onMajorTownHover, name: 'MajorTown' },
+      { fn: onAttractionsHover, name: 'Attractions' },
+      { fn: onShoppingHover, name: 'Shopping' },
+      { fn: onFoodHover, name: 'Food' },
+      { fn: onTransportationHover, name: 'Transportation' },
+      { fn: onAccommodationHover, name: 'Accommodation' },
+      { fn: onTourGuidesHover, name: 'TourGuides' },
+      { fn: onEventHover, name: 'Event' }
+    ].filter(item => item.fn);
 
-    // PRELOAD IMMEDIATELY AND AGGRESSIVELY
-    const preloadAll = () => {
-      preloadFunctions.forEach(preloadFn => {
-        if (preloadFn && typeof preloadFn === 'function') {
-          try {
-            preloadFn();
-          } catch (error) {
-            console.warn('Preload function error:', error);
-          }
-        }
+    // 🚀 INITIAL PRELOAD: Only preload once on mount, with staggered timing
+    const initialPreload = () => {
+      preloadFunctions.forEach((item, index) => {
+        // Stagger preloads by 2 seconds each to avoid overwhelming APIs
+        setTimeout(() => {
+          rateLimitedPreload(item.fn, item.name);
+        }, index * 2000);
       });
     };
 
-    // 🚀 Preload immediately when navbar mounts
-    preloadAll();
+    // Run initial preload
+    initialPreload();
     
-    // 🚀 Preload more frequently (every 15 seconds)
-    const interval = setInterval(preloadAll, 15000);
+    // 🚀 REDUCED FREQUENCY: Only refresh every 5 minutes instead of 15 seconds
+    const interval = setInterval(() => {
+      // Only preload if user is actively on the site (not idle)
+      if (document.visibilityState === 'visible') {
+        preloadFunctions.forEach((item, index) => {
+          setTimeout(() => {
+            rateLimitedPreload(item.fn, item.name);
+          }, index * 1000); // Stagger by 1 second for background refreshes
+        });
+      }
+    }, 5 * 60 * 1000); // 5 minutes instead of 15 seconds
     
     return () => clearInterval(interval);
   }, [
@@ -92,6 +138,13 @@ const MenuNavbar = ({
     onTourGuidesHover,
     onEventHover
   ]);
+
+  // 🚀 HOVER PRELOADING: Only preload on actual hover, with rate limiting
+  const handleMouseEnter = (item) => {
+    if (item.onMouseEnter) {
+      rateLimitedPreload(item.onMouseEnter, item.name);
+    }
+  };
 
   const handleMobileMenuClick = (item) => {
     setSelectedMobileMenuItem(item);
@@ -161,7 +214,7 @@ const MenuNavbar = ({
                   key={item.name}
                   to={item.path}
                   className={`menu-item3 ${isActive ? 'active' : ''}`}
-                  onMouseEnter={item.onMouseEnter}
+                  onMouseEnter={() => handleMouseEnter(item)}
                 >
                   <div className={`icon-container2 ${isActive ? 'active-icon-container2' : ''}`}>
                     <span className={`menu-icon2 ${isActive ? 'active-icon2' : ''}`}>

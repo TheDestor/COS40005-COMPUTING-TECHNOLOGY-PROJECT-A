@@ -337,7 +337,10 @@ export default function AiChatbot({ visibleByDefault = false }) {
                         )}
 
                         {error && (
-                            <div className="ai-error shake-on-error">{error}</div>
+                            // <div className="ai-error shake-on-error">{error}</div>
+                            <div className="error-message">
+                                <p>Oops something went wrong</p>
+                            </div>
                         )}
 
                         <button

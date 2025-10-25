@@ -1091,7 +1091,7 @@ const BusinessManagement = () => {
                           <FaChevronLeft /> Previous
                         </button>
                         
-                        <div className="page-numbers">
+                        <div className="page-numbers-vi">
                           {Array.from({ length: Math.min(5, totalPaginationPages) }, (_, index) => {
                             let pageNumber;
                             if (totalPaginationPages <= 5) {
