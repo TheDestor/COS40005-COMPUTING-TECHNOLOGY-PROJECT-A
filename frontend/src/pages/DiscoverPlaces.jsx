@@ -70,12 +70,33 @@ function DiscoverPlaces() {
   
   // Event-only details flag for conditional rendering (hide category/type/division/website)
   const isEventDetail = Boolean(
-    eventType ||
     locationData?.type === 'Event' ||
+    locationData?.eventType ||
     locationData?.registrationRequired ||
-    locationData?.startDate || locationData?.endDate ||
-    (Array.isArray(dailySchedule) && dailySchedule.length > 0)
+    (locationData?.startDate && locationData?.endDate)
   );
+
+  const getTodayScheduleInfo = useCallback(() => {
+    if (!isEventDetail) return null;
+    
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    // Find today's schedule from dailySchedule array
+    const todaySchedule = dailySchedule?.find(schedule => {
+      if (!schedule.date) return false;
+      const scheduleDate = new Date(schedule.date);
+      const scheduleDateStr = `${scheduleDate.getFullYear()}-${String(scheduleDate.getMonth() + 1).padStart(2, '0')}-${String(scheduleDate.getDate()).padStart(2, '0')}`;
+      return scheduleDateStr === todayStr;
+    });
+    
+    // Use today's schedule times if available, otherwise fallback to general times
+    const startTime = todaySchedule?.startTime || locationData?.startTime;
+    const endTime = todaySchedule?.endTime || locationData?.endTime;
+    
+    return { startTime, endTime, hasDailySchedule: Array.isArray(dailySchedule) && dailySchedule.length > 0 };
+  }, [isEventDetail, dailySchedule, locationData?.startTime, locationData?.endTime]);
 
   const formatTimeDisplayDP = (time) => {
     if (!time) return '';
@@ -733,9 +754,10 @@ function DiscoverPlaces() {
           </div>
 
           <div className="nearby-places-section-dp">
+          {isEventDetail && (
             <div className="daily-schedule-dp">
               <div className="schedule-header-dp">
-                <h3>Daily Schedule</h3>
+                <h3>Event Schedule</h3>
                 <button
                   className="toggle-schedule-btn-dp"
                   onClick={() => setShowScheduleSection(s => !s)}
@@ -747,53 +769,100 @@ function DiscoverPlaces() {
 
               {showScheduleSection && (
                 <>
-                  <div className="schedule-toolbar-dp">
-                    <div className="toolbar-left-dp">
-                      <div className="toolbar-input-wrap-dp">
-                        <FaSearch className="toolbar-icon-dp" />
-                        <input
-                          type="text"
-                          className="schedule-search-input-dp"
-                          placeholder="Search date..."
-                          value={scheduleSearchQuery}
-                          onChange={(e) => setScheduleSearchQuery(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="toolbar-actions-dp">
-                      <button
-                        className="schedule-copy-btn-dp"
-                        onClick={handleCopyScheduleDP}
-                      >
-                        Copy Schedule
-                      </button>
-                    </div>
-                  </div>
-
-                  {Array.isArray(dailySchedule) && getFilteredScheduleEntries().length > 0 ? (
-                    <div className="daily-schedule-table-dp">
-                      {getFilteredScheduleEntries().map((entry, idx) => {
-                        const dateLabel = new Date(entry.date).toLocaleDateString('en-US', {
-                          year: 'numeric', month: 'long', day: 'numeric'
-                        });
-                        return (
-                          <div key={idx} className="schedule-row-dp">
-                            <span className="schedule-date-dp">{dateLabel}</span>
-                            <span className="schedule-time-dp">
-                              {formatTimeDisplayDP(entry.startTime)} - {formatTimeDisplayDP(entry.endTime)}
+                  {/* Show today's specific time if available */}
+                  {(() => {
+                    const scheduleInfo = getTodayScheduleInfo();
+                    if (scheduleInfo?.startTime) {
+                      return (
+                        <div className="today-schedule-dp">
+                          <h4>Today's Schedule</h4>
+                          <div className="today-time-dp">
+                            <FaClock className="time-icon-dp" />
+                            <span>
+                              {formatTimeDisplayDP(scheduleInfo.startTime)} - {formatTimeDisplayDP(scheduleInfo.endTime || 'End of day')}
                             </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="schedule-empty-dp">
-                      No per-day times. Same time every day or not provided.
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Show daily schedule table only if dailySchedule exists and has entries */}
+                  {getTodayScheduleInfo()?.hasDailySchedule && (
+                    <>
+                      <div className="schedule-toolbar-dp">
+                        <div className="toolbar-left-dp">
+                          <div className="toolbar-input-wrap-dp">
+                            <FaSearch className="toolbar-icon-dp" />
+                            <input
+                              type="text"
+                              className="schedule-search-input-dp"
+                              placeholder="Search date..."
+                              value={scheduleSearchQuery}
+                              onChange={(e) => setScheduleSearchQuery(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="toolbar-actions-dp">
+                          <button
+                            className="schedule-copy-btn-dp"
+                            onClick={handleCopyScheduleDP}
+                          >
+                            Copy Schedule
+                          </button>
+                        </div>
+                      </div>
+
+                      {Array.isArray(dailySchedule) && getFilteredScheduleEntries().length > 0 ? (
+                        <div className="daily-schedule-table-dp">
+                          {getFilteredScheduleEntries().map((entry, idx) => {
+                            const dateLabel = new Date(entry.date).toLocaleDateString('en-US', {
+                              year: 'numeric', month: 'long', day: 'numeric'
+                            });
+                            return (
+                              <div key={idx} className="schedule-row-dp">
+                                <span className="schedule-date-dp">{dateLabel}</span>
+                                <span className="schedule-time-dp">
+                                  {formatTimeDisplayDP(entry.startTime)} - {formatTimeDisplayDP(entry.endTime)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="schedule-empty-dp">
+                          No per-day times. Same time every day or not provided.
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Show general event times if no daily schedule */}
+                  {!getTodayScheduleInfo()?.hasDailySchedule && (locationData?.startTime || locationData?.endTime) && (
+                    <div className="general-schedule-dp">
+                      <h4>Event Times</h4>
+                      {locationData?.startDate && locationData?.endDate && (
+                        <div className="event-dates-dp">
+                          <FaCalendar className="date-icon-dp" />
+                          <span>
+                            {new Date(locationData.startDate).toLocaleDateString()} - {new Date(locationData.endDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="general-time-dp">
+                        <FaClock className="time-icon-dp" />
+                        <span>
+                          {locationData?.startTime ? formatTimeDisplayDP(locationData.startTime) : 'Start time not specified'} - 
+                          {locationData?.endTime ? formatTimeDisplayDP(locationData.endTime) : 'End time not specified'}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </>
               )}
             </div>
+          )}
 
             {/* Map Section */}
             <div className="map-section-dp">

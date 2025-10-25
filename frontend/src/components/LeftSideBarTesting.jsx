@@ -1892,15 +1892,13 @@ const handleVehicleClick = async (vehicle) => {
     // End loading early so map draws immediately
     setIsLoading(false);
 
-    // Fetch nearby places only if the drawer is open (avoid slow Overpass calls)
-    if (isNearbyDrawerOpen) {
-      try {
-        const nearby = await fetchNearbyPlaces(endCoords, 500);
-        setNearbyPlaces(nearby);
-      } catch (error) {
-        console.warn('Failed to fetch nearby places:', error);
-        setNearbyPlaces([]);
-      }
+    // Fetch nearby places around the destination (always, not only when drawer is open)
+    try {
+      const nearby = await fetchNearbyPlaces(endCoords, 2000);
+      setNearbyPlaces(nearby || []);
+    } catch (error) {
+      console.warn('Failed to fetch nearby places:', error);
+      setNearbyPlaces([]);
     }
 
     // BACKGROUND: compute richer alternatives; don't block the UI
