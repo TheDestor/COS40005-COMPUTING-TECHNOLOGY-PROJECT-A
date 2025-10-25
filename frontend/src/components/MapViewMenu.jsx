@@ -1243,10 +1243,9 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         const apiCategory = menuToBusinessCategory(categoryName);
         
         // Always use nearby data
-        let overpassResults = [];
-        if (currentPos) {
-          overpassResults = await fetchOverpassPlaces(categoryName, currentPos, radiusMeters);
-        }
+        // CHANGE: Always fetch Overpass using currentPos or DEFAULT_CENTER
+        const center = currentPos || DEFAULT_CENTER;
+        const overpassResults = await fetchOverpassPlaces(categoryName, center, radiusMeters);
 
         const [backendResults, businessResults] = await Promise.all([
           fetchBackendData(categoryName),
