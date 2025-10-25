@@ -347,7 +347,7 @@ const EventNotificationPanel = () => {
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>
               Events in Sarawak
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9 }}>
+            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9, color: 'white'}}>
               {eventCounts.ongoing > 0 && `${eventCounts.ongoing} happening now • `}
               {events.length} total event{events.length !== 1 ? 's' : ''}
             </p>
@@ -526,14 +526,35 @@ const EventNotificationPanel = () => {
                           </span>
                         </div>
                         
-                        {currentEvent.startTime && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <FaClock style={{ color: '#667eea', fontSize: '14px' }} />
-                            <span style={{ fontSize: '13px', color: '#374151' }}>
-                              {currentEvent.startTime} - {currentEvent.endTime || 'End of day'}
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          // Get today's date in YYYY-MM-DD format
+                          const today = new Date();
+                          const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                          
+                          // Find today's schedule from dailySchedule array
+                          const todaySchedule = currentEvent.dailySchedule?.find(schedule => {
+                            if (!schedule.date) return false;
+                            const scheduleDate = new Date(schedule.date);
+                            const scheduleDateStr = `${scheduleDate.getFullYear()}-${String(scheduleDate.getMonth() + 1).padStart(2, '0')}-${String(scheduleDate.getDate()).padStart(2, '0')}`;
+                            return scheduleDateStr === todayStr;
+                          });
+                          
+                          // Use today's schedule times if available, otherwise fallback to general times
+                          const startTime = todaySchedule?.startTime || currentEvent.startTime;
+                          const endTime = todaySchedule?.endTime || currentEvent.endTime;
+                          
+                          if (startTime) {
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaClock style={{ color: '#667eea', fontSize: '14px' }} />
+                                <span style={{ fontSize: '13px', color: '#374151' }}>
+                                  {startTime} - {endTime || 'End of day'}
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                       
                       <div style={{

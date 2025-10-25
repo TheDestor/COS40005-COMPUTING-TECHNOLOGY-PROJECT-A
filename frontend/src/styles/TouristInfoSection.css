@@ -277,6 +277,55 @@
   color: #666;
 }
 
+.error-message {
+  padding: 20px;
+  margin: 15px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: errorJumping 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Add this new keyframe animation specifically for error messages */
+@keyframes errorJumping {
+  0%   { transform: translateY(0); }
+  20%  { transform: translateY(-8px); }
+  40%  { transform: translateY(0); }
+  60%  { transform: translateY(-6px); }
+  80%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: white;
+}
+
+.error-message::before {
+  content: '⚠️';
+  display: block;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .error-message {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .error-message p {
+    font-size: 14px;
+  }
+}
 /* Loading and error states
 .loading, .error, .no-reels {
   padding: 25px;

@@ -830,7 +830,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     console.log('⚡ Loading Events from cache');
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-
+  
     return cached
       .filter(item => {
         const eventEndDate = item.endDate ? new Date(item.endDate) : null;
@@ -865,6 +865,8 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         endDate: item.endDate,
         startTime: item.startTime,
         endTime: item.endTime,
+        // Add dailySchedule from cache
+        dailySchedule: Array.isArray(item.dailySchedule) ? item.dailySchedule : [],
         eventType: item.eventType,
         registrationRequired: item.registrationRequired,
         targetAudience: item.targetAudience || [],

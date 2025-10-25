@@ -172,7 +172,7 @@ p {
   border-color: #e5e7eb;
 }
 
-.search-icon {
+.search-icon-av {
   color: #64748b;
   margin-right: 8px;
 }
@@ -1904,7 +1904,7 @@ p {
   background: rgba(34, 197, 94, 0.9);
 }
 
-.delete-btn:hover {
+.delete-btn-av:hover {
   background: rgba(239, 68, 68, 0.9);
 }
 
@@ -1958,6 +1958,7 @@ p {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-align: left;
   flex-grow: 0;
 }
 

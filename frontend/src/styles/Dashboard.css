@@ -1227,7 +1227,7 @@ svg {
 
 /* Mobile modal fixes */
 @media (max-width: 768px) {
-  .modal-content {
+  .modal-content-dh {
     width: 95% !important;
     max-height: 85vh !important;
     margin: 20px !important;
@@ -1297,7 +1297,7 @@ svg {
     min-height: 100px !important;
   }
 
-  .modal-close {
+  .modal-close-dh {
     padding: 10px !important;
     font-size: 1.8rem !important;
   }

@@ -15,7 +15,8 @@ import {
   FaLock,
   FaChevronLeft,
   FaChevronRight,
-  FaSync
+  FaSync,
+  FaArrowLeft
 } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import '../styles/Dashboard.css';
@@ -26,6 +27,73 @@ import { useAuth } from '../context/AuthProvider'; // Fixed import path
 // Fallback images (in case API images fail to load)
 import defaultBusinessImage from '../assets/default-business.jpg';
 import defaultAvatarImage from '../assets/default-avatar.png';
+
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const SARAWAK_BOUNDS = L.latLngBounds([0.8, 108.8], [5.5, 115.5]);
+
+const clampToBounds = (lat, lng) => {
+  const sw = SARAWAK_BOUNDS.getSouthWest();
+  const ne = SARAWAK_BOUNDS.getNorthEast();
+  const clampedLat = Math.min(ne.lat, Math.max(sw.lat, lat));
+  const clampedLng = Math.min(ne.lng, Math.max(sw.lng, lng));
+  return [clampedLat, clampedLng];
+};
+
+// LEAFLET ICON CONFIGURATION
+const defaultIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+
+// Map Modal Component for showing coordinates
+const MapModal = ({ latitude, longitude }) => {
+  const [markerPos, setMarkerPos] = useState([latitude, longitude]);
+
+  useEffect(() => {
+    const [clat, clng] = clampToBounds(latitude, longitude);
+    setMarkerPos([clat, clng]);
+  }, [latitude, longitude]);
+
+  const RecenterMap = ({ center }) => {
+    const map = useMap();
+    useEffect(() => {
+      const [clat, clng] = clampToBounds(center[0], center[1]);
+      map.setView([clat, clng]);
+    }, [center, map]);
+    return null;
+  };
+
+  return (
+    <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+      <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
+        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+      </div>
+      <MapContainer
+        center={[latitude, longitude]}
+        zoom={14}
+        style={{ width: '100%', height: '100%' }}
+        maxBounds={SARAWAK_BOUNDS}
+        maxBoundsViscosity={1.0}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        <RecenterMap center={[latitude, longitude]} />
+        <Marker
+          position={markerPos}
+          icon={defaultIcon}
+        />
+      </MapContainer>
+    </div>
+  );
+};
 
 const BusinessManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,7 +109,8 @@ const BusinessManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [businessCategories, setBusinessCategories] = useState([]);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  const [showBusinessDetail, setShowBusinessDetail] = useState(false);  
   // Notification states
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -65,6 +134,19 @@ const BusinessManagement = () => {
     console.log("Current user:", user);
     console.log("Is user admin?", isAdmin);
   }, [user, isAdmin]);
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600);
+      if (window.innerWidth > 600 && showBusinessDetail) {
+        setShowBusinessDetail(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showBusinessDetail]);
 
   // Click outside handlers
   useEffect(() => {
@@ -336,11 +418,19 @@ const BusinessManagement = () => {
   // Function to handle business selection
   const handleSelectBusiness = (business) => {
     setSelectedBusiness(business);
-    
+    if (isMobile) {
+      setShowBusinessDetail(true);
+    }
+  
     // If the business was pending, mark it as in-review
     if (business.status === 'pending') {
       handleUpdateBusinessStatus(business._id, 'in-review');
     }
+  };
+
+  // Handler for going back to business list on mobile
+  const handleBackToList = () => {
+    setShowBusinessDetail(false);
   };
 
   // Handler for updating business status
@@ -438,6 +528,9 @@ const BusinessManagement = () => {
         // If the deleted business was selected, select the first one from the updated list
         if (selectedBusiness && selectedBusiness._id === id) {
           setSelectedBusiness(updatedBusinesses.length > 0 ? updatedBusinesses[0] : null);
+          if (isMobile && updatedBusinesses.length === 0) {
+            setShowBusinessDetail(false);
+          }
         }
         
         // Add notification for deletion
@@ -922,7 +1015,7 @@ const BusinessManagement = () => {
             </div>
           </div>
           
-          <div className="business-container no-scroll-container">
+          <div className={`business-container no-scroll-container ${isMobile && showBusinessDetail ? 'mobile-detail-active' : ''}`}>
             {/* Left panel - Business list */}
             <div className="business-list compact-list">
               {currentBusinesses.length > 0 ? (
@@ -998,7 +1091,7 @@ const BusinessManagement = () => {
                           <FaChevronLeft /> Previous
                         </button>
                         
-                        <div className="page-numbers">
+                        <div className="page-numbers-vi">
                           {Array.from({ length: Math.min(5, totalPaginationPages) }, (_, index) => {
                             let pageNumber;
                             if (totalPaginationPages <= 5) {
@@ -1044,8 +1137,16 @@ const BusinessManagement = () => {
             {/* Right panel - Selected business detail */}
             {selectedBusiness ? (
               <div className="business-detail compact-detail">
-                <div className="business-detail-header compact-detail-header">
-                  <div className="business-info compact-info">
+              <div className="business-detail-header compact-detail-header">
+                {isMobile && (
+                  <button 
+                    className="back-button mobile-back-btn"
+                    onClick={handleBackToList}
+                  >
+                    <FaArrowLeft /> Back to List
+                  </button>
+                )}
+                <div className="business-info compact-info">
                     <div className="business-main-image compact-main-image">
                       <img 
                         src={selectedBusiness.businessImage.startsWith('/uploads') 
@@ -1173,6 +1274,15 @@ const BusinessManagement = () => {
                       <span className="meta-label">Coordinate:</span>
                       <span className="meta-value">{selectedBusiness.latitude}, {selectedBusiness.longitude}</span>
                     </div>
+
+                    {/* NEW: Add Location Map */}
+                    <div className="business-location-map">
+                      <h4>Location Map</h4>
+                      <MapModal 
+                        latitude={selectedBusiness.latitude} 
+                        longitude={selectedBusiness.longitude} 
+                      />
+                    </div>
                   </div>
                   
                   <div className="business-description compact-description">
@@ -1212,873 +1322,6 @@ const BusinessManagement = () => {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        /* Notification Styles */
-        .notification-wrapper {
-          position: relative;
-        }
-
-        .notification-icon {
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .notification-icon:hover .action-icon {
-          color: #3b82f6;
-          transform: scale(1.1);
-        }
-
-        .notification-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          width: 380px;
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          z-index: 1000;
-          max-height: 500px;
-          overflow: hidden;
-          animation: slideDown 0.2s ease-out;
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .dropdown-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e5e7eb;
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-          border-radius: 12px 12px 0 0;
-        }
-
-        .dropdown-header h4 {
-          margin: 0;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .mark-all-read {
-          background: none;
-          border: none;
-          color: #3b82f6;
-          cursor: pointer;
-          font-size: 0.85rem;
-          font-weight: 500;
-          padding: 4px 8px;
-          border-radius: 6px;
-          transition: all 0.2s ease;
-        }
-
-        .mark-all-read:hover {
-          color: #2563eb;
-          background: #eff6ff;
-        }
-
-        .notification-list {
-          max-height: 400px;
-          overflow-y: auto;
-        }
-
-        .notification-item {
-          display: flex;
-          align-items: flex-start;
-          padding: 14px 20px;
-          border-bottom: 1px solid #f3f4f6;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          position: relative;
-        }
-
-        .notification-item:hover {
-          background: #f9fafb;
-        }
-
-        .notification-item:last-child {
-          border-bottom: none;
-        }
-
-        .notification-item.unread {
-          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-          border-left: 4px solid #3b82f6;
-        }
-
-        .notification-item.unread:hover {
-          background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-        }
-
-        .notification-content {
-          flex: 1;
-        }
-
-        .notification-message {
-          margin: 0 0 6px 0;
-          font-size: 0.9rem;
-          line-height: 1.4;
-          color: #374151;
-          font-weight: 500;
-        }
-
-        .notification-time {
-          font-size: 0.8rem;
-          color: #6b7280;
-          font-weight: 400;
-        }
-
-        .notification-type-indicator {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          margin-left: 12px;
-          margin-top: 6px;
-          flex-shrink: 0;
-        }
-
-        .notification-info .notification-type-indicator {
-          background: #3b82f6;
-        }
-
-        .notification-success .notification-type-indicator {
-          background: #10b981;
-        }
-
-        .notification-warning .notification-type-indicator {
-          background: #f59e0b;
-        }
-
-        .notification-error .notification-type-indicator {
-          background: #ef4444;
-        }
-
-        .notification-item.read .notification-type-indicator {
-          background: #d1d5db;
-        }
-
-        .no-notifications {
-          padding: 40px 20px;
-          text-align: center;
-          color: #6b7280;
-        }
-
-        .no-notifications p {
-          margin: 0;
-          font-size: 0.9rem;
-        }
-
-        /* Refresh Button Styles */
-        .refresh-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          background: white;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: #059669;
-          font-size: 0.9rem;
-          margin-right: 8px;
-        }
-
-        .refresh-btn:hover:not(:disabled) {
-          background: #f0fdf4;
-          border-color: #059669;
-          transform: translateY(-1px);
-        }
-
-        .refresh-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .spinning {
-          animation: spin 1s linear infinite;
-        }
-
-        /* Enhanced badge styles */
-        .badge {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          color: white;
-          border-radius: 12px;
-          padding: 2px 6px;
-          font-size: 0.7rem;
-          font-weight: 600;
-          min-width: 18px;
-          height: 18px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          }
-          50% {
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
-          }
-          100% {
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-          }
-        }
-
-        .icon-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 6px;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-        }
-
-        .action-icon {
-          font-size: 1.2rem;
-          color: #6b7280;
-          transition: all 0.2s ease;
-        }
-
-        /* Compact Layout Styles for No-Scroll Business Management */
-        .dashboard-content {
-          height: 100vh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .compact-header {
-          padding: 10px 20px;
-          min-height: 70px;
-          flex-shrink: 0;
-        }
-
-        .compact-header h3 {
-          font-size: 1.4rem;
-          margin-bottom: 2px;
-        }
-
-        .compact-header p {
-          font-size: 0.9rem;
-          margin: 0;
-        }
-
-        .no-scroll-layout {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .compact-options {
-          padding: 8px 20px;
-          flex-shrink: 0;
-        }
-
-        .business-statistics {
-          gap: 12px;
-        }
-
-        .stat {
-          padding: 6px 10px;
-        }
-
-        .stat-value {
-          font-size: 1.2rem;
-        }
-
-        .stat-label {
-          font-size: 0.8rem;
-        }
-
-        .no-scroll-container {
-          flex: 1;
-          display: flex;
-          overflow: hidden;
-          margin: 0 20px 20px 20px;
-          border-radius: 8px;
-          border: 1px solid #e5e7eb;
-        }
-
-        .compact-list {
-          width: 40%;
-          overflow-y: auto;
-          max-height: none;
-          border-right: 1px solid #e5e7eb;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .compact-item {
-          padding: 8px;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .compact-avatar img {
-          width: 35px;
-          height: 35px;
-        }
-
-        .business-brief {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .business-name {
-          font-size: 0.95rem;
-          margin-bottom: 2px;
-        }
-
-        .compact-date {
-          font-size: 0.75rem;
-        }
-
-        .compact-owner {
-          margin: 2px 0;
-        }
-
-        .compact-owner .owner-avatar {
-          width: 16px;
-          height: 16px;
-          margin-right: 4px;
-        }
-
-        .compact-owner span {
-          font-size: 0.8rem;
-        }
-
-        .compact-category {
-          font-size: 0.8rem;
-          margin: 2px 0;
-          color: #6b7280;
-        }
-
-        .compact-preview {
-          font-size: 0.8rem;
-          line-height: 1.3;
-          margin: 3px 0;
-        }
-
-        .business-status {
-          gap: 6px;
-          margin-top: 4px;
-        }
-
-        .status-badge, .priority-badge {
-          font-size: 0.7rem;
-          padding: 2px 6px;
-        }
-
-        /* Professional Pagination Styles */
-        .pagination-container {
-          border-top: 1px solid #e5e7eb;
-          padding: 15px;
-          background: #f9fafb;
-          margin-top: auto;
-        }
-
-        .pagination-info {
-          font-size: 0.8rem;
-          color: #6b7280;
-          margin-bottom: 10px;
-          text-align: center;
-        }
-
-        .pagination-controls {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .pagination-btn {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          padding: 6px 12px;
-          border: 1px solid #d1d5db;
-          background: white;
-          border-radius: 6px;
-          font-size: 0.8rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: #374151;
-        }
-
-        .pagination-btn:hover:not(:disabled) {
-          background: #f3f4f6;
-          border-color: #9ca3af;
-        }
-
-        .pagination-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .page-numbers {
-          display: flex;
-          gap: 4px;
-        }
-
-        .page-number {
-          padding: 6px 10px;
-          border: 1px solid #d1d5db;
-          background: white;
-          border-radius: 6px;
-          font-size: 0.8rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-width: 35px;
-          text-align: center;
-          color: #374151;
-        }
-
-        .page-number:hover {
-          background: #f3f4f6;
-          border-color: #9ca3af;
-        }
-
-        .page-number.active {
-          background: #3b82f6;
-          color: white;
-          border-color: #3b82f6;
-        }
-
-        .compact-detail {
-          width: 60%;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .compact-detail-header {
-          padding: 10px 15px;
-          flex-shrink: 0;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .compact-info {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
-
-        .compact-main-image {
-          flex-shrink: 0;
-        }
-
-        .compact-main-image .detail-business-image {
-          width: 60px;
-          height: 60px;
-          object-fit: cover;
-          border-radius: 8px;
-        }
-
-        .business-header-info h3 {
-          font-size: 1.1rem;
-          margin-bottom: 4px;
-        }
-
-        .compact-actions {
-          gap: 6px;
-          margin-top: 8px;
-        }
-
-        .business-action-btn {
-          padding: 5px 10px;
-          font-size: 0.8rem;
-        }
-
-        /* Print Actions Styles */
-        .print-actions {
-          position: relative;
-        }
-
-        .print-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #059669;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-width: 40px;
-        }
-
-        .print-btn:hover {
-          background: #047857;
-          transform: translateY(-1px);
-        }
-
-        .print-dropdown {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-          min-width: 140px;
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(-10px);
-          transition: all 0.2s ease;
-        }
-
-        .print-dropdown.active {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-        }
-
-        .print-dropdown button {
-          display: block;
-          width: 100%;
-          padding: 8px 12px;
-          border: none;
-          background: none;
-          text-align: left;
-          cursor: pointer;
-          font-size: 0.85rem;
-          color: #374151;
-          transition: background-color 0.2s ease;
-        }
-
-        .print-dropdown button:first-child {
-          border-radius: 8px 8px 0 0;
-        }
-
-        .print-dropdown button:last-child {
-          border-radius: 0 0 8px 8px;
-          border-bottom: none;
-        }
-
-        .print-dropdown button:hover {
-          background: #f3f4f6;
-        }
-
-        .print-dropdown button:not(:last-child) {
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .compact-detail-content {
-          flex: 1;
-          padding: 12px 15px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .compact-owner-info {
-          background: #f9fafb;
-          border-radius: 6px;
-          padding: 8px;
-        }
-
-        .owner-info-header h4 {
-          font-size: 0.9rem;
-          margin-bottom: 6px;
-        }
-
-        .compact-owner-profile {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .compact-owner-profile .detail-avatar {
-          width: 30px;
-          height: 30px;
-        }
-
-        .detail-owner-name {
-          font-size: 0.9rem;
-          margin-bottom: 2px;
-          font-weight: 500;
-        }
-
-        .detail-email {
-          font-size: 0.8rem;
-          margin: 0;
-          color: #6b7280;
-        }
-
-        .compact-meta {
-          background: #f9fafb;
-          border-radius: 6px;
-          padding: 8px;
-        }
-
-        .meta-section h4 {
-          font-size: 0.9rem;
-          margin-bottom: 6px;
-        }
-
-        .compact-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-        }
-
-        .meta-item {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .meta-label {
-          font-size: 0.75rem;
-          color: #6b7280;
-          font-weight: 500;
-        }
-
-        .meta-value {
-          font-size: 0.8rem;
-          font-weight: 400;
-        }
-
-        .compact-address {
-          grid-column: 1 / -1;
-          margin-top: 4px;
-        }
-
-        .compact-address .meta-value {
-          font-size: 0.8rem;
-          line-height: 1.3;
-        }
-
-        .compact-description h4 {
-          font-size: 0.9rem;
-          margin-bottom: 6px;
-        }
-
-        .compact-description-body {
-          background: #f9fafb;
-          border-radius: 6px;
-          padding: 8px;
-          font-size: 0.85rem;
-          line-height: 1.4;
-          max-height: 80px;
-          overflow-y: auto;
-        }
-
-        .compact-notes {
-          margin-top: auto;
-        }
-
-        .compact-notes h4 {
-          font-size: 0.9rem;
-          margin-bottom: 6px;
-        }
-
-        .compact-textarea {
-          width: 100%;
-          height: 60px;
-          padding: 6px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          resize: none;
-          font-size: 0.85rem;
-          font-family: inherit;
-        }
-
-        .save-notes-btn {
-          padding: 6px 12px;
-          font-size: 0.8rem;
-          margin-top: 6px;
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-          .compact-list {
-            width: 100%;
-          }
-          
-          .compact-detail {
-            width: 100%;
-          }
-          
-          .compact-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .pagination-controls {
-            flex-direction: column;
-            gap: 10px;
-          }
-
-          .page-numbers {
-            order: -1;
-          }
-
-          .pagination-info {
-            font-size: 0.75rem;
-          }
-
-          .notification-dropdown {
-            width: 320px;
-            left: -280px;
-          }
-
-          .action-icons {
-            flex-direction: column;
-            gap: 4px;
-          }
-        }
-
-        /* Scrollbar styling for better appearance */
-        .compact-list::-webkit-scrollbar,
-        .compact-detail-content::-webkit-scrollbar,
-        .compact-description-body::-webkit-scrollbar,
-        .notification-list::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .compact-list::-webkit-scrollbar-track,
-        .compact-detail-content::-webkit-scrollbar-track,
-        .compact-description-body::-webkit-scrollbar-track,
-        .notification-list::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-
-        .compact-list::-webkit-scrollbar-thumb,
-        .compact-detail-content::-webkit-scrollbar-thumb,
-        .compact-description-body::-webkit-scrollbar-thumb,
-        .notification-list::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 2px;
-        }
-
-        .compact-list::-webkit-scrollbar-thumb:hover,
-        .compact-detail-content::-webkit-scrollbar-thumb:hover,
-        .compact-description-body::-webkit-scrollbar-thumb:hover,
-        .notification-list::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-
-        /* Loading and error states compact styling */
-        .loading-container, .error-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 200px;
-        }
-
-        .loading-container p, .error-container p {
-          font-size: 0.9rem;
-          margin-top: 8px;
-        }
-
-        .error-icon {
-          font-size: 2rem;
-          color: #ef4444;
-        }
-
-        .spinner {
-          animation: spin 1s linear infinite;
-          font-size: 1.5rem;
-          color: #3b82f6;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .retry-button {
-          margin-top: 8px;
-          padding: 6px 12px;
-          font-size: 0.8rem;
-          background: #3b82f6;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-
-        .retry-button:hover {
-          background: #2563eb;
-        }
-
-        /* Enhanced notification animations */
-        .notification-item.unread {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .notification-item.unread::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
-          animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-          0% {
-            left: -100%;
-          }
-          100% {
-            left: 100%;
-          }
-        }
-
-        /* Better focus states for accessibility */
-        .notification-item:focus,
-        .refresh-btn:focus,
-        .mark-all-read:focus,
-        .pagination-btn:focus,
-        .page-number:focus {
-          outline: 2px solid #3b82f6;
-          outline-offset: 2px;
-        }
-
-        /* Enhanced hover effects */
-        .notification-item:hover .notification-message {
-          color: #1f2937;
-        }
-
-        .business-item.pending {
-          animation: subtle-glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes subtle-glow {
-          from {
-            box-shadow: 0 0 5px rgba(59, 130, 246, 0.1);
-          }
-          to {
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-          }
-        }
-      `}</style>
     </div>
   );
 };

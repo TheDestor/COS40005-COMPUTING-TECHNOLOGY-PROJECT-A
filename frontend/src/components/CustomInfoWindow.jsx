@@ -435,29 +435,26 @@ const CustomInfoWindow = ({
   };
   
   const getTodayOpeningHours = () => {
-    // Use today's actual date without subtracting one day
-    const now = new Date();
-    const todayUTC = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate()
-    ));
-    const searchDateYMD = toUTCYMD(todayUTC);
-
-    const daily = Array.isArray(location.dailySchedule) ? location.dailySchedule : [];
-    const entry = daily.find((e) => normalizeDbYMD(e?.date) === searchDateYMD);
-
-    if (entry?.startTime && entry?.endTime) {
-      return `${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}`;
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    // Find today's schedule from dailySchedule array
+    const todaySchedule = location.dailySchedule?.find(schedule => {
+      if (!schedule.date) return false;
+      const scheduleDate = new Date(schedule.date);
+      const scheduleDateStr = `${scheduleDate.getFullYear()}-${String(scheduleDate.getMonth() + 1).padStart(2, '0')}-${String(scheduleDate.getDate()).padStart(2, '0')}`;
+      return scheduleDateStr === todayStr;
+    });
+    
+    // Use today's schedule times if available, otherwise fallback to general times
+    const startTime = todaySchedule?.startTime || location.startTime;
+    const endTime = todaySchedule?.endTime || location.endTime;
+    
+    if (startTime) {
+      return `${formatTime(startTime)} - ${formatTime(endTime)}`;
     }
-
-    // Fallbacks: standard operating hours
-    if (location.startTime && location.endTime) {
-      return `${formatTime(location.startTime)} - ${formatTime(location.endTime)}`;
-    }
-    if (location.startTime || location.endTime) {
-      return formatTimePeriod();
-    }
+    
     return 'N/A';
   };
 
@@ -770,14 +767,14 @@ const CustomInfoWindow = ({
         </div>
       )}
 
-      {/* {(Array.isArray(location.dailySchedule) || location.startTime || location.endTime) && (
+      {(Array.isArray(location.dailySchedule) || location.startTime || location.endTime) && (
         <div className="info-row">
           <span className="info-row-icon"><FaClock /></span>
           <span className="info-row-text">
             <strong>Today Opening Hours:</strong> {getTodayOpeningHours()}
           </span>
         </div>
-      )} */}
+      )}
 
       {location.eventType && (
         <div className="info-row">

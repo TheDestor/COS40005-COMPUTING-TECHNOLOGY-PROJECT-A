@@ -161,7 +161,7 @@ const EventCard = ({ event, type, onEdit, onDelete, onClick, isNew = false, onMa
               <FaEdit />
             </button>
             <button 
-              className="action-btn delete-btn"
+              className="action-btn delete-btn-av"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(event._id);
@@ -2414,12 +2414,26 @@ const getMinStartTimeForDate = (dateOrYmd) => {
       formData.append('longitude', editForm.longitude.toString());
       formData.append('eventOrganizers', editForm.eventOrganizers);
       // Normalize edit hashtags before sending
-      const normalizedEditHashtags = (editForm.eventHashtags || '')
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean)
-        .map(t => `#${t.replace(/^#+/, '')}`)
-        .join(', ');
+      let normalizedEditHashtags = '';
+      if (Array.isArray(editForm.eventHashtags)) {
+        // If it's already an array, join it and normalize
+        normalizedEditHashtags = editForm.eventHashtags
+          .map(t => t.trim())
+          .filter(Boolean)
+          .map(t => `#${t.replace(/^#+/, '')}`)
+          .join(', ');
+      } else if (typeof editForm.eventHashtags === 'string') {
+        // If it's a string, split and normalize
+        normalizedEditHashtags = (editForm.eventHashtags || '')
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+          .map(t => `#${t.replace(/^#+/, '')}`)
+          .join(', ');
+      } else {
+        // Fallback for other types
+        normalizedEditHashtags = '';
+      }
       formData.append('eventHashtags', normalizedEditHashtags);
 
       // Audience
@@ -3166,7 +3180,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
         {(activeTab === 'Past Events' || activeTab === 'Schedule Upcoming Events' || activeTab === 'On-going Events') && (
         <div className="events-controls-ae">
           <div className="search-bar-ae">
-            <FaSearch className="search-icon" />
+            <FaSearch className="search-icon-av" />
             <input
               type="text"
               placeholder={`Search ${activeTab === 'Past Events' ? 'Past' : activeTab === 'Schedule Upcoming Events' ? 'Scheduled' : 'On-going'} events by name...`}
@@ -3276,7 +3290,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                     confirmAction === 'publish'
                       ? 'modal-confirm-btn'
                       : confirmAction === 'delete'
-                        ? 'modal-delete-btn'
+                        ? 'modal-delete-btn-av'
                         : 'modal-confirm-btn'
                   }
                   onClick={handleConfirm}
