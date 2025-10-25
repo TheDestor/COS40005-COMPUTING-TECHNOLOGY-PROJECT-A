@@ -1,3 +1,5 @@
+@import "leaflet/dist/leaflet.css";
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -98,4 +100,31 @@ a:focus {
   display: none !important;
 }
 
-@import "leaflet/dist/leaflet.css";
+/* Senior Mode */
+.senior-mode-active {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active button {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .settings-container .sidebar-item, .senior-mode-active .settings-container .content-section h2 {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .faq-list-item, .senior-mode-active .sidebar-item123 {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .field-group label, .senior-mode-active .field-group input {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .sidebar .sidebar-content .sidebar-menu .menu-item a {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .event-tabs .event-tab {
+  font-size: 1.25rem;
+}

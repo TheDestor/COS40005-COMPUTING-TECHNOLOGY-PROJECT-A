@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthProvider.jsx';
 import { BookmarkProvider } from './context/BookmarkProvider.jsx';
+import { SeniorModeProvider } from './context/SeniorModeProvider.jsx';
 
 import './App.css';
 import 'leaflet/dist/leaflet.css'; 
@@ -68,69 +69,66 @@ function App() {
   return (
     <AuthProvider>
       <BookmarkProvider>
-        <Router>
-          <SessionVisitorTracker />
-          {/* Removed: <RouteChangeTracker /> */}
-          <Routes>
-            <Route path="/" element={<MapComponentTesting />} />
-            {/* <Route path="/testing" element={<MapComponentTesting />} /> */}
-
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<UserRegistration />} />
-            <Route path="/business-register" element={<BusinessRegistration />} />
-            
-            <Route path="/footer" element={<Footer />} />
-            <Route path="/forget-password" element={<ForgetPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            <Route path="/settings" element={<SettingPage />} />
-            <Route path="/contact-us" element={<ContactUs />} />
-            {/* <Route path="/review" element={<ReviewPage />} /> */}
-            <Route path="/business-submission" element={<BusinessSubmissionForm />} />
-            <Route path="/manage-business" element={<ManageBusiness />} />
-            <Route path="/error" element={<ErrorPage />} />
-            <Route path="/share" element={<SharePlace />} />
-
-            <Route path="/major-towns" element={<MajorTownPage />} />
-            <Route path="/attractions" element={<AttractionsPage />} />
-            <Route path="/shopping" element={<ShoppingsPage />} />
-            <Route path="/food" element={<FoodPage />} />
-            <Route path="/transportation" element={<Transportation />} />
-            <Route path="/accomodation" element={<AccomodationPage />} />
-            <Route path="/tourguides" element={<TourGuides />} />
-            <Route path="/event" element={<Eventpage />} />
-            <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
-            <Route path="/discover/:slug" element={<DiscoverPlaces />} />
-
-            {/* Login User routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/profile-settings" element={<ProfileSettingPage />} />
-              <Route path="/bookmark" element={<BookmarkPage />} />
-            </Route>
-
-            {/* CBT Admin routes */}
-            <Route element={<ProtectedRoute allowedRoles={["cbt_admin"]} />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/view-inquiry" element={<ViewInquiry />} />
-              <Route path="/view-analytics" element={<ViewAnalytics />} />
-              {/*<Route path="/manage-reviews" element={<ManageReviews />} />*/}
-              <Route path="/add-event" element={<AddEventPage />} />
-              <Route path="/past-events" element={<PastEventsPage />} />
-              <Route path="/schedule-events" element={<ScheduleEventsPage />} />
-              <Route path="/business-management" element={<BusinessManagementPage />} />
-              <Route path="/manage-location" element={<ManageLocation />} />
-            </Route>
-
-            {/* System Admin routes */}
-            <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
-              <Route path="/system-admin" element={<SystemAdminSidebar />} />
-              <Route path="/admin-dashboard" element={<SystemAdminDashboard />} />
-              <Route path="/user-management" element={<UserManagementPage />} />
-              <Route path="/data-management" element={<DataManagementPage />} />
-              <Route path="/system-monitoring" element={<SystemMonitoringPage />} />
-              <Route path="/security-admin" element={<SecurityAdminPage />} />
-            </Route>
-          </Routes>
-        </Router>
+        <SeniorModeProvider>
+          <Router>
+            <SessionVisitorTracker />
+            {/* Removed: <RouteChangeTracker /> */}
+            <Routes>
+              <Route path="/" element={<MapComponentTesting />} />
+              {/* <Route path="/testing" element={<MapComponentTesting />} /> */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<UserRegistration />} />
+              <Route path="/business-register" element={<BusinessRegistration />} />
+          
+              <Route path="/footer" element={<Footer />} />
+              <Route path="/forget-password" element={<ForgetPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+              <Route path="/settings" element={<SettingPage />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              {/* <Route path="/review" element={<ReviewPage />} /> */}
+              <Route path="/business-submission" element={<BusinessSubmissionForm />} />
+              <Route path="/manage-business" element={<ManageBusiness />} />
+              <Route path="/error" element={<ErrorPage />} />
+              <Route path="/share" element={<SharePlace />} />
+              <Route path="/major-towns" element={<MajorTownPage />} />
+              <Route path="/attractions" element={<AttractionsPage />} />
+              <Route path="/shopping" element={<ShoppingsPage />} />
+              <Route path="/food" element={<FoodPage />} />
+              <Route path="/transportation" element={<Transportation />} />
+              <Route path="/accomodation" element={<AccomodationPage />} />
+              <Route path="/tourguides" element={<TourGuides />} />
+              <Route path="/event" element={<Eventpage />} />
+              <Route path="/towns/:slug" element={<CategoryDetailsPage />} />
+              <Route path="/discover/:slug" element={<DiscoverPlaces />} />
+              {/* Login User routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile-settings" element={<ProfileSettingPage />} />
+                <Route path="/bookmark" element={<BookmarkPage />} />
+              </Route>
+              {/* CBT Admin routes */}
+              <Route element={<ProtectedRoute allowedRoles={["cbt_admin"]} />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/view-inquiry" element={<ViewInquiry />} />
+                <Route path="/view-analytics" element={<ViewAnalytics />} />
+                {/*<Route path="/manage-reviews" element={<ManageReviews />} />*/}
+                <Route path="/add-event" element={<AddEventPage />} />
+                <Route path="/past-events" element={<PastEventsPage />} />
+                <Route path="/schedule-events" element={<ScheduleEventsPage />} />
+                <Route path="/business-management" element={<BusinessManagementPage />} />
+                <Route path="/manage-location" element={<ManageLocation />} />
+              </Route>
+              {/* System Admin routes */}
+              <Route element={<ProtectedRoute allowedRoles={["system_admin"]} />}>
+                <Route path="/system-admin" element={<SystemAdminSidebar />} />
+                <Route path="/admin-dashboard" element={<SystemAdminDashboard />} />
+                <Route path="/user-management" element={<UserManagementPage />} />
+                <Route path="/data-management" element={<DataManagementPage />} />
+                <Route path="/system-monitoring" element={<SystemMonitoringPage />} />
+                <Route path="/security-admin" element={<SecurityAdminPage />} />
+              </Route>
+            </Routes>
+          </Router>
+        </SeniorModeProvider>
       </BookmarkProvider>
     </AuthProvider>
   );

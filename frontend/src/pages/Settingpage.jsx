@@ -13,6 +13,7 @@ import LoginPage from './Loginpage.jsx';
 import AIChatbot from '../components/AiChatbot.jsx';
 import AboutMapModal from '../components/AboutMapModal.jsx';
 import { toast } from 'sonner';
+import { useSeniorMode } from '../context/SeniorModeProvider.jsx';
 
 // SettingsPage component
 function SettingsPage() {
@@ -38,7 +39,7 @@ function SettingsPage() {
   const [activeSection, setActiveSection] = useState(() => {
     return localStorage.getItem('activeSection') || 'general';
   });
-  const [seniorMode, setSeniorMode] = useState(false);
+  const { isSeniorMode, setIsSeniorMode } = useSeniorMode();
   const [voiceAssistant, setVoiceAssistant] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [showSeniorConfirm, setShowSeniorConfirm] = useState(false);
@@ -138,10 +139,10 @@ function SettingsPage() {
                   if (checked) {
                     setShowSeniorConfirm(true); // open popup, wait for confirmation
                   } else {
-                    setSeniorMode(false); // if toggling OFF, apply immediately
+                    setIsSeniorMode(false); // if toggling OFF, apply immediately
                   }
                 }}
-                checked={seniorMode}
+                checked={isSeniorMode}
                 offColor="#ccc"
                 onColor="#007bff"
                 uncheckedIcon={false}
@@ -254,7 +255,7 @@ function SettingsPage() {
       {showSeniorConfirm && (
           <SeniorModeConfirm
             onConfirm={() => {
-              setSeniorMode(true); // apply setting
+              setIsSeniorMode(true);
               setShowSeniorConfirm(false); // close popup
             }}
             onCancel={() => {
