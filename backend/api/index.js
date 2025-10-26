@@ -21,7 +21,6 @@ import backupRouter from "../routes/BackupRoutes.js";
 import UserManagementRouter from "../routes/UserManagementRoutes.js";
 import { nominatimLimiter } from "../middleware/rateLimiter.js";
 
-
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

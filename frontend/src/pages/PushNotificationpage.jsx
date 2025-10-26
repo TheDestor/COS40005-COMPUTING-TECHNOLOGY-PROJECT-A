@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
-import { toast } from "sonner";
 import "../styles/PushNotificationpage.css";
 
 const PushNotificationPage = () => {

@@ -20,6 +20,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 /* a:hover {
   color: #535bf2;
 } */
@@ -48,9 +49,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -61,9 +64,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: white;
   }
@@ -84,6 +89,7 @@ a:focus {
     transform: translateY(-30px);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -95,29 +101,27 @@ a:focus {
   display: none;
 }
 
-.gm-style img[src*="https://maps.gstatic.com/mapfiles/api-3/images/"]
-{
+.gm-style img[src*="https://maps.gstatic.com/mapfiles/api-3/images/"] {
   display: none !important;
 }
 
 /* Senior Mode */
-.senior-mode-active {
-  font-size: 1.25rem;
-}
-
 .senior-mode-active button {
   font-size: 1.25rem;
 }
 
-.senior-mode-active .settings-container .sidebar-item, .senior-mode-active .settings-container .content-section h2 {
+.senior-mode-active .settings-container .sidebar-item,
+.senior-mode-active .settings-container .content-section h2 {
   font-size: 1.25rem;
 }
 
-.senior-mode-active .faq-list-item, .senior-mode-active .sidebar-item123 {
+.senior-mode-active .faq-list-item,
+.senior-mode-active .sidebar-item123 {
   font-size: 1.25rem;
 }
 
-.senior-mode-active .field-group label, .senior-mode-active .field-group input {
+.senior-mode-active .field-group label,
+.senior-mode-active .field-group input {
   font-size: 1.25rem;
 }
 
@@ -126,5 +130,29 @@ a:focus {
 }
 
 .senior-mode-active .event-tabs .event-tab {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .search-input-mj {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .card .card-content,
+.senior-mode-active .card .card-content p {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .footer-links .links-column h4,
+.senior-mode-active .footer-links .links-column ul li a {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .event-card-enp h4,
+.senior-mode-active .event-card-enp p,
+.senior-mode-active .event-card-enp .event-detail-text-enp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .minimized-container-enp .minimized-text-enp {
   font-size: 1.25rem;
 }

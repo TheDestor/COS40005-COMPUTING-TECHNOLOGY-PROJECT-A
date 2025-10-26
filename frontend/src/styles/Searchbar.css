@@ -124,9 +124,9 @@
   top: 100%;
   left: 0;
   width: 100%;
-  background: #fff;
+  background: #efefef;
   color: #3d3842;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
   border-top: none;
   border-radius: 0px 0px 10px 10px;
   max-height: 280px;

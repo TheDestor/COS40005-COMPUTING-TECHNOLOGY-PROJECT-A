@@ -409,7 +409,7 @@
 
 .filter-dropdown-container {
   position: relative;
-  z-index: 50;
+  z-index: 10;
 }
 
 .filter-btn, .filter-button {
@@ -447,7 +447,7 @@
   border-radius: 12px;
   padding: 16px;
   width: 280px;
-  z-index: 100;
+  z-index: 20;
 }
 
 .filter-dropdown::before {
@@ -1399,7 +1399,7 @@
   /* Filter dropdown mobile fix */
   .filter-dropdown-container {
     position: relative;
-    z-index: 50;
+    z-index: 10;
   }
 
   .filter-dropdown {
@@ -1409,7 +1409,7 @@
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 300px;
-    z-index: 100;
+    z-index: 20;
   }
 
   .filter-dropdown::before {
@@ -1796,7 +1796,7 @@
   /* Filter dropdown mobile fix */
   .filter-dropdown-container {
     position: relative;
-    z-index: 100;
+    z-index: 10;
   }
 
   .filter-dropdown {
@@ -1806,7 +1806,7 @@
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 300px;
-    z-index: 100;
+    z-index: 20;
   }
 
   .filter-dropdown::before {

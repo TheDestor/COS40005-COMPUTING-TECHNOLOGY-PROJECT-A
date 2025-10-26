@@ -65,7 +65,7 @@
   padding: 0;
   overflow-y: auto; /* Enable scrolling */
   opacity: 0;
-  border-right: 1px solid #e2e8f0;
+  /* border-right: 1px solid #e2e8f0; */
   display: flex;
   flex-direction: column;
 }

@@ -51,7 +51,6 @@ const userSchema = new mongoose.Schema({
         },
         required: [true, "Email required"]
     },
-    // phoneNumber: { type: String, required: true, trim: true }, 
     phoneNumber: { type: String, trim: true, default: null },
     password: { type: String, required: true, trim: true },
     role: { type: String, required: true, enum: userRoles, default: 'tourist' },
@@ -60,6 +59,16 @@ const userSchema = new mongoose.Schema({
     authProvider: { type: String, enum: ['password','google'], default: 'password' },
     // Add account status for admin breakdowns
     accountStatus: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
+    notifications: {
+        location: {
+            type: Boolean,
+            default: true,
+        },
+        event: {
+            type: Boolean,
+            default: true,
+        }
+    },
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null }
 }, baseOptions);

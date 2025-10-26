@@ -1,5 +1,8 @@
 import { put, del } from "@vercel/blob";
 import { eventModel } from "../models/EventModel.js";
+import { userModel } from "../models/UserModel.js";
+import transporter from "../config/emailConfig.js";
+import { getNewEventEmailTemplate } from "../utils/emailTemplates.js";
 
 export const getAllEvents = async (req, res) => {
     try {
@@ -156,6 +159,26 @@ export const addEvent = async (req, res) => {
 
         const event = await eventModel.create(newEventData);
         console.log('Event created successfully:', event);
+
+        const usersToNotify = await userModel.find({ "notifications.event": true }).select("email firstName lastName");;
+
+        if (usersToNotify.length > 0) {
+            for (const user of usersToNotify) {
+                const fullName = `${user.firstName} ${user.lastName}`;
+
+                const emailTemplate = getNewEventEmailTemplate(newEventData.name, fullName, newEventData.description, newEventData.eventOrganizers, newEventData.eventType, newEventData.eventHashtags, newEventData.startDate);
+
+                const mailOptions = {
+                    to: user.email,
+                    from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
+                    subject: emailTemplate.subject,
+                    html: emailTemplate.html,
+                    text: emailTemplate.text
+                };
+
+                await transporter.sendMail(mailOptions);
+            }
+        }
         return res.status(201).json({ message: "Event added successfully", success: true, event });
     } catch (error) {
         console.error("Unexpected error in addEvent:", error);
