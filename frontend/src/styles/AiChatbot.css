@@ -63,23 +63,8 @@
 
 /* Panel sizing: more compact by default */
 .ai-panel {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: 360px; /* was 380px */
-  height: 500px; /* was 520px */
   z-index: 2000;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  transform: translateY(8px) scale(0.92);
-  opacity: 0;
-  transform-origin: bottom right;
-  transition: transform 180ms ease, opacity 180ms ease;
 }
 .ai-panel.entered {
 	transform: translateY(0) scale(1);
@@ -160,6 +145,12 @@
 	background: linear-gradient(135deg, #2563eb, #1d4ed8);
 	color: white;
     font-size: 14px;
+	word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
 }
 .ai-bubble--assistant {
 	border: 1px solid rgba(2,132,199,0.25);
@@ -203,22 +194,6 @@
 .ai-dot.delay-1 { animation-delay: 150ms; }
 .ai-dot.delay-2 { animation-delay: 300ms; }
 
-.ai-form {
-	padding: 12px;
-	border-top: 1px solid #e5e7eb;
-	display: flex;
-	gap: 8px;
-	align-items: center;
-}
-.ai-input {
-	flex: 1;
-	border: 1px solid #d1d5db;
-	border-radius: 10px;
-	padding: 12px 14px;
-	font-size: 14px;
-	outline: none;
-	transition: box-shadow 160ms ease, border-color 160ms ease;
-}
 .ai-input:focus {
 	box-shadow: none !important;
 	border-color: #93c5fd;
@@ -235,6 +210,8 @@
   font-weight: 600;
   transition: transform 100ms ease, opacity 160ms ease;
   min-width: 84px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .ai-send-btn:hover {
@@ -559,7 +536,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  /* border: 1px solid #e5e7eb; */
   transform: translateY(0.5rem) scale(0.92);
   opacity: 0;
   transform-origin: bottom right;
@@ -613,14 +590,22 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
+	min-width: 0;
+  	overflow: hidden;
 }
 .ai-input {
 	flex: 1;
 	border: 1px solid #d1d5db;
 	border-radius: 10px;
 	padding: clamp(10px, 1.8vw, 14px) clamp(12px, 2vw, 16px);
-	/* font-size: clamp(0.9rem, 1.8vw, 1rem); */
 	border-radius: clamp(8px, 1.6vw, 10px);
+	/* Add these properties to handle long strings */
+	word-wrap: break-word;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	white-space: normal;
+	min-width: 0; /* Allow flex item to shrink */
+	max-width: 100%; /* Prevent overflow */
 }
 
 /* Send button sizing and icon scaling */
@@ -666,12 +651,6 @@
 /* Larger send icon */
 .ai-send-btn svg { font-size: 16px; transition: transform 200ms ease; align-items: center; display: inline-flex; }
 
-/* Redesigned sending animation: ripple ring + icon glide */
-/* @keyframes sendPulseRing {
-  0% { transform: scale(0.9); opacity: 0.0; box-shadow: 0 0 0 0 rgba(59,130,246,0.25); }
-  50% { transform: scale(1.05); opacity: 0.6; box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
-  100% { transform: scale(1.1); opacity: 0; box-shadow: 0 0 0 16px rgba(59,130,246,0.0); }
-} */
 @keyframes sendIconSlide {
   0% { transform: translateX(0) translateY(0); opacity: 1; }
   40% { transform: translateX(14px) translateY(-6px); opacity: 1; }

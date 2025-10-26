@@ -159,7 +159,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  background-color: #ECE6F0;
+  background-color: #efefef;
   border: none;
   border-radius: 30px;
   padding: 8px 15px;
@@ -200,7 +200,7 @@
   top: calc(100% + 10px);
   /* left: 50%;
   transform: translateX(-50%); */
-  background-color: #ECE6F0;
+  background-color: #efefef;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   width: 200px;
@@ -226,7 +226,7 @@
   width: 100%;
   box-sizing: border-box;
   text-align: left;
-  background-color: #ECE6F0;
+  background-color: #efefef;
   outline: none;
   border: none;
   position: relative;

@@ -235,7 +235,7 @@ function TouristInfoSection({ selectedLocation }) {
       setLoading(true);
       setError(null);
       
-      const apiKey = 'AIzaSyAl79EwWjJZ9w1IFFZlT7RvzORHoA7szYY';
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
       const searchQuery = `${selectedLocation.name} sarawak tourism shorts`;
       const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 

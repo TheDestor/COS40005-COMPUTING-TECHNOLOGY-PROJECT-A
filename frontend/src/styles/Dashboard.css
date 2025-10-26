@@ -251,8 +251,8 @@
   overflow: hidden;
   transition: all 0.3s ease;
   border: 1px solid rgba(0, 0, 0, 0.03);
-  min-height: 400px;
-  height: 500px;
+  min-height: 480px; /* Increased to accommodate legend and title spacing */
+  height: auto; /* Changed from fixed 500px to auto */
 }
 
 .visualization-card:hover {
@@ -281,7 +281,8 @@
 }
 
 .viz-content {
-  height: 340px;
+  height: auto; /* Changed from fixed height to auto */
+  min-height: 380px; /* Increased to accommodate legend */
   width: 100%;
   position: relative;
 }
@@ -333,6 +334,15 @@
   z-index: 5;
 }
 
+/* Ensure SVG legends don't overflow */
+svg .legend {
+  max-width: 400px;
+}
+
+svg .legend text {
+  font-size: 10px !important;
+}
+
 /* Business Participation Chart specific styles */
 .business-legend {
   position: absolute;
@@ -345,6 +355,15 @@
   gap: 20px;
   padding: 0 20px;
   z-index: 5;
+}
+
+/* Ensure legend items wrap properly and don't overflow */
+.business-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 45%;
+  word-wrap: break-word;
 }
 
 /* D3 specific fixes */
@@ -491,357 +510,33 @@ svg {
   color: #dc2626;
 }
 
-.actions-cell {
+/* Loading State */
+.loading-container {
   display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  letter-spacing: 0.3px;
-}
-
-.view-btn {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
-
-.view-btn:hover {
-  background-color: #93c5fd;
-}
-
-.edit-btn {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.edit-btn:hover {
-  background-color: #e5e7eb;
-}
-
-/* Reviews Table Styles */
-.reviews-list-container {
-  overflow-x: auto;
-  margin-bottom: 10px;
-}
-
-.reviews-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.reviews-table th {
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  background-color: white;
-  z-index: 10;
-}
-
-.reviews-table td {
-  padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  color: #1e293b;
-  vertical-align: top;
-}
-
-.reviews-table tr:last-child td {
-  border-bottom: none;
-}
-
-.reviews-table tr:hover {
-  background-color: #f9fafb;
-}
-
-/* Reviewer cell styling */
-.reviewer-cell {
-  display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 150px;
-}
-
-/* Star rating styling */
-.star-rating {
-  display: flex;
-  align-items: center;
-}
-
-.star {
-  color: #d1d5db;
+  height: 400px;
   font-size: 18px;
-  line-height: 1;
+  color: #6b7280;
 }
 
-.star.filled {
-  color: #f59e0b;
-}
-
-/* Review content styling */
-.review-content {
-  max-width: 300px;
-  max-height: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  line-clamp: 3;
-  line-height: 1.4;
-  font-size: 13px;
-  position: relative;
-}
-
-
-.review-content:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 30%;
-  height: 1.4em;
-  background: linear-gradient(to right, rgba(255, 255, 255, 1));
-}
-
-/* Review action buttons */
-.review-action-cell {
-  min-width: 170px;
-}
-
-.review-action {
-  display: flex;
-  gap: 8px;
-}
-
-.approve-btn {
-  background-color: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #86efac;
-  transition: all 0.2s ease;
-}
-
-.approve-btn:hover {
-  background-color: #16a34a; 
-  color: #ffffff; 
-  border-color: #15803d;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
-}
-
-.approve-btn:active {
-  transform: translateY(0);
-  background-color: #15803d;
-  color: #ffffff;
-}
-
-/* Professional reject button styling */
-.reject-btn {
-  background-color: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  transition: all 0.2s ease;
-}
-
-.reject-btn:hover {
-  background-color: #dc2626; 
-  color: #ffffff; 
-  border-color: #b91c1c;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.2);
-}
-
-.reject-btn:active {
-  transform: translateY(0);
-  background-color: #b91c1c;
-  color: #ffffff;
-}
-
-
-.approve-btn::before,
-.reject-btn::before {
-  font-family: "Font Awesome 5 Free", sans-serif;
-  font-weight: 900;
-  margin-right: 6px;
-  font-size: 12px;
-}
-
-.approve-btn::before {
-  content: "\f00c"; /* check mark icon */
-}
-
-.reject-btn::before {
-  content: "\f00d"; /* times icon */
-}
-
-/* Focus states for accessibility */
-.approve-btn:focus,
-.reject-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-}
-
-/* Disabled states */
-.approve-btn:disabled,
-.reject-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Handle smaller screens */
-@media (max-width: 576px) {
-  .action-btn {
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-  
-  .approve-btn::before,
-  .reject-btn::before {
-    margin-right: 4px;
-  }
-}
-
-/* Tooltip for buttons on hover */
-.action-btn {
-  position: relative;
-}
-
-.action-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 8px;
-  border-radius: 4px;
-  background-color: #1e293b;
-  color: white;
-  font-size: 11px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-  z-index: 100;
-}
-
-.action-btn:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .review-content {
-    max-width: 250px;
-  }
-}
-
-@media (max-width: 992px) {
-  .review-content {
-    max-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .reviews-table {
-    display: block;
-  }
-  
-  .reviews-table thead {
-    display: none;
-  }
-  
-  .reviews-table tbody {
-    display: block;
-  }
-  
-  .reviews-table tr {
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    border-bottom: 1px solid #e5e7eb;
-    position: relative;
-  }
-  
-  .reviews-table tr:last-child {
-    border-bottom: none;
-  }
-  
-  .reviews-table td {
-    display: flex;
-    padding: 8px 0;
-    border-bottom: none;
-  }
-  
-  .reviews-table td:before {
-    content: attr(data-label);
-    width: 120px;
-    font-weight: 500;
-    color: #6b7280;
-  }
-  
-  .review-content {
-    max-width: 100%;
-  }
-  
-  .review-action {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: 10px;
-  }
-}
-
-/* To make dashboard area adjusts to sidebar */
-@media (max-width: 1200px) {
-  .dashboard-content {
-    margin-left: 280px; /* Match sidebar width */
-    width: calc(100% - 280px);
-  }
-
+/* Responsive for tablets (1024px and below) */
+@media (max-width: 1024px) {
   .dashboard-visualizations {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
   }
   
   .visualization-card {
-    height: auto;
-    min-height: 450px;
-  }
-  
-  .chart-wrapper {
-    flex-direction: column;
-  }
-  
-  .chart-section, 
-  .donut-section,
-  .indicators-section {
-    width: 100% !important;
-  }
-  
-  .indicators-section {
-    padding-left: 0;
-    margin-top: 20px;
+    height: auto !important;
+    min-height: 450px !important;
   }
 }
 
+/* Responsive for small tablets/large phones (992px and below) */
 @media (max-width: 992px) {
   .dashboard-content {
-    margin-left: 0; /* Remove margin when sidebar is hidden */
+    margin-left: 0;
     width: 100vw;
     padding: 20px;
   }
@@ -850,7 +545,7 @@ svg {
     gap: 16px;
   }
 
-  .greeting h3, p{
+  .greeting h3, .greeting p {
     text-align: center;
   }
 
@@ -860,6 +555,7 @@ svg {
   }
 }
 
+/* Main mobile breakpoint (768px and below) - CRITICAL FIX */
 @media (max-width: 768px) {
   .dashboard-content {
     padding: 15px;
@@ -874,20 +570,92 @@ svg {
     text-align: center;
   }
 
-  .greeting p{
+  .greeting p {
     text-align: center;
   }
   
   .stat-cards-container {
     flex-direction: column;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 15px !important;
   }
   
   .stat-card {
     width: 100%;
+    padding: 15px !important;
   }
 
-  .stat-value{
+  .stat-value {
     text-align: center;
+    font-size: 1.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.75rem !important;
+  }
+
+  /* CRITICAL: Visualization cards responsive fix */
+  .dashboard-visualizations {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .visualization-card {
+    height: auto !important;
+    min-height: 550px !important; /* Increased to accommodate stacked layout */
+    padding: 15px !important;
+  }
+
+  .viz-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .viz-header h3 {
+    font-size: 1.1rem !important;
+  }
+
+  .viz-header p {
+    font-size: 0.85rem !important;
+  }
+
+  /* CRITICAL: Chart content height fix for mobile */
+  .viz-content {
+    height: auto !important;
+    min-height: 450px !important; /* Increased min-height for stacked layout */
+  }
+
+  /* CRITICAL: Chart wrapper becomes column on mobile */
+  .chart-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  /* CRITICAL: Donut section and chart section full width on mobile */
+  .donut-section,
+  .chart-section {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 260px !important;
+  }
+
+  /* CRITICAL: Indicators section layout fix for mobile */
+  .indicators-section {
+    width: 100% !important;
+    height: auto !important;
+    padding: 20px 10px !important;
+    margin-top: 20px !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: flex-start !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .indicators-section > div {
+    margin-bottom: 0 !important;
+    flex: 0 0 calc(50% - 10px) !important;
+    text-align: center !important;
   }
 
   /* Table responsive styles */
@@ -919,7 +687,6 @@ svg {
   }
   
   .reviews-table td:before, .users-table td:before {
-    /* content: attr(data-label); */
     width: auto;
     font-weight: 500;
     color: #6b7280;
@@ -935,12 +702,29 @@ svg {
     margin-top: 10px;
   }
 
-  .users-table td.actions-cell{
+  .users-table td.actions-cell {
     display: flex;
     margin-left: auto;
   }
+
+  /* Legend responsiveness */
+  .business-legend {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 10px !important;
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 15px !important;
+  }
+
+  .business-legend > div {
+    max-width: 100% !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+  }
 }
 
+/* Small mobile (576px and below) */
 @media (max-width: 576px) {
   .dashboard-content {
     padding: 10px;
@@ -969,7 +753,8 @@ svg {
   }
 
   .visualization-card {
-    padding: 15px;
+    padding: 12px !important;
+    min-height: 520px !important;
   }
 
   .viz-header h3 {
@@ -978,6 +763,10 @@ svg {
 
   .viz-header p {
     font-size: 13px;
+  }
+
+  .viz-content {
+    min-height: 420px !important;
   }
 
   .section-header h3 {
@@ -998,13 +787,19 @@ svg {
     width: auto;
   }
 
-  .users-table td.actions-cell{
+  .users-table td.actions-cell {
     display: flex;
     margin-left: auto;
   }
+
+  /* Indicators on very small screens - stack them */
+  .indicators-section > div {
+    flex: 0 0 100% !important;
+    margin-bottom: 10px !important;
+  }
 }
 
-/* Small Mobile (480px and below) */
+/* Extra small mobile (480px and below) */
 @media (max-width: 480px) {
   .dashboard-content {
     padding: 8px;
@@ -1022,12 +817,13 @@ svg {
 
   .greeting p {
     font-size: 14px;
-    text-align: center  ;
+    text-align: center;
   }
 
   /* Stat Cards */
   .stat-cards-container {
     gap: 12px;
+    grid-template-columns: 1fr !important;
   }
 
   .stat-card {
@@ -1056,7 +852,7 @@ svg {
   /* Visualization Cards */
   .visualization-card {
     padding: 12px;
-    min-height: 400px;
+    min-height: 500px !important;
   }
 
   .viz-header {
@@ -1070,6 +866,10 @@ svg {
 
   .viz-header p {
     font-size: 12px;
+  }
+
+  .viz-content {
+    min-height: 400px !important;
   }
 
   /* Tables */
@@ -1086,7 +886,7 @@ svg {
     font-size: 12px;
   }
 
-  .users-table td .actions-cell{
+  .users-table td .actions-cell {
     display: flex;
     margin-left: auto;
   }
@@ -1131,74 +931,8 @@ svg {
     font-size: 11px;
   }
 
-  .stat-value{
-    text-align: center;
-  }
-}
-
-/* Mobile responsiveness for stat cards */
-@media (max-width: 768px) {
-  .stat-cards-container {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 15px !important;
-  }
-
-  .stat-card {
-    padding: 15px !important;
-  }
-
   .stat-value {
-    font-size: 1.5rem !important;
-  }
-
-  .stat-label {
-    font-size: 0.75rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .stat-cards-container {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Responsive visualizations */
-@media (max-width: 1024px) {
-  .dashboard-visualizations {
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
-  }
-
-  .visualization-card {
-    min-height: 400px !important;
-  }
-}
-
-/* Mobile visualization adjustments */
-@media (max-width: 768px) {
-  .viz-content {
-    height: 350px !important;
-  }
-
-  .chart-wrapper {
-    flex-direction: column !important;
-  }
-
-  .donut-section,
-  .chart-section {
-    width: 100% !important;
-    height: 250px !important;
-  }
-
-  .indicators-section {
-    width: 100% !important;
-    padding: 15px 0 !important;
-    flex-direction: row !important;
-    justify-content: space-around !important;
-  }
-
-  .indicators-section > div {
-    margin-bottom: 0 !important;
+    text-align: center;
   }
 }
 
@@ -1211,18 +945,13 @@ svg {
   word-wrap: break-word !important;
 }
 
-/* Legend responsiveness */
-@media (max-width: 768px) {
-  .business-legend {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    padding: 10px !important;
-  }
+/* Ensure tooltips don't go off-screen */
+.chart-tooltip.tooltip-left {
+  transform: translateX(-100%) translateX(-10px) !important;
+}
 
-  .business-legend > div {
-    max-width: 100% !important;
-    margin-bottom: 8px !important;
-  }
+.chart-tooltip.tooltip-top {
+  transform: translateY(-100%) translateY(-10px) !important;
 }
 
 /* Mobile modal fixes */
@@ -1241,43 +970,6 @@ svg {
   .subscribers-table td {
     padding: 8px 6px !important;
   }
-}
-
-/* Dashboard header responsive */
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
-  }
-
-  .greeting h3 {
-    font-size: 1.3rem !important;
-  }
-
-  .greeting p {
-    font-size: 0.9rem !important;
-  }
-}
-
-/* Fix for chart text on mobile */
-@media (max-width: 768px) {
-  .viz-header h3 {
-    font-size: 1.1rem !important;
-  }
-
-  .viz-header p {
-    font-size: 0.85rem !important;
-  }
-}
-
-/* Ensure tooltips don't go off-screen */
-.chart-tooltip.tooltip-left {
-  transform: translateX(-100%) translateX(-10px) !important;
-}
-
-.chart-tooltip.tooltip-top {
-  transform: translateY(-100%) translateY(-10px) !important;
 }
 
 /* Scrollable table on small screens */

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaTimes, FaChevronRight, FaBell, FaChevronDown, FaChevronUp, FaExclamationCircle, FaHistory, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import '../styles/EventNotificationPanel.css';
 
 const EventNotificationPanel = () => {
   const [events, setEvents] = useState([]);
@@ -9,11 +11,30 @@ const EventNotificationPanel = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [eventCategory, setEventCategory] = useState('all');
+  const navigate = useNavigate();
+
+  // Set initial expanded state based on screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      if (window.innerWidth <= 768) {
+        setIsExpanded(false); // Collapsed by default on mobile
+      } else {
+        setIsExpanded(true); // Expanded by default on desktop
+      }
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Listen for resize events
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Auto-minimize when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if click is on profile dropdown, login modal, or other UI elements
       const isProfileClick = event.target.closest('.profile-dropdown') || 
                             event.target.closest('.profile-container') ||
                             event.target.closest('[class*="profile"]') ||
@@ -21,7 +42,6 @@ const EventNotificationPanel = () => {
                             event.target.closest('.modal') ||
                             event.target.closest('[class*="Modal"]');
       
-      // Don't minimize if clicking on the event panel itself
       const isEventPanelClick = event.target.closest('[data-event-panel="true"]');
       
       if (isProfileClick && !isEventPanelClick && !isMinimized) {
@@ -179,72 +199,47 @@ const EventNotificationPanel = () => {
     setCurrentEventIndex(prev => (prev + 1) % filteredEvents.length);
   };
 
+  // Enhanced navigation function to handle event details
+  const handleViewEventDetails = useCallback((event) => {
+    navigate(`/discover/${event.name.toLowerCase().replace(/\s+/g, '-')}`, {
+      state: {
+        name: event.name,
+        description: event.description,
+        image: event.imageUrl || defaultImage,
+        latitude: event.coordinates?.latitude || 1.5533,
+        longitude: event.coordinates?.longitude || 110.3592,
+        eventType: event.eventType,
+        eventOrganizers: event.eventOrganizers,
+        eventHashtags: event.eventHashtags,
+        dailySchedule: event.dailySchedule || [],
+        startDate: event.startDate,
+        endDate: event.endDate,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        registrationRequired: event.registrationRequired,
+        targetAudience: event.targetAudience,
+        type: 'Event',
+        category: 'Events',
+        eventId: event._id,
+        fromEventPanel: true
+      }
+    });
+  }, [navigate]);
+
   if (loading) {
     return (
-      <div 
-        data-event-panel="true"
-        style={{
-          position: 'fixed',
-          top: '100px',
-          right: '20px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          padding: '15px 20px',
-          borderRadius: '12px',
-          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
-          zIndex: 10,
-          fontSize: '14px',
-          fontWeight: '500',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-        <div style={{
-          width: '16px',
-          height: '16px',
-          border: '3px solid rgba(255, 255, 255, 0.3)',
-          borderTop: '3px solid white',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} />
+      <div data-event-panel="true" className="loading-container-enp">
+        <div className="loading-spinner-enp" />
         Loading events...
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
 
   const ErrorBanner = () => error && (
-    <div style={{
-      background: '#fee2e2',
-      color: '#991b1b',
-      padding: '12px',
-      borderRadius: '8px',
-      fontSize: '13px',
-      marginBottom: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    }}>
+    <div className="error-banner-enp">
       <FaExclamationCircle />
-      <div style={{ flex: 1 }}>{error}</div>
-      <button
-        onClick={fetchAllEvents}
-        style={{
-          background: '#991b1b',
-          color: 'white',
-          border: 'none',
-          padding: '4px 10px',
-          borderRadius: '4px',
-          fontSize: '11px',
-          cursor: 'pointer',
-          fontWeight: '600'
-        }}
-      >
+      <div className="error-banner-content-enp">{error}</div>
+      <button className="error-retry-btn-enp" onClick={fetchAllEvents}>
         Retry
       </button>
     </div>
@@ -255,138 +250,44 @@ const EventNotificationPanel = () => {
       <div
         data-event-panel="true"
         onClick={() => setIsMinimized(false)}
-        style={{
-          position: 'fixed',
-          top: '100px',
-          right: '20px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          padding: '12px 16px',
-          borderRadius: '50px',
-          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
-          cursor: 'pointer',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.3s ease',
-          animation: eventCounts.ongoing > 0 ? 'pulse 2s infinite' : 'none'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 12px 30px rgba(102, 126, 234, 0.6)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
-        }}
+        className={`minimized-container-enp ${eventCounts.ongoing > 0 ? 'pulse-animation-enp' : ''}`}
       >
-        <FaBell style={{ fontSize: '18px' }} />
-        <span style={{ fontWeight: '600', fontSize: '14px' }}>
+        <FaBell className="minimized-bell-icon-enp" />
+        <span className="minimized-text-enp">
           {eventCounts.ongoing > 0 && `${eventCounts.ongoing} Happening • `}
-          {events.length} Event{events.length !== 1 ? 's' : ''}
+          {/* {events.length} Event{events.length !== 1 ? 's' : ''} */}
         </span>
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-          }
-        `}</style>
       </div>
     );
   }
 
   return (
     <div 
-      data-event-panel="true"
-      style={{
-        position: 'fixed',
-        top: '100px',
-        right: '20px',
-        width: '360px',
-        maxHeight: '85vh',
-        background: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-        zIndex: 10,
-        overflow: 'hidden',
-        animation: 'slideIn 0.4s ease-out'
-      }}>
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .event-notification-panel {
-            width: calc(100vw - 40px) !important;
-            right: 20px !important;
-          }
-        }
-      `}</style>
-
+      data-event-panel="true" 
+      className={`main-panel-container-enp ${!isExpanded ? 'collapsed-enp' : ''}`}
+    >
       {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        padding: '16px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FaBell style={{ fontSize: '20px' }} />
+      <div className="panel-header-enp">
+        <div className="header-left-enp">
+          <FaBell className="header-bell-icon-enp" />
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700' }}>
-              Events in Sarawak
-            </h3>
-            <p style={{ margin: 0, fontSize: '12px', opacity: 0.9, color: 'white'}}>
+            <h3 className="header-title-enp">Events in Sarawak</h3>
+            <p className="header-subtitle-enp">
               {eventCounts.ongoing > 0 && `${eventCounts.ongoing} happening now • `}
               {events.length} total event{events.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="header-controls-enp">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+            className="header-btn-enp"
           >
             {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
           </button>
           <button
             onClick={() => setIsMinimized(true)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: 'none',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+            className="header-btn-enp"
           >
             <FaTimes />
           </button>
@@ -395,21 +296,12 @@ const EventNotificationPanel = () => {
 
       {/* Content */}
       {isExpanded && (
-        <div style={{
-          maxHeight: 'calc(85vh - 80px)',
-          overflowY: 'auto',
-          padding: '16px'
-        }}>
+        <div className="panel-content-enp">
           <ErrorBanner />
 
           {/* Category Filter Tabs */}
           {events.length > 0 && (
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              marginBottom: '16px',
-              flexWrap: 'wrap'
-            }}>
+            <div className="category-tabs-container-enp">
               {[
                 { id: 'all', label: 'All', count: eventCounts.all },
                 { id: 'ongoing', label: 'Happening', count: eventCounts.ongoing },
@@ -423,19 +315,7 @@ const EventNotificationPanel = () => {
                     setCurrentEventIndex(0);
                   }}
                   disabled={cat.count === 0}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: eventCategory === cat.id ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f3f4f6',
-                    color: eventCategory === cat.id ? 'white' : '#6b7280',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    cursor: cat.count > 0 ? 'pointer' : 'not-allowed',
-                    opacity: cat.count === 0 ? 0.5 : 1,
-                    transition: 'all 0.2s ease'
-                  }}
+                  className={`category-tab-enp ${eventCategory === cat.id ? 'active-enp' : 'inactive-enp'}`}
                 >
                   {cat.label} ({cat.count})
                 </button>
@@ -451,29 +331,9 @@ const EventNotificationPanel = () => {
                 const colors = getCategoryColor(currentEvent.category);
                 
                 return (
-                  <div style={{ position: 'relative' }}>
-                    <div style={{
-                      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      marginBottom: '16px',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        background: colors.bg,
-                        color: 'white',
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        animation: currentEvent.category === 'ongoing' ? 'pulse 2s infinite' : 'none',
-                        zIndex: 2
-                      }}>
+                  <div className="event-card-container-enp">
+                    <div className="event-card-enp">
+                      <div className={`event-status-badge-enp ${currentEvent.category}-enp`}>
                         {currentEvent.category === 'ongoing' ? '🔴 Happening Now' : 
                          currentEvent.category === 'upcoming' ? '📅 Upcoming' : 
                          '📜 Past Event'}
@@ -483,55 +343,26 @@ const EventNotificationPanel = () => {
                         <img
                           src={currentEvent.imageUrl}
                           alt={currentEvent.name}
-                          style={{
-                            width: '100%',
-                            height: '150px',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                            marginBottom: '12px',
-                            opacity: currentEvent.category === 'past' ? 0.7 : 1
-                          }}
+                          className={`event-image-enp ${currentEvent.category === 'past' ? 'past-enp' : ''}`}
                         />
                       )}
                       
-                      <h4 style={{
-                        margin: '0 0 8px 0',
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        color: '#1f2937',
-                        lineHeight: '1.4'
-                      }}>
-                        {currentEvent.name}
-                      </h4>
+                      <h4 className="event-title-enp">{currentEvent.name}</h4>
                       
-                      <p style={{
-                        margin: '0 0 12px 0',
-                        fontSize: '13px',
-                        color: '#4b5563',
-                        lineHeight: '1.5',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
-                        {currentEvent.description}
-                      </p>
+                      <p className="event-description-enp">{currentEvent.description}</p>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FaCalendarAlt style={{ color: '#667eea', fontSize: '14px' }} />
-                          <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>
+                      <div className="event-details-enp">
+                        <div className="event-detail-row-enp">
+                          <FaCalendarAlt className="event-detail-icon-enp" />
+                          <span className="event-detail-text-enp">
                             {formatDateRange(currentEvent.startDate, currentEvent.endDate)}
                           </span>
                         </div>
                         
                         {(() => {
-                          // Get today's date in YYYY-MM-DD format
                           const today = new Date();
                           const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                           
-                          // Find today's schedule from dailySchedule array
                           const todaySchedule = currentEvent.dailySchedule?.find(schedule => {
                             if (!schedule.date) return false;
                             const scheduleDate = new Date(schedule.date);
@@ -539,15 +370,14 @@ const EventNotificationPanel = () => {
                             return scheduleDateStr === todayStr;
                           });
                           
-                          // Use today's schedule times if available, otherwise fallback to general times
                           const startTime = todaySchedule?.startTime || currentEvent.startTime;
                           const endTime = todaySchedule?.endTime || currentEvent.endTime;
                           
                           if (startTime) {
                             return (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <FaClock style={{ color: '#667eea', fontSize: '14px' }} />
-                                <span style={{ fontSize: '13px', color: '#374151' }}>
+                              <div className="event-detail-row-enp">
+                                <FaClock className="event-detail-icon-enp" />
+                                <span className="event-detail-text-enp">
                                   {startTime} - {endTime || 'End of day'}
                                 </span>
                               </div>
@@ -557,101 +387,33 @@ const EventNotificationPanel = () => {
                         })()}
                       </div>
                       
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        paddingTop: '12px',
-                        borderTop: '1px solid rgba(0, 0, 0, 0.1)'
-                      }}>
-                        <span style={{
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: colors.bg,
-                          background: colors.light,
-                          padding: '4px 10px',
-                          borderRadius: '12px'
-                        }}>
+                      <div className="event-footer-enp">
+                        <span className={`event-timing-badge-enp ${currentEvent.category}-enp`}>
                           {getEventTiming(currentEvent)}
                         </span>
                         
-                        <a
-                          href={`/discover/${currentEvent.name.toLowerCase().replace(/\s+/g, '-')}`}
-                          style={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            textDecoration: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                        <button
+                          onClick={() => handleViewEventDetails(currentEvent)}
+                          className="view-details-btn-enp"
                         >
                           View Details
-                          <FaChevronRight style={{ fontSize: '12px' }} />
-                        </a>
+                          <FaChevronRight className="view-details-icon-enp" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Simple Navigation Arrows - Only show if more than 1 event */}
+                    {/* Navigation Arrows */}
                     {filteredEvents.length > 1 && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '16px'
-                      }}>
-                        <button
-                          onClick={goToPrevious}
-                          style={{
-                            background: '#f3f4f6',
-                            border: 'none',
-                            color: '#4b5563',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                        >
+                      <div className="navigation-container-enp">
+                        <button onClick={goToPrevious} className="nav-btn-enp">
                           <FaAngleLeft /> Previous
                         </button>
                         
-                        <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>
+                        <span className="nav-counter-enp">
                           {currentEventIndex + 1} / {filteredEvents.length}
                         </span>
                         
-                        <button
-                          onClick={goToNext}
-                          style={{
-                            background: '#f3f4f6',
-                            border: 'none',
-                            color: '#4b5563',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f6'}
-                        >
+                        <button onClick={goToNext} className="nav-btn-enp">
                           Next <FaAngleRight />
                         </button>
                       </div>
@@ -661,16 +423,12 @@ const EventNotificationPanel = () => {
               })()}
             </>
           ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: '#6b7280'
-            }}>
-              <FaHistory style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }} />
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+            <div className="no-events-container-enp">
+              <FaHistory className="no-events-icon-enp" />
+              <h4 className="no-events-title-enp">
                 No {eventCategory !== 'all' ? eventCategory : ''} events
               </h4>
-              <p style={{ margin: 0, fontSize: '13px' }}>
+              <p className="no-events-text-enp">
                 {eventCategory === 'all' 
                   ? "Check back later for exciting events in Sarawak!" 
                   : `Try viewing ${eventCategory === 'upcoming' ? 'past' : eventCategory === 'past' ? 'upcoming' : 'all'} events`}
@@ -679,31 +437,7 @@ const EventNotificationPanel = () => {
           )}
 
           {/* View All Button */}
-          <a
-            href="/event"
-            style={{
-              display: 'block',
-              marginTop: '16px',
-              padding: '12px',
-              background: 'white',
-              border: '2px solid #667eea',
-              color: '#667eea',
-              borderRadius: '8px',
-              textAlign: 'center',
-              fontWeight: '600',
-              fontSize: '14px',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#667eea';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'white';
-              e.currentTarget.style.color = '#667eea';
-            }}
-          >
+          <a href="/event" className="view-all-btn-enp">
             View All Events Page →
           </a>
         </div>

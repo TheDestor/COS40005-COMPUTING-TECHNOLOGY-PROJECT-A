@@ -84,9 +84,6 @@ export default function AiChatbot({ visibleByDefault = false }) {
 
 	const handleSuggestionClick = (text) => {
 		setInput(text);
-		// Optionally send immediately for quicker flow
-		const fakeEvent = { preventDefault: () => {} };
-		sendMessage(fakeEvent);
 	};
 
 	const handleListScroll = () => {

@@ -157,13 +157,13 @@ const DashboardPage = () => {
     if (locationData && businessParticipationChartRef.current) {
       createLocationBreakdownChart();
     }
-  }, [locationData]);
+  }, [locationData, isMobile]);
 
   useEffect(() => {
     if (monthlyTrendsData && userEngagementChartRef.current) {
       createMonthlyTrendsChart();
     }
-  }, [monthlyTrendsData]);
+  }, [monthlyTrendsData, isMobile]);
 
   // Window resize handler
   useEffect(() => {
@@ -186,47 +186,51 @@ const DashboardPage = () => {
     container.selectAll("*").remove();
 
     const containerWidth = businessParticipationChartRef.current.clientWidth;
-    const containerHeight = isMobile ? 280 : 340;
+    // Increased height on mobile to accommodate stacked layout
+    const containerHeight = isMobile ? 450 : 340;
 
     const chartWrapper = container
       .append("div")
       .attr("class", "chart-wrapper")
       .style("position", "relative")
       .style("width", "100%")
-      .style("height", "100%")
-      .style("display", "flex");
+      .style("height", `${containerHeight}px`)
+      .style("display", "flex")
+      .style("flex-direction", isMobile ? "column" : "row");
 
     const donutSection = chartWrapper
       .append("div")
       .attr("class", "donut-section")
-      .style("width", "60%")
-      .style("height", "100%")
+      .style("width", isMobile ? "100%" : "60%")
+      .style("height", isMobile ? "260px" : "100%")
       .style("position", "relative");
 
     const indicatorsSection = chartWrapper
       .append("div")
       .attr("class", "indicators-section")
-      .style("width", "40%")
-      .style("height", "100%")
+      .style("width", isMobile ? "100%" : "40%")
+      .style("height", isMobile ? "auto" : "100%")
       .style("display", "flex")
-      .style("flex-direction", "column")
-      .style("justify-content", "center")
-      .style("padding-left", "20px");
+      .style("flex-direction", isMobile ? "row" : "column")
+      .style("justify-content", isMobile ? "space-around" : "center")
+      .style("align-items", isMobile ? "flex-start" : "stretch")
+      .style("padding", isMobile ? "20px 10px" : "0 0 0 20px")
+      .style("gap", isMobile ? "20px" : "0");
 
     const chartSize = Math.min(
-      donutSection.node().clientWidth * 0.8,
-      containerHeight * 0.8
+      donutSection.node().clientWidth * (isMobile ? 0.7 : 0.8),
+      (isMobile ? 260 : containerHeight) * 0.8
     );
     const radius = chartSize / 2;
 
     const svg = donutSection
       .append("svg")
       .attr("width", donutSection.node().clientWidth)
-      .attr("height", containerHeight)
+      .attr("height", isMobile ? 260 : containerHeight)
       .append("g")
       .attr(
         "transform",
-        `translate(${donutSection.node().clientWidth / 2},${containerHeight / 2})`
+        `translate(${donutSection.node().clientWidth / 2},${(isMobile ? 260 : containerHeight) / 2})`
       );
 
     // Use real data
@@ -365,7 +369,7 @@ const DashboardPage = () => {
     const centerText = svg
       .append("text")
       .attr("text-anchor", "middle")
-      .attr("font-size", "32px")
+      .attr("font-size", isMobile ? "28px" : "32px")
       .attr("font-weight", "bold")
       .attr("fill", "#1e293b")
       .attr("opacity", 0)
@@ -386,7 +390,7 @@ const DashboardPage = () => {
       .append("text")
       .attr("text-anchor", "middle")
       .attr("y", 30)
-      .attr("font-size", "14px")
+      .attr("font-size", isMobile ? "12px" : "14px")
       .attr("fill", "#6b7280")
       .attr("opacity", 0)
       .text("Active")
@@ -399,7 +403,7 @@ const DashboardPage = () => {
       .append("text")
       .attr("text-anchor", "middle")
       .attr("y", 50)
-      .attr("font-size", "14px")
+      .attr("font-size", isMobile ? "12px" : "14px")
       .attr("fill", "#6b7280")
       .attr("opacity", 0)
       .text("Locations")
@@ -413,9 +417,11 @@ const DashboardPage = () => {
       const indicator = indicatorsSection
         .append("div")
         .style("display", "flex")
-        .style("align-items", "center")
-        .style("gap", "12px")
-        .style("margin-bottom", "20px")
+        .style("flex-direction", isMobile ? "column" : "row")
+        .style("align-items", isMobile ? "center" : "center")
+        .style("gap", isMobile ? "8px" : "12px")
+        .style("margin-bottom", isMobile ? "0" : "20px")
+        .style("text-align", isMobile ? "center" : "left")
         .style("opacity", "0")
         .style("transform", "translateY(20px)");
 
@@ -451,14 +457,14 @@ const DashboardPage = () => {
 
       textContent
         .append("div")
-        .style("font-size", "16px")
+        .style("font-size", isMobile ? "14px" : "16px")
         .style("font-weight", "bold")
         .style("color", "#1e293b")
         .text(data.value);
 
       textContent
         .append("div")
-        .style("font-size", "12px")
+        .style("font-size", isMobile ? "11px" : "12px")
         .style("color", "#6b7280")
         .text(data.label);
     };
@@ -503,6 +509,7 @@ const DashboardPage = () => {
       .style("opacity", "1")
       .style("transform", "translateY(0)");
 
+    // Create legend with descriptive labels
     const legendItems = [
       { label: "Locations not currently marked as active", color: "#e4e4e7" },
       { label: "Active locations visible on the map", color: "#818cf8" },
@@ -514,7 +521,7 @@ const DashboardPage = () => {
         .style("display", "flex")
         .style("align-items", "center")
         .style("gap", "8px")
-        .style("max-width", "45%");
+        .style("max-width", isMobile ? "100%" : "45%");
 
       legendItem
         .append("div")
@@ -526,7 +533,7 @@ const DashboardPage = () => {
 
       legendItem
         .append("div")
-        .style("font-size", "11px")
+        .style("font-size", isMobile ? "10px" : "11px")
         .style("color", "#6b7280")
         .text(item.label);
     });
@@ -538,32 +545,37 @@ const DashboardPage = () => {
     container.selectAll("*").remove();
 
     const containerWidth = userEngagementChartRef.current.clientWidth;
-    const containerHeight = isMobile ? 300 : 340;
+    // Increased height on mobile to accommodate stacked layout, and on desktop for top margin
+    const containerHeight = isMobile ? 500 : 370;
 
     const chartWrapper = container
       .append("div")
       .attr("class", "chart-wrapper")
       .style("position", "relative")
       .style("width", "100%")
-      .style("height", "100%")
-      .style("display", "flex");
+      .style("height", `${containerHeight}px`)
+      .style("display", "flex")
+      .style("flex-direction", isMobile ? "column" : "row");
 
     const chartSection = chartWrapper
       .append("div")
       .attr("class", "chart-section")
-      .style("width", "70%")
-      .style("height", "100%")
+      .style("width", isMobile ? "100%" : "70%")
+      .style("height", isMobile ? "300px" : "100%")
       .style("position", "relative");
 
     const indicatorsSection = chartWrapper
       .append("div")
       .attr("class", "indicators-section")
-      .style("width", "30%")
-      .style("height", "100%")
+      .style("width", isMobile ? "100%" : "30%")
+      .style("height", isMobile ? "auto" : "100%")
       .style("display", "flex")
-      .style("flex-direction", "column")
-      .style("justify-content", "center")
-      .style("padding-left", "20px");
+      .style("flex-direction", isMobile ? "row" : "column")
+      .style("justify-content", isMobile ? "space-around" : "center")
+      .style("align-items", isMobile ? "flex-start" : "stretch")
+      .style("padding", isMobile ? "20px 10px" : "0 0 0 20px")
+      .style("gap", isMobile ? "15px" : "0")
+      .style("flex-wrap", isMobile ? "wrap" : "nowrap");
 
     const tooltip = container
       .append("div")
@@ -579,9 +591,11 @@ const DashboardPage = () => {
       .style("z-index", 10)
       .style("box-shadow", "0 4px 8px rgba(0, 0, 0, 0.2)");
 
-    const margin = { top: 50, right: 20, bottom: 40, left: 50 };
+    const margin = isMobile 
+      ? { top: 50, right: 10, bottom: 40, left: 40 }
+      : { top: 80, right: 20, bottom: 40, left: 50 }; // Increased top margin for desktop
     const width = chartSection.node().clientWidth - margin.left - margin.right;
-    const height = containerHeight - margin.top - margin.bottom;
+    const height = (isMobile ? 300 : containerHeight) - margin.top - margin.bottom;
     const transitionDuration = 1000;
 
     const svg = chartSection
@@ -613,7 +627,7 @@ const DashboardPage = () => {
       .append("g")
       .attr("transform", `translate(0,${height})`)
       .attr("class", "x-axis")
-      .style("font-size", "12px")
+      .style("font-size", isMobile ? "10px" : "12px")
       .style("color", "#6b7280")
       .call(d3.axisBottom(x))
       .attr("opacity", 0)
@@ -624,7 +638,7 @@ const DashboardPage = () => {
     svg
       .append("g")
       .attr("class", "y-axis")
-      .style("font-size", "12px")
+      .style("font-size", isMobile ? "10px" : "12px")
       .style("color", "#6b7280")
       .call(
         d3
@@ -668,7 +682,7 @@ const DashboardPage = () => {
       .append("text")
       .attr("class", "total-users-text")
       .attr("y", 0)
-      .attr("font-size", "24px")
+      .attr("font-size", isMobile ? "20px" : "24px")
       .attr("font-weight", "bold")
       .attr("fill", "#1e293b")
       .attr("opacity", 0)
@@ -681,7 +695,7 @@ const DashboardPage = () => {
       .append("text")
       .attr("class", "total-users-label")
       .attr("y", 20)
-      .attr("font-size", "14px")
+      .attr("font-size", isMobile ? "12px" : "14px")
       .attr("fill", "#6b7280")
       .attr("opacity", 0)
       .text("Total Events")
@@ -776,27 +790,27 @@ const DashboardPage = () => {
     const legendContainer = svg
       .append("g")
       .attr("class", "legend")
-      .attr("transform", `translate(${width - 320}, -90)`)
+      .attr("transform", isMobile ? `translate(10, -40)` : `translate(${width - 350}, -95)`)
       .style("opacity", 0);
 
     monthlyTrendsData.series.forEach((series, i) => {
       const legend = legendContainer
         .append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
+        .attr("transform", isMobile ? `translate(${i * 80}, 0)` : `translate(0, ${i * 18})`);
 
       legend
         .append("rect")
-        .attr("width", 12)
-        .attr("height", 12)
+        .attr("width", 10)
+        .attr("height", 10)
         .attr("rx", 2)
         .attr("ry", 2)
         .attr("fill", series.color);
 
       legend
         .append("text")
-        .attr("x", 20)
-        .attr("y", 10)
-        .style("font-size", "11px")
+        .attr("x", 16)
+        .attr("y", 9)
+        .style("font-size", "10px")
         .style("fill", "#6b7280")
         .text(series.name);
     });
@@ -811,9 +825,12 @@ const DashboardPage = () => {
       const indicator = indicatorsSection
         .append("div")
         .style("display", "flex")
-        .style("align-items", "center")
-        .style("gap", "12px")
-        .style("margin-bottom", "20px")
+        .style("flex-direction", isMobile ? "column" : "row")
+        .style("align-items", isMobile ? "center" : "center")
+        .style("gap", isMobile ? "8px" : "12px")
+        .style("margin-bottom", isMobile ? "0" : "20px")
+        .style("text-align", isMobile ? "center" : "left")
+        .style("flex", isMobile ? "0 0 calc(33.333% - 10px)" : "none")
         .style("opacity", "0")
         .style("transform", "translateY(20px)");
 
@@ -849,14 +866,14 @@ const DashboardPage = () => {
 
       textContent
         .append("div")
-        .style("font-size", "16px")
+        .style("font-size", isMobile ? "14px" : "16px")
         .style("font-weight", "bold")
         .style("color", "#1e293b")
         .text(data.value);
 
       textContent
         .append("div")
-        .style("font-size", "12px")
+        .style("font-size", isMobile ? "10px" : "12px")
         .style("color", "#6b7280")
         .text(data.label);
     };
