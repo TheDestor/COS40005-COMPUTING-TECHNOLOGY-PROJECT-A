@@ -481,14 +481,14 @@ const ViewInquiry = () => {
       </html>
     `;
 
-    const printWindow = window.open('', '', 'height=600,width=800');
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printWindow.print();
+    printWindow.close();
+    
+    setShowPrintOptions(false);
   };
 
   const handlePrintAll = () => {
@@ -553,14 +553,44 @@ const ViewInquiry = () => {
       </html>
     `;
 
-    const printWindow = window.open('', '', 'height=600,width=800');
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    printWindow.print();
+    printWindow.close();
+    
+    setShowPrintOptions(false);
+  };
+
+  const handleSaveInquiry = () => {
+    if (!selectedInquiry) return;
+
+    const inquiryData = {
+      id: selectedInquiry.id,
+      name: selectedInquiry.name,
+      email: selectedInquiry.email,
+      subject: selectedInquiry.subject,
+      message: selectedInquiry.message,
+      date: selectedInquiry.date,
+      status: selectedInquiry.status,
+      priority: selectedInquiry.priority,
+      category: selectedInquiry.category
+    };
+
+    const dataStr = JSON.stringify(inquiryData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inquiry_${selectedInquiry.id}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    setShowPrintOptions(false);
   };
 
   // Filter and search inquiries
@@ -904,16 +934,10 @@ const ViewInquiry = () => {
                           >
                             <FaPrint />
                           </button>
-                          {showPrintOptions && (
-                            <div className="print-dropdown">
-                              <button onClick={handlePrintInquiry}>
-                                <FaPrint /> Print This Inquiry
-                              </button>
-                              <button onClick={handlePrintAll}>
-                                <FaPrint /> Print All Inquiries
-                              </button>
-                            </div>
-                          )}
+                          <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
+                            <button onClick={handlePrintInquiry}>Print Inquiry</button>
+                            <button onClick={handleSaveInquiry}>Save as File</button>
+                          </div>
                         </div>
                         <button 
                           className="inquiry-action-btn delete-btn"
@@ -951,16 +975,10 @@ const ViewInquiry = () => {
                         >
                           <FaPrint /> Print
                         </button>
-                        {showPrintOptions && (
-                          <div className="print-dropdown">
-                            <button onClick={handlePrintInquiry}>
-                              <FaPrint /> Print This Inquiry
-                            </button>
-                            <button onClick={handlePrintAll}>
-                              <FaPrint /> Print All Inquiries
-                            </button>
-                          </div>
-                        )}
+                        <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
+                          <button onClick={handlePrintInquiry}>Print Inquiry</button>
+                          <button onClick={handleSaveInquiry}>Save as File</button>
+                        </div>
                       </div>
                       <button 
                         className="inquiry-action-btn delete-btn"
@@ -1033,8 +1051,16 @@ const ViewInquiry = () => {
           box-sizing: border-box;
         }
 
-        .dashboard-header,
-        .dashboard-actions,
+        .dashboard-header {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        .dashboard-actions {
+          max-width: 100%;
+          overflow: visible; /* Changed to allow dropdowns to show */
+        }
+
         .search-bar {
           max-width: 100%;
           overflow-x: hidden;
@@ -1070,7 +1096,7 @@ const ViewInquiry = () => {
         .compact-header {
           min-height: 90px;
           padding: 15px 20px;
-          overflow-x: hidden;
+          overflow: visible; /* Changed to allow dropdowns to show */
         }
 
         .compact-options {
@@ -1080,12 +1106,14 @@ const ViewInquiry = () => {
         .inquiry-container {
           flex: 1;
           min-height: 0;
-          overflow: hidden;
+          overflow-y: hidden;
+          overflow-x: visible; /* Allow dropdowns to show */
         }
 
         .compact-list, .compact-detail {
           height: 100%;
           overflow-y: auto;
+          overflow-x: visible; /* Allow dropdowns to show outside */
         }
 
         .compact-detail-content {
@@ -1197,7 +1225,7 @@ const ViewInquiry = () => {
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           padding: 8px;
-          z-index: 100;
+          z-index: 9999; /* Increased to ensure it's above everything */
           min-width: 180px;
         }
 
@@ -1224,7 +1252,7 @@ const ViewInquiry = () => {
         /* Notification styling */
         .notification-wrapper {
           position: relative;
-          z-index: 50;
+          z-index: 1000; /* Increased to ensure it's above other elements */
         }
 
         .icon-wrapper {
@@ -1264,6 +1292,26 @@ const ViewInquiry = () => {
           padding: 2px 5px;
         }
 
+        .action-icons {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          overflow: visible; /* Ensure dropdowns aren't clipped */
+        }
+
+        /* Ensure print dropdown isn't clipped */
+        .inquiry-detail-header {
+          overflow: visible !important;
+        }
+
+        .inquiry-actions {
+          overflow: visible !important;
+        }
+
+        .print-options-wrapper {
+          overflow: visible !important;
+        }
+
         .notification-dropdown {
           position: absolute;
           top: calc(100% + 10px);
@@ -1273,7 +1321,7 @@ const ViewInquiry = () => {
           background-color: white;
           border-radius: 12px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-          z-index: 1000;
+          z-index: 9999; /* Increased to ensure it's above everything */
           overflow: hidden;
         }
 
