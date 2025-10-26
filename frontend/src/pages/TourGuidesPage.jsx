@@ -646,7 +646,7 @@ const TourGuidePage = () => {
       </div>
 
       <div className="search-section">
-        <div className="search-container">
+        <div className="search-container-mj">
           <div className="search-bar-mj">
             <FaSearch className="search-icon-mj" />
             <input
