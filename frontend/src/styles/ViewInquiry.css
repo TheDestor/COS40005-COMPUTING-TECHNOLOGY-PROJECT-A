@@ -1,4 +1,4 @@
-/* ViewInquiry.css */
+/* ViewInquiry.css - FIXED Z-INDEX ISSUE */
 
 .inquiry-content {
   margin-top: 20px;
@@ -14,6 +14,12 @@
   border-radius: 16px;
   padding: 16px 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.inquiry-options,
+.compact-options {
+  position: relative;
+  z-index: 0;
 }
 
 .inquiry-statistics {
@@ -42,9 +48,10 @@
   position: relative;
 }
 
+/* FIXED: Reduced z-index to be below notification dropdown */
 .filter-dropdown-container {
   position: relative;
-  z-index: 50;
+  z-index: 10;
 }
 
 .filter-button {
@@ -66,6 +73,7 @@
   background-color: #e2e8f0;
 }
 
+/* FIXED: Reduced z-index to ensure it stays below notification */
 .filter-dropdown {
   position: absolute;
   right: auto;
@@ -76,7 +84,7 @@
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   padding: 16px;
-  z-index: 10;
+  z-index: 5;
 }
 
 .filter-dropdown::before {
@@ -448,50 +456,57 @@
 
 .meta-value {
   font-size: 14px;
-  font-weight: 500;
   color: #2c3345;
+  font-weight: 500;
 }
 
-.inquiry-message, .inquiry-reply {
-  margin-bottom: 24px;
+.inquiry-message {
+  margin-bottom: 20px;
 }
 
-.inquiry-message h4, .inquiry-reply h4 {
+.inquiry-message h4,
+.inquiry-reply h4 {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 12px;
   color: #2c3345;
+  margin-bottom: 10px;
 }
 
 .message-body {
   background-color: #f9fafb;
-  padding: 16px;
   border-radius: 8px;
+  padding: 16px;
   font-size: 14px;
   line-height: 1.6;
   color: #2c3345;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .inquiry-reply textarea {
   width: 100%;
   min-height: 120px;
   padding: 12px;
-  border: 1px solid #e2e8f0;
   border-radius: 8px;
+  border: 1px solid #e2e8f0;
   font-size: 14px;
+  line-height: 1.5;
   resize: vertical;
-  margin-bottom: 12px;
   font-family: inherit;
+  margin-bottom: 12px;
   transition: all 0.2s ease;
 }
 
 .inquiry-reply textarea:focus {
   outline: none;
   border-color: #6c5dd3;
-  box-shadow: 0 0 0 2px rgba(108, 93, 211, 0.2);
+  box-shadow: 0 0 0 3px rgba(108, 93, 211, 0.1);
 }
 
 .send-reply-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background-color: #6c5dd3;
   color: white;
   padding: 10px 20px;
@@ -945,3 +960,4 @@
     color: #333;
   }
 }
+
