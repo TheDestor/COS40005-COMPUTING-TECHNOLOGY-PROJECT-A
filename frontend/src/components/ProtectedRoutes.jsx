@@ -13,7 +13,7 @@ function ProtectedRoute({ allowedRoles }) {
     }
 
     if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
-        console.warn(`Access denied for role: ${user.role}. Required: ${allowedRoles.join(', ')}`);
+        // console.warn(`Access denied for role: ${user.role}. Required: ${allowedRoles.join(', ')}`);
         return <Navigate to="/" replace />;
     }
 

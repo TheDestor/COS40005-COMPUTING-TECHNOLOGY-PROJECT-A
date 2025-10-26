@@ -481,7 +481,7 @@ function SystemAdminDashboard() {
 
     const tooltip = svgRoot
       .append("div")
-      .attr("class", "chart-tooltip")
+      .attr("class", "chart-tooltip2")
       .style("position", "absolute")
       .style("visibility", "hidden")
       .style("background-color", "rgba(0, 0, 0, 0.85)")
