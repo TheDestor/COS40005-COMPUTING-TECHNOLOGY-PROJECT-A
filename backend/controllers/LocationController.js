@@ -1,4 +1,7 @@
+import transporter from "../config/emailConfig.js";
 import { locationModel } from "../models/LocationModel.js";
+import { userModel } from "../models/UserModel.js";
+import { getNewLocationEmailTemplate } from "../utils/emailTemplates.js";
 
 export const getAllLocations = async (req, res) => {
     try {
@@ -40,6 +43,27 @@ export const addLocation = async (req, res) => {
         }
         const newLocation = await locationModel.create(locationData);
         console.log(newLocation);
+
+        const usersToNotify = await userModel.find({ "notifications.location": true }).select("email firstName lastName");
+
+        if (usersToNotify.length > 0) {
+            for (const user of usersToNotify) {
+                const fullName = `${user.firstName} ${user.lastName}`;
+
+                const emailTemplate = getNewLocationEmailTemplate(locationData.name, fullName, locationData.description, locationData.category, locationData.type);
+
+                const mailOptions = {
+                    to: user.email,
+                    from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
+                    subject: emailTemplate.subject,
+                    html: emailTemplate.html,
+                    text: emailTemplate.text
+                };
+
+                await transporter.sendMail(mailOptions);
+            }
+        }
+
         return res.status(201).json({ message: "Location added successfully", success: true, newLocation });
     } catch (error) {
         console.error("An error occured while trying to create new location:", error);

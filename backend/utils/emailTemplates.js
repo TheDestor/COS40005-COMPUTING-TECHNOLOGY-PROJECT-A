@@ -1,7 +1,7 @@
 export const getWelcomeEmailTemplate = (email) => {
-    return {
-      subject: '🌴 Welcome to Sarawak Tourism Newsletter!',
-      html: `
+  return {
+    subject: '🌴 Welcome to Sarawak Tourism Newsletter!',
+    html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -184,7 +184,7 @@ export const getWelcomeEmailTemplate = (email) => {
         </body>
         </html>
       `,
-      text: `
+    text: `
   🌴 Welcome to Sarawak Tourism Newsletter!
   
   Hi there! 👋
@@ -222,6 +222,389 @@ export const getWelcomeEmailTemplate = (email) => {
   You're receiving this email because you subscribed at ${email}
   © 2025 Sarawak Tourism. All rights reserved.
       `
-    };
   };
-  
+};
+
+export const getNewLocationEmailTemplate = (locationName, fullName, locationDescription, locationCategory, locationType) => {
+  return {
+    subject: `🌴 New Location: Explore ${locationName} on Metaverse Trails 2.0!`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+
+      <head>
+          <style>
+              body {
+                  font-family: 'Arial', sans-serif;
+                  line-height: 1.6;
+                  color: #333;
+                  max-width: 600px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  background-color: #f4f4f4;
+              }
+
+              .email-container {
+                  background: white;
+                  border-radius: 10px;
+                  overflow: hidden;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+              }
+
+              .header {
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  padding: 40px 30px;
+                  text-align: center;
+              }
+
+              .header h1 {
+                  margin: 0;
+                  font-size: 28px;
+                  font-weight: bold;
+              }
+
+              .header p {
+                  margin: 10px 0 0 0;
+                  font-size: 16px;
+                  opacity: 0.9;
+              }
+              
+              .featured-image {
+                  width: 100%;
+                  height: auto;
+                  max-height: 300px;
+                  object-fit: cover;
+              }
+
+              .content {
+                  padding: 40px 30px;
+              }
+
+              .greeting {
+                  font-size: 18px;
+                  color: #333;
+                  margin-bottom: 20px;
+              }
+              
+              .announcement-box {
+                  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                  border-left: 5px solid #667eea;
+                  padding: 20px;
+                  margin: 25px 0;
+                  border-radius: 8px;
+              }
+              
+              .announcement-box h2 {
+                  margin-top: 0;
+                  color: #667eea;
+                  font-size: 22px;
+              }
+              
+              .announcement-box p {
+                  margin: 10px 0 0 0;
+                  line-height: 1.7;
+              }
+              
+              .cta-button {
+                  text-align: center;
+                  margin: 30px 0;
+              }
+
+              .cta-button a {
+                  display: inline-block;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  padding: 15px 40px;
+                  text-decoration: none;
+                  border-radius: 30px;
+                  font-weight: bold;
+                  font-size: 16px;
+                  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                  transition: transform 0.3s;
+              }
+
+              .footer {
+                  background: #f9f9f9;
+                  text-align: center;
+                  padding: 30px;
+                  color: #666;
+                  font-size: 13px;
+                  border-top: 1px solid #e0e0e0;
+              }
+
+              .footer p {
+                  margin: 5px 0;
+              }
+          </style>
+      </head>
+
+      <body>
+          <div class="email-container">
+              <div class="header">
+                  <h1>New Location Added!</h1>
+                  <p>Your Next Adventure in Sarawak Awaits</p>
+              </div>
+              <div class="content">
+                  <p class="greeting">Hi ${fullName}, 👋</p>
+
+                  <p>Great news! We've just added something new and exciting to Metaverse Trails 2.0 that we think you'll love.</p>
+                  
+                  <div class="announcement-box">
+                      <h2>Discover: ${locationName}</h2>
+                      <p>${locationDescription}</p>
+                  </div>
+                  
+                  <div class="details-section">
+                    <h3>Location Details:</h3>
+                      <ul>
+                          <li><strong>Category:</strong> ${locationCategory}</li>
+                          <li><strong>Type:</strong> ${locationType}</li>
+                      </ul>
+                  </div>
+
+                  <p>Ready to see more? Click the button below to explore interactive maps, view stunning galleries, and get all the details for your visit.</p>
+
+                  <div class="cta-button">
+                      <a href="https://metaversetrails20.vercel.app/">Explore Now</a>
+                  </div>
+
+                  <p style="text-align: center; color: #666; font-style: italic;">Stay curious, keep exploring, and let
+                      Sarawak's magic captivate you! 🗺️✨</p>
+
+                  <p style="margin-top: 30px;">Best regards,<br>
+                      <strong>The Sarawak Tourism Team</strong> 🌴
+                  </p>
+              </div>
+
+              <div class="footer">
+                  <p>📧 You're receiving this email because you have notifications turned on.</p>
+                  <p>&copy; 2025 Sarawak Tourism. All rights reserved.</p>
+                  <p style="margin-top: 15px; font-size: 11px;">If you no longer wish to receive our emails, you can turn notifications off in the settings at any time</p>
+              </div>
+          </div>
+      </body>
+
+      </html>
+    `,
+    text: `
+      Hi ${fullName}, 👋
+
+      Great news! We've just added something new and exciting to Metaverse Trails 2.0 that we think you'll love.
+
+      Discover: ${locationName}
+      ${locationDescription}
+
+      Location Details:
+      Category: ${locationCategory}
+      Type: ${locationType}
+      Ready to see more? Click the button below to explore interactive maps, view stunning galleries, and get all the details for your visit.
+
+      Explore Now
+      Stay curious, keep exploring, and let Sarawak's magic captivate you! 🗺️✨
+
+      Best regards,
+      The Sarawak Tourism Team 🌴
+
+      📧 You're receiving this email because you have notifications turned on.
+
+      © 2025 Sarawak Tourism. All rights reserved.
+
+      If you no longer wish to receive our emails, you can turn notifications off in the settings at any time
+    `
+  }
+}
+
+export const getNewEventEmailTemplate = (eventName, fullName, eventDescription, eventOrganizers, eventType, eventHashtags, eventStartDate) => {
+  return {
+    subject: `🌴 New Event: Explore ${eventName} on Metaverse Trails 2.0!`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+
+      <head>
+          <style>
+              body {
+                  font-family: 'Arial', sans-serif;
+                  line-height: 1.6;
+                  color: #333;
+                  max-width: 600px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  background-color: #f4f4f4;
+              }
+
+              .email-container {
+                  background: white;
+                  border-radius: 10px;
+                  overflow: hidden;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+              }
+
+              .header {
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  padding: 40px 30px;
+                  text-align: center;
+              }
+
+              .header h1 {
+                  margin: 0;
+                  font-size: 28px;
+                  font-weight: bold;
+              }
+
+              .header p {
+                  margin: 10px 0 0 0;
+                  font-size: 16px;
+                  opacity: 0.9;
+              }
+              
+              .featured-image {
+                  width: 100%;
+                  height: auto;
+                  max-height: 300px;
+                  object-fit: cover;
+              }
+
+              .content {
+                  padding: 40px 30px;
+              }
+
+              .greeting {
+                  font-size: 18px;
+                  color: #333;
+                  margin-bottom: 20px;
+              }
+              
+              .announcement-box {
+                  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                  border-left: 5px solid #667eea;
+                  padding: 20px;
+                  margin: 25px 0;
+                  border-radius: 8px;
+              }
+              
+              .announcement-box h2 {
+                  margin-top: 0;
+                  color: #667eea;
+                  font-size: 22px;
+              }
+              
+              .announcement-box p {
+                  margin: 10px 0 0 0;
+                  line-height: 1.7;
+              }
+              
+              .cta-button {
+                  text-align: center;
+                  margin: 30px 0;
+              }
+
+              .cta-button a {
+                  display: inline-block;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  padding: 15px 40px;
+                  text-decoration: none;
+                  border-radius: 30px;
+                  font-weight: bold;
+                  font-size: 16px;
+                  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                  transition: transform 0.3s;
+              }
+
+              .footer {
+                  background: #f9f9f9;
+                  text-align: center;
+                  padding: 30px;
+                  color: #666;
+                  font-size: 13px;
+                  border-top: 1px solid #e0e0e0;
+              }
+
+              .footer p {
+                  margin: 5px 0;
+              }
+          </style>
+      </head>
+
+      <body>
+          <div class="email-container">
+              <div class="header">
+                  <h1>New Event Added!</h1>
+                  <p>Your Next Adventure in Sarawak Awaits</p>
+              </div>
+              <div class="content">
+                  <p class="greeting">Hi ${fullName}, 👋</p>
+
+                  <p>Great news! We've just added something new and exciting to Metaverse Trails 2.0 that we think you'll love.</p>
+                  
+                  <div class="announcement-box">
+                      <h2>Discover: ${eventName}</h2>
+                      <p>${eventDescription}</p>
+                  </div>
+                  
+                  <div class="details-section">
+                    <h3>Event Details:</h3>
+                      <ul>
+                          <li><strong>Organizers:</strong> ${eventOrganizers}</li>
+                          <li><strong>Type:</strong> ${eventType}</li>
+                          <li><strong>Hashtags:</strong> ${eventHashtags}</li>
+                          <li><strong>Start Date:</strong> ${eventStartDate}</li>
+                      </ul>
+                  </div>
+
+                  <p>Ready to see more? Click the button below to explore interactive maps, view stunning galleries, and get all the details for your visit.</p>
+
+                  <div class="cta-button">
+                      <a href="https://metaversetrails20.vercel.app/">Explore Now</a>
+                  </div>
+
+                  <p style="text-align: center; color: #666; font-style: italic;">Stay curious, keep exploring, and let
+                      Sarawak's magic captivate you! 🗺️✨</p>
+
+                  <p style="margin-top: 30px;">Best regards,<br>
+                      <strong>The Sarawak Tourism Team</strong> 🌴
+                  </p>
+              </div>
+
+              <div class="footer">
+                  <p>📧 You're receiving this email because you have notifications turned on.</p>
+                  <p>&copy; 2025 Sarawak Tourism. All rights reserved.</p>
+                  <p style="margin-top: 15px; font-size: 11px;">If you no longer wish to receive our emails, you can turn notifications off in the settings at any time</p>
+              </div>
+          </div>
+      </body>
+
+      </html>
+    `,
+    text: `
+      Hi ${fullName}, 👋
+
+      Great news! We've just added something new and exciting to Metaverse Trails 2.0 that we think you'll love.
+
+      Discover: ${eventName}
+      ${eventDescription}
+
+      Event Details:
+      Organizers: ${eventOrganizers}
+      Type: ${eventType}
+      Hashtags: ${eventHashtags}
+      Start Date: ${eventStartDate}
+      Ready to see more? Click the button below to explore interactive maps, view stunning galleries, and get all the details for your visit.
+
+      Explore Now
+      Stay curious, keep exploring, and let Sarawak's magic captivate you! 🗺️✨
+
+      Best regards,
+      The Sarawak Tourism Team 🌴
+
+      📧 You're receiving this email because you have notifications turned on.
+
+      © 2025 Sarawak Tourism. All rights reserved.
+
+      If you no longer wish to receive our emails, you can turn notifications off in the settings at any time
+    `
+  }
+}
