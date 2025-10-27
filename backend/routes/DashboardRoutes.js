@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { 
-  getDashboardStats, 
+import {
+  getDashboardStats,
   getRecentInquiries,
   getLocationBreakdown,
   getMonthlyTrends,
-  getNewsletterSubscribers
+  getNewsletterSubscribers,
+  getUserRegistrations,
 } from "../controllers/DashboardController.js";
 import { verifyJWT, checkRole } from "../middleware/AuthMiddleware.js";
 import { adminDashboardLimiter } from "../middleware/rateLimiter.js";
@@ -16,42 +17,52 @@ const dashboardRouter = Router();
 dashboardRouter.get(
   "/stats",
   verifyJWT,
-  checkRole(['cbt_admin']),
+  checkRole(["cbt_admin"]),
   adminDashboardLimiter,
-  logAdminUsage('admin_dashboard_stats'),
+  logAdminUsage("admin_dashboard_stats"),
   getDashboardStats
 );
 dashboardRouter.get(
   "/recent-inquiries",
   verifyJWT,
-  checkRole(['cbt_admin']),
+  checkRole(["cbt_admin"]),
   adminDashboardLimiter,
-  logAdminUsage('admin_dashboard_recent_inquiries'),
+  logAdminUsage("admin_dashboard_recent_inquiries"),
   getRecentInquiries
 );
 dashboardRouter.get(
   "/location-breakdown",
   verifyJWT,
-  checkRole(['cbt_admin']),
+  checkRole(["cbt_admin"]),
   adminDashboardLimiter,
-  logAdminUsage('admin_dashboard_location_breakdown'),
+  logAdminUsage("admin_dashboard_location_breakdown"),
   getLocationBreakdown
 );
 dashboardRouter.get(
   "/monthly-trends",
   verifyJWT,
-  checkRole(['cbt_admin']),
+  checkRole(["cbt_admin"]),
   adminDashboardLimiter,
-  logAdminUsage('admin_dashboard_monthly_trends'),
+  logAdminUsage("admin_dashboard_monthly_trends"),
   getMonthlyTrends
 );
 dashboardRouter.get(
   "/newsletter-subscribers",
   verifyJWT,
-  checkRole(['cbt_admin']),
+  checkRole(["cbt_admin"]),
   adminDashboardLimiter,
-  logAdminUsage('admin_dashboard_newsletter_subscribers'),
+  logAdminUsage("admin_dashboard_newsletter_subscribers"),
   getNewsletterSubscribers
+);
+
+// In DashboardRoutes.js - Add this route
+dashboardRouter.get(
+  "/user-registrations",
+  verifyJWT,
+  checkRole(["cbt_admin"]),
+  adminDashboardLimiter,
+  logAdminUsage("admin_dashboard_user_registrations"),
+  getUserRegistrations
 );
 
 export default dashboardRouter;

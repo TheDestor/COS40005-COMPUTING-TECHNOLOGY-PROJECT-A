@@ -2,7 +2,7 @@
 .viewanalytics-container {
   /* Remove the fixed height */
   height: auto;
-  min-height: 100vh; 
+  min-height: 100vh;
   /* Keep your other properties */
   display: grid;
   grid-template-areas:
@@ -18,7 +18,7 @@
   box-sizing: border-box;
 }
 
-  /* .dashboard-content {
+/* .dashboard-content {
     position: relative; 
     min-height: 100vh; 
     padding-bottom: 100px; 
@@ -30,22 +30,23 @@
   display: flex;
   background: #fcfdff;
   border-radius: 1rem;
-  box-shadow: 0px 1px 12px rgba(0,0,0,0.1);
+  box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   flex-direction: column;
-  margin-top:-10px;
+  margin-top: -10px;
+  padding-top: 2rem;
 }
 
 .business-chart-wrapper {
   grid-area: business-participation;
-  display:flex;
+  display: flex;
   position: relative;
   background: #fcfdff;
   border-radius: 1rem;
-  box-shadow: 0px 1px 12px rgba(0,0,0,0.1);
+  box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   flex-direction: column;
-  margin-top:-10px;
+  margin-top: -10px;
 }
 
 .traffic-card {
@@ -54,10 +55,10 @@
   position: relative;
   background: #fcfdff;
   border-radius: 1rem;
-  box-shadow: 0 1px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   flex-direction: column;
-  margin-top:-10px;
+  margin-top: -10px;
 }
 
 .device-chart-card {
@@ -65,9 +66,9 @@
   background: #fcfdff;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 1px 12px rgba(0,0,0,0.1);
-  margin-top:-10px;
-  height:auto;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.1);
+  margin-top: -10px;
+  height: auto;
 }
 
 .browser-card {
@@ -77,8 +78,8 @@
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', sans-serif;
-  margin-top:-10px;
+  font-family: "Segoe UI", sans-serif;
+  margin-top: -10px;
 }
 
 .UO_chart-container {
@@ -87,8 +88,8 @@
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', sans-serif;
-  margin-top:-10px;
+  font-family: "Segoe UI", sans-serif;
+  margin-top: -10px;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 1.5rem;
   align-items: start;
@@ -101,28 +102,28 @@
 
 /* User Engagement Chart */
 .ue-header {
-display: flex;
-justify-content: space-between;
-align-items: start;
-/* margin-bottom: 1rem; */
-border-bottom: 1px solid #eee;
-height:130px;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  /* margin-bottom: 1rem; */
+  border-bottom: 1px solid #eee;
+  height: 130px;
 }
 
 .ue-title {
-font-size: 24px;
-font-weight: 600;
-color: #333;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
 }
 
 .ue-total {
-font-size: 20px;
-margin-top: 0.25rem 0 0 0;
-color: #888;
+  font-size: 20px;
+  margin-top: 0.25rem 0 0 0;
+  color: #888;
 }
 
 .ue-menu-container {
-position: relative;
+  position: relative;
 }
 
 /* Enhanced menu button styles */
@@ -143,7 +144,7 @@ position: relative;
 
 .ue-menu-btn:hover {
   background: #f1f5f9;
-  color: #4F46E5;
+  color: #4f46e5;
   border-color: #cbd5e1;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -202,11 +203,11 @@ position: relative;
 
 .ue-menu-item:hover {
   background: #f8fafc;
-  color: #4F46E5;
+  color: #4f46e5;
 }
 
 .ue-menu-item:hover svg {
-  color: #4F46E5;
+  color: #4f46e5;
 }
 
 /* Danger item specific styles */
@@ -249,76 +250,72 @@ position: relative;
 }
 
 .ue-chart {
-position: relative;
-display: flex;
-justify-content: center;
-align-items: center;
-width: 100%;
-color: #333;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  color: #333;
+  padding-top: 20px;
 }
 
 /* Legend */
 .ue-legend {
-display: flex;
-gap: 1.5rem;
-margin-top: 1rem;
-font-size: 1rem;
-color: #4A5568;
-justify-content: space-around;
-align-items: center;
-height: 80px;
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #4a5568;
+  justify-content: space-around;
+  align-items: center;
+  height: 80px;
 }
 
 .legend-dot {
-display: inline-block;
-width: 0.75rem;
-height: 0.75rem;
-border-radius: 50%;
-margin-right: 0.5rem;
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
 }
 
-.legend-dot--inactive { background: #9F7AEA; }
-.legend-dot--active { background: #48BB78; }
-.legend-dot--new { background: #ED64A6; }
+.legend-dot--inactive {
+  background: #9f7aea;
+}
+.legend-dot--active {
+  background: #48bb78;
+}
+.legend-dot--new {
+  background: #ed64a6;
+}
 
 /* Modal Overlay */
 .ue-modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-padding: 20px;
-background: rgba(0, 0, 0, 0.5);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
-box-sizing: border-box;
-overflow: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 /* Modal Window */
 .ue-modal-window {
-background: #fff;
-padding: 24px;
-border-radius: 16px;
-max-width: 900px;
-width: 100%;
-margin: auto;
-box-sizing: border-box;
-position: relative;
-}
-
-/* Modal Close Button */
-.ue-modal-close {
-position: absolute;
-top: 12px;
-right: 16px;
-font-size: 20px;
-background: none;
-border: none;
-cursor: pointer;
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  margin: auto;
+  box-sizing: border-box;
+  position: relative;
 }
 
 /* Business Participation Chart */
@@ -329,7 +326,7 @@ cursor: pointer;
   align-items: start;
   /* padding: 1rem; */
   border-bottom: 1px solid #eee;
-  height:130px;
+  height: 130px;
 }
 
 .bp-title {
@@ -344,20 +341,11 @@ cursor: pointer;
   margin: 0.25rem 0 0 0;
 }
 
-
 .chart-container svg {
-  position:relative;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.chart-center-text {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 .chart-center-text .percentage {
@@ -369,21 +357,18 @@ cursor: pointer;
 .chart-center-text .label {
   font-size: 12px;
   color: #666;
-  
 }
-
 
 .chart-and-stats {
   display: flex;
   flex-direction: row;
   align-items: center; /* Vertically center contents */
   justify-content: center; /* Horizontally center if needed */
-  flex:1 1 0px;
+  flex: 1 1 0px;
   flex-wrap: wrap;
-  height: 100%;             /* Take full height of the wrapper */
-  width: 100%;   /* Take full height of parent */
+  height: 100%; /* Take full height of the wrapper */
+  width: 100%; /* Take full height of parent */
 }
-
 
 .BPchart-container {
   position: relative;
@@ -455,42 +440,31 @@ cursor: pointer;
 
 /* Modal Overlay */
 .ue-modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-padding: 20px;
-background: rgba(0, 0, 0, 0.5);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
-box-sizing: border-box;
-overflow: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 /* Modal Window */
 .ue-modal-window {
-background: #fff;
-padding: 24px;
-border-radius: 16px;
-max-width: 900px;
-width: 100%;
-margin: auto;
-box-sizing: border-box;
-position: relative;
-}
-
-/* Modal Close Button */
-.ue-modal-close {
-position: absolute;
-top: 12px;
-right: 16px;
-font-size: 20px;
-background: none;
-border: none;
-cursor: pointer;
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  margin: auto;
+  box-sizing: border-box;
+  position: relative;
 }
 
 /* Organic Traffic Chart Components */
@@ -503,7 +477,7 @@ cursor: pointer;
   height: 90px;
 }
 
-.traffic-header h2{
+.traffic-header h2 {
   font-size: 24px;
   font-weight: 600;
   color: #333;
@@ -523,7 +497,7 @@ cursor: pointer;
 }
 .time-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
@@ -532,9 +506,9 @@ cursor: pointer;
 }
 
 .time-button.active {
-  background: #4F46E5;
+  background: #4f46e5;
   color: white;
-  border-color: #4F46E5;
+  border-color: #4f46e5;
 }
 
 .traffic-legend {
@@ -542,7 +516,7 @@ cursor: pointer;
   gap: 1.5rem;
   margin-top: 1rem;
   font-size: 0.875rem;
-  color: #4A5568;
+  color: #4a5568;
   justify-content: center;
 }
 
@@ -559,10 +533,15 @@ cursor: pointer;
   border-radius: 50%;
 }
 
-.legend-color--registered { background: #4F46E5; }
-.legend-color--new-users { background: #10B981; }
-.legend-color--visitors { background: #EF4444; }
-
+.legend-color--registered {
+  background: #4f46e5;
+}
+.legend-color--new-users {
+  background: #10b981;
+}
+.legend-color--visitors {
+  background: #ef4444;
+}
 
 .value {
   fill: #6dfa50;
@@ -594,14 +573,14 @@ cursor: pointer;
 
 .traffic-mapchart {
   position: relative;
-  display:flex;
+  display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height:100%;
+  height: 100%;
   max-height: 500px;
   padding-bottom: 80px;
-  margin-top:50px;
+  margin-top: 50px;
 }
 
 .with-title {
@@ -630,7 +609,7 @@ cursor: pointer;
 .traffic-chart-wrapper {
   margin-top: 30px;
   position: relative;
-  display:flex;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -642,7 +621,7 @@ cursor: pointer;
   height: auto;
   max-width: 600px;
   position: relative;
-  display:flex;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -652,7 +631,7 @@ cursor: pointer;
   bottom: 250px;
   left: 90%;
   transform: translateX(-45%) scaleX(-1);
-  width: 290px;         /* Set a fixed width */
+  width: 290px; /* Set a fixed width */
   height: auto;
   pointer-events: none;
   z-index: 1;
@@ -661,129 +640,128 @@ cursor: pointer;
 /*Session Device*/
 /* Tooltip styling */
 .tooltip {
-transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 /* Title */
 .device-title {
-font-size: 24px;
-font-weight: 600;
-color: #333;
-margin: 0.25rem 0 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0.25rem 0 0 0;
 }
 
 /* Header */
 .session-device-header {
-display: flex;
-justify-content: space-between;
-align-items: start;
-/* padding: 1rem; */
-border-bottom: 1px solid #eee;
-height: 90px;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  /* padding: 1rem; */
+  border-bottom: 1px solid #eee;
+  height: 90px;
 }
 
 /* Chart */
 .device-chart {
-width: 100%;
-height: 50%;
-margin-top: 25px;
-margin-bottom: -50px;
+  width: 100%;
+  height: 50%;
+  margin-top: 25px;
+  margin-bottom: -50px;
 }
 
 /* Stats */
 .device-stats {
-position: relative;
-text-align: center;
-height: auto;
-padding-top:50px;
+  position: relative;
+  text-align: center;
+  height: auto;
+  padding-top: 50px;
 }
 
 .device-number {
-font-size: 30px;
-font-weight: bold;
-color: #333;
+  font-size: 30px;
+  font-weight: bold;
+  color: #333;
 }
 
 .device-label {
-color: #6B7280;
-font-size: 20px;
+  color: #6b7280;
+  font-size: 20px;
 }
 
 .device-legend {
-display: flex;
-justify-content: space-around;
-gap: 2px;
-flex-wrap: wrap;
-height: 60px;
+  display: flex;
+  justify-content: space-around;
+  gap: 2px;
+  flex-wrap: wrap;
+  height: 60px;
 }
 
 .legend-item {
-font-size: 18px;
-color: #374151;
+  font-size: 18px;
+  color: #374151;
 }
 
 .legend-item .dot {
-display: inline-block;
-width: 15px;
-height: 15px;
-border-radius: 9999px;
-margin-right: 6px;
-vertical-align: middle;
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 9999px;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 /* Dropdown menu styles */
 .ue-menu-container {
-position: relative;
+  position: relative;
 }
 
 .ue-menu-btn {
-background: none;
-border: none;
-font-size: 20px;
-cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
 }
 
 .ue-menu-dropdown {
-position: absolute;
-top: 30px;
-right: 0;
-background-color: #fff;
-border: 1px solid #ddd;
-border-radius: 8px;
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-z-index: 1000;
-min-width: 140px;
-padding: 8px 0;
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+  padding: 8px 0;
 }
 
 .ue-menu-item {
-padding: 10px 16px;
-cursor: pointer;
-font-size: 16px;
-color: #111827;
-white-space: nowrap;
-transition: background 0.2s ease;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #111827;
+  white-space: nowrap;
+  transition: background 0.2s ease;
 }
 
 .ue-menu-item:hover {
-background-color: #f9fafb;
+  background-color: #f9fafb;
 }
 
 .ue-menu-item--danger {
-color: #dc2626;
+  color: #dc2626;
 }
-
 
 /* Browser Usage */
 .browser-row {
-position: relative;
-margin: 8px 15px;
+  position: relative;
+  margin: 8px 15px;
 }
 
 .bar-fill:hover {
-transform: scaleX(1.02) scaleY(1.25);
-box-shadow: 3px 2px 3px -1.5px rgba(147, 51, 234, 0.3);
-z-index: 2;
+  transform: scaleX(1.02) scaleY(1.25);
+  box-shadow: 3px 2px 3px -1.5px rgba(147, 51, 234, 0.3);
+  z-index: 2;
 }
 
 .browser-header {
@@ -792,7 +770,7 @@ z-index: 2;
   align-items: start;
   /* padding: 1rem; */
   border-bottom: 1px solid #eee;
-  height:90px;
+  height: 90px;
 }
 
 .browser-header h3 {
@@ -864,27 +842,6 @@ z-index: 2;
   padding-right: 20px;
 }
 
-.BU_tooltip {
-  z-index: 4;
-  position: absolute;
-}
-
-.BU_tooltip-bg {
-  fill: rgba(0, 0, 0, 0.9);
-  stroke: rgba(255, 255, 255, 0.15);
-  stroke-width: 1px;
-  opacity: 0.8;
-  rx: 4;
-}
-
-.BU_tooltip-text {
-  font-size: 15px;
-  font-weight: 500;
-  fill: white;
-  letter-spacing: 0.3px;
-  font-family: sans-serif;
-}
-
 .ue-modal-overlay {
   position: fixed;
   inset: 0;
@@ -901,16 +858,6 @@ z-index: 2;
   border-radius: 10px;
   overflow-y: auto;
   position: relative;
-}
-
-.ue-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  font-size: 24px;
-  border: none;
-  background: none;
-  cursor: pointer;
 }
 
 .browser-modal-header {
@@ -938,7 +885,7 @@ z-index: 2;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
   cursor: pointer;
-  margin-right:100px;
+  margin-right: 100px;
 }
 /*Overwrite dashboard container (from Dashboard.css)*/
 .dashboard-container {
@@ -948,15 +895,14 @@ z-index: 2;
   width: 100%;
 }
 
-
 /* Header Styles */
 .UO_chart-header {
-display: flex;
+  display: flex;
   justify-content: space-between;
   align-items: start;
   /* padding: 1rem; */
   border-bottom: 1px solid #eee;
-  height:90px;
+  height: 90px;
 }
 
 .UO_chart-title {
@@ -967,17 +913,17 @@ display: flex;
 
 /* Chart SVG Container */
 .UO_chart-svg {
-width: 100%;
-height: 300px;
-display: block;
-position: relative;
-z-index: 2;
-margin-left: 0; /* Removed negative margin */
+  width: 100%;
+  height: 300px;
+  display: block;
+  position: relative;
+  z-index: 2;
+  margin-left: 0; /* Removed negative margin */
+  top: 80px;
 }
-
 /* Custom Select Dropdown */
 .custom-select {
-font-size: 16px;
+  font-size: 16px;
   max-width: 120px;
   color: #6b7280;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
@@ -990,178 +936,168 @@ font-size: 16px;
 
 /* Chart Elements Layering */
 .UO_chart-svg rect.bar {
-position: relative;
-z-index: 2; /* Bars above area chart */
-transition: all 0.2s ease;
+  position: relative;
+  z-index: 2; /* Bars above area chart */
+  transition: all 0.2s ease;
 }
 
 .path[fill="url(#areaGradient)"] {
-z-index: 3; /* Area chart behind bars */
-position: relative;
+  z-index: 3; /* Area chart behind bars */
+  position: relative;
 }
 
 /* Tooltip Stacking */
 .tooltip {
-z-index: 4; /* Highest z-index */
-position: absolute;
+  z-index: 4; /* Highest z-index */
+  position: absolute;
 }
 
-.tooltip-bg {
-fill: rgba(0, 0, 0, 0.9);
-stroke: rgba(255, 255, 255, 0.15);
-stroke-width: 1px;
-}
-
-.tooltip-text {
-font-size: 16px;
-font-weight: 500;
-fill: white;
-letter-spacing: 0.3px;
-}
 .ue-modal-overlay {
-position: fixed;
-inset: 0;
-background: rgba(0, 0, 0, 0.4);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .ue-modal-window {
-background: white;
-padding: 20px;
-border-radius: 10px;
-overflow-y: auto;
-position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  overflow-y: auto;
+  position: relative;
 }
 
 .ue-modal-close {
-position: absolute;
-top: 12px;
-right: 16px;
-font-size: 24px;
-border: none;
-background: none;
-cursor: pointer;
+  position: absolute;
+  right: 16px;
+  font-size: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 1px 8px;
 }
-.UO-viewUI_dropdown-container{
-padding-right:90px;
+
+.ue-modal-close:hover {
+  background-color: #f3f4f6;
 }
+
 /* Axis Styling */
 .y-axis .tick text {
-font-family: -apple-system, sans-serif;
-fill: #6b7280;
+  font-family: -apple-system, sans-serif;
+  fill: #6b7280;
 }
 
 .y-axis .tick line {
-stroke: #e2e8f0;
-stroke-dasharray: 2;
+  stroke: #e2e8f0;
+  stroke-dasharray: 2;
 }
 
 /* Hover Effects */
 .UO_chart-svg rect:hover {
-filter: brightness(110%);
-z-index: 3; /* Hovered bar above others */
+  filter: brightness(110%);
+  z-index: 3; /* Hovered bar above others */
 }
 
 /* Dashboard Header */
 .dashboard-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 40px;
-padding-bottom: 20px;
-border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
 /* Search bar */
 .dashboard-actions {
-display: flex;
-align-items: center;
-gap: 25px;
-justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  justify-content: flex-end;
 }
 
 .search-bar:focus-within {
-background-color: #ffffff;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-border-color: #e2e8f0;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-color: #e2e8f0;
 }
 
 .search-icon {
-font-size: 16px;
-color: #6c5dd3;
-margin-right: 10px;
+  font-size: 16px;
+  color: #6c5dd3;
+  margin-right: 10px;
 }
 
 .search-bar input {
-border: none;
-background: none;
-outline: none;
-font-size: 14px;
-color: #2c3345;
-width: 100%;
-height: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: #2c3345;
+  width: 100%;
+  height: 100%;
 }
 
 .search-bar input::placeholder {
-color: #a0aec0;
+  color: #a0aec0;
 }
 
 /* Notification icons */
 .action-icons {
-display: flex;
-align-items: center;
-gap: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .icon-wrapper {
-position: relative;
-display: flex;
-align-items: center;
-justify-content: center;
-width: 40px;
-height: 40px;
-background-color: #ffffff;
-border-radius: 8px;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-cursor: pointer;
-transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .icon-wrapper:hover {
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(108, 93, 211, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 93, 211, 0.15);
 }
 
 .action-icon {
-font-size: 16px;
-color: #6b7280;
-transition: color 0.2s ease;
+  font-size: 16px;
+  color: #6b7280;
+  transition: color 0.2s ease;
 }
 
 .icon-wrapper:hover .action-icon {
-color: #6c5dd3;
+  color: #6c5dd3;
 }
 
 .badge {
-position: absolute;
-top: -6px;
-right: -6px;
-background-color: #6c5dd3;
-color: white;
-font-size: 10px;
-font-weight: 600;
-height: 20x;
-width: 20px;
-display: flex;
-align-items: center;
-justify-content: center;
-border-radius: 50%;
-border: 2px solid #ffffff;
-margin-left:10px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #6c5dd3;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  height: 20x;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  margin-left: 10px;
 }
 
 .restore-charts-btn {
@@ -1172,7 +1108,7 @@ margin-left:10px;
   width: 50px;
   height: 55px;
   border-radius: 50%;
-  background-color:rgb(167, 167, 167);
+  background-color: rgb(167, 167, 167);
   color: white;
   border: none;
   font-size: 24px;
@@ -1186,7 +1122,7 @@ margin-left:10px;
 }
 
 .restore-charts-btn:hover {
-  background-color:rgb(173, 173, 173);
+  background-color: rgb(173, 173, 173);
   transform: translateX(-50%) scale(1.1);
 }
 
@@ -1240,8 +1176,8 @@ margin-left:10px;
 
 .chart-selection-item.selected {
   background-color: #f0f5ff;
-  border-color: #4F46E5;
-  color: #4F46E5;
+  border-color: #4f46e5;
+  color: #4f46e5;
 }
 
 .restore-modal-actions {
@@ -1262,7 +1198,7 @@ margin-left:10px;
 
 .restore-confirm-btn {
   padding: 8px 16px;
-  background: #4F46E5;
+  background: #4f46e5;
   color: white;
   border: none;
   border-radius: 6px;
@@ -1292,10 +1228,16 @@ margin-left:10px;
   }
 
   /* Font size adjustments for 1200px */
-  .ue-title, .bp-title, .traffic-header h2, .device-title, .browser-header h3, .UO_chart-title {
+  .ue-title,
+  .bp-title,
+  .traffic-header h2,
+  .device-title,
+  .browser-header h3,
+  .UO_chart-title {
     font-size: 22px;
   }
-  .ue-total, .bp-total {
+  .ue-total,
+  .bp-total {
     font-size: 18px;
   }
   .stat-text .value {
@@ -1304,7 +1246,9 @@ margin-left:10px;
   .stat-text .label {
     font-size: 12px;
   }
-  .time-dropdown, .dropdown, .custom-select {
+  .time-dropdown,
+  .dropdown,
+  .custom-select {
     font-size: 13px;
   }
   .ue-menu-item {
@@ -1322,7 +1266,8 @@ margin-left:10px;
   .percent-labels {
     font-size: 15px;
   }
-  .search-bar input, .search-bar input::placeholder {
+  .search-bar input,
+  .search-bar input::placeholder {
     font-size: 13px;
   }
   .action-icon {
@@ -1344,7 +1289,8 @@ margin-left:10px;
   .chart-selection-item {
     font-size: 14px;
   }
-  .restore-cancel-btn, .restore-confirm-btn {
+  .restore-cancel-btn,
+  .restore-confirm-btn {
     padding: 7px 14px;
     font-size: 13px;
   }
@@ -1393,11 +1339,17 @@ margin-left:10px;
     min-width: 200px;
   }
 
-  .ue-title, .bp-title, .traffic-header h2, .device-title, .browser-header h3, .UO_chart-title {
+  .ue-title,
+  .bp-title,
+  .traffic-header h2,
+  .device-title,
+  .browser-header h3,
+  .UO_chart-title {
     font-size: 24px;
     padding-left: 10px;
   }
-  .ue-total, .bp-total {
+  .ue-total,
+  .bp-total {
     font-size: 16px;
     text-align: left;
     padding-left: 10px;
@@ -1408,7 +1360,9 @@ margin-left:10px;
   .stat-text .label {
     font-size: 14px;
   }
-  .time-dropdown, .dropdown, .custom-select {
+  .time-dropdown,
+  .dropdown,
+  .custom-select {
     font-size: 14px;
     padding: 3px 6px;
   }
@@ -1453,7 +1407,8 @@ margin-left:10px;
     font-size: 14px;
     padding: 6px 10px;
   }
-  .restore-cancel-btn, .restore-confirm-btn {
+  .restore-cancel-btn,
+  .restore-confirm-btn {
     padding: 4px 8px;
     font-size: 14px;
   }
@@ -1508,4 +1463,1182 @@ margin-left:10px;
   .UO_chart-container {
     padding: 0.75rem;
   }
+}
+
+/* Event Overview Chart Styling */
+.ue-card {
+  grid-area: user-engagement;
+  position: relative;
+  display: flex;
+  background: #fcfdff;
+  border-radius: 1rem;
+  box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  flex-direction: column;
+  margin-top: -10px;
+}
+
+.ue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  border-bottom: 1px solid #eee;
+  height: 130px;
+  margin-bottom: 6rem; /* Add space below header */
+}
+
+.ue-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ue-total {
+  font-size: 20px;
+  margin-top: 0.25rem 0 0 0;
+  color: #888;
+}
+
+.ue-chart {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  color: #333;
+}
+
+/* Business Approvals Chart Styling */
+.business-chart-wrapper {
+  grid-area: business-participation;
+  display: flex;
+  position: relative;
+  background: #fcfdff;
+  border-radius: 1rem;
+  box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  flex-direction: column;
+  margin-top: -10px;
+}
+
+.bp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  border-bottom: 1px solid #eee;
+  height: 130px;
+}
+
+.bp-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.bp-total {
+  font-size: 20px;
+  color: #888;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Consistent Bar Chart Styling for All Charts */
+.UO_bar,
+.ue-chart rect,
+.business-status-svg rect {
+  fill: #9333ea;
+  rx: 6;
+  transition: all 0.2s ease;
+}
+
+.UO_bar:hover,
+.ue-chart rect:hover,
+.business-status-svg rect:hover {
+  filter: brightness(110%);
+}
+
+/* Bar value labels */
+.bar-val,
+.bar-label {
+  font-size: 12px;
+  font-weight: bold;
+  fill: #374151;
+  text-anchor: middle;
+}
+
+/* Axis styling consistency */
+.ue-chart .y-axis .tick text,
+.business-status-svg .y-axis .tick text,
+.UO_chart-svg .y-axis .tick text {
+  font-family: -apple-system, sans-serif;
+  fill: #6b7280;
+  font-size: 12px;
+}
+
+.ue-chart .y-axis .tick line,
+.business-status-svg .y-axis .tick line,
+.UO_chart-svg .y-axis .tick line {
+  stroke: #e2e8f0;
+  stroke-dasharray: 2;
+}
+
+/* Time/period labels */
+.day-label,
+.time-label {
+  fill: #6b7280;
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+/* Chart containers */
+.chart-wrapper,
+.ue-chart-container,
+.business-chart-container {
+  width: 100%;
+  position: relative;
+}
+
+/* Tooltip consistency */
+.tooltip-bg {
+  fill: rgba(0, 0, 0, 0.9);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1px;
+  rx: 4;
+}
+
+.tooltip-text {
+  font-size: 14px;
+  font-weight: 500;
+  fill: white;
+  letter-spacing: 0.3px;
+  font-family: sans-serif;
+}
+
+/* Modal styling consistency */
+.ue-modal-window .ue-chart,
+.ue-modal-window .business-status-svg,
+.ue-modal-window .UO_chart-svg {
+  width: 100%;
+  height: 300px;
+  display: block;
+}
+
+/* Responsive design */
+@media screen and (max-width: 1200px) {
+  .ue-title,
+  .bp-title,
+  .UO_chart-title {
+    font-size: 22px;
+  }
+
+  .ue-total,
+  .bp-total {
+    font-size: 18px;
+  }
+
+  .bar-val,
+  .bar-label {
+    font-size: 11px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .ue-title,
+  .bp-title,
+  .UO_chart-title {
+    font-size: 20px;
+    padding-left: 10px;
+  }
+
+  .ue-total,
+  .bp-total {
+    font-size: 16px;
+    text-align: left;
+    padding-left: 10px;
+  }
+
+  .ue-chart,
+  .business-status-svg,
+  .UO_chart-svg {
+    height: 250px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ue-card,
+  .business-chart-wrapper,
+  .UO_chart-container {
+    padding: 1rem;
+  }
+
+  .ue-header,
+  .bp-header,
+  .UO_chart-header {
+    height: auto;
+    padding-bottom: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ue-title,
+  .bp-title,
+  .UO_chart-title {
+    font-size: 18px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .ue-card,
+  .business-chart-wrapper,
+  .UO_chart-container {
+    padding: 0.75rem;
+  }
+
+  .ue-title,
+  .bp-title,
+  .UO_chart-title {
+    font-size: 16px;
+  }
+
+  .ue-total,
+  .bp-total {
+    font-size: 14px;
+  }
+
+  .bar-val,
+  .bar-label {
+    font-size: 10px;
+  }
+}
+
+/* Additional specific styling for Business Approvals chart */
+.business-status-svg {
+  width: 100%;
+  height: 300px;
+  margin-bottom: 30px;
+}
+
+.chart-and-stats {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0px;
+  flex-wrap: wrap;
+  height: 100%;
+  width: 100%;
+}
+
+.BPchart-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 300px;
+}
+
+.chart-center-text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  bottom: 5px; /* Adjust this value as needed */
+}
+.chart-center-text .percentage {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.chart-center-text .label {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Stats boxes consistency */
+.stats {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: 12px;
+  flex: 1;
+  min-width: 0;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f0f4f8;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.stat-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-text .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1f36;
+  margin-bottom: 4px;
+}
+
+.stat-text .label {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Event Overview Tooltip Styling */
+/* Consistent dropdown styles for all charts */
+.business-chart-wrapper select,
+.ue-card select,
+.UO_chart-container select {
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Hover and focus states */
+.business-chart-wrapper select:hover,
+.ue-card select:hover,
+.UO_chart-container select:hover {
+  border-color: #a855f7;
+  background-color: #ffffff;
+}
+
+.business-chart-wrapper select:focus,
+.ue-card select:focus,
+.UO_chart-container select:focus {
+  outline: none;
+  border-color: #9333ea;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+/* Specific adjustment for Business Status Chart dropdown alignment */
+.business-chart-wrapper .bp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  border-bottom: 1px solid #eee;
+  height: 130px;
+}
+
+/* Ensure proper spacing in the header controls */
+.business-chart-wrapper .bp-header > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Consistent Tooltip Styling for All Charts */
+/* Base tooltip container */
+.chart-tooltip {
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Tooltip background - consistent across all charts */
+.chart-tooltip .tooltip-bg {
+  fill: rgba(0, 0, 0, 0.85);
+  stroke: none;
+  rx: 6;
+  ry: 6;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+/* Tooltip text - consistent across all charts */
+.chart-tooltip .tooltip-text {
+  fill: white;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-anchor: middle;
+  pointer-events: none;
+  letter-spacing: 0.3px;
+}
+
+/* Ensure tooltips appear above all other elements */
+.ue-chart .chart-tooltip,
+.business-status-svg .chart-tooltip,
+.UO_chart-svg .chart-tooltip {
+  z-index: 1000;
+}
+
+.summary-label {
+  font-size: 16px;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.summary-value {
+  font-size: 16px;
+  text-align: left;
+  padding-left: 10px;
+}
+
+/* Event Overview Chart - Scrollable within card */
+.ue-card {
+  grid-area: user-engagement;
+  position: relative;
+  display: flex;
+  background: #fcfdff;
+  border-radius: 1rem;
+  box-shadow: 0px 1px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  flex-direction: column;
+  margin-top: -10px;
+  min-height: 500px; /* Slightly taller to accommodate larger chart */
+  overflow: hidden; /* Keep card boundaries clean */
+}
+
+/* Enhanced Event Overview Chart Styling */
+.ue-chart-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding: 20px 0;
+  max-height: 350px; /* Increased height */
+}
+
+.ue-chart-scroll-content {
+  min-width: 1000px; /* Increased minimum width */
+  padding: 0 20px;
+  height: 350px; /* Increased height */
+}
+
+.ue-chart-scrollable {
+  width: 1000px; /* Increased width */
+  height: 350px; /* Increased height */
+  display: block;
+}
+
+/* Larger bars and text for better visibility */
+.ue-chart-scrollable rect {
+  rx: 10; /* More rounded corners */
+}
+
+.ue-chart-scrollable .bar-val {
+  font-size: 16px !important; /* Larger value labels */
+  font-weight: 600 !important;
+}
+
+.ue-chart-scrollable .tick text {
+  font-size: 13px !important; /* Larger axis labels */
+}
+
+/* Enhanced scrollbar for larger container */
+.ue-chart-scroll-container::-webkit-scrollbar {
+  height: 10px;
+}
+
+.ue-chart-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+  margin: 0 20px;
+}
+
+.ue-chart-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+}
+
+.ue-chart-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox scrollbar */
+.ue-chart-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Adjust header */
+.ue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  border-bottom: 1px solid #eee;
+  height: auto;
+  min-height: 130px;
+  margin-bottom: 0;
+  padding-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 1200px) {
+  .ue-chart-scroll-content {
+    min-width: 900px;
+    height: 340px;
+  }
+
+  .ue-chart-scrollable {
+    width: 900px;
+    height: 400px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .ue-chart-scroll-content {
+    min-width: 800px;
+    height: 320px;
+  }
+
+  .ue-chart-scrollable {
+    width: 800px;
+    height: 300px;
+  }
+
+  .ue-card {
+    min-height: 480px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ue-chart-scroll-content {
+    min-width: 700px;
+    height: 300px;
+  }
+
+  .ue-chart-scrollable {
+    width: 700px;
+    height: 280px;
+  }
+
+  .ue-card {
+    min-height: 450px;
+    padding: 1rem;
+  }
+
+  .ue-chart-scroll-container {
+    padding: 10px 0;
+  }
+}
+
+/* Event Overview Modal Header Fix */
+.ue-modal-window .ue-header {
+  position: relative;
+  padding-right: 80px; /* Make space for close button */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 130px;
+}
+
+.ue-modal-window .ue-header > div:first-child {
+  flex: 1;
+  margin-right: 30px;
+}
+
+.ue-modal-window .ue-header select {
+  min-width: 140px;
+  margin-top: 0;
+  z-index: 2;
+  position: relative;
+}
+
+/* Ensure close button stays on top */
+.ue-modal-close {
+  z-index: 1001;
+  position: absolute;
+  right: 16px;
+}
+
+/* Business Approvals Modal Header Fix */
+.ue-modal-window .bp-header {
+  position: relative;
+  padding-right: 80px; /* Make space for close button */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 130px;
+}
+
+.ue-modal-window .bp-header > div:first-child {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.ue-modal-window .bp-header select {
+  min-width: 120px;
+  margin-top: 0;
+  z-index: 2;
+  position: relative;
+}
+
+/* Consistent dropdown styling for all charts - both main and modal */
+.business-chart-wrapper select,
+.ue-card select,
+.UO_chart-container select,
+.ue-modal-window select {
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Hover and focus states for all dropdowns */
+.business-chart-wrapper select:hover,
+.ue-card select:hover,
+.UO_chart-container select:hover,
+.ue-modal-window select:hover {
+  border-color: #a855f7;
+  background-color: #ffffff;
+}
+
+.business-chart-wrapper select:focus,
+.ue-card select:focus,
+.UO_chart-container select:focus,
+.ue-modal-window select:focus {
+  outline: none;
+  border-color: #9333ea;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+/* Specific modal header adjustments for proper dropdown alignment */
+.ue-modal-window .ue-header,
+.ue-modal-window .bp-header {
+  position: relative;
+  padding-right: 80px; /* Make space for close button */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 130px;
+}
+
+.ue-modal-window .ue-header > div:first-child,
+.ue-modal-window .bp-header > div:first-child {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.ue-modal-window .ue-header select,
+.ue-modal-window .bp-header select {
+  min-width: 120px;
+  margin-top: 0;
+  z-index: 2;
+  position: relative;
+}
+
+/* Ensure close button stays on top */
+.ue-modal-close {
+  z-index: 1001;
+  position: absolute;
+  right: 16px;
+}
+
+/* Remove the inline styles from the JSX by adding proper CSS classes */
+.modal-period-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  font-size: 14px;
+}
+
+/* Responsive adjustments for modal dropdowns */
+@media screen and (max-width: 1200px) {
+  .ue-modal-window select,
+  .business-chart-wrapper select,
+  .ue-card select,
+  .UO_chart-container select {
+    font-size: 14px;
+    padding: 4px 10px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .ue-modal-window select,
+  .business-chart-wrapper select,
+  .ue-card select,
+  .UO_chart-container select {
+    font-size: 13px;
+    padding: 3px 8px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ue-modal-window .ue-header,
+  .ue-modal-window .bp-header {
+    flex-direction: column;
+    gap: 15px;
+    padding-right: 60px;
+  }
+
+  .ue-modal-window .ue-header select,
+  .ue-modal-window .bp-header select {
+    align-self: flex-start;
+  }
+}
+
+/* System Usage dropdown styling - consistent with other charts */
+.browser-card select,
+.browser-card .dropdown,
+.ue-modal-window .BU-view-dropdown {
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Hover and focus states for System Usage dropdowns */
+.browser-card select:hover,
+.browser-card .dropdown:hover,
+.ue-modal-window .BU-view-dropdown:hover {
+  border-color: #a855f7;
+  background-color: #ffffff;
+}
+
+.browser-card select:focus,
+.browser-card .dropdown:focus,
+.ue-modal-window .BU-view-dropdown:focus {
+  outline: none;
+  border-color: #9333ea;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+/* Remove the old dropdown styles that were specific to System Usage */
+.browser-card .dropdown {
+  /* Remove these old properties */
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.ue-modal-window .BU-view-dropdown {
+  /* Remove these old properties */
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  background-color: #f9f9ff;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  margin-right: 100px;
+}
+
+/* System Usage modal header adjustments */
+.ue-modal-window .browser-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-right: 60px; /* Space for close button */
+}
+
+.ue-modal-window .browser-modal-header h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #111827;
+  flex: 1;
+}
+
+/* Responsive adjustments for System Usage dropdowns */
+@media screen and (max-width: 1200px) {
+  .browser-card select,
+  .browser-card .dropdown,
+  .ue-modal-window .BU-view-dropdown {
+    font-size: 14px;
+    padding: 4px 10px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .browser-card select,
+  .browser-card .dropdown,
+  .ue-modal-window .BU-view-dropdown {
+    font-size: 13px;
+    padding: 3px 8px;
+    max-width: 110px;
+  }
+
+  .ue-modal-window .BU-view-dropdown {
+    margin-right: 120px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .browser-card select,
+  .browser-card .dropdown,
+  .ue-modal-window .BU-view-dropdown {
+    font-size: 12px;
+    padding: 2px 6px;
+    max-width: 100px;
+  }
+
+  .ue-modal-window .browser-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-right: 80px;
+  }
+
+  .ue-modal-window .BU-view-dropdown {
+    margin-right: 0;
+    align-self: flex-start;
+  }
+}
+
+/* System Usage Modal Specific Styling */
+.system-usage-modal .browser-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-right: 80px; /* More space for close button */
+  min-height: 60px;
+}
+
+.system-usage-modal .browser-modal-header h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #111827;
+  flex: 1;
+}
+
+/* System Usage dropdown container in modal */
+.system-usage-modal .browser-modal-header .BU-modal-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-right: 30px; /* Increased space between dropdown and close button */
+  margin-left: auto; /* Push to the right but leave space for close button */
+}
+
+/* System Usage dropdown styling in modal */
+.system-usage-modal .BU-modal-dropdown {
+  font-size: 16px;
+  max-width: 120px;
+  color: #6b7280;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background-color: #f9f9ff;
+  cursor: pointer;
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.system-usage-modal .BU-modal-dropdown:hover {
+  border-color: #a855f7;
+  background-color: #ffffff;
+}
+
+.system-usage-modal .BU-modal-dropdown:focus {
+  outline: none;
+  border-color: #9333ea;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+/* System Usage Modal Close Button - Same as Business Approvals */
+.ue-modal-close1 {
+  position: absolute;
+  right: 16px;
+  font-size: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 1px 8px;
+  z-index: 1001;
+}
+
+.ue-modal-close1:hover {
+  background-color: #f3f4f6;
+}
+
+/* Ensure proper positioning in System Usage modal */
+.system-usage-modal .browser-modal-header {
+  position: relative;
+  padding-right: 80px; /* Space for close button */
+}
+
+/* Specific positioning for System Usage modal close button */
+.system-usage-modal .ue-modal-close1 {
+  top: 10px;
+  right: 15px;
+}
+
+/* Responsive adjustments for System Usage modal */
+@media screen and (max-width: 768px) {
+  .system-usage-modal .browser-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding-right: 60px;
+    min-height: auto;
+  }
+
+  .system-usage-modal .browser-modal-header .BU-modal-dropdown-container {
+    margin-right: 0;
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
+  .system-usage-modal .ue-modal-close {
+    top: 15px;
+    right: 15px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .system-usage-modal .browser-modal-header {
+    padding-right: 50px;
+  }
+
+  .system-usage-modal .ue-modal-close {
+    top: 15px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+
+  .system-usage-modal .BU-modal-dropdown {
+    font-size: 14px;
+    padding: 4px 10px;
+    max-width: 110px;
+  }
+}
+
+/* Target Session Device modal close button specifically */
+.device-chart-card .ue-modal-close {
+  width: 40px;
+  height: 40px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.device-chart-card .ue-modal-close:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* Specific class for Users Overview modal close button */
+/* Users Overview Modal Header Fix */
+.users-overview-modal .UO_chart-header {
+  position: relative;
+  padding-right: 80px; /* Make space for close button */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 90px;
+}
+
+.users-overview-modal .UO_chart-header > div:first-child {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.users-overview-modal .UO_chart-header select {
+  min-width: 120px;
+  margin-top: 0;
+  z-index: 2;
+  position: relative;
+}
+
+.users-overview-modal .ue-modal-close:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* Update the existing Users Overview modal styles */
+.ue-modal-window .UO_chart-header {
+  position: relative;
+  padding-right: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 90px;
+}
+
+.ue-modal-window .UO_chart-header > div:first-child {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.ue-modal-window .UO_chart-header select {
+  min-width: 120px;
+  margin-top: 0;
+  z-index: 2;
+  position: relative;
+}
+
+/* Individual styling for Users Overview modal close button */
+.users-overview-close {
+  width: 20px;
+  height: 20px;
+  font-size: 28px;
+  display: flex;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.users-overview-close:hover {
+  background-color: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* Modal Export Button Styles */
+.modal-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.modal-export-btn:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.modal-export-btn:active {
+  transform: translateY(0);
+}
+
+.modal-export-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive adjustments for modal export buttons */
+@media screen and (max-width: 768px) {
+  .modal-export-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .modal-export-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .modal-export-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .ue-modal-window .bp-header,
+  .ue-modal-window .ue-header,
+  .ue-modal-window .UO_chart-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .ue-modal-window .bp-header > div:last-child,
+  .ue-modal-window .ue-header > div:last-child {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+}
+
+.modal-export-btn1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 60px;
+  padding: 8px 16px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.modal-export-btn2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+  padding: 8px 16px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }

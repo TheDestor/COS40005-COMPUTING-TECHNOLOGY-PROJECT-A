@@ -12,7 +12,40 @@ import html2canvas from "html2canvas"; // install this package if not already
 import "../styles/ViewAnalytics.css";
 import { FaRegEye, FaFileExport, FaTrash } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { useAuth } from "../context/AuthProvider";
 
+// Auth fetch helper function
+const authFetch = async (url, options = {}) => {
+  // Try multiple possible token storage locations
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("authToken");
+
+  if (!token) {
+    console.error("No authentication token found");
+    throw new Error("Authentication required");
+  }
+
+  const config = {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
+  };
+
+  const response = await fetch(url, config);
+
+  if (response.status === 401) {
+    console.log("Token expired or invalid");
+    throw new Error("Authentication expired");
+  }
+
+  return response;
+};
 // Add this new component at the top level of your file (but not inside another component)
 function RestoreChartsModal({ visibleCharts, onRestore, onClose }) {
   const hiddenCharts = Object.entries(visibleCharts)
@@ -79,26 +112,55 @@ function RestoreChartsModal({ visibleCharts, onRestore, onClose }) {
 // Helper function to format chart names for display
 function getChartDisplayName(chartKey) {
   const names = {
-    userEngagement: "User Engagement",
+    eventOverview: "Event Overview", // Updated
     businessParticipation: "Business Participation",
     organicTraffic: "Organic Traffic",
     sessionDevice: "Session Device",
     browserUsage: "Browser Usage",
     usersOverview: "Users Overview",
+    businessStatus: "Business Status", // Add this line
   };
   return names[chartKey] || chartKey;
 }
 
 export default function ViewAnalyticsOverview() {
   const [visibleCharts, setVisibleCharts] = useState({
-    userEngagement: true,
-    businessParticipation: true,
+    eventOverview: true,
+    businessStatus: true,
     organicTraffic: true,
     sessionDevice: true,
     browserUsage: true,
     usersOverview: true,
   });
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [activeMenu, setActiveMenu] = useState(null); // NEW: Track which menu is open
+
+  // NEW: Function to handle menu toggle
+  const handleMenuToggle = (chartName) => {
+    setActiveMenu(activeMenu === chartName ? null : chartName);
+  };
+
+  // NEW: Function to close all menus
+  const closeAllMenus = () => {
+    setActiveMenu(null);
+  };
+
+  // NEW: Handle clicks outside menus
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeMenu && !event.target.closest(".ue-menu-container")) {
+        closeAllMenus();
+      }
+    };
+
+    if (activeMenu) {
+      document.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [activeMenu]);
 
   // Function to restore specific charts
   const restoreCharts = (chartsToRestore) => {
@@ -117,6 +179,7 @@ export default function ViewAnalyticsOverview() {
       ...prev,
       [chartName]: false,
     }));
+    closeAllMenus(); // NEW: Close menu when removing chart
   };
 
   // Check if any charts are hidden
@@ -138,29 +201,44 @@ export default function ViewAnalyticsOverview() {
 
         {/* Your existing charts container */}
         <div className="viewanalytics-container">
-          {visibleCharts.userEngagement && (
-            <UserEngagementChart
-              onRemove={() => handleRemoveChart("userEngagement")}
+          {visibleCharts.eventOverview && (
+            <EventOverviewChart
+              onRemove={() => handleRemoveChart("eventOverview")}
+              isMenuOpen={activeMenu === "eventOverview"}
+              onMenuToggle={() => handleMenuToggle("eventOverview")}
+              onMenuClose={closeAllMenus}
             />
           )}
-          {visibleCharts.businessParticipation && (
-            <BusinessParticipationChart
-              onRemove={() => handleRemoveChart("businessParticipation")}
-            />
-          )}
-          {visibleCharts.sessionDevice && (
-            <SessionDeviceChart
-              onRemove={() => handleRemoveChart("sessionDevice")}
-            />
-          )}
-          {visibleCharts.browserUsage && (
-            <SystemUsageChart
-              onRemove={() => handleRemoveChart("browserUsage")}
+          {visibleCharts.businessStatus && (
+            <BusinessStatusChart
+              onRemove={() => handleRemoveChart("businessStatus")}
+              isMenuOpen={activeMenu === "businessStatus"}
+              onMenuToggle={() => handleMenuToggle("businessStatus")}
+              onMenuClose={closeAllMenus}
             />
           )}
           {visibleCharts.usersOverview && (
             <UsersOverviewChart
               onRemove={() => handleRemoveChart("usersOverview")}
+              isMenuOpen={activeMenu === "usersOverview"} // NEW: Pass menu state
+              onMenuToggle={() => handleMenuToggle("usersOverview")} // NEW: Pass toggle function
+              onMenuClose={closeAllMenus} // NEW: Pass close function
+            />
+          )}
+          {visibleCharts.sessionDevice && (
+            <SessionDeviceChart
+              onRemove={() => handleRemoveChart("sessionDevice")}
+              isMenuOpen={activeMenu === "sessionDevice"}
+              onMenuToggle={() => handleMenuToggle("sessionDevice")}
+              onMenuClose={closeAllMenus}
+            />
+          )}
+          {visibleCharts.browserUsage && (
+            <SystemUsageChart
+              onRemove={() => handleRemoveChart("browserUsage")}
+              isMenuOpen={activeMenu === "browserUsage"}
+              onMenuToggle={() => handleMenuToggle("browserUsage")}
+              onMenuClose={closeAllMenus}
             />
           )}
         </div>
@@ -227,83 +305,153 @@ function OrganicTrafficChart({ onRemove }) {
     visitor: "#EF4444",
   };
 
-  const drawCharts = (mapNode, barNode) => {
-    const width = 800;
-    const height = 400;
+  const drawChart = (svgNode) => {
+    const svg = d3.select(svgNode);
+    svg.selectAll("*").remove();
 
-    const projection = d3
-      .geoMercator()
-      .scale(120)
-      .translate([width / 2, height / 1.5]);
-    const path = d3.geoPath().projection(projection);
+    // Increased dimensions for larger chart
+    const width = 500; // Increased from 300
+    const height = 300; // Increased from 200
+    const margin = { top: 30, right: 30, bottom: 50, left: 60 }; // Increased margins
 
-    const svgMap = d3.select(mapNode);
-    svgMap.selectAll("*").remove();
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-    d3.json(
-      "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
-    ).then((worldData) => {
-      const countriesGeo = topojson.feature(
-        worldData,
-        worldData.objects.countries
-      );
-      svgMap
-        .append("g")
-        .selectAll("path")
-        .data(countriesGeo.features)
-        .join("path")
-        .attr("fill", (d) => {
-          const countryName = d.properties.name;
-          const match = countries.find((c) => c.name === countryName);
-          return match ? typeColor[match.type] : "#E5E7EB";
-        })
-        .attr("d", path)
-        .attr("stroke", "#fff");
-    });
-
-    const svgBar = d3.select(barNode);
-    svgBar.selectAll("*").remove();
-
-    const barWidth = 600;
-    const barHeight = 400;
-    const margin = { top: 40, right: 30, bottom: 30, left: 100 };
+    // Empty state
+    if (approvalData.length === 0) {
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#6b7280")
+        .style("font-size", "16px") // Larger font
+        .text(
+          loading ? "Loading approval data..." : "No approval data available"
+        );
+      return;
+    }
 
     const x = d3
-      .scaleLinear()
-      .domain([0, 100])
-      .range([0, barWidth - margin.left - margin.right]);
-    const y = d3
       .scaleBand()
-      .domain(countries.map((d) => d.name))
-      .range([0, barHeight - margin.top - margin.bottom])
-      .padding(0.4);
+      .domain(approvalData.map((d) => (timeRange === "week" ? d.day : d.month)))
+      .range([margin.left, width - margin.right])
+      .padding(0.3);
 
-    const g = svgBar
+    // FIXED: Consistent y-scale domain
+    const maxValue = d3.max(approvalData, (d) => d.count);
+    const consistentMax = Math.max(maxValue * 1.15, 10); // Minimum of 10, or 15% above max
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, consistentMax])
+      .range([height - margin.bottom, margin.top]);
+
+    // Create tooltip group FIRST - consistent with other charts
+    const tooltip = svg
       .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-    g.append("g")
-      .call(d3.axisLeft(y).tickSize(0))
-      .selectAll("text")
-      .attr("fill", "white")
-      .style("font-size", "14px")
+      .attr("class", "chart-tooltip")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
+    const tooltipRect = tooltip
+      .append("rect")
+      .attr("class", "tooltip-bg")
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .style("fill", "rgba(0, 0, 0, 0.85)");
+
+    const tooltipText = tooltip
+      .append("text")
+      .attr("class", "tooltip-text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.3em")
+      .style("fill", "white")
+      .style("font-size", "16px") // Larger tooltip text
+      .style("font-weight", "500")
       .style("font-family", "sans-serif");
 
-    g.selectAll("rect")
-      .data(countries)
+    // Draw bars - larger bars
+    const bars = svg
+      .selectAll(".bar")
+      .data(approvalData)
       .join("rect")
-      .attr("y", (d) => y(d.name))
-      .attr("width", (d) => x(d.value))
-      .attr("height", y.bandwidth())
-      .attr("fill", "#c4f5e7")
-      .attr("rx", 10);
+      .attr("class", "bar")
+      .attr("x", (d) => x(timeRange === "week" ? d.day : d.month))
+      .attr("y", (d) => y(d.count))
+      .attr("width", x.bandwidth())
+      .attr("height", (d) => y(0) - y(d.count))
+      .attr("fill", "#10B981")
+      .attr("rx", 6) // More rounded corners
+      .on("mouseover", function (event, d) {
+        d3.select(this).transition().duration(200).attr("fill", "#34D399");
 
-    g.selectAll("text.value")
-      .data(countries)
+        const tooltipContent = `${d.count} approval${d.count !== 1 ? "s" : ""}`;
+
+        const [xPos, yPos] = d3.pointer(event);
+        tooltipText.text(tooltipContent);
+
+        const bbox = tooltipText.node().getBBox();
+        tooltipRect
+          .attr("x", bbox.x - 15) // Larger padding
+          .attr("y", bbox.y - 10)
+          .attr("width", bbox.width + 30)
+          .attr("height", bbox.height + 20);
+
+        tooltip
+          .raise()
+          .attr("transform", `translate(${xPos},${yPos - 45})`)
+          .style("opacity", 1);
+      })
+      .on("mousemove", function (event, d) {
+        const [xPos, yPos] = d3.pointer(event);
+        tooltip.raise().attr("transform", `translate(${xPos},${yPos - 45})`);
+      })
+      .on("mouseout", function () {
+        d3.select(this).transition().duration(200).attr("fill", "#10B981");
+        tooltip.style("opacity", 0);
+      });
+
+    // Add count labels on bars - larger font
+    svg
+      .selectAll(".bar-label")
+      .data(approvalData)
       .join("text")
-      .attr("class", "value")
-      .attr("x", (d) => x(d.value) + 10)
-      .attr("y", (d) => y(d.name) + y.bandwidth() / 2 + 5)
-      .text((d) => `${d.value}%`);
+      .attr("class", "bar-label")
+      .attr(
+        "x",
+        (d) => x(timeRange === "week" ? d.day : d.month) + x.bandwidth() / 2
+      )
+      .attr("y", (d) => y(d.count) - 8) // Adjusted position
+      .attr("text-anchor", "middle")
+      .attr("fill", "#374151")
+      .style("font-size", "14px") // Larger font
+      .style("font-weight", "bold")
+      .text((d) => d.count);
+
+    // Add time labels - larger font
+    svg
+      .selectAll(".time-label")
+      .data(approvalData)
+      .join("text")
+      .attr("class", "time-label")
+      .attr(
+        "x",
+        (d) => x(timeRange === "week" ? d.day : d.month) + x.bandwidth() / 2
+      )
+      .attr("y", height - 15) // Adjusted position
+      .attr("text-anchor", "middle")
+      .attr("fill", "#6b7280")
+      .style("font-size", "13px") // Larger font
+      .text((d) => (timeRange === "week" ? d.day : d.month));
+
+    // Add Y-axis with larger labels
+    svg
+      .append("g")
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(6))
+      .selectAll("text")
+      .style("font-size", "12px") // Larger axis labels
+      .style("fill", "#6b7280");
   };
 
   // Add this useEffect for handling outside clicks
@@ -343,13 +491,19 @@ function OrganicTrafficChart({ onRemove }) {
 
   const handleExport = () => {
     if (!chartContainerRef.current) return;
+
     html2canvas(chartContainerRef.current, {
       backgroundColor: "#fff",
-      scale: 2,
+      scale: 3, // Higher scale for better quality
       useCORS: true,
+      logging: false, // Disable logging for better performance
+      width: chartContainerRef.current.scrollWidth,
+      height: chartContainerRef.current.scrollHeight,
     }).then((canvas) => {
       const link = document.createElement("a");
-      link.download = "organic-traffic-chart.png";
+      link.download = `users-overview-${period.toLowerCase()}-${
+        new Date().toISOString().split("T")[0]
+      }.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     });
@@ -494,231 +648,436 @@ function OrganicTrafficChart({ onRemove }) {
   );
 }
 
-/*User Engagement Chart*/
-function UserEngagementChart({ onRemove }) {
-  const ref = useRef();
-  const [menuOpen, setMenuOpen] = useState(false);
+/* Event Overview Chart */
+/* Event Overview Chart */
+function EventOverviewChart({
+  onRemove,
+  isMenuOpen,
+  onMenuToggle,
+  onMenuClose,
+}) {
+  const { token } = useAuth();
+  const ref = useRef(null);
+  const modalRef = useRef(null);
+  const chartContainerRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const [visible, setVisible] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const chartContainerRef = useRef();
+  const [period, setPeriod] = useState("weekly");
+  const [eventsData, setEventsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const data = [
-    { month: "Jan", value: 100 },
-    { month: "Feb", value: 120 },
-    { month: "Mar", value: 60, type: "Active" },
-    { month: "Apr", value: 90 },
-    { month: "May", value: 100 },
-    { month: "Jun", value: 150, type: "Inactive" },
-    { month: "Jul", value: 80 },
-    { month: "Aug", value: 90 },
-    { month: "Sep", value: 40 },
-    { month: "Oct", value: 80, type: "New" },
-    { month: "Nov", value: 70 },
-    { month: "Dec", value: 75 },
-  ];
+  // NEW: Menu toggle function
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    onMenuToggle();
+  };
 
-  const drawChart = (container) => {
-    const svg = d3.select(container);
+  // NEW: Menu item handlers
+  const handleViewClick = () => {
+    onMenuClose();
+    setShowModal(true);
+  };
+
+  const handleRemoveClick = () => {
+    onMenuClose();
+    onRemove();
+  };
+
+  // Fetch events from API
+  const fetchEventsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/event/getAllEvents");
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+
+      if (result.success) {
+        const events = result.events || result.data || [];
+        setEventsData(events);
+      } else {
+        throw new Error(result.message || "Failed to fetch events from server");
+      }
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      setError(err.message);
+      setEventsData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getEventDate = (event) => {
+    if (event?.eventDate) {
+      return new Date(event.eventDate);
+    } else if (event?.startDate) {
+      return new Date(event.startDate);
+    }
+    return null;
+  };
+
+  const parseValidDates = (events) =>
+    events.map((e) => getEventDate(e)).filter((d) => d && !isNaN(d.valueOf()));
+
+  const formatWeekRange = (start, end) => {
+    const format = d3.timeFormat("%b %d");
+    return `${format(start)} - ${format(end)}`;
+  };
+
+  const formatMonthLabel = d3.timeFormat("%b %Y");
+
+  function bucketWeekly(dates) {
+    const weekFloor = d3.timeMonday.floor;
+    const roll = d3.rollup(
+      dates,
+      (v) => v.length,
+      (d) => +weekFloor(d)
+    );
+
+    return Array.from(roll, ([ts, count]) => {
+      const start = new Date(Number(ts));
+      const end = d3.timeDay.offset(d3.timeSunday.ceil(start), -1);
+      const weekNumber = getISOWeek(start);
+
+      return {
+        keyDate: start,
+        label: `Week ${weekNumber}`,
+        weekRange: formatWeekRange(start, end),
+        weekNumber: weekNumber,
+        year: start.getFullYear(),
+        count,
+      };
+    }).sort((a, b) => a.keyDate - b.keyDate);
+  }
+
+  function getISOWeek(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+    return 1 + Math.ceil((firstThursday - target) / 604800000);
+  }
+
+  function bucketMonthly(dates) {
+    const monthFloor = d3.timeMonth.floor;
+    const roll = d3.rollup(
+      dates,
+      (v) => v.length,
+      (d) => +monthFloor(d)
+    );
+    return Array.from(roll, ([ts, count]) => {
+      const start = new Date(Number(ts));
+      return {
+        keyDate: start,
+        label: formatMonthLabel(start),
+        count,
+      };
+    }).sort((a, b) => a.keyDate - b.keyDate);
+  }
+
+  // Chart renderer with larger dimensions
+  function drawChart(svgNode, isModal = false) {
+    const svg = d3.select(svgNode);
     svg.selectAll("*").remove();
 
-    const width = 500;
-    const height = 250;
-    const margin = { top: 20, right: 20, bottom: 40, left: 20 };
+    const dates = parseValidDates(eventsData);
+
+    // Larger dimensions for the chart
+    const width = isModal ? 800 : 1000; // Wider chart
+    const height = isModal ? 350 : 350; // Taller chart
+    const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+
+    svg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMin meet");
+
+    if (!dates.length) {
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#6b7280")
+        .style("font-size", "14px")
+        .text("No events to display");
+      return;
+    }
+
+    const buckets =
+      period === "weekly" ? bucketWeekly(dates) : bucketMonthly(dates);
 
     const x = d3
       .scaleBand()
-      .domain(data.map((d) => d.month))
+      .domain(buckets.map((d) => d.label))
       .range([margin.left, width - margin.right])
       .padding(0.3);
 
     const y = d3
       .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.value) + 20])
+      .domain([0, d3.max(buckets, (d) => d.count) || 1])
+      .nice()
       .range([height - margin.bottom, margin.top]);
 
-    svg
-      .attr("viewBox", `0 0 ${width} ${height}`)
+    // Tooltip setup
+    const tooltip = svg
+      .append("g")
+      .attr("class", "chart-tooltip")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
+    const tooltipRect = tooltip
+      .append("rect")
+      .attr("class", "tooltip-bg")
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .style("fill", "rgba(0, 0, 0, 0.85)");
+
+    const tooltipText = tooltip
+      .append("text")
+      .attr("class", "tooltip-text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.3em")
+      .style("fill", "white")
+      .style("font-size", "15px")
+      .style("font-weight", "500")
       .style("font-family", "sans-serif");
 
-    svg
-      .append("g")
-      .selectAll("rect")
-      .data(data)
-      .join("rect")
-      .attr("x", (d) => x(d.month))
-      .attr("y", (d) => y(d.value))
-      .attr("height", (d) => y(0) - y(d.value))
-      .attr("width", x.bandwidth())
-      .attr("rx", 6)
-      .attr("fill", (d) => {
-        if (d.type === "Active") return "#48BB78";
-        if (d.type === "Inactive") return "#9F7AEA";
-        if (d.type === "New") return "#ED64A6";
-        return "#E2E8F0";
-      });
+    // X-axis
+    const xAxis = d3.axisBottom(x).tickSize(0);
 
     svg
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x).tickSize(0))
+      .call(xAxis)
       .selectAll("text")
-      .style("font-size", "12px");
+      .style("font-size", "12px")
+      .style("fill", "#6b7280")
+      .style("text-anchor", "middle")
+      .style("font-family", "sans-serif");
 
-    // Tooltip (optional)
-    const tooltip = svg
-      .append("g")
-      .attr("class", "tooltip")
-      .style("pointer-events", "none")
-      .style("opacity", 0);
-
-    const tooltipBg = tooltip.append("rect").attr("rx", 4).attr("fill", "#333");
-
-    const tooltipText = tooltip
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.3em")
-      .attr("fill", "#fff");
-
+    // Y-axis
     svg
+      .append("g")
+      .attr("transform", `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(6))
+      .selectAll("text")
+      .style("font-size", "12px")
+      .style("fill", "#6b7280");
+
+    // Bars - larger and more prominent
+    const bars = svg
+      .append("g")
       .selectAll("rect")
+      .data(buckets)
+      .join("rect")
+      .attr("x", (d) => x(d.label))
+      .attr("y", (d) => y(d.count))
+      .attr("width", x.bandwidth())
+      .attr("height", (d) => y(0) - y(d.count))
+      .attr("fill", "#9333ea")
+      .attr("rx", 8)
       .on("mouseover", function (event, d) {
         d3.select(this).transition().duration(200).attr("fill", "#b57af0");
-        tooltip.style("opacity", 1);
+
+        let tooltipContent = `${d.count} events`;
+        if (period === "weekly" && d.weekRange) {
+          tooltipContent = `${d.year} ${d.weekRange}\n${d.count} events`;
+        }
+
+        const [xPos, yPos] = d3.pointer(event);
+        tooltipText.text(tooltipContent);
+
+        const bbox = tooltipText.node().getBBox();
+        tooltipRect
+          .attr("x", bbox.x - 10)
+          .attr("y", bbox.y - 8)
+          .attr("width", bbox.width + 20)
+          .attr("height", bbox.height + 16);
+
+        tooltip
+          .raise()
+          .attr("transform", `translate(${xPos},${yPos - 35})`)
+          .style("opacity", 1);
       })
       .on("mousemove", function (event, d) {
         const [xPos, yPos] = d3.pointer(event);
-        tooltip.attr("transform", `translate(${xPos + 15},${yPos - 25})`);
-        tooltipText.text(`${d.value} users`);
-        const bbox = tooltipText.node().getBBox();
-        tooltipBg
-          .attr("x", bbox.x - 8)
-          .attr("y", bbox.y - 4)
-          .attr("width", bbox.width + 16)
-          .attr("height", bbox.height + 8);
+        tooltip.raise().attr("transform", `translate(${xPos},${yPos - 35})`);
       })
       .on("mouseout", function () {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("fill", (d) => {
-            if (d.type === "Active") return "#48BB78";
-            if (d.type === "Inactive") return "#9F7AEA";
-            if (d.type === "New") return "#ED64A6";
-            return "#E2E8F0";
-          });
+        d3.select(this).transition().duration(200).attr("fill", "#9333ea");
         tooltip.style("opacity", 0);
       });
-  };
 
-  // Add this useEffect for handling outside clicks
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuOpen && !event.target.closest(".ue-menu-container")) {
-        setMenuOpen(false);
+    // Values on bars - larger font
+    svg
+      .append("g")
+      .selectAll("text.bar-val")
+      .data(buckets)
+      .join("text")
+      .attr("class", "bar-val")
+      .attr("x", (d) => x(d.label) + x.bandwidth() / 2)
+      .attr("y", (d) => y(d.count) - 10)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#374151")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .style("pointer-events", "none")
+      .text((d) => d.count);
+  }
+
+  // Event Overview Chart - Update export functions
+  const handleExport = () => {
+    onMenuClose();
+    setTimeout(() => {
+      try {
+        const node = chartContainerRef.current;
+        if (!node) return;
+        html2canvas(node, {
+          backgroundColor: "#fff",
+          scale: 2,
+          useCORS: true,
+        }).then((canvas) => {
+          const link = document.createElement("a");
+          link.download = `event-overview-${period}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        });
+      } catch (e) {
+        console.error("Export failed:", e);
       }
-    };
-
-    if (menuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  // Modify your menu button to stop propagation
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setMenuOpen((open) => !open);
+    }, 100);
   };
 
-  useEffect(() => {
-    if (ref.current) {
-      drawChart(ref.current);
+  // Add modal export function
+  const handleModalExport = () => {
+    const modalElement = document.querySelector(".ue-modal-window.large-modal");
+    if (modalElement) {
+      html2canvas(modalElement, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = `event-overview-modal-${period}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
     }
+  };
+  useEffect(() => {
+    fetchEventsData();
   }, []);
 
-  const handleExport = () => {
-    const chartEl = chartContainerRef.current;
-    if (!chartEl) return;
+  useEffect(() => {
+    if (ref.current) drawChart(ref.current);
+  }, [eventsData, period]);
 
-    html2canvas(chartEl, {
-      backgroundColor: "#fff",
-      scale: 2,
-      useCORS: true,
-    }).then((canvas) => {
-      const link = document.createElement("a");
-      link.download = "user-engagement-chart.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    });
-  };
-
-  const handleRemove = () => {
-    setVisible(false);
-  };
-
-  if (!visible) return null;
+  useEffect(() => {
+    if (showModal && modalRef.current) drawChart(modalRef.current, true);
+  }, [showModal, eventsData, period]);
 
   return (
     <>
       <div className="ue-card" ref={chartContainerRef}>
         <div className="ue-header">
           <div>
-            <h1 className="ue-title">User Engagement</h1>
-            <p className="ue-total">Total User: 1500</p>
+            <h1 className="ue-title">Event Overview</h1>
+            <p className="ue-total">
+              Total Events: {eventsData.length}
+              {error && " - " + error}
+            </p>
           </div>
-          <div className="ue-menu-container">
-            <button
-              className="ue-menu-btn"
-              onClick={() => setMenuOpen((open) => !open)}
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="modal-period-select"
             >
-              <BsThreeDotsVertical />
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+
+            <button
+              onClick={fetchEventsData}
+              disabled={loading}
+              style={{
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #E2E7EB",
+                backgroundColor: "white",
+                cursor: "pointer",
+              }}
+              title="Refresh data"
+            >
+              <FaSyncAlt className={loading ? "spinning" : ""} />
             </button>
-            {menuOpen && (
-              <div
-                className="ue-menu-dropdown"
-                onClick={(e) => e.stopPropagation()}
-              >
+
+            <div className="ue-menu-container">
+              <button className="ue-menu-btn" onClick={toggleMenu}>
+                <BsThreeDotsVertical />
+              </button>
+              {isMenuOpen && (
                 <div
-                  className="ue-menu-item"
-                  onClick={() => setShowModal(true)}
+                  className="ue-menu-dropdown"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <FaRegEye /> View
+                  <div className="ue-menu-item" onClick={handleViewClick}>
+                    <FaRegEye /> View
+                  </div>
+                  <div className="ue-menu-item" onClick={handleExport}>
+                    <FaFileExport /> Export
+                  </div>
+                  <div
+                    className="ue-menu-item ue-menu-item--danger"
+                    onClick={handleRemoveClick}
+                  >
+                    <FaTrash /> Remove
+                  </div>
                 </div>
-                <div className="ue-menu-item" onClick={handleExport}>
-                  <FaFileExport /> Export
-                </div>
-                <div
-                  className="ue-menu-item ue-menu-item--danger"
-                  onClick={onRemove}
-                >
-                  <FaTrash /> Remove
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        <svg ref={ref} className="ue-chart"></svg>
-
-        <div className="ue-legend">
-          <div>
-            <span className="legend-dot legend-dot--inactive" /> Inactive Users
-          </div>
-          <div>
-            <span className="legend-dot legend-dot--active" /> Active Users
-          </div>
-          <div>
-            <span className="legend-dot legend-dot--new" /> New Signups
+        {/* Scrollable Chart Container */}
+        <div className="ue-chart-scroll-container">
+          <div ref={scrollContainerRef} className="ue-chart-scroll-content">
+            {loading ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "60px",
+                  color: "#6b7280",
+                  minWidth: "1000px",
+                }}
+              >
+                Loading events data...
+              </div>
+            ) : (
+              <svg
+                ref={ref}
+                className="ue-chart-scrollable"
+                viewBox="0 0 1000 400"
+                preserveAspectRatio="xMidYMin meet"
+              />
+            )}
           </div>
         </div>
       </div>
 
       {showModal && (
         <div className="ue-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="ue-modal-window" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="ue-modal-window large-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="ue-modal-close"
               onClick={() => setShowModal(false)}
@@ -727,29 +1086,57 @@ function UserEngagementChart({ onRemove }) {
             </button>
             <div className="ue-header">
               <div>
-                <h1 className="ue-title">User Engagement</h1>
-                <p className="ue-total">1500</p>
+                <h1 className="ue-title">Event Overview</h1>
+                <p className="ue-total">Total Events: {eventsData.length}</p>
+              </div>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  className="modal-period-select"
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {/* ADD Export Button */}
+                <button
+                  className="modal-export-btn"
+                  onClick={handleModalExport}
+                  title="Export modal as image"
+                >
+                  <FaFileExport /> Export
+                </button>
               </div>
             </div>
-            <svg ref={(node) => node && drawChart(node)} className="ue-chart" />
-            <div className="ue-legend">
-              <div>
-                <span className="legend-dot legend-dot--inactive" /> Inactive
-                Users
-              </div>
-              <div>
-                <span className="legend-dot legend-dot--active" /> Active Users
-              </div>
-              <div>
-                <span className="legend-dot legend-dot--new" /> New Signups
-              </div>
-            </div>
+            <svg
+              ref={modalRef}
+              className="ue-chart-large"
+              viewBox="0 0 1200 500"
+              preserveAspectRatio="xMidYMin meet"
+            />
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </>
   );
 }
+
 // Business Participation Chart Component
 function BusinessParticipationChart({ onRemove }) {
   const ref = useRef();
@@ -967,10 +1354,14 @@ function BusinessParticipationChart({ onRemove }) {
   );
 }
 /*Session Device Chart*/
-function SessionDeviceChart({ onRemove }) {
+function SessionDeviceChart({
+  onRemove,
+  isMenuOpen,
+  onMenuToggle,
+  onMenuClose,
+}) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [visible, setVisible] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -1067,41 +1458,54 @@ function SessionDeviceChart({ onRemove }) {
     0
   );
 
-  // Add this useEffect for handling outside clicks
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuOpen && !event.target.closest(".ue-menu-container")) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  // Modify your menu button to stop propagation
+  // NEW: Menu toggle function
   const toggleMenu = (e) => {
     e.stopPropagation();
-    setMenuOpen((open) => !open);
+    onMenuToggle();
   };
 
+  const handleViewClick = () => {
+    onMenuClose();
+    setShowModal(true);
+  };
+
+  const handleRemoveClick = () => {
+    onMenuClose();
+    onRemove();
+  };
+
+  // Session Device Chart - Add export functions
   const handleExport = () => {
-    if (!chartContainerRef.current) return;
-    html2canvas(chartContainerRef.current, {
-      backgroundColor: "#fff",
-      scale: 2,
-      useCORS: true,
-    }).then((canvas) => {
-      const link = document.createElement("a");
-      link.download = "session-device-chart.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    });
+    onMenuClose();
+    setTimeout(() => {
+      if (!chartContainerRef.current) return;
+      html2canvas(chartContainerRef.current, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = "session-device-chart.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }, 100);
+  };
+
+  const handleModalExport = () => {
+    const modalElement = document.querySelector(".ue-modal-window");
+    if (modalElement) {
+      html2canvas(modalElement, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = "session-device-modal.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
   };
 
   const handleRemove = () => {
@@ -1146,21 +1550,15 @@ function SessionDeviceChart({ onRemove }) {
             <FaSyncAlt />
           </button>
           <div className="ue-menu-container">
-            <button
-              className="ue-menu-btn"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
+            <button className="ue-menu-btn" onClick={toggleMenu}>
               <BsThreeDotsVertical />
             </button>
-            {menuOpen && (
+            {isMenuOpen && (
               <div
                 className="ue-menu-dropdown"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="ue-menu-item"
-                  onClick={() => setShowModal(true)}
-                >
+                <div className="ue-menu-item" onClick={handleViewClick}>
                   <FaRegEye /> View
                 </div>
                 <div className="ue-menu-item" onClick={handleExport}>
@@ -1168,7 +1566,7 @@ function SessionDeviceChart({ onRemove }) {
                 </div>
                 <div
                   className="ue-menu-item ue-menu-item--danger"
-                  onClick={onRemove}
+                  onClick={handleRemoveClick}
                 >
                   <FaTrash /> Remove
                 </div>
@@ -1256,7 +1654,6 @@ function SessionDeviceChart({ onRemove }) {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div className="ue-modal-overlay" onClick={() => setShowModal(false)}>
           <div className="ue-modal-window" onClick={(e) => e.stopPropagation()}>
@@ -1268,6 +1665,18 @@ function SessionDeviceChart({ onRemove }) {
             </button>
             <div className="session-device-header">
               <h2 className="device-title">Session Device</h2>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "15px" }}
+              >
+                {/* ADD Export Button with proper spacing */}
+                <button
+                  className="modal-export-btn1"
+                  onClick={handleModalExport}
+                  title="Export modal as image"
+                >
+                  <FaFileExport /> Export
+                </button>
+              </div>
             </div>
 
             {deviceData.length > 0 ? (
@@ -1358,9 +1767,10 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 /* System Usage Chart */
-/* System Usage Chart */
-function SystemUsageChart({ onRemove }) {
+function SystemUsageChart({ onRemove, isMenuOpen, onMenuToggle, onMenuClose }) {
   const [selectedRange, setSelectedRange] = useState("Today");
+  const modalContainerRef = useRef();
+  const chartContainerRef = useRef(); // ADD THIS for main chart export
   const [tooltip, setTooltip] = useState({
     visible: false,
     x: 0,
@@ -1369,10 +1779,8 @@ function SystemUsageChart({ onRemove }) {
     value: 0,
   });
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [visible, setVisible] = useState(true);
-  const chartRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [systemData, setSystemData] = useState([]);
 
@@ -1412,45 +1820,70 @@ function SystemUsageChart({ onRemove }) {
 
   const currentData = systemData;
 
-  // Add this useEffect for handling outside clicks
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuOpen && !event.target.closest(".ue-menu-container")) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  // Modify your menu button to stop propagation
   const toggleMenu = (e) => {
     e.stopPropagation();
-    setMenuOpen((open) => !open);
+    onMenuToggle();
   };
 
-  const handleRemove = () => {
-    setVisible(false);
+  const handleViewClick = () => {
+    onMenuClose();
+    setShowModal(true);
   };
 
+  const handleRemoveClick = () => {
+    onMenuClose();
+    onRemove();
+  };
+
+  // FIXED: Main chart export function
   const handleExport = () => {
-    if (!chartRef.current) return;
-    html2canvas(chartRef.current, {
+    onMenuClose();
+    setTimeout(() => {
+      if (!chartContainerRef.current) {
+        console.error("Chart container not found");
+        return;
+      }
+
+      html2canvas(chartContainerRef.current, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+        logging: true,
+      })
+        .then((canvas) => {
+          const link = document.createElement("a");
+          link.download = `system-usage-${selectedRange.toLowerCase()}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        })
+        .catch((error) => {
+          console.error("Export failed:", error);
+        });
+    }, 100);
+  };
+
+  // FIXED: Modal export function
+  const handleModalExport = () => {
+    if (!modalContainerRef.current) {
+      console.error("Modal container not found");
+      return;
+    }
+
+    html2canvas(modalContainerRef.current, {
       backgroundColor: "#fff",
       scale: 2,
       useCORS: true,
-    }).then((canvas) => {
-      const link = document.createElement("a");
-      link.download = "system-usage-chart.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    });
+      logging: true,
+    })
+      .then((canvas) => {
+        const link = document.createElement("a");
+        link.download = `system-usage-modal-${selectedRange.toLowerCase()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      })
+      .catch((error) => {
+        console.error("Modal export failed:", error);
+      });
   };
 
   if (!visible) return null;
@@ -1458,7 +1891,9 @@ function SystemUsageChart({ onRemove }) {
   return (
     <>
       {/* Main chart - using original browser-card class */}
-      <div className="browser-card" ref={chartRef}>
+      <div className="browser-card" ref={chartContainerRef}>
+        {" "}
+        {/* ADDED ref here */}
         <div className="browser-header">
           {/* Only title changed to "System Usage" */}
           <h3>System Usage</h3>
@@ -1468,7 +1903,7 @@ function SystemUsageChart({ onRemove }) {
             style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
             <select
-              className="dropdown"
+              className="BU-modal-dropdown"
               value={selectedRange}
               onChange={(e) => setSelectedRange(e.target.value)}
             >
@@ -1483,39 +1918,45 @@ function SystemUsageChart({ onRemove }) {
               </span>
             )}
 
+            {/* Refresh button */}
+            <button
+              onClick={fetchSystemData}
+              disabled={loading}
+              style={{
+                background: "transparent",
+                color: "#6B7280",
+                border: "1px solid #E5E7EB",
+                padding: "6px 8px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Refresh system data"
+            >
+              <FaSyncAlt className={loading ? "spinning" : ""} />
+            </button>
+
             <div className="ue-menu-container" style={{ position: "relative" }}>
-              <button
-                className="ue-menu-btn"
-                onClick={() => setMenuOpen((open) => !open)}
-              >
+              <button className="ue-menu-btn" onClick={toggleMenu}>
                 <BsThreeDotsVertical />
               </button>
-              {menuOpen && (
+              {isMenuOpen && (
                 <div
                   className="ue-menu-dropdown"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div
-                    className="ue-menu-item"
-                    onClick={() => {
-                      setShowModal(true);
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <div className="ue-menu-item" onClick={handleViewClick}>
                     <FaRegEye /> View
                   </div>
-                  <div
-                    className="ue-menu-item"
-                    onClick={() => {
-                      handleExport();
-                      setMenuOpen(false);
-                    }}
-                  >
+                  <div className="ue-menu-item" onClick={handleExport}>
                     <FaFileExport /> Export
                   </div>
                   <div
                     className="ue-menu-item ue-menu-item--danger"
-                    onClick={onRemove}
+                    onClick={handleRemoveClick}
                   >
                     <FaTrash /> Remove
                   </div>
@@ -1524,7 +1965,6 @@ function SystemUsageChart({ onRemove }) {
             </div>
           </div>
         </div>
-
         {loading ? (
           <div
             style={{ textAlign: "center", padding: "40px", color: "#6B7280" }}
@@ -1622,23 +2062,37 @@ function SystemUsageChart({ onRemove }) {
         </svg>
       )}
 
-      {/* Modal View UI - using original class names */}
       {showModal && (
         <div className="ue-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="ue-modal-window" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="ue-modal-window system-usage-modal"
+            ref={modalContainerRef}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="browser-modal-header">
-              <h3>System Usage</h3>
-
-              <select
-                className="BU-view-dropdown"
-                value={selectedRange}
-                onChange={(e) => setSelectedRange(e.target.value)}
+              <h3>System Usage ({selectedRange})</h3>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                <option value="Today">Today</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-              </select>
+                <select
+                  className="BU-modal-dropdown"
+                  value={selectedRange}
+                  onChange={(e) => setSelectedRange(e.target.value)}
+                >
+                  <option value="Today">Today</option>
+                  <option value="Weekly">Weekly</option>
+                  <option value="Monthly">Monthly</option>
+                </select>
 
+                {/* UPDATE Export Button to use new function */}
+                <button
+                  className="modal-export-btn"
+                  onClick={handleModalExport}
+                  title="Export modal as image"
+                >
+                  <FaFileExport /> Export
+                </button>
+              </div>
               <button
                 className="ue-modal-close"
                 onClick={() => setShowModal(false)}
@@ -1704,116 +2158,230 @@ function SystemUsageChart({ onRemove }) {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </>
   );
 }
 
 /* Users Overview Chart */
-function UsersOverviewChart({ onRemove }) {
+function UsersOverviewChart({
+  onRemove,
+  isMenuOpen,
+  onMenuToggle,
+  onMenuClose,
+}) {
   const chartRef = useRef();
+  const { accessToken } = useAuth();
+  const chartContainerRef = useRef();
   const modalRef = useRef();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [period, setPeriod] = useState("Weekly");
   const [isMounted, setIsMounted] = useState(true);
-
-  const dataSets = {
-    Weekly: [
-      { day: "Sun", value: 550 },
-      { day: "Mon", value: 350 },
-      { day: "Tue", value: 950 },
-      { day: "Wed", value: 450 },
-      { day: "Thu", value: 700 },
-      { day: "Fri", value: 950 },
-      { day: "Sat", value: 850 },
-    ],
-    Monthly: [
-      { day: "Jan", value: 1200 },
-      { day: "Feb", value: 1100 },
-      { day: "Mar", value: 1300 },
-      { day: "Apr", value: 1400 },
-      { day: "May", value: 1250 },
-      { day: "Jun", value: 1600 },
-      { day: "Jul", value: 1500 },
-      { day: "Aug", value: 1700 },
-      { day: "Sep", value: 1450 },
-      { day: "Oct", value: 1800 },
-      { day: "Nov", value: 1550 },
-      { day: "Dec", value: 1650 },
-    ],
-  };
-
-  // Add this useEffect for handling outside clicks
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuOpen && !event.target.closest(".ue-menu-container")) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener("click", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  // Modify your menu button to stop propagation
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setMenuOpen((open) => !open);
-  };
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState([]);
+  const modalContainerRef = useRef(); // ADD THIS for modal export
 
   const handleExport = () => {
-    const svg = chartRef.current;
-    if (!svg) return;
+    onMenuClose();
+    setTimeout(() => {
+      if (!chartContainerRef.current) {
+        console.error("Chart container not found");
+        return;
+      }
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 600;
-    const ctx = canvas.getContext("2d");
+      // Use the actual DOM element instead of querySelector
+      html2canvas(chartContainerRef.current, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+        logging: true, // Enable logging to see what's happening
+      })
+        .then((canvas) => {
+          const link = document.createElement("a");
+          link.download = `users-overview-${period.toLowerCase()}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        })
+        .catch((error) => {
+          console.error("Export failed:", error);
+        });
+    }, 100);
+  };
+  const handleModalExport = () => {
+    onMenuClose();
 
-    const img = new Image();
-    const svgBlob = new Blob([svgData], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
+    setTimeout(() => {
+      const svgElement = document.querySelector(
+        ".ue-modal-window .UO_chart-svg"
+      );
+      if (!svgElement) return;
 
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
+      // Serialize SVG
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], {
+        type: "image/svg+xml;charset=utf-8",
+      });
+      const svgUrl = URL.createObjectURL(svgBlob);
 
-      const png = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.download = "users-overview-chart.png";
-      link.href = png;
-      link.click();
-    };
+      // Create image from SVG
+      const img = new Image();
+      img.onload = function () {
+        // Create canvas
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-    img.src = url;
+        // Set dimensions (slightly larger for better quality)
+        canvas.width = 1000;
+        canvas.height = 600;
+
+        // White background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw SVG
+        ctx.drawImage(img, 50, 50, 900, 500);
+
+        // Add title text
+        ctx.fillStyle = "#111827";
+        ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI"';
+        ctx.fillText(`Users Overview (${period})`, 50, 40);
+
+        // Create download
+        const link = document.createElement("a");
+        link.download = `users-overview-${period.toLowerCase()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+        // Clean up
+        URL.revokeObjectURL(svgUrl);
+      };
+
+      img.src = svgUrl;
+    }, 300);
   };
 
-  const handleRemove = () => {
-    setIsMounted(false);
-    if (onRemove) onRemove();
-    setMenuOpen(false);
+  // NEW: Simplified toggle menu function
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    onMenuToggle();
+  };
+  const handleViewClick = () => {
+    onMenuClose();
+    setShowModal(true);
   };
 
+  const handleRemoveClick = () => {
+    onMenuClose();
+    onRemove();
+  };
+  // Fetch real user registration data
   useEffect(() => {
-    document.body.style.overflow = showModal ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [showModal]);
+    fetchUserData();
+  }, [period]);
 
-  const drawChart = (svgElement) => {
-    const data = dataSets[period];
+  const fetchUserData = async () => {
+    setLoading(true);
+    try {
+      console.log("🔄 Fetching user data for period:", period);
+
+      const response = await fetch(
+        `/api/dashboard/user-registrations?period=${period.toLowerCase()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("📊 API Response Data:", result);
+
+      if (result.success && result.data) {
+        console.log("✅ User data received:", result.data);
+        setUserData(result.data);
+      } else {
+        throw new Error(result.message || "No data received");
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+      // For demo purposes, create sample data if API fails
+      if (period === "Monthly") {
+        setUserData(generateMonthlySampleData());
+      } else {
+        setUserData([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate sample monthly data for 6 months
+  const generateMonthlySampleData = () => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    return months.map((month) => ({
+      month,
+      count: Math.floor(Math.random() * 100) + 20,
+    }));
+  };
+
+  // Transform data based on period - SIMPLIFIED
+  const transformData = (apiData, period) => {
+    if (!apiData || apiData.length === 0) return [];
+
+    if (period === "Weekly") {
+      return apiData.map((item) => ({
+        day: item.day,
+        value: item.count,
+      }));
+    } else {
+      // Monthly data - use month names directly
+      return apiData.map((item) => ({
+        day: item.month, // Using 'day' field for consistent chart usage
+        value: item.count,
+      }));
+    }
+  };
+
+  const currentData = transformData(userData, period);
+
+  // Draw chart - UPDATED FOR CONSISTENT PURPLE COLORS
+  const drawChart = (svgElement, isModal = false) => {
+    const data = currentData;
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();
 
+    // If no data or loading, show message
+    if (data.length === 0) {
+      svg
+        .append("text")
+        .attr("x", 300)
+        .attr("y", 150)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#6b7280")
+        .text(loading ? "Loading user data..." : "No user data available");
+      return;
+    }
+
+    // Fixed dimensions for 6 bars
     const width = 600;
     const height = 300;
     const margin = { top: 30, right: 30, bottom: 40, left: 60 };
@@ -1824,12 +2392,7 @@ function UsersOverviewChart({ onRemove }) {
       .scaleBand()
       .domain(data.map((d) => d.day))
       .range([margin.left, width - margin.right])
-      .padding(0.4);
-
-    const xArea = d3
-      .scaleLinear()
-      .domain([0, data.length - 1])
-      .range([x(data[0].day), x(data[data.length - 1].day) + x.bandwidth()]);
+      .padding(0.3);
 
     const y = d3
       .scaleLinear()
@@ -1837,6 +2400,7 @@ function UsersOverviewChart({ onRemove }) {
       .nice()
       .range([height - margin.bottom, margin.top]);
 
+    // Y-axis
     const yAxis = d3
       .axisLeft(y)
       .ticks(5)
@@ -1864,6 +2428,7 @@ function UsersOverviewChart({ onRemove }) {
           .style("fill", "#6b7280")
       );
 
+    // Gradient for area chart - CONSISTENT PURPLE FOR BOTH WEEKLY AND MONTHLY
     const defs = svg.append("defs");
     const gradient = defs
       .append("linearGradient")
@@ -1876,14 +2441,20 @@ function UsersOverviewChart({ onRemove }) {
     gradient
       .append("stop")
       .attr("offset", "0%")
-      .attr("stop-color", "#c084fc")
+      .attr("stop-color", "#c084fc") // Purple color
       .attr("stop-opacity", 0.6);
 
     gradient
       .append("stop")
       .attr("offset", "100%")
-      .attr("stop-color", "#c084fc")
+      .attr("stop-color", "#c084fc") // Purple color
       .attr("stop-opacity", 0.1);
+
+    // Area chart for both weekly and monthly - CONSISTENT PURPLE
+    const xArea = d3
+      .scaleLinear()
+      .domain([0, data.length - 1])
+      .range([x(data[0].day), x(data[data.length - 1].day) + x.bandwidth()]);
 
     const area = d3
       .area()
@@ -1898,10 +2469,11 @@ function UsersOverviewChart({ onRemove }) {
       .attr("fill", "url(#areaGradient)")
       .attr("d", area)
       .attr("opacity", 0.7)
-      .attr("stroke", "#9333ea")
+      .attr("stroke", "#9333ea") // Consistent purple stroke
       .attr("stroke-width", 1.5)
       .attr("stroke-opacity", 0.3);
 
+    // Bars - CONSISTENT PURPLE FOR BOTH WEEKLY AND MONTHLY
     const bars = svg
       .selectAll(".bar")
       .data(data)
@@ -1912,46 +2484,57 @@ function UsersOverviewChart({ onRemove }) {
       .attr("y", (d) => y(d.value))
       .attr("width", x.bandwidth())
       .attr("height", (d) => y(0) - y(d.value))
-      .attr("fill", "#9333ea")
+      .attr("fill", "#9333ea") // Consistent purple bars
       .attr("rx", 6);
 
+    // Tooltip - consistent styling
     const tooltip = svg
       .append("g")
-      .attr("class", "tooltip")
+      .attr("class", "chart-tooltip")
       .style("pointer-events", "none")
       .style("opacity", 0);
 
     const tooltipBg = tooltip
       .append("rect")
       .attr("class", "tooltip-bg")
-      .attr("rx", 4);
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .style("fill", "rgba(0, 0, 0, 0.85)");
+
     const tooltipText = tooltip
       .append("text")
       .attr("class", "tooltip-text")
       .attr("text-anchor", "middle")
-      .attr("dy", "0.3em");
+      .attr("dy", "0.3em")
+      .style("fill", "white")
+      .style("font-size", "19px")
+      .style("font-weight", "300")
+      .style("font-family", "sans-serif");
 
     bars
       .on("mouseover", function (event, d) {
-        d3.select(this).transition().duration(200).attr("fill", "#b57af0");
+        d3.select(this).transition().duration(200).attr("fill", "#b57af0"); // Consistent purple hover
+
         tooltip.style("opacity", 1);
       })
       .on("mousemove", function (event, d) {
         const [xPos, yPos] = d3.pointer(event);
-        tooltip.attr("transform", `translate(${xPos + 15},${yPos - 25})`);
+        tooltip.attr("transform", `translate(${xPos},${yPos - 35})`);
         tooltipText.text(`${d.value} users`);
+
         const bbox = tooltipText.node().getBBox();
         tooltipBg
-          .attr("x", bbox.x - 8)
-          .attr("y", bbox.y - 4)
-          .attr("width", bbox.width + 16)
-          .attr("height", bbox.height + 8);
+          .attr("x", bbox.x - 10)
+          .attr("y", bbox.y - 8)
+          .attr("width", bbox.width + 20)
+          .attr("height", bbox.height + 16);
       })
       .on("mouseout", function () {
-        d3.select(this).transition().duration(200).attr("fill", "#9333ea");
+        d3.select(this).transition().duration(200).attr("fill", "#9333ea"); // Consistent purple
         tooltip.style("opacity", 0);
       });
 
+    // X-axis labels
     svg
       .selectAll(".day-label")
       .data(data)
@@ -1961,21 +2544,41 @@ function UsersOverviewChart({ onRemove }) {
       .attr("x", (d) => x(d.day) + x.bandwidth() / 2)
       .attr("y", height - 10)
       .attr("text-anchor", "middle")
+      .style("font-size", period === "Weekly" ? "11px" : "12px")
+      .style("fill", "#6b7280")
       .text((d) => d.day);
+
+    // Value labels on bars - CONSISTENT COLOR
+    svg
+      .selectAll(".value-label")
+      .data(data)
+      .enter()
+      .append("text")
+      .attr("class", "value-label")
+      .attr("x", (d) => x(d.day) + x.bandwidth() / 2)
+      .attr("y", (d) => y(d.value) - 8)
+      .attr("text-anchor", "middle")
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .style("fill", "#4C1D95") // Consistent dark purple
+      .text((d) => d.value);
   };
 
   useEffect(() => {
     if (chartRef.current) drawChart(chartRef.current);
-  }, [period]);
+  }, [period, userData, loading]);
 
   useEffect(() => {
-    if (showModal && modalRef.current) drawChart(modalRef.current);
-  }, [showModal, period]);
+    if (showModal && modalRef.current) drawChart(modalRef.current, true);
+  }, [showModal, period, userData, loading]);
 
   if (!isMounted) return null;
 
+  const totalUsers = currentData.reduce((sum, item) => sum + item.value, 0);
+  const isMonthly = period === "Monthly";
+
   return (
-    <div className="UO_chart-container">
+    <div className="UO_chart-container" ref={chartContainerRef}>
       <div className="UO_chart-header">
         <h3 className="UO_chart-title">Users Overview</h3>
         <div
@@ -1990,39 +2593,60 @@ function UsersOverviewChart({ onRemove }) {
             <option value="Weekly">Weekly</option>
             <option value="Monthly">Monthly</option>
           </select>
+
+          {loading && (
+            <span style={{ color: "#6B7280", fontSize: "14px" }}>
+              Loading...
+            </span>
+          )}
+          {/* ADD REFRESH BUTTON HERE */}
+          <button
+            onClick={fetchUserData}
+            disabled={loading}
+            style={{
+              background: "transparent",
+              color: "#6B7280",
+              border: "1px solid #E5E7EB",
+              padding: "6px 8px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Refresh user data"
+          >
+            <FaSyncAlt className={loading ? "spinning" : ""} />
+          </button>
+
           <div className="ue-menu-container" style={{ position: "relative" }}>
             <button
               className="ue-menu-btn"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={toggleMenu} // UPDATED: Use new toggle function
             >
               <BsThreeDotsVertical />
             </button>
-            {menuOpen && (
+            {isMenuOpen && ( // UPDATED: Use prop instead of local state
               <div
                 className="ue-menu-dropdown"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div
                   className="ue-menu-item"
-                  onClick={() => {
-                    setShowModal(true);
-                    setMenuOpen(false);
-                  }}
+                  onClick={handleViewClick} // UPDATED: Use new handler
                 >
                   <FaRegEye /> View
                 </div>
                 <div
                   className="ue-menu-item"
-                  onClick={() => {
-                    handleExport();
-                    setMenuOpen(false);
-                  }}
+                  onClick={handleExport} // UPDATED: Use export function directly
                 >
                   <FaFileExport /> Export
                 </div>
                 <div
                   className="ue-menu-item ue-menu-item--danger"
-                  onClick={onRemove}
+                  onClick={handleRemoveClick} // UPDATED: Use new handler
                 >
                   <FaTrash /> Remove
                 </div>
@@ -2032,6 +2656,23 @@ function UsersOverviewChart({ onRemove }) {
         </div>
       </div>
 
+      {/* Data Summary */}
+      {currentData.length > 0 && (
+        <div className="data-summary">
+          <div className="summary-item">
+            <span className="summary-label">Total Registrations:</span>
+            <span className="summary-value">{totalUsers} users</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Time Period:</span>
+            <span className="summary-value">
+              {period === "Weekly" ? "Last 7 days" : "Last 6 months"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Chart Container */}
       <div className="chart-wrapper">
         <svg
           ref={chartRef}
@@ -2041,6 +2682,7 @@ function UsersOverviewChart({ onRemove }) {
         />
       </div>
 
+      {/* Modal - keep this part unchanged */}
       {showModal && (
         <div
           className="ue-modal-overlay"
@@ -2060,6 +2702,7 @@ function UsersOverviewChart({ onRemove }) {
         >
           <div
             className="ue-modal-window"
+            ref={modalContainerRef}
             onClick={(e) => e.stopPropagation()}
             style={{
               background: "#fff",
@@ -2067,9 +2710,9 @@ function UsersOverviewChart({ onRemove }) {
               borderRadius: "16px",
               maxWidth: "900px",
               width: "90%",
-              maxHeight: "90vh",
-              overflowY: "auto",
+              height: "90%",
               position: "relative",
+              margin: "auto",
             }}
           >
             <div className="UO_chart-header">
@@ -2077,7 +2720,7 @@ function UsersOverviewChart({ onRemove }) {
               <div
                 className="UO-viewUI_dropdown-container"
                 style={{
-                  display: "relative",
+                  display: "flex",
                   alignItems: "center",
                   gap: "10px",
                 }}
@@ -2090,6 +2733,21 @@ function UsersOverviewChart({ onRemove }) {
                   <option value="Weekly">Weekly</option>
                   <option value="Monthly">Monthly</option>
                 </select>
+
+                {loading && (
+                  <span style={{ color: "#6B7280", fontSize: "14px" }}>
+                    Loading...
+                  </span>
+                )}
+
+                {/* ADD Export Button */}
+                <button
+                  className="modal-export-btn"
+                  onClick={handleModalExport}
+                  title="Export modal as image"
+                >
+                  <FaFileExport /> Export
+                </button>
               </div>
               <button
                 className="ue-modal-close"
@@ -2098,15 +2756,678 @@ function UsersOverviewChart({ onRemove }) {
                 ×
               </button>
             </div>
-            <svg
-              ref={modalRef}
-              className="UO_chart-svg"
-              viewBox="0 0 600 300"
-              preserveAspectRatio="xMidYMin meet"
-            />
+
+            <div className="chart-wrapper">
+              <svg
+                ref={modalRef}
+                className="UO_chart-svg"
+                viewBox="0 0 600 300"
+                preserveAspectRatio="xMidYMin meet"
+              />
+            </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+// Add this new chart component to your ViewAnalytics.jsx file
+function BusinessStatusChart({
+  onRemove,
+  isMenuOpen,
+  onMenuToggle,
+  onMenuClose,
+}) {
+  const chartRef = useRef();
+  const modalRef = useRef();
+  const chartContainerRef = useRef();
+  const [showModal, setShowModal] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState("week"); // "week" or "month"
+  const [approvalData, setApprovalData] = useState([]);
+
+  // Fetch approved businesses data
+  const fetchApprovalData = async () => {
+    setLoading(true);
+    try {
+      console.log(`🔄 Fetching approved businesses for ${timeRange}...`);
+
+      const response = await authFetch(`/api/businesses/approved`);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("✅ Approved businesses data:", result);
+
+        if (result.success && result.data) {
+          // Transform the data based on time range
+          const transformedData = transformApprovalData(result.data, timeRange);
+          setApprovalData(transformedData);
+        } else if (Array.isArray(result)) {
+          // If the API returns array directly
+          const transformedData = transformApprovalData(result, timeRange);
+          setApprovalData(transformedData);
+        } else {
+          console.warn("⚠️ Unexpected data format:", result);
+          // Use mock data as fallback
+          setApprovalData(generateMockData(timeRange));
+        }
+      } else {
+        console.warn(
+          "⚠️ Failed to fetch approved businesses:",
+          response.status
+        );
+        // Use mock data as fallback
+        setApprovalData(generateMockData(timeRange));
+      }
+    } catch (error) {
+      console.error("❌ Error fetching approval data:", error);
+      // Use mock data as fallback
+      setApprovalData(generateMockData(timeRange));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Transform API data to chart format
+  const transformApprovalData = (apiData, range) => {
+    console.log("🔄 TRANSFORMING DATA for range:", range);
+    console.log("Raw API data:", apiData);
+    // If no data, return empty
+    if (!apiData || apiData.length === 0) {
+      return generateMockData(range);
+    }
+
+    // Extract dates from approved businesses
+    const businesses = Array.isArray(apiData) ? apiData : apiData.data || [];
+    console.log("Businesses to process:", businesses.length);
+
+    // Debug each business date
+    businesses.forEach((business, index) => {
+      const date = new Date(
+        business.approvedAt || business.updatedAt || business.createdAt
+      );
+      console.log(`Business ${index}:`, {
+        approvedAt: business.approvedAt,
+        updatedAt: business.updatedAt,
+        createdAt: business.createdAt,
+        parsedDate: date,
+        isValid: !isNaN(date.getTime()),
+      });
+    });
+
+    // Get approval dates (use createdAt, approvedAt, or updatedAt)
+    const dates = businesses
+      .map((business) => {
+        return new Date(
+          business.approvedAt || business.updatedAt || business.createdAt
+        );
+      })
+      .filter((date) => !isNaN(date.getTime()));
+
+    if (dates.length === 0) {
+      return generateMockData(range);
+    }
+
+    if (range === "week") {
+      return groupByWeek(dates);
+    } else {
+      return groupByMonth(dates);
+    }
+  };
+
+  // Group dates by week
+  const groupByWeek = (dates) => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const result = days.map((day) => ({ day, count: 0 }));
+
+    dates.forEach((date) => {
+      if (date >= weekAgo) {
+        const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        result[dayIndex].count++;
+      }
+    });
+
+    return result;
+  };
+
+  // Group dates by month
+  const groupByMonth = (dates) => {
+    const now = new Date();
+    console.log("🕐 CURRENT DATE:", now);
+    console.log(
+      "🕐 Current year:",
+      now.getFullYear(),
+      "Current month:",
+      now.getMonth()
+    );
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    console.log("📅 Six months ago:", sixMonthsAgo);
+
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const result = [];
+
+    // Create last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      result.push({
+        month: monthNames[date.getMonth()],
+        count: 0,
+        year: date.getFullYear(),
+        monthIndex: date.getMonth(),
+      });
+    }
+
+    console.log(
+      "📊 Expected months in result:",
+      result.map((r) => `${r.month} ${r.year}`)
+    );
+
+    // Debug each date to see where it gets placed
+    dates.forEach((date, index) => {
+      const monthIndex = date.getMonth();
+      const year = date.getFullYear();
+      const monthName = monthNames[monthIndex];
+
+      console.log(
+        `📅 Processing date ${index}: ${date} (${monthName} ${year})`
+      );
+
+      const resultIndex = result.findIndex((item) => {
+        const matches = item.monthIndex === monthIndex && item.year === year;
+        console.log(
+          `   Comparing to: ${item.month} ${item.year} -> ${matches}`
+        );
+        return matches;
+      });
+
+      if (resultIndex !== -1) {
+        result[resultIndex].count++;
+        console.log(`   ✅ ADDED to ${result[resultIndex].month}`);
+      } else {
+        console.log(`   ❌ NOT IN RANGE: ${monthName} ${year}`);
+      }
+    });
+
+    console.log("📈 Final monthly result:", result);
+    return result;
+  };
+
+  console.log("Approval Data:", approvalData);
+  console.log(
+    "Tuesday data:",
+    approvalData.find((d) => d.day === "Tue")
+  );
+
+  const drawChart = (svgNode) => {
+    const svg = d3.select(svgNode);
+    svg.selectAll("*").remove();
+
+    const width = 300;
+    const height = 200;
+    const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+    // Empty state
+    if (approvalData.length === 0) {
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#6b7280")
+        .style("font-size", "14px")
+        .text(
+          loading ? "Loading approval data..." : "No approval data available"
+        );
+      return;
+    }
+
+    const x = d3
+      .scaleBand()
+      .domain(approvalData.map((d) => (timeRange === "week" ? d.day : d.month)))
+      .range([margin.left, width - margin.right])
+      .padding(0.3);
+
+    // FIXED: Consistent y-scale domain
+    const maxValue = d3.max(approvalData, (d) => d.count);
+    const consistentMax = Math.max(maxValue * 1.15, 10); // Minimum of 10, or 15% above max
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, consistentMax])
+      .range([height - margin.bottom, margin.top]);
+
+    // Create tooltip group FIRST - consistent with other charts
+    const tooltip = svg
+      .append("g")
+      .attr("class", "chart-tooltip")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
+    const tooltipRect = tooltip
+      .append("rect")
+      .attr("class", "tooltip-bg")
+      .attr("rx", 6)
+      .attr("ry", 6)
+      .style("fill", "rgba(0, 0, 0, 0.85)");
+
+    const tooltipText = tooltip
+      .append("text")
+      .attr("class", "tooltip-text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.3em")
+      .style("fill", "white")
+      .style("font-size", "11px")
+      .style("font-weight", "300")
+      .style("font-family", "sans-serif");
+
+    // Draw bars
+    const bars = svg
+      .selectAll(".bar")
+      .data(approvalData)
+      .join("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => x(timeRange === "week" ? d.day : d.month))
+      .attr("y", (d) => y(d.count))
+      .attr("width", x.bandwidth())
+      .attr("height", (d) => y(0) - y(d.count))
+      .attr("fill", "#10B981")
+      .attr("rx", 4)
+      .on("mouseover", function (event, d) {
+        d3.select(this).transition().duration(200).attr("fill", "#34D399");
+
+        const tooltipContent = `${d.count} approval${d.count !== 1 ? "s" : ""}`;
+
+        const [xPos, yPos] = d3.pointer(event);
+        tooltipText.text(tooltipContent);
+
+        const bbox = tooltipText.node().getBBox();
+        tooltipRect
+          .attr("x", bbox.x - 10)
+          .attr("y", bbox.y - 8)
+          .attr("width", bbox.width + 20)
+          .attr("height", bbox.height + 16);
+
+        tooltip
+          .raise()
+          .attr("transform", `translate(${xPos},${yPos - 35})`)
+          .style("opacity", 1);
+      })
+      .on("mousemove", function (event, d) {
+        const [xPos, yPos] = d3.pointer(event);
+        tooltip.raise().attr("transform", `translate(${xPos},${yPos - 35})`);
+      })
+      .on("mouseout", function () {
+        d3.select(this).transition().duration(200).attr("fill", "#10B981");
+        tooltip.style("opacity", 0);
+      });
+
+    // Add count labels on bars
+    svg
+      .selectAll(".bar-label")
+      .data(approvalData)
+      .join("text")
+      .attr("class", "bar-label")
+      .attr(
+        "x",
+        (d) => x(timeRange === "week" ? d.day : d.month) + x.bandwidth() / 2
+      )
+      .attr("y", (d) => y(d.count) - 5)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#374151")
+      .style("font-size", "12px")
+      .style("font-weight", "bold")
+      .text((d) => d.count);
+
+    // Add time labels
+    svg
+      .selectAll(".time-label")
+      .data(approvalData)
+      .join("text")
+      .attr("class", "time-label")
+      .attr(
+        "x",
+        (d) => x(timeRange === "week" ? d.day : d.month) + x.bandwidth() / 2
+      )
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#6b7280")
+      .style("font-size", "11px")
+      .text((d) => (timeRange === "week" ? d.day : d.month));
+  };
+
+  // Business Status Chart - Add export functions
+  const handleExport = () => {
+    onMenuClose();
+    setTimeout(() => {
+      if (!chartContainerRef.current) return;
+      html2canvas(chartContainerRef.current, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = `business-approvals-${timeRange}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }, 100);
+  };
+
+  const handleModalExport = () => {
+    const modalElement = document.querySelector(".ue-modal-window");
+    if (modalElement) {
+      html2canvas(modalElement, {
+        backgroundColor: "#fff",
+        scale: 2,
+        useCORS: true,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = `business-approvals-modal-${timeRange}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+  };
+
+  // NEW: Menu toggle function
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    onMenuToggle();
+  };
+
+  // NEW: Menu item handlers
+  const handleViewClick = () => {
+    onMenuClose();
+    setShowModal(true);
+  };
+
+  const handleRemoveClick = () => {
+    onMenuClose();
+    onRemove();
+  };
+  // Fetch data on mount and when timeRange changes
+  useEffect(() => {
+    fetchApprovalData();
+  }, [timeRange]);
+
+  // Draw chart when data changes
+  useEffect(() => {
+    if (chartRef.current) drawChart(chartRef.current);
+  }, [approvalData, loading, timeRange]);
+
+  useEffect(() => {
+    if (showModal && modalRef.current) drawChart(modalRef.current);
+  }, [showModal, approvalData, loading, timeRange]);
+
+  if (!visible) return null;
+
+  const totalApprovals = approvalData.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
+
+  return (
+    <>
+      <div className="business-chart-wrapper" ref={chartContainerRef}>
+        <div className="bp-header">
+          <div>
+            <h1 className="bp-title">Business Approvals</h1>
+            <p className="bp-total">
+              {timeRange === "week"
+                ? "Weekly Approval Trends"
+                : "Monthly Approval Trends"}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <select
+              className="custom-select"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+            </select>
+
+            {loading && (
+              <span style={{ color: "#6B7280", fontSize: "14px" }}>
+                Loading...
+              </span>
+            )}
+
+            <button
+              onClick={fetchApprovalData}
+              disabled={loading}
+              style={{
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #E2E7EB",
+                backgroundColor: "white",
+                cursor: "pointer",
+              }}
+              title="Refresh data"
+            >
+              <FaSyncAlt className={loading ? "spinning" : ""} />
+            </button>
+
+            <div className="ue-menu-container">
+              <button className="ue-menu-btn" onClick={toggleMenu}>
+                <BsThreeDotsVertical />
+              </button>
+              {isMenuOpen && (
+                <div
+                  className="ue-menu-dropdown"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="ue-menu-item" onClick={handleViewClick}>
+                    <FaRegEye /> View
+                  </div>
+                  <div className="ue-menu-item" onClick={handleExport}>
+                    <FaFileExport /> Export
+                  </div>
+                  <div
+                    className="ue-menu-item ue-menu-item--danger"
+                    onClick={handleRemoveClick}
+                  >
+                    <FaTrash /> Remove
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="chart-and-stats">
+          <div className="BPchart-container">
+            <svg
+              ref={chartRef}
+              className="business-status-svg"
+              viewBox="0 0 300 200"
+              preserveAspectRatio="xMidYMin meet"
+            />
+          </div>
+
+          <div className="stats">
+            <div className="stat-box">
+              <div className="stat-icon">📈</div>
+              <div className="stat-text">
+                <div className="value">{totalApprovals}</div>
+                <div className="label">Total Approved</div>
+              </div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-icon">⚡</div>
+              <div className="stat-text">
+                <div className="value">
+                  {Math.max(...approvalData.map((d) => d.count))}
+                </div>
+                <div className="label">Peak Approvals</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="ue-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="ue-modal-window" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="ue-modal-close"
+              onClick={() => setShowModal(false)}
+            >
+              ×
+            </button>
+            <div className="bp-header">
+              <div>
+                <h1 className="bp-title">Business Approvals</h1>
+                <p className="bp-total">
+                  {timeRange === "week"
+                    ? "Weekly Approval Trends"
+                    : "Monthly Approval Trends"}
+                </p>
+              </div>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="modal-period-select"
+              >
+                <option value="week">Weekly</option>
+                <option value="month">Monthly</option>
+              </select>
+              {/* ADD Export Button */}
+              <button
+                className="modal-export-btn2"
+                onClick={handleModalExport}
+                title="Export modal as image"
+              >
+                <FaFileExport /> Export
+              </button>
+            </div>
+            <div className="chart-and-stats modal-expanded">
+              <div className="BPchart-container">
+                <svg
+                  ref={modalRef}
+                  className="business-status-svg"
+                  viewBox="0 0 300 200"
+                  preserveAspectRatio="xMidYMin meet"
+                />
+              </div>
+
+              <div className="stats">
+                <div className="stat-box">
+                  <div className="stat-icon">📈</div>
+                  <div className="stat-text">
+                    <div className="value">{totalApprovals}</div>
+                    <div className="label">Total Approved</div>
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-icon">⚡</div>
+                  <div className="stat-text">
+                    <div className="value">
+                      {Math.max(...approvalData.map((d) => d.count))}
+                    </div>
+                    <div className="label">Peak Approvals</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed breakdown in modal */}
+            <div className="approval-breakdown">
+              <h4>Detailed Breakdown</h4>
+              <div className="breakdown-list">
+                {approvalData.map((item, index) => (
+                  <div key={index} className="breakdown-item">
+                    <span className="period">
+                      {timeRange === "week" ? item.day : item.month}
+                    </span>
+                    <span className="count">{item.count} approvals</span>
+                    <span className="percentage">
+                      ({Math.round((item.count / totalApprovals) * 100)}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .approval-breakdown {
+          margin-top: 20px;
+          padding: 15px;
+          background: #f8fafc;
+          border-radius: 8px;
+        }
+
+        .approval-breakdown h4 {
+          margin: 0 0 12px 0;
+          color: #1e293b;
+        }
+
+        .breakdown-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .breakdown-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+        }
+
+        .period {
+          font-weight: 500;
+          color: #374151;
+        }
+
+        .count {
+          color: #10b981;
+          font-weight: 500;
+        }
+
+        .percentage {
+          color: #6b7280;
+          font-size: 12px;
+        }
+      `}</style>
+    </>
   );
 }
