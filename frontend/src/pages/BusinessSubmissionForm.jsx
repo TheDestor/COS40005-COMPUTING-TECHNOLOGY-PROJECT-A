@@ -327,17 +327,31 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
       );
     });
 
-  const handleTakeCurrentLocation = async () => {
-    try {
-      const pos = await getBestLocationFix({ desiredAccuracyMeters: 50, maxWaitMs: 15000 });
-      const { latitude, longitude } = pos.coords;
-      const value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-      setCoordinatesInput(value);
-      setFormData(prev => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
-    } catch (e) {
-      console.warn('Location error:', e?.message);
-    }
-  };
+    const handleTakeCurrentLocation = async () => {
+      try {
+        const pos = await getBestLocationFix({ desiredAccuracyMeters: 50, maxWaitMs: 15000 });
+        const { latitude, longitude } = pos.coords;
+        const value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+        setCoordinatesInput(value);
+        setFormData(prev => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
+        
+        // Success toast (optional)
+        toast.success('Location retrieved successfully!');
+      } catch (e) {
+        console.warn('Location error:', e?.message);
+        
+        // User-facing warning toast
+        if (e?.message?.includes('denied') || e?.code === 1) {
+          toast.error('Location access denied. Please enter coordinates manually or enable location permissions.');
+        } else if (e?.code === 2) {
+          toast.error('Location unavailable. Please enter coordinates manually.');
+        } else if (e?.code === 3) {
+          toast.error('Location request timed out. Please try again or enter coordinates manually.');
+        } else {
+          toast.warning('Could not retrieve location. Please enter coordinates manually.');
+        }
+      }
+    };
 
   // Validate the current step
   const validateStep = (step) => {
