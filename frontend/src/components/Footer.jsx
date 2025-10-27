@@ -123,7 +123,7 @@ const Footer = () => {
             <h4>Explore</h4>
             <ul>
               <li><a href="/">Map</a></li>
-              <li><a href="/events">Events</a></li>
+              <li><a href="/event">Events</a></li>
               <li><a href="/attractions">Popular Attractions</a></li>
             </ul>
           </div>
