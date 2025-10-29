@@ -695,7 +695,7 @@ const ViewInquiry = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="action-icons">
+            <div className="action-icons-vi">
               <button 
                 className="refresh-btn"
                 onClick={handleRefresh}
@@ -849,7 +849,7 @@ const ViewInquiry = () => {
                         <div className="inquiry-subject">{inquiry.subject}</div>
                         <p className="inquiry-message-preview">{inquiry.message}</p>
                         <div className="inquiry-status">
-                          <span className={`status-badge status-badge-${inquiry.status.toLowerCase().replace(' ', '')}`}>
+                          <span className={`status-badge-vi status-badge-vi-${inquiry.status.toLowerCase().replace(' ', '')}`}>
                             {inquiry.status}
                           </span>
                           <span className={`priority-badge priority-badge-${inquiry.priority}`}>
@@ -1003,7 +1003,7 @@ const ViewInquiry = () => {
                     </div>
                     <div className="meta-item">
                       <span className="meta-label">Status:</span>
-                      <span className={`status-badge status-badge-${selectedInquiry.status.toLowerCase().replace(' ', '')}`}>
+                      <span className={`status-badge-vi status-badge-vi-${selectedInquiry.status.toLowerCase().replace(' ', '')}`}>
                         {selectedInquiry.status}
                       </span>
                     </div>
@@ -1292,7 +1292,7 @@ const ViewInquiry = () => {
           padding: 2px 5px;
         }
 
-        .action-icons {
+        .action-icons-vi {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -1496,7 +1496,7 @@ const ViewInquiry = () => {
             left: -280px;
           }
 
-          .action-icons {
+          .action-icons-vi {
             flex-direction: row;
             gap: 4px;
           }
@@ -1560,12 +1560,13 @@ const ViewInquiry = () => {
             z-index: 1;
           }
 
-          .action-icons {
+          .action-icons-vi {
             display: flex;
             flex-direction: row;
             align-items: center;
             gap: 4px;
             flex-shrink: 0;
+            margin-left: auto;
           }
 
           .refresh-btn {

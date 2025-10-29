@@ -85,17 +85,6 @@
   }
 }
 
-.mr-search-bar:hover {
-  border-color: #ced4da;
-}
-
-.mr-search-bar input {
-  border: none;
-  background: transparent;
-  flex: 1;
-  font-size: 14px;
-  color: #495057;
-}
 
 .add-location-button {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
@@ -250,6 +239,10 @@
   display: block !important;
 }
 
+.react-datepicker__input-container input:focus {
+  box-shadow: none;
+}
+
 .react-datepicker {
   font-family: inherit;
   border: 1px solid #ddd;
@@ -266,7 +259,7 @@
 
 .react-datepicker__current-month {
   font-weight: 600;
-  color: #333;
+  color: white;
   margin-bottom: 5px;
 }
 
@@ -281,7 +274,8 @@
   margin: 0;
   text-align: center;
   font-weight: 600;
-  color: #555;
+  color: white;
+  margin-top: 20px;
 }
 
 .react-datepicker__month {
@@ -536,9 +530,93 @@
   margin-top: 20px;
 }
 
+/* Card layout for very small screens (hidden by default) */
+.MLcards-container {
+  display: none;
+  background: none;
+}
+
+.MLcard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 40px 12px 14px 12px; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.MLcard-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.MLcard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.MLcard-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.MLcard-icon {
+  color: #374151;
+  font-size: 16px;
+  line-height: 1;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.MLcard-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.MLcard-label {
+  font-size: 12px;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.MLcard-value {
+  font-size: 13px;
+  color: #111827;
+  word-break: break-word;
+}
+
+.MLcard-status {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+}
+
+@media (max-width: 400px) {
+  .MLstatus-badge {
+    font-size: 13px;
+  }
+
+  .date-picker-wrapper {
+    flex-direction: column;
+  }
+
+  .date-icon {
+    top: 10px;
+  }
+}
+
 .search-bar {
   width: 100%;
-  padding: 12px 16px;
+  /* padding: 12px 16px; */
+  margin: 0 auto;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 14px;
@@ -559,40 +637,43 @@
 /* Most advanced - completely responsive */
 .MLtable-header {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 0.8fr));
-  padding: 12px 20px;
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #1e40af;
+  grid-template-columns: 
+    minmax(80px, 0.8fr)    /* Location ID - flexible but minimum 80px */
+    minmax(100px, 1.2fr)   /* Name - takes more space, minimum 100px */
+    minmax(70px, 0.9fr)    /* Category - flexible, minimum 70px */
+    minmax(70px, 0.9fr)    /* Type - flexible, minimum 70px */
+    minmax(70px, 0.9fr)    /* Division - flexible, minimum 70px */
+    minmax(70px, 0.8fr)    /* Status - flexible, minimum 70px */
+    minmax(90px, 1fr)      /* Last Updated - flexible, minimum 90px */
+    minmax(120px, 1.1fr);  /* Action - flexible, minimum 120px */
+  gap: clamp(8px, 1.5vw, 16px); /* Responsive gap: 8px to 16px */
+  padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 24px); /* Responsive padding */
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 2px solid #e9ecef;
-  gap: 1vw;
+  font-weight: 600;
+  color: #374151;
   align-items: center;
-  width: 100%;
+  font-size: clamp(12px, 1.2vw, 16px); /* Responsive font size */
 }
 
+/* Responsive Table Rows - Match Header */
 .MLtable-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 0.8fr));
-  gap: 1vw;
-  padding: 15px 20px;
+  grid-template-columns: 
+    minmax(80px, 0.8fr)    /* Location ID */
+    minmax(100px, 1.2fr)   /* Name */
+    minmax(70px, 0.9fr)    /* Category */
+    minmax(70px, 0.9fr)    /* Type */
+    minmax(70px, 0.9fr)    /* Division */
+    minmax(70px, 0.8fr)    /* Status */
+    minmax(90px, 1fr)      /* Last Updated */
+    minmax(120px, 1.1fr);  /* Action */
+  gap: clamp(8px, 1.5vw, 16px); /* Same responsive gap as header */
+  padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 24px); /* Same responsive padding */
   border-bottom: 1px solid #e9ecef;
   align-items: center;
-  width: 100%;
+  transition: all 0.2s ease;
 }
-
-/* Ensure specific column behavior */
-.table-cell:nth-child(1) {
-  min-width: 80px;
-} /* Location ID */
-.table-cell:nth-child(2) {
-  min-width: 120px;
-} /* Name */
-.table-cell:nth-child(6) {
-  min-width: 80px;
-} /* Status */
-.table-cell:nth-child(8) {
-  min-width: 150px;
-} /* Action */
 
 .MLtable-row:hover {
   background-color: #f1f5f9; /* Light hover color */
@@ -606,9 +687,9 @@
   color: black;
   word-break: break-word;
   min-height: 20px;
-  overflow: hidden;
+  /* overflow: hidden; */
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: wrap;
   min-width: 0; /* Allows text truncation */
 }
 
@@ -644,7 +725,7 @@
 /* Status Badges */
 .MLstatus-badge {
   padding: 4px 12px;
-  border-radius: 12px;
+  border-radius: 99px;
   display: inline-block;
   font-weight: 700;
 }
@@ -741,21 +822,6 @@
   color: #721c24;
 }
 
-/* === Modal Overlay === */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  /* dimmed background */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 /* === Modal Content === */
 .MLmodal-content {
   background-color: #faf6fa;
@@ -763,7 +829,7 @@
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   width: 1200px;
-  max-height: 100vh;
+  max-height: 92vh;
   text-align: center;
   z-index: 1000;
   overflow-y: auto;
@@ -835,7 +901,7 @@
 }
 
 /* === Modal Buttons === */
-.modal-actions {
+.modal-actions-ml {
   display: flex;
   justify-content: space-between;
   margin-top: 24px;
@@ -878,35 +944,31 @@
 .edit-button,
 .delete-button {
   margin-right: 8px;
-  min-width: 60px;
-  padding: 6px 12px;
-  font-size: 13px;
+  /* min-width: 60px; */
+  /* padding: 6px 12px; */
+  font-size: 14px;
   border: none;
-  color: white;
-  border-radius: 999px;
+  color: #333;
+  /* border-radius: 999px; */
   white-space: nowrap;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  background: #e5e7eb;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
 }
 
-.edit-button {
-  background: linear-gradient(90deg, #b5b5b5, #9e9e9e);
-}
-
-.delete-button {
-  background: linear-gradient(90deg, #ff4d4f, #ff1723);
-}
 /* Button hover effects */
 .edit-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(90deg, #b5b5b5, #9e9e9e);
 }
 
 .delete-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(90deg, #ff4d4f, #ff1723);
 }
 
 .form-select {
@@ -928,7 +990,7 @@
   border: 1px solid #ff4444 !important;
 }
 
-.error-message {
+.error-message-ml {
   color: #ff4444;
   font-size: 12px;
   margin-top: -10px;
@@ -1019,7 +1081,7 @@
     gap: 8px;
     padding: 16px;
     background: #fff;
-    margin-bottom: 16px;
+    /* margin-bottom: 16px; */
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
@@ -1056,7 +1118,7 @@
   .delete-button {
     font-size: 12px;
     padding: 6px 10px;
-    min-width: 90px;
+    /* min-width: 90px; */
   }
 
   .filter-dropdown-ml,
@@ -1067,20 +1129,21 @@
 }
 
 /* Image Upload Styles */
-.image-upload-container {
+.image-upload-container-ml {
   margin-bottom: 15px;
+  padding: 12px !important;
 }
 
-.image-upload-area {
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 20px;
+.image-upload-area-ml {
+  /* border: 2px dashed #ddd;
+  border-radius: 8px; */
+  /* padding: 12px; */
   text-align: center;
   transition: all 0.3s ease;
   position: relative;
 }
 
-.image-upload-area:hover {
+.image-upload-area-ml:hover {
   border-color: #4a6cf7;
 }
 
@@ -1155,7 +1218,7 @@
 }
 
 /* Drag and drop styles */
-.image-upload-area.drag-over {
+.image-upload-area-ml.drag-over {
   border-color: #4a6cf7;
   background-color: rgba(74, 108, 247, 0.05);
 }
@@ -1223,6 +1286,7 @@
 
 .confirmation-icon {
   font-size: 24px;
+  color: #333;
 }
 
 .confirmation-icon.delete-icon {
@@ -1326,7 +1390,7 @@
 }
 
 /* Modal Overlay */
-.modal-overlay {
+.modal-overlay-ml {
   position: fixed;
   top: 0;
   left: 0;
@@ -1336,9 +1400,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10002;
   overflow: visible; /* Change from overflow-y: auto to visible */
   backdrop-filter: blur(2px);
+  padding: 10px;
 }
 
 /* Multiple Locations Modal Styles */
@@ -1710,7 +1775,7 @@
 .location-counter {
   font-weight: 600;
   color: #8b5cf6;
-  font-size: 14px;
+  font-size: 16px;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1819,7 +1884,7 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
 }
 
-.error-message {
+.error-message-ml {
   color: #ef4444;
   font-size: 12px;
   margin-top: 8px;
@@ -1827,7 +1892,7 @@
 }
 
 /* Image Upload Styling Updates */
-.image-upload-container {
+.image-upload-container-ml {
   border: 2px dashed #e2e8f0;
   border-radius: 16px;
   padding: 32px;
@@ -1841,13 +1906,13 @@
   min-height: 160px;
 }
 
-.image-upload-container:hover {
+.image-upload-container-ml:hover {
   border-color: #8b5cf6;
   background-color: rgba(139, 92, 246, 0.05);
   transform: scale(1.01);
 }
 
-.image-upload-area {
+.image-upload-area-ml {
   width: 100%;
   height: 100%;
   display: flex;
@@ -1920,6 +1985,66 @@
     padding: 12px 14px;
     font-size: 14px;
   }
+
+  .side-navigation-arrows {
+    position: relative !important;
+  }
+
+  .modal-actions-ml {
+    flex-direction: column;
+    display: flex;
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .cancel-button {
+    margin-right: 0;
+    font-size: 12px;
+  }
+
+  .search-bar {
+    padding: 4px 8px;
+  }
+
+  .save-button {
+    font-size: 12px;
+  }
+
+  .confirm-btn.cancel-btn, .confirm-btn.save-btn {
+    font-size: 13px;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .MLmodal-content h3 {
+    font-size: 16px;
+  }
+
+  .header-controls-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .location-counter {
+    position: static;
+    transform: none;
+  }
+
+  .add-another-btn {
+    margin-left: 0;
+    font-size: 13px;
+  }
+
+  .multiple-locations-modal {
+    padding: 20px 10px;
+  }
+
+  .confirmation-header h3, .confirmation-icon{
+    font-size: 18px;
+  }
 }
 
 /* Mobile (480px - 575px) */
@@ -1937,11 +2062,6 @@
   .dashboard-actions {
     width: 100%;
     justify-content: center;
-  }
-
-  .search-bar {
-    width: 100%;
-    max-width: 300px;
   }
 
   .filters-actions-row {
@@ -2029,6 +2149,21 @@
     transform-origin: top center !important;
   }
 }
+
+/* General extra-small screens: switch to card layout */
+@media (max-width: 400px) {
+  .MLtable-header,
+  .MLtable-row {
+    display: none !important;
+  }
+
+  .MLcards-container {
+    display: grid;
+    gap: 12px;
+  }
+
+
+}
 /* Extra Small Mobile (400px width and below) */
 @media (max-width: 400px) and (max-height: 472px) {
   /* Dashboard Header - Improve visibility */
@@ -2069,48 +2204,11 @@
     align-items: center;
   }
 
-  /* Search Bar - Enhanced visibility */
-  .search-bar {
-    width: 100%;
-    max-width: 100%;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
-
-  .search-bar:focus-within {
-    border-color: #8b5cf6;
-    background: white;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
-  }
-
   .search-icon {
     font-size: 14px;
     color: #6b7280;
     flex-shrink: 0;
     min-width: 14px;
-  }
-
-  .search-bar input {
-    font-size: 14px;
-    padding: 6px 0;
-    border: none;
-    background: transparent;
-    color: #495057;
-    width: 100%;
-    outline: none;
-    font-weight: 500;
-  }
-
-  .search-bar input::placeholder {
-    color: #9ca3af;
-    font-weight: 400;
   }
 
   .action-icons {
@@ -2319,10 +2417,6 @@
     gap: 16px;
   }
 
-  /* Search bar adjustment to balance with larger icons */
-  .search-bar {
-    margin-bottom: 8px;
-  }
 }
 
 /* Even smaller screens optimization */
@@ -2475,14 +2569,6 @@
 
   .TitleML p {
     font-size: 11px;
-  }
-
-  .search-bar {
-    padding: 6px 10px;
-  }
-
-  .search-bar input {
-    font-size: 13px;
   }
 
   .action-icons {
@@ -2732,7 +2818,7 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 50px;
+    /* min-width: 50px; */
     font-weight: 600;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
@@ -2876,7 +2962,7 @@
   .delete-button {
     padding: 5px 8px;
     font-size: 9px;
-    min-width: 45px;
+    /* min-width: 45px; */
   }
 }
 
@@ -2943,11 +3029,6 @@
 
 /* Medium Screens (770px - 992px) */
 @media (max-width: 992px) and (min-width: 771px) {
-  .MLdashboard-content {
-    margin-left: 240px;
-    width: calc(100% - 240px);
-    padding: 25px;
-  }
 
   .MLmodal-content {
     width: 95%;
@@ -2995,10 +3076,6 @@
     justify-content: space-between;
   }
 
-  .search-bar {
-    width: 100%;
-    max-width: 300px;
-  }
 
   .filters-actions-row {
     flex-wrap: wrap;
@@ -3070,10 +3147,6 @@
     width: 100%;
   }
 
-  .search-bar {
-    width: 100%;
-    max-width: none;
-  }
 
   .action-icons {
     justify-content: center;
@@ -3115,7 +3188,7 @@
 
   .header-cell,
   .table-cell {
-    font-size: 12px;
+    font-size: 13px;
     padding: 8px 4px;
   }
 
@@ -3126,8 +3199,8 @@
     padding: 1rem;
   }
 
-  .modal-actions {
-    flex-direction: column;
+  .modal-actions-ml {
+    /* flex-direction: column; */
     gap: 10px;
   }
 
@@ -3176,28 +3249,28 @@
   }
 
   .header-cell {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #374151;
     text-align: left;
   }
 
   .table-cell {
-    font-size: 11px;
+    /* font-size: 11px;/ */
     color: #4b5563;
     line-height: 1.3;
   }
 
   .MLstatus-badge {
     padding: 4px 8px;
-    font-size: 10px;
+    /* font-size: 10px; */
   }
 
   .edit-button,
   .delete-button {
     padding: 6px 10px;
-    font-size: 11px;
-    min-width: 55px;
+    font-size: 14px;
+    /* min-width: 55px; */
   }
 
   /* Pagination adjustments */
@@ -3234,7 +3307,7 @@
   }
 
   .confirmation-actions {
-    flex-direction: column;
+    /* flex-direction: column; */
     gap: 10px;
   }
 
@@ -3281,17 +3354,6 @@
 
 /* Large Tablets and Small Desktops (1100px - 901px) */
 @media (max-width: 1100px) and (min-width: 901px) {
-  .MLdashboard-content {
-    margin-left: 0;
-    width: 100%;
-    padding: 25px;
-  }
-
-  .MLmodal-content {
-    width: 95%;
-    max-width: 900px;
-  }
-
   .filters-actions-row {
     flex-wrap: wrap;
     gap: 12px;
@@ -3319,40 +3381,13 @@
   }
 
   .header-cell {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .table-cell {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
-
-/* Hide sidebar and make content full width for 990px - 1100px */
-@media (max-width: 1100px) and (min-width: 990px) {
-  .MLdashboard-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    padding: 25px;
-  }
-
-  /* Ensure sidebar is hidden */
-  .sidebar {
-    display: none !important;
-  }
-}
-
-/* Also apply to screens below 990px */
-@media (max-width: 989px) {
-  .MLdashboard-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-
-  .sidebar {
-    display: none !important;
-  }
-}
-
 /* Fix table squishing above 1100px - keep original layout */
 @media (min-width: 1101px) {
   .MLdashboard-content {
@@ -3383,8 +3418,7 @@
   .edit-button,
   .delete-button {
     padding: 8px 12px;
-    font-size: 13px;
-    min-width: 60px;
+    font-size: 16px;
   }
 }
 
@@ -3409,10 +3443,6 @@
   .dashboard-actions {
     flex: 1;
     justify-content: flex-end;
-  }
-
-  .search-bar {
-    width: 250px;
   }
 
   .filters-actions-row {
@@ -3472,18 +3502,14 @@
   }
 
   .header-cell {
-    font-size: 12px;
-  }
-
-  .table-cell {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .edit-button,
   .delete-button {
     padding: 6px 10px;
-    font-size: 11px;
-    min-width: 55px;
+    font-size: 14px;
+    min-width: 40px;
   }
 }
 
@@ -3504,11 +3530,6 @@
   .dashboard-actions {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .search-bar {
-    width: 100%;
-    max-width: 300px;
   }
 
   .filters-actions-row {
@@ -3566,5 +3587,50 @@
     gap: 8px;
     padding: 12px 16px;
     min-width: 700px;
+  }
+}
+
+@media (max-width: 1300px) {
+  .location-navigation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-navigation-arrows {
+    /* position: static; */
+    width: 100%;
+    display: flex;
+    justify-content: space-between; /* left and right sides */
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    margin: 8px 0 0 0;    
+    pointer-events: auto;       /* keep clickable */
+  }
+}
+
+/* Same behavior for <=768px */
+@media (max-width: 768px) {
+  .location-navigation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-navigation-arrows {
+    position: static;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    margin: 8px 0 0 0;
+    pointer-events: auto;
+  }
+
+  .left-arrow, .right-arrow {
+    border-radius: 12px;
   }
 }

@@ -1502,7 +1502,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 9999,
+        zIndex: 99999,
         flexDirection: 'column',
         animation: 'fadeIn 0.3s ease'
       }}>

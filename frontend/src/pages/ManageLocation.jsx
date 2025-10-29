@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  FaSearch,
+  FaSearch, FaChevronUp,
   FaBell,
   FaEnvelope,
   FaDownload,
@@ -12,10 +12,18 @@ import {
   FaMinus,
   FaCheckCircle,
   FaExclamationCircle,
-  FaFilter, // ADD THIS for status filter
-  FaCalendarAlt, // ADD THIS for date picker
-  FaChevronDown, // ADD THIS for dropdown arrow
-} from "react-icons/fa";
+  FaFilter, 
+  FaCalendarAlt,
+  FaChevronDown,
+  FaEdit,
+  FaIdCard,
+  FaInfoCircle,
+  FaTag,
+  FaList,
+  FaMapMarkerAlt,
+  FaClock
+} from "react-icons/fa"; 
+import { MdDelete } from "react-icons/md"
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -26,6 +34,7 @@ import { useAuth } from "../context/AuthProvider";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
+import { Toaster, toast } from 'sonner';
 
 const buildPageList = (total, current) => {
   const pages = [];
@@ -160,63 +169,6 @@ const getTimeAgo = (dateString) => {
 
   return "Just now";
 };
-// Toast Notification Component
-const ToastNotification = ({
-  message,
-  type = "success",
-  onClose,
-  isVisible,
-}) => {
-  if (!isVisible) return null;
-
-  return (
-    <div
-      className={`toast-notification toast-${type} ${
-        isVisible ? "toast-visible" : ""
-      }`}
-    >
-      <div className="toast-content">
-        {/* UPDATE: Add icon logic based on type */}
-        {type === "success" ? (
-          <FaCheckCircle className="toast-icon" />
-        ) : (
-          <FaExclamationCircle className="toast-icon" />
-        )}
-        <span className="toast-message">{message}</span>
-      </div>
-      <button className="toast-close" onClick={onClose}>
-        <FaTimes />
-      </button>
-    </div>
-  );
-};
-
-const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
-  if (!isVisible || !messages || messages.length === 0) return null;
-
-  return (
-    <div
-      className={`toast-notification toast-warning ${
-        isVisible ? "toast-visible" : ""
-      }`}
-    >
-      <div className="toast-content">
-        <FaExclamationCircle className="toast-icon" />
-        <div className="validation-messages">
-          <strong>Please fill in the following required fields:</strong>
-          <ul>
-            {messages.map((message, index) => (
-              <li key={index}>{message}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <button className="toast-close" onClick={onClose}>
-        <FaTimes />
-      </button>
-    </div>
-  );
-};
 // Confirmation Modal Component
 const ConfirmationModal = ({
   isOpen,
@@ -231,7 +183,7 @@ const ConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay-ml">
       <div className="confirmation-modal-ml">
         <div className="confirmation-header">
           <FaExclamationTriangle className={`confirmation-icon ${type}-icon`} />
@@ -264,7 +216,7 @@ const SaveConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay-ml">
       <div className="confirmation-modal-ml">
         <div className="confirmation-header">
           <FaSave className="confirmation-icon save-icon" />
@@ -300,7 +252,7 @@ const CancelConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay-ml">
       <div className="confirmation-modal-ml">
         <div className="confirmation-header">
           <FaExclamationTriangle className="confirmation-icon warning-icon" />
@@ -314,10 +266,10 @@ const CancelConfirmationModal = ({
           </p>
         </div>
         <div className="confirmation-actions">
-          <button className="cancel-confirm-btn" onClick={onClose}>
+          <button className="confirm-btn cancel-btn" onClick={onClose}>
             Continue Editing
           </button>
-          <button className="confirm-btn cancel-btn" onClick={onConfirm}>
+          <button className="confirm-btn save-btn" onClick={onConfirm}>
             Yes, Cancel
           </button>
         </div>
@@ -344,79 +296,101 @@ const ManageLocation = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const mlContentRef = useRef(null);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
-  const [validationToast, setValidationToast] = useState({
-    isVisible: false,
-    messages: [],
-  });
-
-  // ADD: Function to show validation toast
-  const showValidationToast = (validationResults) => {
-    const errorMessages = [];
-
-    validationResults.forEach((result) => {
-      if (Object.keys(result.errors).length > 0) {
-        const locationPrefix =
-          validationResults.length > 1 ? `Location ${result.index + 1}: ` : "";
-
-        Object.keys(result.errors).forEach((field) => {
-          const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
-          errorMessages.push(`${locationPrefix}${fieldName} is required`);
-        });
-      }
-    });
-
-    if (errorMessages.length > 0) {
-      setValidationToast({
-        isVisible: true,
-        messages: errorMessages,
-      });
-
-      // Auto hide after 8 seconds
-      setTimeout(() => {
-        setValidationToast((prev) => ({ ...prev, isVisible: false }));
-      }, 8000);
+  const scrollToTop = () => {
+    if (mlContentRef.current) {
+      mlContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
+  useEffect(() => {
+    const el = mlContentRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      setShowScrollTop(el.scrollTop > 200);
+    };
+
+    el.addEventListener('scroll', onScroll);
+    onScroll(); // initialize visibility
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // const [validationToast, setValidationToast] = useState({
+  //   isVisible: false,
+  //   messages: [],
+  // });
+
+  // ADD: Function to show validation toast
+  // const showValidationToast = (validationResults) => {
+  //   const errorMessages = [];
+
+  //   validationResults.forEach((result) => {
+  //     if (Object.keys(result.errors).length > 0) {
+  //       const locationPrefix =
+  //         validationResults.length > 1 ? `Location ${result.index + 1}: ` : "";
+
+  //       Object.keys(result.errors).forEach((field) => {
+  //         const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
+  //         errorMessages.push(`${locationPrefix}${fieldName} is required`);
+  //       });
+  //     }
+  //   });
+
+  //   if (errorMessages.length > 0) {
+  //     setValidationToast({
+  //       isVisible: true,
+  //       messages: errorMessages,
+  //     });
+
+  //     // Auto hide after 8 seconds
+  //     setTimeout(() => {
+  //       setValidationToast((prev) => ({ ...prev, isVisible: false }));
+  //     }, 8000);
+  //   }
+  // };
+
   // ADD: Function to close validation toast
-  const closeValidationToast = () => {
-    setValidationToast((prev) => ({ ...prev, isVisible: false }));
-  };
+  // const closeValidationToast = () => {
+  //   setValidationToast((prev) => ({ ...prev, isVisible: false }));
+  // };
 
-  // Validation Toast Notification Component
-  const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
-    if (!isVisible || !messages || messages.length === 0) return null;
+  // // Validation Toast Notification Component
+  // const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
+  //   if (!isVisible || !messages || messages.length === 0) return null;
 
-    return (
-      <div
-        className={`toast-notification toast-warning ${
-          isVisible ? "toast-visible" : ""
-        }`}
-      >
-        <div className="toast-content">
-          <FaExclamationCircle className="toast-icon" />
-          <div className="validation-messages">
-            <strong>Please fill in the following required fields:</strong>
-            <ul>
-              {messages.map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <button className="toast-close" onClick={onClose}>
-          <FaTimes />
-        </button>
-      </div>
-    );
-  };
+  //   return (
+  //     <div
+  //       className={`toast-notification toast-warning ${
+  //         isVisible ? "toast-visible" : ""
+  //       }`}
+  //     >
+  //       <div className="toast-content">
+  //         <FaExclamationCircle className="toast-icon" />
+  //         <div className="validation-messages">
+  //           <strong>Please fill in the following required fields:</strong>
+  //           <ul>
+  //             {messages.map((message, index) => (
+  //               <li key={index}>{message}</li>
+  //             ))}
+  //           </ul>
+  //         </div>
+  //       </div>
+  //       <button className="toast-close" onClick={onClose}>
+  //         <FaTimes />
+  //       </button>
+  //     </div>
+  //   );
+  // };
 
-  const [toast, setToast] = useState({
-    isVisible: false,
-    message: "",
-    type: "success",
-  });
+  // const [toast, setToast] = useState({
+  //   isVisible: false,
+  //   message: "",
+  //   type: "success",
+  // });
 
   // Confirmation modal states
   const [deleteModal, setDeleteModal] = useState({
@@ -446,11 +420,14 @@ const ManageLocation = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
+        setIsLoadingLocations(true);
         const response = await ky.get("/api/locations").json();
-        // Make sure the response includes image URLs
         setLocations(response);
       } catch (error) {
         console.error("Error fetching locations:", error);
+        setLocations([]); // ensure array
+      } finally {
+        setIsLoadingLocations(false);
       }
     };
     fetchLocations();
@@ -486,18 +463,7 @@ const ManageLocation = () => {
       "Business Attraction",
     ],
     "Major Town": [
-      "Sibu",
-      "Mukah",
-      "Bintulu",
-      "Kapit",
-      "Sarikei",
-      "Samarahan",
-      "Kuching",
-      "Sri Aman",
-      "Limbang",
-      "Betong",
-      "Serian",
-      "Miri",
+      "Major Town",
     ],
     "Shopping & Leisure": [
       "Shopping Mall",
@@ -573,6 +539,18 @@ const ManageLocation = () => {
   const getStatusClass = (status) =>
     status === "Active" ? "status-active" : "status-inactive";
 
+  const getEffectiveCreatedDate = (loc) => {
+    // Prefer createdAt if present, otherwise fallback to updatedAt
+    return new Date(loc.updatedAt || loc.createdAt);
+  };
+
+  const isNewLocationIndicator = (loc) => {
+    const created = getEffectiveCreatedDate(loc);
+    if (isNaN(created.getTime())) return false;
+    const minutes = (Date.now() - created.getTime()) / 60000;
+    return minutes <= 10; // consider new if created within last 10 minutes
+  };
+
   const filteredLocations = locations.filter((location) => {
     const matchesSearchQuery =
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -627,7 +605,13 @@ const ManageLocation = () => {
   // Pagination logic
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = filteredLocations.slice(indexOfFirstRow, indexOfLastRow);
+  // Ensure sorting by newest first (backend already sorts; this is a safe client-side fallback)
+  const sortedLocations = [...filteredLocations].sort((a, b) => {
+    const aDate = getEffectiveCreatedDate(a).getTime();
+    const bDate = getEffectiveCreatedDate(b).getTime();
+    return bDate - aDate;
+  });
+  const currentRows = sortedLocations.slice(indexOfFirstRow, indexOfLastRow);
 
   const totalPages = Math.ceil(filteredLocations.length / rowsPerPage);
 
@@ -728,17 +712,31 @@ const ManageLocation = () => {
       // Validate all locations before sending
       const validationResults = editingLocations.map((location, index) => {
         const errors = {};
-
-        if (!location.category?.trim())
-          errors.category = "Category is required";
+      
+        if (!location.category?.trim()) errors.category = "Category is required";
         if (!location.type?.trim()) errors.type = "Type is required";
-        if (!location.division?.trim())
-          errors.division = "Division is required";
+        if (!location.division?.trim()) errors.division = "Division is required";
         if (!location.name?.trim()) errors.name = "Name is required";
         if (!location.status?.trim()) errors.status = "Status is required";
-        if (!location.description?.trim())
+      
+        // New rules:
+        if (hasWordLongerThan(location.description || "", 30)) {
+          errors.description = "No single word may exceed 30 characters.";
+        } else if (!location.description?.trim()) {
           errors.description = "Description is required";
-
+        }
+      
+        if (/\s/.test(location.url || "")) {
+          errors.url = "URL cannot contain spaces.";
+        }
+      
+        const lat = parseFloat(location.latitude);
+        const lon = parseFloat(location.longitude);
+        if (!isWithinSarawak(lat, lon)) {
+          errors.latitude = "Location is outside Sarawak boundary.";
+          errors.longitude = "Location is outside Sarawak boundary.";
+        }
+      
         return { index, errors };
       });
 
@@ -758,9 +756,11 @@ const ManageLocation = () => {
         });
 
         setValidationErrors(allErrors);
-        showValidationToast(validationResults);
+        toast.error('Some locations have required fields missing or invalid. Please review and try again.');
         return;
       }
+
+      const t = toast.loading('Saving locations...');
 
       console.log("Starting to save locations:", editingLocations);
 
@@ -862,10 +862,10 @@ const ManageLocation = () => {
         try {
           const refreshed = await ky.get("/api/locations").json();
           setLocations(refreshed);
-          alert(`${successfulSaves.length} location(s) saved successfully!`);
+          toast.success(`${successfulSaves.length} location(s) saved successfully!`, { id: t });
         } catch (refreshError) {
           console.error("Error refreshing locations:", refreshError);
-          alert(
+          toast.error(
             `${successfulSaves.length} location(s) saved successfully, but could not refresh the list.`
           );
         }
@@ -880,8 +880,8 @@ const ManageLocation = () => {
           )
           .join("\n");
 
-        alert(
-          `${successfulSaves.length} location(s) saved successfully, but ${failedSaves.length} failed:\n\n${errorDetails}`
+        toast.error(
+          `${successfulSaves.length} location(s) saved successfully, but ${failedSaves.length} failed:\n\n${errorDetails}`, { id: t }
         );
 
         // You might want to keep the modal open for retry, or close it
@@ -894,7 +894,7 @@ const ManageLocation = () => {
       }
     } catch (err) {
       console.error("Unexpected error in handleSaveAllLocations:", err);
-      alert(
+      toast.error(
         `Unexpected error: ${err.message}. Please check the console for details.`
       );
     }
@@ -921,12 +921,10 @@ const ManageLocation = () => {
       setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
 
       // Show success toast notification - ADD THIS LINE
-      showToast(
-        `Location "${deleteModal.locationName}" has been deleted successfully!`
-      );
+      toast.success(`Location "${deleteModal.locationName}" has been deleted successfully!`);
     } catch (error) {
       console.error("Error deleting location:", error);
-      showToast("Failed to delete location. Please try again.", "error"); // ADD THIS LINE
+      toast.error('Failed to delete location. Please try again.');
     }
   };
 
@@ -1008,17 +1006,34 @@ const ManageLocation = () => {
         errors.division = "Division is required";
       if (!editingLocation.name?.trim()) errors.name = "Name is required";
       if (!editingLocation.status?.trim()) errors.status = "Status is required";
-      if (!editingLocation.description?.trim())
+      if (!editingLocation.description?.trim()) {
         errors.description = "Description is required";
+      } else if (hasWordLongerThan(editingLocation.description, 30)) {
+        errors.description = "No single word may exceed 30 characters.";
+      }
+
+      // URL: no spaces (no '@' requirement)
+      if (/\s/.test(editingLocation.url || "")) {
+        errors.url = "URL cannot contain spaces.";
+      }
+
+      // Latitude/Longitude: must be inside Sarawak
+      const lat = parseFloat(editingLocation.latitude);
+      const lon = parseFloat(editingLocation.longitude);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        if (!isWithinSarawak(lat, lon)) {
+          errors.latitude = "Location is outside Sarawak boundary.";
+          errors.longitude = "Location is outside Sarawak boundary.";
+        }
+      }
 
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
-
-        // FIX: Create validationResults array properly
-        const validationResults = [{ index: 0, errors }];
-        showValidationToast(validationResults);
+        toast.error('Please fix the highlighted errors.');
         return;
       }
+
+      const t = toast.loading('Saving location...');
 
       const isNewLocation = editingLocation?._id?.startsWith("temp-");
 
@@ -1063,9 +1078,9 @@ const ManageLocation = () => {
         closeModal();
         const refreshed = await ky.get("/api/locations").json();
         setLocations(refreshed);
-        alert("Location saved successfully!");
+         toast.success('Location saved successfully!', { id: t });
       } else {
-        alert(`Save failed: ${response.message || "Unknown error"}`);
+         toast.error(`Save failed: ${response.message || "Unknown error"}`, { id: t });
       }
     } catch (err) {
       console.error("Save failed:", err);
@@ -1088,7 +1103,7 @@ const ManageLocation = () => {
         }
       }
 
-      alert(`Save failed: ${errorMessage}`);
+      toast.error(`Save failed: ${errorMessage}`, { id: t });
     }
   };
 
@@ -1097,11 +1112,11 @@ const ManageLocation = () => {
       const file = e.target.files[0];
 
       if (!file.type.match("image.*")) {
-        alert("Please select an image file (jpg, png, gif, etc.)");
+        toast.error("Please select an image file (jpg, png, gif, etc.)");
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert("Please select an image smaller than 5MB");
+        toast.error("Please select an image smaller than 5MB");
         return;
       }
 
@@ -1140,8 +1155,12 @@ const ManageLocation = () => {
 
   const downloadCSV = () => {
     if (filteredLocations.length === 0) {
-      alert("No data available to download.");
+      toast.info('No data available to download.');
       return;
+    }
+    
+    if (filteredLocations.length > 0) {
+      toast.success('Location data download successfully.');
     }
 
     const headers = [
@@ -1182,33 +1201,42 @@ const ManageLocation = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Show toast notification
-  const showToast = (message, type = "success") => {
-    setToast({
-      isVisible: true,
-      message,
-      type,
-    });
+  const multiModalRef = useRef(null);
 
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-      setToast((prev) => ({ ...prev, isVisible: false }));
-    }, 5000);
+  useEffect(() => {
+    if (editingLocations.length > 0 && multiModalRef.current) {
+      // wait until layout paints, then scroll
+      requestAnimationFrame(() => {
+        multiModalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  }, [currentLocationIndex, editingLocations.length]);
+
+  // Add near other constants
+  const divisionOptions = [
+    "Kuching","Sibu","Miri","Bintulu","Mukah","Betong",
+    "Samarahan","Limbang","Kapit","Sri Aman","Sarikei","Serian"
+  ];
+
+  // Rough Sarawak bounding box (tweak if you have exact polygon)
+  const isWithinSarawak = (lat, lon) => {
+    if (lat == null || lon == null) return false;
+    return lat >= 0.8 && lat <= 5.5 && lon >= 109.5 && lon <= 115.5;
   };
 
-  // Close toast manually
-  const closeToast = () => {
-    setToast((prev) => ({ ...prev, isVisible: false }));
+  const hasWordLongerThan = (text, limit) => {
+    if (!text) return false;
+    return text.split(/\s+/).some(w => w.length > limit);
   };
 
   return (
     <div className="MLdashboard-container">
       <Sidebar />
-      <div className="MLdashboard-content">
+      <div className="MLdashboard-content" ref={mlContentRef}>
         {/* Header */}
-        <div className="MLdashboard-header">
-          <div className="TitleML">
-            <h2>Manage Locations</h2>
+        <div className="dashboard-header">
+          <div className="greeting">
+            <h3>Manage Location</h3>
             <p>Manage and monitor locations' status</p>
           </div>
           <div className="dashboard-actions">
@@ -1216,32 +1244,21 @@ const ManageLocation = () => {
               <FaSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Search by ID, name, or status..."
+                placeholder="Search location..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="action-icons">
-              <div className="icon-wrapper">
-                <FaBell className="action-icon" />
-                <span className="badge">5</span>
-              </div>
-              <div className="icon-wrapper">
-                <FaEnvelope className="action-icon" />
-                <span className="badge">3</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Filters */}
         {/* Filters */}
         <div className="filters-actions-row">
           <button
             className="add-location-button"
             onClick={handleOpenModalForNew}
           >
-            Add New Location +
+            + Add New Location
           </button>
 
           {/* Updated Status Filter with Icon */}
@@ -1324,6 +1341,16 @@ const ManageLocation = () => {
 
         {/* Table */}
         <div className="reviews-table-container">
+        {isLoadingLocations ? (
+          <div style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>
+            Loading locations...
+          </div>
+        ) : locations.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>
+            No location found, please try refresh again.
+          </div>
+        ) : (
+          <>
           <div className="MLtable-header">
             <div className="header-cell">Location ID</div>
             <div className="header-cell">Name</div>
@@ -1337,7 +1364,24 @@ const ManageLocation = () => {
 
           {currentRows.map((location) => (
             <div key={location._id} className="MLtable-row">
-              <div className="table-cell">{location._id}</div>
+              <div className="table-cell">
+                {isNewLocationIndicator(location) && (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 8,
+                      height: 18,
+                      backgroundColor: '#ef4444',
+                      borderRadius: '9999px',
+                      marginRight: 6,
+                      verticalAlign: 'middle'
+                    }}
+                    aria-label="New"
+                    title="New"
+                  />
+                )}
+                {location._id}
+              </div>
               <div className="table-cell">{location.name}</div>
               <div className="table-cell">{location.category}</div>
               <div className="table-cell">{location.type}</div>
@@ -1351,26 +1395,116 @@ const ManageLocation = () => {
                   {location.status}
                 </span>
               </div>
-              <div className="table-cell">{getTimeAgo(location.updatedAt)}</div>
+              <div className="table-cell">{getTimeAgo(getEffectiveCreatedDate(location))}</div>
               <div className="table-cell">
                 <button
                   className="edit-button"
                   onClick={() => handleEditClick(location)}
                 >
-                  Edit
+                  <FaEdit />
                 </button>
                 <button
                   className="delete-button"
                   onClick={() => handleDeleteClick(location._id, location.name)}
                 >
-                  X
+                  <MdDelete />
                 </button>
               </div>
             </div>
           ))}
+          {/* Card view for very small screens */}
+          <div className="MLcards-container">
+            {currentRows.map((location) => (
+              <div key={`${location._id}-card`} className="MLcard">
+                 <div className="MLcard-status">
+                  <span className={`MLstatus-badge ${getStatusClass(location.status)}`}>
+                    {location.status}
+                  </span>
+                  {isNewLocationIndicator(location) && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        backgroundColor: '#ef4444',
+                        borderRadius: '9999px',
+                        marginLeft: 6,
+                        verticalAlign: 'middle'
+                      }}
+                      aria-label="New"
+                      title="New"
+                    />
+                  )}
+                </div>
+                <div className="MLcard-actions">
+                  <button
+                    className="edit-button"
+                    onClick={() => handleEditClick(location)}
+                    aria-label="Edit location"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    className="delete-button"
+                    onClick={() => handleDeleteClick(location._id, location.name)}
+                    aria-label="Delete location"
+                  >
+                    <MdDelete />
+                  </button>
+                </div>
+                <div className="MLcard-content">
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaIdCard /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Location ID</span>
+                      <span className="MLcard-value">
+                        {location._id}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaInfoCircle /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Name</span>
+                      <span className="MLcard-value">{location.name}</span>
+                    </div>
+                  </div>
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaTag /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Category</span>
+                      <span className="MLcard-value">{location.category}</span>
+                    </div>
+                  </div>
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaList /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Type</span>
+                      <span className="MLcard-value">{location.type}</span>
+                    </div>
+                  </div>
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaMapMarkerAlt /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Division</span>
+                      <span className="MLcard-value">{location.division}</span>
+                    </div>
+                  </div>
+                  <div className="MLcard-item">
+                    <span className="MLcard-icon"><FaClock /></span>
+                    <div className="MLcard-text">
+                      <span className="MLcard-label">Last Updated</span>
+                      <span className="MLcard-value">{getTimeAgo(getEffectiveCreatedDate(location))}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
+        )}
         </div>
 
-        {/* Pagination Controls */}
         {/* Pagination Controls */}
         <div
           className="pagination"
@@ -1433,7 +1567,7 @@ const ManageLocation = () => {
 
         {/* Edit Modal (Single Location) */}
         {editingLocation && (
-          <div className="modal-overlay">
+          <div className="modal-overlay-ml">
             <div className="MLmodal-content">
               <h3>
                 {editingLocation?._id?.startsWith("temp-")
@@ -1470,7 +1604,7 @@ const ManageLocation = () => {
                       ))}
                     </select>
                     {validationErrors.category && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.category}
                       </div>
                     )}
@@ -1512,7 +1646,7 @@ const ManageLocation = () => {
                         ))}
                     </select>
                     {validationErrors.type && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.type}
                       </div>
                     )}
@@ -1521,7 +1655,7 @@ const ManageLocation = () => {
                   {/* Division Field */}
                   <div className="form-group">
                     <label>Division *</label>
-                    <input
+                    <select
                       name="division"
                       value={editingLocation.division}
                       onChange={(e) => {
@@ -1531,12 +1665,15 @@ const ManageLocation = () => {
                         });
                         clearValidationError("division");
                       }}
-                      className={`form-input ${
-                        validationErrors.division ? "error-border" : ""
-                      }`}
-                    />
+                      className={`form-select ${validationErrors.division ? "error-border" : ""}`}
+                    >
+                      <option value="">Select division</option>
+                      {divisionOptions.map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
                     {validationErrors.division && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.division}
                       </div>
                     )}
@@ -1560,7 +1697,7 @@ const ManageLocation = () => {
                       }`}
                     />
                     {validationErrors.name && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.name}
                       </div>
                     )}
@@ -1573,18 +1710,26 @@ const ManageLocation = () => {
                       name="description"
                       value={editingLocation.description}
                       onChange={(e) => {
+                        const val = e.target.value;
                         setEditingLocation({
                           ...editingLocation,
-                          description: e.target.value,
+                          description: val,
                         });
-                        clearValidationError("description");
+                        if (hasWordLongerThan(val, 30)) {
+                          setValidationErrors(prev => ({
+                            ...prev,
+                            description: "No single word may exceed 30 characters."
+                          }));
+                        } else {
+                          clearValidationError("description");
+                        }
                       }}
                       className={`form-textarea ${
                         validationErrors.description ? "error-border" : ""
                       }`}
                     />
                     {validationErrors.description && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.description}
                       </div>
                     )}
@@ -1596,14 +1741,30 @@ const ManageLocation = () => {
                     <input
                       name="url"
                       value={editingLocation.url || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setEditingLocation({
                           ...editingLocation,
-                          url: e.target.value,
-                        })
-                      }
-                      className="form-input"
+                          url: val,
+                        });
+                        if (/\s/.test(val)) {
+                          setValidationErrors(prev => ({
+                            ...prev,
+                            url: "URL cannot contain spaces."
+                          }));
+                        } else {
+                          clearValidationError("url");
+                        }
+                      }}
+                      className={`form-input ${
+                        validationErrors.url ? "error-border" : ""
+                      }`}
                     />
+                    {validationErrors.url && (
+                      <div className="error-message-ml">
+                        {validationErrors.url}
+                      </div>
+                    )}
                   </div>
 
                   {/* Status Field */}
@@ -1627,7 +1788,7 @@ const ManageLocation = () => {
                       <option value="Inactive">Inactive</option>
                     </select>
                     {validationErrors.status && (
-                      <div className="error-message">
+                      <div className="error-message-ml">
                         {validationErrors.status}
                       </div>
                     )}
@@ -1639,8 +1800,8 @@ const ManageLocation = () => {
                   {/* Image Upload */}
                   <div className="form-group">
                     <label>Image</label>
-                    <div className="image-upload-container">
-                      <div className="image-upload-area">
+                    <div className="image-upload-container-ml">
+                      <div className="image-upload-area-ml">
                         <input
                           type="file"
                           id={`image-upload-${editingLocation._id}`}
@@ -1695,20 +1856,31 @@ const ManageLocation = () => {
                         type="number"
                         step="any"
                         name="latitude"
-                        value={
-                          editingLocation.latitude === 0
-                            ? ""
-                            : editingLocation.latitude
-                        }
-                        onChange={(e) =>
-                          setEditingLocation({
-                            ...editingLocation,
-                            latitude: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        value={editingLocation.latitude === 0 ? "" : editingLocation.latitude}
+                        onChange={(e) => {
+                          const lat = parseFloat(e.target.value) || 0;
+                          const lon = editingLocation.longitude ?? 0;
+                          setEditingLocation({ ...editingLocation, latitude: lat });
+                          if (!isWithinSarawak(lat, lon)) {
+                            setValidationErrors(prev => ({
+                              ...prev,
+                              latitude: "Location is outside Sarawak boundary."
+                            }));
+                          } else {
+                            clearValidationError("latitude");
+                            clearValidationError("longitude");
+                          }
+                        }}
                         placeholder="Latitude"
-                        className="form-input"
+                        className={`form-input ${
+                          validationErrors.latitude ? "error-border" : ""
+                        }`}
                       />
+                      {validationErrors.latitude && (
+                        <div className="error-message-ml">
+                          {validationErrors.latitude}
+                        </div>
+                      )}
                     </div>
 
                     <div className="form-group">
@@ -1717,20 +1889,31 @@ const ManageLocation = () => {
                         type="number"
                         step="any"
                         name="longitude"
-                        value={
-                          editingLocation.longitude === 0
-                            ? ""
-                            : editingLocation.longitude
-                        }
-                        onChange={(e) =>
-                          setEditingLocation({
-                            ...editingLocation,
-                            longitude: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        value={editingLocation.longitude === 0 ? "" : editingLocation.longitude}
+                        onChange={(e) => {
+                          const lon = parseFloat(e.target.value) || 0;
+                          const lat = editingLocation.latitude ?? 0;
+                          setEditingLocation({ ...editingLocation, longitude: lon });
+                          if (!isWithinSarawak(lat, lon)) {
+                            setValidationErrors(prev => ({
+                              ...prev,
+                              longitude: "Location is outside Sarawak boundary."
+                            }));
+                          } else {
+                            clearValidationError("longitude");
+                            clearValidationError("latitude");
+                          }
+                        }}
                         placeholder="Longitude"
-                        className="form-input"
+                        className={`form-input ${
+                          validationErrors.longitude ? "error-border" : ""
+                        }`}
                       />
+                      {validationErrors.longitude && (
+                        <div className="error-message-ml">
+                          {validationErrors.longitude}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1750,7 +1933,7 @@ const ManageLocation = () => {
                 </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="modal-actions-ml">
                 <button className="cancel-button" onClick={handleCancelClick}>
                   Cancel
                 </button>
@@ -1764,8 +1947,8 @@ const ManageLocation = () => {
 
         {/* Add Multiple Locations Modal */}
         {editingLocations.length > 0 && (
-          <div className="modal-overlay">
-            <div className="MLmodal-content multiple-locations-modal">
+          <div className="modal-overlay-ml">
+            <div className="MLmodal-content multiple-locations-modal" ref={multiModalRef}>
               <div className="modal-header-with-navigation">
                 <div className="navigation-header">
                   <h3>Add Multiple Locations</h3>
@@ -1845,7 +2028,7 @@ const ManageLocation = () => {
                             ))}
                           </select>
                           {validationErrors[`locations[${index}].category`] && (
-                            <div className="error-message">
+                            <div className="error-message-ml">
                               {validationErrors[`locations[${index}].category`]}
                             </div>
                           )}
@@ -1889,7 +2072,7 @@ const ManageLocation = () => {
                               ))}
                           </select>
                           {validationErrors[`locations[${index}].type`] && (
-                            <div className="error-message">
+                            <div className="error-message-ml">
                               {validationErrors[`locations[${index}].type`]}
                             </div>
                           )}
@@ -1898,26 +2081,22 @@ const ManageLocation = () => {
                         {/* Division Field */}
                         <div className="form-group">
                           <label>Division *</label>
-                          <input
+                          <select
                             name="division"
                             value={location.division}
                             onChange={(e) => {
-                              handleLocationChange(index, {
-                                ...location,
-                                division: e.target.value,
-                              });
-                              clearValidationError(
-                                `locations[${index}].division`
-                              );
+                              handleLocationChange(index, { ...location, division: e.target.value });
+                              clearValidationError(`locations[${index}].division`);
                             }}
-                            className={`form-input ${
-                              validationErrors[`locations[${index}].division`]
-                                ? "error-border"
-                                : ""
-                            }`}
-                          />
+                            className={`form-select ${validationErrors[`locations[${index}].division`] ? "error-border" : ""}`}
+                          >
+                            <option value="">Select division</option>
+                            {divisionOptions.map(d => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
                           {validationErrors[`locations[${index}].division`] && (
-                            <div className="error-message">
+                            <div className="error-message-ml">
                               {validationErrors[`locations[${index}].division`]}
                             </div>
                           )}
@@ -1943,47 +2122,38 @@ const ManageLocation = () => {
                             }`}
                           />
                           {validationErrors[`locations[${index}].name`] && (
-                            <div className="error-message">
+                            <div className="error-message-ml">
                               {validationErrors[`locations[${index}].name`]}
                             </div>
                           )}
                         </div>
 
                         {/* Description Field */}
-                        <div className="form-group">
-                          <label>Description *</label>
-                          <textarea
-                            name="description"
-                            value={location.description}
-                            onChange={(e) => {
-                              handleLocationChange(index, {
-                                ...location,
-                                description: e.target.value,
-                              });
-                              clearValidationError(
-                                `locations[${index}].description`
-                              );
-                            }}
-                            className={`form-textarea ${
-                              validationErrors[
-                                `locations[${index}].description`
-                              ]
-                                ? "error-border"
-                                : ""
-                            }`}
-                          />
-                          {validationErrors[
-                            `locations[${index}].description`
-                          ] && (
-                            <div className="error-message">
-                              {
-                                validationErrors[
-                                  `locations[${index}].description`
-                                ]
-                              }
-                            </div>
-                          )}
-                        </div>
+                        <textarea
+                          name="description"
+                          value={location.description}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleLocationChange(index, { ...location, description: val });
+                            // live-validate: no single word > 30 chars
+                            if (hasWordLongerThan(val, 30)) {
+                              setValidationErrors(prev => ({
+                                ...prev,
+                                [`locations[${index}].description`]: "No single word may exceed 30 characters."
+                              }));
+                            } else {
+                              clearValidationError(`locations[${index}].description`);
+                            }
+                          }}
+                          className={`form-textarea ${
+                            validationErrors[`locations[${index}].description`] ? "error-border" : ""
+                          }`}
+                        />
+                        {validationErrors[`locations[${index}].description`] && (
+                          <div className="error-message-ml">
+                            {validationErrors[`locations[${index}].description`]}
+                          </div>
+                        )}
 
                         {/* Website URL Field */}
                         <div className="form-group">
@@ -1991,14 +2161,27 @@ const ManageLocation = () => {
                           <input
                             name="url"
                             value={location.url || ""}
-                            onChange={(e) =>
-                              handleLocationChange(index, {
-                                ...location,
-                                url: e.target.value,
-                              })
-                            }
-                            className="form-input"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              handleLocationChange(index, { ...location, url: val });
+                          if (/\s/.test(val)) {
+                                setValidationErrors(prev => ({
+                                  ...prev,
+                                  [`locations[${index}].url`]: "URL cannot contain spaces."
+                                }));
+                              } else {
+                                clearValidationError(`locations[${index}].url`);
+                              }
+                            }}
+                            className={`form-input ${
+                              validationErrors[`locations[${index}].url`] ? "error-border" : ""
+                            }`}
                           />
+                          {validationErrors[`locations[${index}].url`] && (
+                            <div className="error-message-ml">
+                              {validationErrors[`locations[${index}].url`]}
+                            </div>
+                          )}
                         </div>
 
                         {/* Status Field */}
@@ -2026,7 +2209,7 @@ const ManageLocation = () => {
                             <option value="Inactive">Inactive</option>
                           </select>
                           {validationErrors[`locations[${index}].status`] && (
-                            <div className="error-message">
+                            <div className="error-message-ml">
                               {validationErrors[`locations[${index}].status`]}
                             </div>
                           )}
@@ -2038,8 +2221,8 @@ const ManageLocation = () => {
                         {/* Image Upload */}
                         <div className="form-group">
                           <label>Image</label>
-                          <div className="image-upload-container">
-                            <div className="image-upload-area">
+                          <div className="image-upload-container-ml">
+                            <div className="image-upload-area-ml">
                               <input
                                 type="file"
                                 id={`image-upload-${location._id}`}
@@ -2094,18 +2277,31 @@ const ManageLocation = () => {
                               type="number"
                               step="any"
                               name="latitude"
-                              value={
-                                location.latitude === 0 ? "" : location.latitude
-                              }
-                              onChange={(e) =>
-                                handleLocationChange(index, {
-                                  ...location,
-                                  latitude: parseFloat(e.target.value) || 0,
-                                })
-                              }
+                              value={location.latitude === 0 ? "" : location.latitude}
+                              onChange={(e) => {
+                                const lat = parseFloat(e.target.value) || 0;
+                                const lon = location.longitude ?? 0;
+                                handleLocationChange(index, { ...location, latitude: lat });
+                                if (!isWithinSarawak(lat, lon)) {
+                                  setValidationErrors(prev => ({
+                                    ...prev,
+                                    [`locations[${index}].latitude`]: "Location is outside Sarawak boundary."
+                                  }));
+                                } else {
+                                  clearValidationError(`locations[${index}].latitude`);
+                                  clearValidationError(`locations[${index}].longitude`);
+                                }
+                              }}
                               placeholder="Latitude"
-                              className="form-input"
+                              className={`form-input ${
+                                validationErrors[`locations[${index}].latitude`] ? "error-border" : ""
+                              }`}
                             />
+                            {validationErrors[`locations[${index}].latitude`] && (
+                              <div className="error-message-ml">
+                                {validationErrors[`locations[${index}].latitude`]}
+                              </div>
+                            )}
                           </div>
 
                           <div className="form-group">
@@ -2114,25 +2310,35 @@ const ManageLocation = () => {
                               type="number"
                               step="any"
                               name="longitude"
-                              value={
-                                location.longitude === 0
-                                  ? ""
-                                  : location.longitude
-                              }
-                              onChange={(e) =>
-                                handleLocationChange(index, {
-                                  ...location,
-                                  longitude: parseFloat(e.target.value) || 0,
-                                })
-                              }
+                              value={location.longitude === 0 ? "" : location.longitude}
+                              onChange={(e) => {
+                                const lon = parseFloat(e.target.value) || 0;
+                                const lat = location.latitude ?? 0;
+                                handleLocationChange(index, { ...location, longitude: lon });
+                                if (!isWithinSarawak(lat, lon)) {
+                                  setValidationErrors(prev => ({
+                                    ...prev,
+                                    [`locations[${index}].longitude`]: "Location is outside Sarawak boundary."
+                                  }));
+                                } else {
+                                  clearValidationError(`locations[${index}].longitude`);
+                                  clearValidationError(`locations[${index}].latitude`);
+                                }
+                              }}
                               placeholder="Longitude"
-                              className="form-input"
+                              className={`form-input ${
+                                validationErrors[`locations[${index}].longitude`] ? "error-border" : ""
+                              }`}
                             />
+                            {validationErrors[`locations[${index}].longitude`] && (
+                              <div className="error-message-ml">
+                                {validationErrors[`locations[${index}].longitude`]}
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         {/* Map Preview */}
-
                         <div className="event-form-container">
                           <div className="event-form-left">
                             <div className="form-group">
@@ -2165,7 +2371,7 @@ const ManageLocation = () => {
                     <button
                       type="button"
                       className="side-nav-arrow left-arrow"
-                      onClick={goToPrevLocation}
+                      onClick={() => { goToPrevLocation(); }}
                       disabled={currentLocationIndex === 0}
                       aria-label="Previous location"
                     >
@@ -2175,7 +2381,7 @@ const ManageLocation = () => {
                     <button
                       type="button"
                       className="side-nav-arrow right-arrow"
-                      onClick={goToNextLocation}
+                      onClick={() => { goToNextLocation(); }}
                       disabled={
                         currentLocationIndex === editingLocations.length - 1
                       }
@@ -2186,7 +2392,7 @@ const ManageLocation = () => {
                   </div>
                 )}
 
-                <div className="modal-actions">
+                <div className="modal-actions-ml">
                   <button className="cancel-button" onClick={handleCancelClick}>
                     Cancel
                   </button>
@@ -2198,6 +2404,15 @@ const ManageLocation = () => {
             </div>
           </div>
         )}
+
+        <button
+          className={`scroll-to-top-btn ${showScrollTop ? 'visible' : ''}`}
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          title="Scroll to top"
+        >
+          <FaChevronUp className="scroll-to-top-icon" />
+        </button>
 
         {/* Confirmation Modals */}
         <ConfirmationModal
@@ -2224,20 +2439,6 @@ const ManageLocation = () => {
           onClose={handleCancelClose}
           onConfirm={handleCancelConfirm}
           hasChanges={hasChanges()}
-        />
-
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={closeToast}
-        />
-
-        {/* ADD THIS VALIDATION TOAST */}
-        <ValidationToastNotification
-          messages={validationToast.messages}
-          isVisible={validationToast.isVisible}
-          onClose={closeValidationToast}
         />
       </div>
     </div>

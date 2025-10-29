@@ -14,12 +14,12 @@
   box-sizing: border-box;
 }
 
-.ae-content {
+/* .ae-content {
   box-sizing: border-box;
   padding: 16px;
   max-width: 1200px;
   margin: 0 auto;
-}
+} */
 
 /* Form columns — unique names */
 .ae-form-left,
@@ -2487,9 +2487,9 @@ p {
 
 /* Responsive adjustments for edit modal */
 @media (max-width: 992px) {
-  .edit-event-form {
+  /* .edit-event-form {
     flex-direction: column;
-  }
+  } */
   
   .edit-event-form .calendar-section {
     grid-template-columns: 1fr;
@@ -2509,12 +2509,11 @@ p {
 
 /* Desktop default (>= 1025px) */
 @media (min-width: 1025px) {
-  .ae-content {
+  /* .ae-content {
     max-width: 1200px;
     padding: 20px;
-    /* if there is a fixed sidebar, keep safe margin left */
     margin-left: 280px;
-  }
+  } */
 
   .ae-form-left,
   .ae-form-right {
@@ -2530,11 +2529,11 @@ p {
 
 /* Laptop (769px–1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .ae-content {
+  /* .ae-content {
     max-width: 960px;
     padding: 18px;
-    margin-left: 240px; /* narrower sidebar offset */
-  }
+    margin-left: 240px;
+  } */
 
   .ae-form-left,
   .ae-form-right {
@@ -2549,11 +2548,11 @@ p {
 
 /* Tablet (481px–768px) */
 @media (min-width: 481px) and (max-width: 768px) {
-  .ae-content {
+  /* .ae-content {
     max-width: 720px;
     padding: 16px;
-    margin-left: 0; /* remove sidebar offset on smaller screens */
-  }
+    margin-left: 0; 
+  } */
 
   .ae-form-left,
   .ae-form-right {
@@ -2612,11 +2611,11 @@ p {
     margin: 0;
   }
 
-  .ae-content {
+  /* .ae-content {
     max-width: 100%;
     padding: 12px;
     margin-left: 0;
-  }
+  } */
 
   .ae-form-left,
   .ae-form-right {
@@ -2773,7 +2772,7 @@ p {
   }
 
   .event-form-container-ae {
-    flex-direction: column;
+    /* flex-direction: column; */
     gap: 24px;
   }
 
@@ -2846,6 +2845,7 @@ p {
 
   .add-event-content {
     padding: 16px;
+    margin-top: 50px;
   }
 
   .form-input,

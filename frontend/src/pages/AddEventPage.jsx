@@ -3155,7 +3155,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     <div className="add-event-container ae-page">
       <Sidebar />
       <div className="add-event-content ae-content" ref={contentRef}>
-        <div className="add-event-header">
+        <div className="dashboard-header">
           <div className="greeting">
             <h3>Add Event</h3>
             <p>Create and publish new event</p>

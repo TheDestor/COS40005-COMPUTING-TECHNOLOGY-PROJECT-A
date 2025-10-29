@@ -183,7 +183,7 @@
   position: fixed;
   top: 15px;
   left: 20px;
-  z-index: 101;
+  z-index: 10001;
   background-color: #6c5dd3;
   color: white;
   padding: 10px 12px;

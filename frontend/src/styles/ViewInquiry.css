@@ -261,26 +261,26 @@
   gap: 8px;
 }
 
-.status-badge, .priority-badge {
+.status-badge-vi, .priority-badge {
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
 }
 
-.status-badge-unread {
+.status-badge-vi-unread {
   background-color: rgba(108, 93, 211, 0.1);
   color: #6c5dd3;
 }
 
-.status-badge-progress {
+.status-badge-vi-progress {
   background-color: rgba(245, 158, 11, 0.1);
   color: #f59e0b;
 }
 
-.status-badge-resolved {
+.status-badge-vi-resolved {
   background-color: rgba(16, 185, 129, 0.1);
   color: #10b981;
 }
@@ -449,7 +449,7 @@
 }
 
 .meta-label {
-  font-size: 12px;
+  font-size: 14px !important;
   color: #6b7280;
   margin-bottom: 4px;
 }
@@ -549,13 +549,12 @@
     padding: 8px;
   }
 
-  .status-badge, .priority-badge {
-    padding: 2px 6px;
-    font-size: 10px;
+  .status-badge-vi, .priority-badge {
+    padding: 4px 8px;
+    font-size: 12px;
   }
 
   .inquiry-detail-header {
-    flex-direction: column; /* Stack children (top-row and user-info) vertically */
     align-items: flex-start; /* Align all children to the left by default */
     padding: 15px;
     gap: 10px;
@@ -572,7 +571,7 @@
   }
 
   .inquiry-user-info {
-    width: 100%; /* Take full width to ensure it's on its own line */
+    /* width: 100%;  */
     flex-direction: row; /* Keep avatar and text side-by-side within user info */
     align-items: center;
     margin-top: 5px; /* Add a small top margin for spacing from the top row */
@@ -584,6 +583,7 @@
     justify-content: flex-end; /* Align actions to the right within their container */
     gap: 8px; /* Space between action buttons */
     flex-grow: 1; /* Allow actions to grow and fill available space */
+    margin-left: auto;
   }
 }
 
@@ -652,7 +652,6 @@
 /* FIXED: Back button in its own row at the top */
 .header-top-row {
   display: flex;
-  flex-direction: column; /* Changed to column to stack back button and actions */
   align-items: flex-start;
   width: 100%;
   gap: 10px; /* Space between back button and action buttons */
@@ -870,9 +869,10 @@
     gap: 5px;
   }
 
-  .status-badge, .priority-badge {
+  .status-badge-vi, .priority-badge {
     padding: 1px 5px;
-    font-size: 9px;
+    font-size: 12px;
+    padding: 4px 8px;
   }
 
   /* FIXED: Extra padding for smaller screens */
@@ -883,14 +883,13 @@
 
   /* Ensure header-top-row maintains column layout on small screens */
   .header-top-row {
-    flex-direction: column; /* Stack back button and actions vertically */
     justify-content: flex-start;
     align-items: flex-start;
     gap: 10px;
   }
 
   .inquiry-user-info {
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: flex-start;
     gap: 8px;
     margin-top: 0;
@@ -915,8 +914,9 @@
     gap: 6px;
     align-items: center;
     flex-wrap: wrap;
-    justify-content: flex-start; /* Align to left */
+    justify-content: flex-end; /* Align to left */
     width: 100%;
+    margin-left: auto;
   }
   .inquiry-action-btn {
       width: auto; /* Let buttons size naturally */
@@ -931,6 +931,7 @@
     gap: 8px;
     margin-bottom: 10px;
     padding-bottom: 8px;
+    flex-direction: column; 
   }
 
   .meta-label {

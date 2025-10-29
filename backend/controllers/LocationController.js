@@ -12,7 +12,9 @@ export const getAllLocations = async (req, res) => {
             filter.type = new RegExp(`^${type}$`, 'i'); // optional: case-insensitive matching
         }
 
-        const locations = await locationModel.find(filter);
+        const locations = await locationModel
+            .find(filter)
+            .sort({ createdAt: -1, updatedAt: -1 });
         return res.status(200).json(locations);
     } catch (error) {
         console.error(error);
@@ -44,27 +46,49 @@ export const addLocation = async (req, res) => {
         const newLocation = await locationModel.create(locationData);
         console.log(newLocation);
 
-        const usersToNotify = await userModel.find({ "notifications.location": true }).select("email firstName lastName");
+        // Respond immediately so the client is not blocked by notification sending
+        res.status(201).json({ message: "Location added successfully", success: true, newLocation });
 
-        if (usersToNotify.length > 0) {
-            for (const user of usersToNotify) {
-                const fullName = `${user.firstName} ${user.lastName}`;
+        // Kick off notifications without blocking the response
+        ;(async () => {
+            try {
+                const usersToNotify = await userModel
+                    .find({ "notifications.location": true })
+                    .select("email firstName lastName");
 
-                const emailTemplate = getNewLocationEmailTemplate(locationData.name, fullName, locationData.description, locationData.category, locationData.type);
+                if (usersToNotify.length > 0) {
+                    for (const user of usersToNotify) {
+                        const fullName = `${user.firstName} ${user.lastName}`;
 
-                const mailOptions = {
-                    to: user.email,
-                    from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
-                    subject: emailTemplate.subject,
-                    html: emailTemplate.html,
-                    text: emailTemplate.text
-                };
+                        const emailTemplate = getNewLocationEmailTemplate(
+                            locationData.name,
+                            fullName,
+                            locationData.description,
+                            locationData.category,
+                            locationData.type
+                        );
 
-                await transporter.sendMail(mailOptions);
+                        const mailOptions = {
+                            to: user.email,
+                            from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
+                            subject: emailTemplate.subject,
+                            html: emailTemplate.html,
+                            text: emailTemplate.text,
+                        };
+
+                        try {
+                            await transporter.sendMail(mailOptions);
+                        } catch (mailErr) {
+                            console.error("Email send failed for:", user.email, mailErr);
+                        }
+                    }
+                }
+            } catch (notifyErr) {
+                console.error("Notification dispatch failed:", notifyErr);
             }
-        }
+        })();
 
-        return res.status(201).json({ message: "Location added successfully", success: true, newLocation });
+        return; // response already sent
     } catch (error) {
         console.error("An error occured while trying to create new location:", error);
         return res.status(500).json({ message: "An error occured while trying to create new location", success: false})
