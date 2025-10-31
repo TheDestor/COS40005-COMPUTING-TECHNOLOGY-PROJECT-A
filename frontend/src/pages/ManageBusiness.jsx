@@ -150,6 +150,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, businessData, loading }
                     <strong>Business Name:</strong> {businessData.name}
                   </div>
                 )}
+                {businessData.description && (
+                  <div className="mb-change-item">
+                    <strong>Description:</strong> {businessData.description}
+                  </div>
+                )}
                 {businessData.address && (
                   <div className="mb-change-item">
                     <strong>Address:</strong> {businessData.address}
@@ -163,6 +168,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, businessData, loading }
                 {businessData.website && (
                   <div className="mb-change-item">
                     <strong>Website:</strong> {businessData.website}
+                  </div>
+                )}
+                {businessData.openingHours && (
+                  <div className="mb-change-item">
+                    <strong>Opening Hours:</strong> {businessData.openingHours}
                   </div>
                 )}
                 {businessData.latitude && businessData.longitude && (
@@ -213,7 +223,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, businessData, loading }
 };
 
 function ManageBusiness() {
-  const { user, accessToken, isLoggedIn } = useAuth();
+  const { user, accessToken, isLoggedIn, logout } = useAuth();
 
   // Check if user has business role
   if (!isLoggedIn || user?.role !== 'business') {
@@ -300,14 +310,13 @@ function ManageBusiness() {
 
   const validators = {
     name: (v) => countNonSpace(v) < 1 ? 'Name is required.' : '',
-    description: (_) => '',
-    address: (v) => countNonSpace(v) < 1 ? 'Address is required.' : '',
     description: (v) => {
       if (!v) return '';
       return hasConsecutiveNonSpaceRun(v, 30)
         ? 'Description must not contain a sequence of 30+ non-space characters.'
         : '';
     },
+    address: (v) => countNonSpace(v) < 1 ? 'Address is required.' : '',
     phone: (v) => {
       if (!v) return '';
       return /^(\d{3}-\d{3}-\d{4}|\d{3}-\d{4}-\d{4})$/.test(v) ? '' : 'Phone must be XXX-XXX-XXXX or XXX-XXXX-XXXX.';
@@ -358,8 +367,39 @@ function ManageBusiness() {
       withCredentials: true,
     });
     if (accessToken) inst.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    
+    // Add response interceptor to handle session expiration
+    inst.interceptors.response.use(
+      (response) => response, // Pass through successful responses
+      (error) => {
+        // Check if error is 401 (Unauthorized) or 403 (Forbidden)
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          const errorMessage = error.response.data?.message || '';
+          
+          // Check if it's a token-related error
+          if (errorMessage.includes('Forbidden') || errorMessage.includes('Unauthorized') || errorMessage.includes('token')) {
+            // Show user-friendly message
+            toast.error('Your session has expired. Please log in again.', {
+              duration: 5000,
+            });
+            
+            // Clear auth state and logout
+            logout();
+            
+            // Optional: Redirect to home page after a short delay
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+          }
+        }
+        
+        // Return the error for further handling
+        return Promise.reject(error);
+      }
+    );
+    
     return inst;
-  }, [accessToken]);
+  }, [accessToken, logout]);
 
   useEffect(() => {
     document.body.classList.add('manage-business-body');
@@ -931,9 +971,11 @@ function ManageBusiness() {
         onConfirm={handleSubmitRequest}
         businessData={{
           name: form?.name,
+          description: form?.description,
           address: form?.address,
           phone: form?.phone,
           website: form?.website,
+          openingHours: form?.openingHours,
           latitude: form?.latitude,
           longitude: form?.longitude,
           businessImageFile: businessImageFile,
