@@ -492,6 +492,7 @@
         top: 70px; /* Default expanded position */
         transition: top 0.3s ease;
         max-height: 86vh;
+        z-index: 1000;
     }
 
     .main-panel-container-enp.collapsed-enp {

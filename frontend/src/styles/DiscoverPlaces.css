@@ -81,6 +81,12 @@
   to { opacity: 1; }
 }
 
+@keyframes floatCard {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -883,12 +889,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  animation: floatCard 3.5s ease-in-out infinite;
 }
 
 /* Hover effect for place cards */
 .place-card-dp:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  animation-play-state: paused;
 }
 
 /* Place card images */

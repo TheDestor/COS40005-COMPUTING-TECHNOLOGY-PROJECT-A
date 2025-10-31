@@ -947,7 +947,7 @@ const BusinessManagement = () => {
               </div>
               <div className="stat">
                 <span className="stat-value">{businesses.filter(b => b.status === 'rejected').length}</span>
-                <span className="stat-label">Rejected</span>
+                <span className="stat-label">Re-amend</span>
               </div>
               <div className="stat">
                 <span className="stat-value">{businesses.length}</span>
@@ -979,7 +979,7 @@ const BusinessManagement = () => {
                         <option value="pending">Pending</option>
                         <option value="in-review">In Review</option>
                         <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="rejected">Re-amend</option>
                       </select>
                     </div>
                     
@@ -1181,7 +1181,7 @@ const BusinessManagement = () => {
                       onClick={() => handleRejectBusiness(selectedBusiness._id)}
                       disabled={selectedBusiness.status === 'rejected'}
                     >
-                      {selectedBusiness.status === 'rejected' ? 'Rejected' : 'Reject'}
+                      {selectedBusiness.status === 'rejected' ? 'Re-amend' : 'Re-amend'}
                     </button>
                     <button 
                       className="business-action-btn delete-btn"

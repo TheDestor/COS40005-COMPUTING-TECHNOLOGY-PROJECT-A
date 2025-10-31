@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 // import BookmarkDetail from './BookmarkDetail';
 import '../styles/Bookmarkpage.css';
-import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft, FaTrashAlt } from 'react-icons/fa';
+import { FaRegBookmark, FaRegFlag, FaRegStar, FaArrowLeft, FaTrashAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useAuth } from '../context/AuthProvider.jsx';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
 import businessImage from '../assets/business1.jpg'; // Placeholder image
@@ -15,6 +15,15 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay, onBookmarkClick }) =>
   // State to track selected bookmarks
   const [selected, setSelected] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, kind: null });
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  // Panel states: 'collapsed' (short open), 'expanded' (tall open)
+  const [mobilePanelState, setMobilePanelState] = useState('collapsed');
+  // Remove useState for panelHeight; height will be derived from mobilePanelState
+  // const [panelHeight, setPanelHeight] = useState(() => (isMobile ? 30 : undefined));
+
+  useEffect(() => {
+    if (isOpen && isMobile) setMobilePanelState('collapsed');
+  }, [isOpen, isMobile]);
 
   useEffect(() => {
     if (isOpen && (!auth || !auth.user)) {
@@ -127,11 +136,69 @@ const BookmarkPage = ({ isOpen, onClose, showLoginOverlay, onBookmarkClick }) =>
   );
 
   return (
-    <div className={`bookmark-slide-container ${isOpen ? "show" : ""}`}>
-      <div className="bookmark-header">
-        <FaRegBookmark className="bookmark-icon"/>
+    <div
+      className={`bookmark-slide-container ${isOpen ? "show" : ""}`}
+      style={isMobile
+        ? mobilePanelState === 'collapsed'
+          ? { height: '30vh', transition: "height 0.35s cubic-bezier(0.4,0,0.2,1)" }
+          : mobilePanelState === 'expanded'
+              ? { height: '60vh', transition: "height 0.35s cubic-bezier(0.4,0,0.2,1)" }
+              : { height: '0', transition: "height 0.35s cubic-bezier(0.4,0,0.2,1)" }
+        : {}}
+    >
+      <div
+        className="bookmark-header"
+        onClick={e => {
+          // Only on mobile
+          if (!isMobile) return;
+          // Prevent header click if on chevron button (has .bookmark-panel-chevron class)
+          if (e.target.closest('.bookmark-panel-chevron')) return;
+          if (mobilePanelState === 'collapsed') {
+            setMobilePanelState('expanded');
+          } else if (mobilePanelState === 'expanded') {
+            setMobilePanelState('collapsed');
+          }
+        }}
+        style={isMobile ? { cursor: 'pointer' } : {}}
+      >
+        <FaRegBookmark className="bookmark-icon"
+        />
         <span>My Bookmarks</span>
-        <FaArrowLeft className="back-icon3" onClick={onClose} />
+        {isMobile ? (
+          <button
+            type="button"
+            className="bookmark-panel-chevron"
+            aria-label={mobilePanelState === 'collapsed' ? "Expand panel" : mobilePanelState === 'expanded' ? "Close bookmarks" : ''}
+            title={mobilePanelState === 'collapsed' ? "Expand panel" : mobilePanelState === 'expanded' ? "Close bookmarks" : ''}
+            onClick={e => {
+              e.stopPropagation();
+              if (mobilePanelState === 'collapsed') {
+                setMobilePanelState('expanded');
+              } else if (mobilePanelState === 'expanded') {
+                setMobilePanelState('collapsed');
+              } else if (mobilePanelState === 'closed') {
+                setMobilePanelState('collapsed');
+              }
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 6,
+              marginLeft: 8,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {mobilePanelState === 'expanded' ? (
+              <FaChevronDown style={{ fontSize: 20 }} />
+            ) : (
+              <FaChevronUp style={{ fontSize: 20 }} />
+            )}
+          </button>
+        ) : (
+          <FaArrowLeft className="back-icon3" onClick={onClose} style={{ cursor: "pointer" }} />
+        )}
       </div>
 
       <div className="bookmark-content">

@@ -298,13 +298,17 @@
 }
 
 .custom-info-window-container {
+  top: 50%;
+  left: 48%;
+  transform: translate(-100%, -50%);
+  z-index: 20000;
   position: absolute;
-  z-index: 1000;
+  /* z-index: 1000; */
   max-width: 320px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  left: 250px !important;
+  /* left: 250px !important; */
   /* Add a subtle glow to make container more distinct */
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
 }
@@ -428,7 +432,8 @@
 
 @media (max-width: 992px) {
   .custom-info-window-container {
-    left: 100px !important;
+    left: 30%;
+    transform: translate(-50%, -50%);
     width: clamp(260px, 92vw, 340px);
     max-width: 280px;
   }
@@ -441,7 +446,8 @@
 
 @media (max-width: 768px) {
   .custom-info-window-container {
-    left: 20px !important;
+    position: absolute;
+    left: 25% !important;
   }
 }
 
@@ -455,6 +461,7 @@
   .custom-info-window-container {
     width: clamp(100px, 92vw, 240px);
     /* max-width: 280px; */
+    transform: translate(-50%, -50%);
   }
 
   .info-footer {
@@ -463,6 +470,12 @@
 }
 
 @media (max-width: 480px) {
+  .custom-info-window-container {
+    /* width: clamp(100px, 92vw, 240px); */
+    /* max-width: 280px; */
+    transform: translate(-30%,-50%);
+  }
+
   .info-window-card {
     width: 280px;
   }

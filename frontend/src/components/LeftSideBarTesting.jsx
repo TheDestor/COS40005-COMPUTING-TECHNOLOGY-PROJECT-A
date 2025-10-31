@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
+import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaChevronDown, FaChevronUp, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
 import { MdManageAccounts, MdAddLocationAlt } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
@@ -12,85 +12,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { useAuth } from '../context/AuthProvider.jsx';
 import NearbyPlacesPanel from './NearbyPlacesPanel';
 import NearbyPlacesDrawer from './NearbyPlacesDrawer';
-// Add the correct import for the bookmarks context
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
-
-// function PhotonAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
-//   const [suggestions, setSuggestions] = useState([]);
-//   const [showDropdown, setShowDropdown] = useState(false);
-//   const debounceRef = useRef();
-
-//   const handleInput = (e) => {
-//     const val = e.target.value;
-//     onChange(val);
-
-//     // Debounce the fetch
-//     if (debounceRef.current) clearTimeout(debounceRef.current);
-//     if (val.length < 2) {
-//       setSuggestions([]);
-//       setShowDropdown(false);
-//       return;
-//     }
-//     debounceRef.current = setTimeout(async () => {
-//       const bbox = '109.5,0.8,115.5,5.5';
-//       const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(val)}&lang=en&limit=5&bbox=${bbox}`;
-//       try {
-//         const res = await fetch(url);
-//         const data = await res.json();
-//         setSuggestions(data.features || []);
-//         setShowDropdown(true);
-//       } catch {
-//         setSuggestions([]);
-//         setShowDropdown(false);
-//       }
-//     }, 300); // 300ms debounce
-//   };
-
-//   const handleSelect = (feature) => {
-//     onChange(feature.properties.name);
-//     onSelect(feature);
-//     setSuggestions([]);
-//     setShowDropdown(false);
-//   };
-
-//   return (
-//     <div style={{ position: 'relative', width: '100%' }}>
-//       <input
-//         value={value}
-//         onChange={handleInput}
-//         onKeyDown={(e) => {
-//           if (e.key === 'Enter' && onManualSubmit) {
-//             e.preventDefault();
-//             onManualSubmit(e.target.value);
-//             setShowDropdown(false);
-//           }
-//         }}
-//         onFocus={() => {
-//           if (suggestions.length > 0) setShowDropdown(true);
-//         }}
-//         onBlur={() => {
-//           // Delay closing to allow item click
-//           setTimeout(() => setShowDropdown(false), 150);
-//         }}
-//         placeholder={placeholder}
-//         autoComplete="off"
-//       />
-//       {showDropdown && suggestions.length > 0 && (
-//         <div className='photon-autocomplete-dropdown'>
-//           {suggestions.map((feature, idx) => (
-//             <div
-//               key={idx}
-//               style={{ padding: 8, cursor: 'pointer' }}
-//               onClick={() => handleSelect(feature)}
-//             >
-//               {feature.properties.name} {feature.properties.city ? `(${feature.properties.city})` : ''}
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
 
 function ComprehensiveAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
@@ -194,29 +116,6 @@ function ComprehensiveAutocompleteInput({ value, onChange, onSelect, onManualSub
     const features = Array.isArray(data.features) ? data.features : [];
     return features.map(mapPhotonFeature);
   };
-
-  // const renderBadge = (source) => {
-  //   const style = {
-  //     fontSize: 11, padding: '2px 6px', borderRadius: 8, marginLeft: 8,
-  //     background: source === 'backend' ? '#e8f4ff'
-  //              : source === 'business' ? '#fff7ea'
-  //              : source === 'nominatim' ? '#eefbea'
-  //              : '#f0f0ff',
-  //     color: source === 'backend' ? '#1a73e8'
-  //           : source === 'business' ? '#b76e00'
-  //           : source === 'nominatim' ? '#2e7d32'
-  //           : '#4b3fb3',
-  //     border: source === 'backend' ? '1px solid #1a73e8'
-  //           : source === 'business' ? '1px solid #b76e00'
-  //           : source === 'nominatim' ? '1px solid #2e7d32'
-  //           : '1px solid #4b3fb3'
-  //   };
-  //   const label = source === 'backend' ? 'Backend'
-  //                : source === 'business' ? 'Business'
-  //                : source === 'nominatim' ? 'Nominatim'
-  //                : 'Photon';
-  //   return <span style={style}>{label}</span>;
-  // };
 
   const handleInput = (e) => {
     const q = e.target.value;
@@ -879,6 +778,12 @@ const LeftSidebarTesting = forwardRef(({
   const [nearbyError, setNearbyError] = useState(null);
   const [isNearbyDrawerOpen, setIsNearbyDrawerOpen] = useState(false);
   const routeAbortRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [panelHeight, setPanelHeight] = useState(() => (isMobile ? 30 : undefined));
+
+  useEffect(() => {
+    if (isMobile) setPanelHeight(30);
+  }, [isMobile]);
 
   // Compute a robust anchor for distance: prefer search selection, then recent selection, then destination
   const anchorCoords = useMemo(() => {
@@ -1802,6 +1707,7 @@ const fetchNearbyPlaces = async (locationCoords, radius = 5000) => {
 const handleVehicleClick = async (vehicle) => {
   setSelectedVehicle(vehicle);
   setIsLoading(true);
+  const toastId = toast.loading('Calculating route...');
   
   // If this is a manual selection (not auto-calculation), reset the flag
   if (autoCalculatedRef.current) {
@@ -1835,7 +1741,7 @@ const handleVehicleClick = async (vehicle) => {
 
     // Strict coordinate presence check
     if (!(startCoords?.lat && startCoords?.lng) || !(endCoords?.lat && endCoords?.lng)) {
-      toast.error('Please set both starting point and destination');
+      toast.error('Please set both starting point and destination', { id: toastId });
       setIsLoading(false);
       return;
     }
@@ -1872,6 +1778,7 @@ const handleVehicleClick = async (vehicle) => {
     if (fastData?.routes?.length) {
       const first = fastData.routes[0];
       const coords = first.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      toast.loading('Found a quick route. Refining options...', { id: toastId });
 
       setRouteAlternatives([{
         index: 0, distance: first.distance, duration: first.duration,
@@ -1927,11 +1834,13 @@ const handleVehicleClick = async (vehicle) => {
           toast.success(
             alternatives.length > 1
               ? `${vehicle} routes updated: ${alternatives.length} options available.`
-              : `${vehicle} route updated.`
+              : `${vehicle} route updated.`,
+              { id: toastId }
           );
         }
       } catch (err) {
         console.warn('Background alternatives failed:', err?.message);
+        toast.error('Could not find better route options.', { id: toastId });
       }
     });
   } catch (error) {
@@ -1968,7 +1877,7 @@ const handleVehicleClick = async (vehicle) => {
         vehicle: fallbackRoute.vehicle
       });
       
-      toast.warning(`Using fallback route for ${vehicle}. API routing failed: ${error.message}`);
+      toast.warning(`Using fallback route for ${vehicle}. API routing failed: ${error.message}`, { id: toastId });
     } else {
       setRouteSummary(null);
       if (setOsrmRouteCoords) setOsrmRouteCoords([]);
@@ -1978,11 +1887,11 @@ const handleVehicleClick = async (vehicle) => {
       
       // Show more helpful error messages
       if (vehicle === 'Walking' && error.message.includes('walking route')) {
-        toast.error('Walking route not available. The route may not be accessible on foot. Try using a different transport mode.');
+        toast.error('Walking route not available. The route may not be accessible on foot. Try using a different transport mode.', { id: toastId });
       } else if (vehicle === 'Bicycle' && error.message.includes('cycling route')) {
-        toast.error('Cycling route not available. The route may not be accessible by bicycle. Try using a different transport mode.');
+        toast.error('Cycling route not available. The route may not be accessible by bicycle. Try using a different transport mode.', { id: toastId });
       } else {
-        toast.error(`Failed to calculate routes for ${vehicle}: ${error.message}`);
+        toast.error(`Failed to calculate routes for ${vehicle}: ${error.message}`, { id: toastId });
       }
     }
   } finally {
@@ -2390,11 +2299,31 @@ useEffect(() => {
         </div>
       </div>
     
-      <div className={`side-panel100 ${sidebarExpanded ? 'expanded' : ''}`}>
-        <div className="transport-section">
-            <div className="section-label">
-              <FaMapMarkerAlt className="section-icon" />
-              <span>Map Route Direction</span>
+      <div 
+        className={`side-panel100 ${sidebarExpanded ? 'expanded' : ''}`}
+        style={isMobile ? { height: `${panelHeight}vh`, transition: 'height 0.35s cubic-bezier(0.4,0,0.2,1)' } : {}}
+      >
+        <div 
+        className="transport-section"
+        onClick={(e) => {
+          if (!isMobile) return;
+          setPanelHeight(h => (h >= 60 ? 30 : 60));
+          e.stopPropagation(); // Prevent event from bubbling if needed
+        }}
+        style={{ cursor: isMobile ? "pointer" : undefined }}>
+            <div className="section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FaMapMarkerAlt className="section-icon" />
+                <span>Map Route Direction</span>
+              </span>
+              {/* Chevron indicator */}
+              {isMobile ? (
+                panelHeight >= 60 ? (
+                  <FaChevronDown style={{ fontSize: 18, marginLeft: "auto" }} />
+                ) : (
+                  <FaChevronUp style={{ fontSize: 18, marginLeft: "auto" }} />
+                )
+              ) : null}
             </div>
             <div className="transport-row">
               {['Car', 'Bus', 'Walking'].map((v) => (

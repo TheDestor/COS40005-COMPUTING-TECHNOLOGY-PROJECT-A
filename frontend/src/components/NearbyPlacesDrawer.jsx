@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/NearbyPlacesDrawer.css';
-import { FaUtensils, FaToilet, FaCapsules, FaListUl, FaHotel, FaArrowLeft } from 'react-icons/fa';
+import { FaUtensils, FaToilet, FaCapsules, FaListUl, FaHotel, FaArrowLeft, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 export default function NearbyPlacesDrawer({
   isOpen,
@@ -20,18 +20,18 @@ export default function NearbyPlacesDrawer({
     { key: 'hotel', label: 'Hotels', Icon: <FaHotel /> },
   ];
 
-  // Click-to-expand on mobile (20vh → 50vh)
+  // Click-to-expand on mobile (30vh → 50vh)
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const [panelHeight, setPanelHeight] = useState(() => (isMobile ? 20 : undefined));
+  const [panelHeight, setPanelHeight] = useState(() => (isMobile ? 30 : undefined));
 
   useEffect(() => {
-    if (isOpen && isMobile) setPanelHeight(20);
+    if (isOpen && isMobile) setPanelHeight(30);
   }, [isOpen]);
 
   const handleHeaderClick = (e) => {
     if (!isMobile) return;
     if (e.target.closest('.nearby-drawer-toggle')) return;
-    setPanelHeight((h) => ((h ?? 20) >= 50 ? 20 : 50));
+    setPanelHeight((h) => ((h ?? 30) >= 50 ? 30 : 50));
   };
 
   const [isDragging, setIsDragging] = useState(false);
@@ -44,7 +44,7 @@ export default function NearbyPlacesDrawer({
     if (target instanceof Element && (target.closest('button') || target.closest('a'))) return;
     setIsDragging(true);
     dragStartYRef.current = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-    dragStartHeightRef.current = panelHeight ?? 20;
+    dragStartHeightRef.current = panelHeight ?? 30;
     window.addEventListener('pointermove', onDragMove, { passive: false });
     window.addEventListener('pointerup', endDrag);
   };
@@ -54,7 +54,7 @@ export default function NearbyPlacesDrawer({
     const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
     const deltaPx = dragStartYRef.current - clientY;
     const deltaVh = (deltaPx / window.innerHeight) * 100;
-    const minVh = 20;
+    const minVh = 30;
     const maxVh = 50;
     const next = Math.max(minVh, Math.min(maxVh, (dragStartHeightRef.current ?? minVh) + deltaVh));
     setPanelHeight(next);
@@ -75,7 +75,7 @@ export default function NearbyPlacesDrawer({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && isMobile) setPanelHeight(20);
+    if (isOpen && isMobile) setPanelHeight(30);
   }, [isOpen]);
 
   // Escape to close behavior
@@ -109,7 +109,7 @@ export default function NearbyPlacesDrawer({
         aria-modal="false"
         tabIndex={isOpen ? 0 : -1}
         data-state={isOpen ? 'open' : 'closed'}
-        style={isMobile ? { height: `${panelHeight ?? 20}vh` } : undefined}
+        style={isMobile ? { height: `${panelHeight ?? 30}vh` } : undefined}
       >
         <div
           className="nearby-drawer-header recent-like-header"
@@ -125,15 +125,34 @@ export default function NearbyPlacesDrawer({
             </svg>
             {headerTitle}
           </h3>
-          <button
-            type="button"
-            className="nearby-drawer-toggle recent-like-button"
-            onClick={() => onToggle && onToggle(false)}
-            aria-label="Close nearby places panel"
-            title="Close nearby places"
-          >
-            <FaArrowLeft className="nearby-drawer-toggle-react-icon" />
-          </button>
+          {isMobile ? (
+            <button
+              type="button"
+              className="nearby-drawer-toggle recent-like-button"
+              onClick={() =>
+                setPanelHeight((h) => ((h ?? 30) >= 50 ? 30 : 50))
+              }
+              aria-label="Expand/collapse panel"
+              title="Expand/collapse panel"
+              tabIndex={0}
+            >
+              {panelHeight >= 50 ? (
+                <FaChevronDown className="nearby-drawer-toggle-react-icon" />
+              ) : (
+                <FaChevronUp className="nearby-drawer-toggle-react-icon" />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="nearby-drawer-toggle recent-like-button"
+              onClick={() => onToggle && onToggle(false)}
+              aria-label="Close nearby places panel"
+              title="Close nearby places"
+            >
+              <FaArrowLeft className="nearby-drawer-toggle-react-icon" />
+            </button>
+          )}
         </div>
 
         <div className="nearby-drawer-toolbar" role="region" aria-label="Nearby filters">

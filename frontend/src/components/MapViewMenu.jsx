@@ -33,39 +33,83 @@ const createSWRCache = () => {
   const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
   const REFRESH_INTERVAL = 60 * 1000; // 60 seconds for background refresh
   const cache = new Map();
-  
+
+  const isFullyPopulatedFn = () => {
+    const essentialKeys = [
+      'major_towns',
+      'backend_locations', 
+      'events',
+      'businesses_Attractions',
+      'businesses_Accommodation',
+      'businesses_Food & Beverages',
+      'businesses_Transportation',
+      'businesses_Shoppings & Leisures',
+      'businesses_Tour Guides'
+    ];
+
+    const now = Date.now();
+    const hasBasicData = essentialKeys.every((key) => {
+      const item = cache.get(key);
+      return item && now - item.timestamp < 24 * 60 * 60 * 1000;
+    });
+
+    if (!hasBasicData) return false;
+
+    const keys = Array.from(cache.keys());
+    const hasOverpassData = keys.some((key) => key.startsWith('overpass_'));
+    return hasBasicData && hasOverpassData;
+  };
+
   // Rate limiter for Overpass API calls
   const rateLimiter = {
     requests: new Map(), // Track requests per category
-    maxRequests: 10, // Max requests per category per minute
+    maxRequests: 3, // Reduced: Max requests per category per minute
     windowMs: 60 * 1000, // 1 minute window
-    
+
+    // Global limiter across all categories
+    globalRequests: [],
+    globalMaxRequests: 5, // Reduced: Max total Overpass requests per minute
+    globalWindowMs: 60 * 1000,
+
     canMakeRequest: (category) => {
       const now = Date.now();
       const categoryRequests = rateLimiter.requests.get(category) || [];
-      
-      // Remove old requests outside the window
       const validRequests = categoryRequests.filter(time => now - time < rateLimiter.windowMs);
       rateLimiter.requests.set(category, validRequests);
-      
       return validRequests.length < rateLimiter.maxRequests;
     },
-    
+
+    canMakeGlobalRequest: () => {
+      const now = Date.now();
+      rateLimiter.globalRequests = rateLimiter.globalRequests.filter(time => now - time < rateLimiter.globalWindowMs);
+      return rateLimiter.globalRequests.length < rateLimiter.globalMaxRequests;
+    },
+
     recordRequest: (category) => {
       const now = Date.now();
       const categoryRequests = rateLimiter.requests.get(category) || [];
       categoryRequests.push(now);
       rateLimiter.requests.set(category, categoryRequests);
+      rateLimiter.globalRequests.push(now);
     },
-    
+
     getWaitTime: (category) => {
       const now = Date.now();
       const categoryRequests = rateLimiter.requests.get(category) || [];
       const validRequests = categoryRequests.filter(time => now - time < rateLimiter.windowMs);
-      
       if (validRequests.length >= rateLimiter.maxRequests) {
         const oldestRequest = Math.min(...validRequests);
         return rateLimiter.windowMs - (now - oldestRequest);
+      }
+      return 0;
+    },
+
+    getGlobalWaitTime: () => {
+      const now = Date.now();
+      const validRequests = rateLimiter.globalRequests.filter(time => now - time < rateLimiter.globalWindowMs);
+      if (validRequests.length >= rateLimiter.globalMaxRequests) {
+        const oldestRequest = Math.min(...validRequests);
+        return rateLimiter.globalWindowMs - (now - oldestRequest);
       }
       return 0;
     }
@@ -181,34 +225,11 @@ const createSWRCache = () => {
     getWithMetadata: (key) => cache.get(key),
     
     // Check if cache is fully populated for instant experience
-    isFullyPopulated: () => {
-      const essentialKeys = [
-        'major_towns',
-        'backend_locations', 
-        'events',
-        'businesses_Attractions',
-        'businesses_Accommodation',
-        'businesses_Food & Beverages',
-        'businesses_Transportation',
-        'businesses_Shoppings & Leisures',
-        'businesses_Tour Guides'
-      ];
-      
-      // Check if we have basic data
-      const hasBasicData = essentialKeys.every(key => cache.has(key));
-      
-      if (!hasBasicData) return false;
-      
-      // Check if we have some Overpass data (don't require all categories)
-      const cacheKeys = Array.from(cache.keys());
-      const hasOverpassData = cacheKeys.some(key => key.startsWith('overpass_'));
-      
-      return hasBasicData && hasOverpassData;
-    },
-    
-    // Get cache stats - FIXED: Use the correct method reference
+    isFullyPopulated: isFullyPopulatedFn,
+
+    // Get cache stats - FIXED: use local function
     getStats: () => {
-      const keys = Array.from(cache.keys()); // FIXED: Use cache.keys() directly
+      const keys = Array.from(cache.keys());
       const now = Date.now();
       let validCount = 0;
       let expiredCount = 0;
@@ -231,7 +252,7 @@ const createSWRCache = () => {
         valid: validCount,
         expired: expiredCount,
         overpass: overpassCount,
-        fullyPopulated: cache.isFullyPopulated()
+        fullyPopulated: isFullyPopulatedFn()
       };
     },
     
@@ -279,10 +300,18 @@ const startBackgroundRefresh = () => {
     
     for (const key of keys) {
       try {
-        // Only refresh items that are due for refresh (older than 60 seconds)
         const item = globalCache.getWithMetadata(key);
-        if (item && Date.now() - item.lastRefresh < 60000) {
-          continue; // Skip if refreshed recently
+
+        // Skip recent refreshes
+        if (key.startsWith('overpass_')) {
+          // Only refresh Overpass data every 10 minutes
+          if (item && Date.now() - item.lastRefresh < 10 * 60 * 1000) {
+            continue;
+          }
+        } else {
+          if (item && Date.now() - item.lastRefresh < 60000) {
+            continue;
+          }
         }
 
         // Determine what type of data this is and refresh accordingly
@@ -318,22 +347,23 @@ const startBackgroundRefresh = () => {
             failedCount++;
           }
         } else if (key.startsWith('overpass_')) {
-          // Apply rate limiting for Overpass requests
           const parts = key.split('_');
           if (parts.length >= 2) {
             const category = parts[1];
-            
-            // Check rate limit before making Overpass request
-            if (!globalCache.rateLimiter.canMakeRequest(category)) {
-              const waitTime = globalCache.rateLimiter.getWaitTime(category);
-              console.log(`⏳ Rate limited for ${category}, waiting ${Math.round(waitTime/1000)}s`);
+
+            // Check category + global rate limits
+            const canCategory = globalCache.rateLimiter.canMakeRequest(category);
+            const canGlobal = globalCache.rateLimiter.canMakeGlobalRequest();
+            if (!canCategory || !canGlobal) {
+              const waitCat = globalCache.rateLimiter.getWaitTime(category);
+              const waitGlobal = globalCache.rateLimiter.getGlobalWaitTime();
+              console.log(`⏳ Rate limited for ${category}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
               rateLimitedCount++;
-              continue; // Skip this request
+              continue;
             }
             
             const rules = menuToOverpassMap[category.toLowerCase()];
             if (rules) {
-              // Record the request
               globalCache.rateLimiter.recordRequest(category);
               
               const ql = buildOverpassQL(rules, currentPos, 10000);
@@ -667,7 +697,8 @@ const menuToOverpassMap = {
 
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter'
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter'
 ];
 
 // Keep existing buildOverpassQL for nearby locations
@@ -691,23 +722,65 @@ const buildOverpassQL = (rules, center, radiusMeters) => {
 };
 
 const fetchOverpassWithFallback = async (ql) => {
+  const MAX_RETRIES_PER_URL = 3;
+  const BASE_DELAY_MS = 1500;
+
+  // Helper: sleep
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
   for (const url of OVERPASS_URLS) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Language': 'en' },
-        body: new URLSearchParams({ data: ql }).toString(),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (res.ok) return await res.json();
-    } catch (_) { /* try next */ }
+    let attempt = 0;
+    while (attempt < MAX_RETRIES_PER_URL) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Language': 'en' },
+          body: new URLSearchParams({ data: ql }).toString(),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          return await res.json();
+        }
+
+        // Handle 429 Too Many Requests: honor Retry-After if present
+        if (res.status === 429) {
+          const retryAfter = res.headers.get('Retry-After');
+          const waitMs = retryAfter ? Number(retryAfter) * 1000 : BASE_DELAY_MS * (attempt + 1);
+          console.warn(`Overpass 429 on ${url}, waiting ${Math.round(waitMs / 1000)}s before retry...`);
+          await sleep(waitMs);
+          attempt++;
+          continue;
+        }
+
+        // Handle 5xx with exponential backoff + jitter
+        if (res.status >= 500 && res.status < 600) {
+          const backoffMs = BASE_DELAY_MS * (attempt + 1) + Math.floor(Math.random() * 500);
+          console.warn(`Overpass ${res.status} on ${url}, backoff ${backoffMs}ms...`);
+          await sleep(backoffMs);
+          attempt++;
+          continue;
+        }
+
+        // Other HTTP errors: move to next mirror
+        console.warn(`Overpass HTTP ${res.status} on ${url}, trying next mirror...`);
+        break;
+      } catch (e) {
+        // Network/timeout: small backoff then retry or next mirror
+        const backoffMs = BASE_DELAY_MS * (attempt + 1);
+        console.warn(`Overpass fetch error on ${url}: ${String(e)}; retrying in ${backoffMs}ms...`);
+        await sleep(backoffMs);
+        attempt++;
+      }
+    }
   }
+
+  // Final fallback: empty elements
   return { elements: [] };
 };
 
@@ -1234,22 +1307,24 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const rules = menuToOverpass(categoryName);
     if (!rules) return [];
 
-    const now = Date.now();
     const key = `overpass_${categoryName}_${center.lat.toFixed(4)}_${center.lng.toFixed(4)}_${radiusMeters}`;
-    
-    // Check cache first - using global persistent cache
+
+    // Cache first
     const cached = dataCacheRef.current.get(key);
     if (cached) {
       console.log(`✅ Using cached Overpass data for ${categoryName}: ${cached.length} items`);
       return cached;
     }
 
-    // Check rate limit before making request
-    if (!globalCache.rateLimiter.canMakeRequest(categoryName)) {
-      const waitTime = globalCache.rateLimiter.getWaitTime(categoryName);
-      console.log(`⏳ Rate limited for ${categoryName}, waiting ${Math.round(waitTime/1000)}s`);
-      
-      // Return cached data if available, or empty array
+    // Category + global rate limit checks
+    const canCategory = globalCache.rateLimiter.canMakeRequest(categoryName);
+    const canGlobal = globalCache.rateLimiter.canMakeGlobalRequest();
+    if (!canCategory || !canGlobal) {
+      const waitCat = globalCache.rateLimiter.getWaitTime(categoryName);
+      const waitGlobal = globalCache.rateLimiter.getGlobalWaitTime();
+      console.log(`⏳ Rate limited for ${categoryName}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
+
+      // Prefer a nearby cached fallback if available
       const fallbackKey = `overpass_${categoryName}_${DEFAULT_CENTER.lat.toFixed(4)}_${DEFAULT_CENTER.lng.toFixed(4)}_10000`;
       return globalCache.get(fallbackKey) || [];
     }
@@ -1258,9 +1333,8 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 10000)));
 
     try {
-      // Record the request
       globalCache.rateLimiter.recordRequest(categoryName);
-      
+
       const data = await fetchOverpassWithFallback(ql);
       const elements = (data.elements || []).map(el => {
         const isWayOrRel = el.type !== 'node';
@@ -1278,7 +1352,6 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         };
       }).filter(Boolean).slice(0, 500);
 
-      // CACHE THE OVERPASS DATA for instant loading next time
       dataCacheRef.current.set(key, elements);
       console.log(`💾 Cached Overpass data for ${categoryName}: ${elements.length} items`);
 

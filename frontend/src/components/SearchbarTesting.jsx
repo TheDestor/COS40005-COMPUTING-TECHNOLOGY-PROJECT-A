@@ -27,6 +27,56 @@ function SearchBarTesting({ onPlaceSelected, setShowRecent, onAddToRecent, onOpe
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
 
+  const inputId = 'searchbar-input';
+  const listboxId = 'search-suggestions-listbox';
+  const getOptionId = (i) => `search-suggestion-${i}`;
+
+  // Visually hidden style for screen-reader-only content
+  const visuallyHiddenStyle = {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (!predictions || predictions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => {
+        const next = prev + 1;
+        return next >= predictions.length ? predictions.length - 1 : next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => {
+        const next = prev - 1;
+        return next < 0 ? 0 : next;
+      });
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && highlightedIndex < predictions.length) {
+        e.preventDefault();
+        const sel = predictions[highlightedIndex];
+        // Prefer existing selection flow to preserve behavior
+        if (typeof handlePlace === 'function') {
+          handlePlace(sel);
+        } else if (typeof onPlaceSelected === 'function') {
+          onPlaceSelected(sel);
+        }
+      }
+    } else if (e.key === 'Escape') {
+      // Close suggestions
+      setHighlightedIndex(-1);
+      setIsFocused(false);
+    }
+  };
+
   // Restore normalizer
   const normalizeName = (s) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -703,8 +753,18 @@ useEffect(() => {
 
   return (
     <div ref={containerRef} className={`styled-searchbar-container expanded ${isFocused ? 'focused' : ''}`}>
+      <label htmlFor={inputId} style={visuallyHiddenStyle}>
+        Search places in Sarawak
+      </label>
+      <span id="searchbar-instructions" style={visuallyHiddenStyle}>
+        Type to search. Use Arrow keys to navigate suggestions and Enter to select.
+      </span>
+      <div aria-live="polite" style={visuallyHiddenStyle}>
+        {isLoading ? 'Loading suggestions…' : `${predictions.length} suggestions available.`}
+      </div>
       <img src={logo} alt="Logo" className="searchbar-logo" />
       <input
+        id={inputId}
         ref={inputRef}
         type="text"
         placeholder="Search destinations"
@@ -715,24 +775,17 @@ useEffect(() => {
           setHighlightedIndex(-1);
         }}
         onFocus={() => setIsFocused(true)}
-        onKeyDown={(e) => {
-          if (predictions.length === 0) return;
-          if (e.key === 'ArrowDown') {
-            setHighlightedIndex((prev) =>
-              prev < predictions.length - 1 ? prev + 1 : 0
-            );
-          } else if (e.key === 'ArrowUp') { 
-            setHighlightedIndex((prev) =>
-              prev > 0 ? prev - 1 : predictions.length - 1
-            );
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (predictions.length > 0) {
-              const idx = highlightedIndex >= 0 ? highlightedIndex : 0;
-              handlePredictionClick(predictions[idx]);
-            }
-          }
-        }}
+        onKeyDown={handleInputKeyDown}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls={listboxId}
+        aria-expanded={isFocused && predictions.length > 0 ? 'true' : 'false'}
+        aria-activedescendant={
+          highlightedIndex >= 0 ? getOptionId(highlightedIndex) : undefined
+        }
+        aria-describedby="searchbar-instructions"
+        aria-busy={isLoading ? 'true' : 'false'}
+        aria-label="Search places"
       />
 
       <div className="searchbar-right-icons">

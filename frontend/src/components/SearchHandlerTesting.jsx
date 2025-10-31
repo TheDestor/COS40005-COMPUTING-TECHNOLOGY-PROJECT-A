@@ -8,6 +8,11 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
     const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
     const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
 
+    console.debug('[SearchHandlerTesting] fetch nearby effect', {
+      mapReady: !!map,
+      rawLat: lat, rawLon: lon
+    });
+
     // UPDATED: use numeric validation, not truthiness, to avoid first-run race and string issues
     if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) {
       return;
@@ -56,6 +61,12 @@ export default function SearchHandlerTesting({ selectedSearchBarPlace, setSearch
   useEffect(() => {
     const lat = selectedSearchBarPlace?.coordinates?.latitude ?? selectedSearchBarPlace?.latitude;
     const lon = selectedSearchBarPlace?.coordinates?.longitude ?? selectedSearchBarPlace?.longitude;
+
+    console.debug('[SearchHandlerTesting] flyTo effect', {
+      mapReady: !!map,
+      rawLat: lat, rawLon: lon, searchBarZoomTrigger
+    });
+
     if (map && Number.isFinite(lat) && Number.isFinite(lon)) {
       setTimeout(() => {
         map.flyTo([lat, lon], 17);

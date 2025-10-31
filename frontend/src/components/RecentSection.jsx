@@ -1,12 +1,17 @@
 import React, {useState} from "react";
 import "../styles/RecentSection.css";
-import { FaArrowLeft, FaMap, FaClock, FaTrashAlt } from "react-icons/fa";
+import { FaArrowLeft, FaMap, FaClock, FaTrashAlt, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import fallbackImage from "../assets/default.png";
 import { toast } from "sonner";
 
 function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteItems, onClearAll }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, kind: null });
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [mobilePanelState, setMobilePanelState] = useState('collapsed');
+  React.useEffect(() => {
+    if (isOpen && isMobile) setMobilePanelState('collapsed');
+  }, [isOpen, isMobile]);
 
   // Read from localStorage if history prop empty
   const [localHistory] = useState(() => {
@@ -84,18 +89,65 @@ function RecentSection({ isOpen, onClose, history = [], onItemClick, onDeleteIte
   };
 
   return (
-    <div className={`recent-slide-container ${isOpen ? "show" : ""}`}>
+    <div
+      className={`recent-slide-container ${isOpen ? "show" : ""}`}
+      style={isMobile
+        ? mobilePanelState === 'collapsed'
+          ? { height: '30vh', transition: "height 0.35s cubic-bezier(0.4,0,0.2,1)" }
+          : { height: '60vh', transition: "height 0.35s cubic-bezier(0.4,0,0.2,1)" }
+        : {}}
+    >
       {/* Header */}
-      <div className="recent-header">
+      <div
+        className="recent-header"
+        onClick={e => {
+          if (!isMobile) return;
+          if (e.target.closest('.recent-panel-chevron')) return;
+          if (mobilePanelState === 'collapsed') {
+            setMobilePanelState('expanded');
+          } else if (mobilePanelState === 'expanded') {
+            setMobilePanelState('collapsed');
+          }
+        }}
+        style={isMobile ? { cursor: 'pointer' } : {}}
+      >
         <FaClock className="recent-icon" />
         <span>Recent Locations</span>
-        <FaArrowLeft
-          className="back-icon3"
-          onClick={onClose}
-          aria-label="Close recent locations"
-          role="button"
-          tabIndex={0}
-        />
+        {isMobile ? (
+          <button
+            type="button"
+            className="recent-panel-chevron"
+            aria-label={mobilePanelState === 'collapsed' ? "Expand panel" : "Collapse panel"}
+            title={mobilePanelState === 'collapsed' ? "Expand panel" : "Collapse panel"}
+            onClick={e => {
+              e.stopPropagation();
+              setMobilePanelState(s => (s === 'collapsed' ? 'expanded' : 'collapsed'));
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 6,
+              marginLeft: 8,
+              display: "flex",
+              alignItems: "center"
+            }}
+          >
+            {mobilePanelState === 'expanded'
+              ? <FaChevronDown style={{ fontSize: 20 }} />
+              : <FaChevronUp style={{ fontSize: 20 }} />
+            }
+          </button>
+        ) : (
+          <FaArrowLeft
+            className="back-icon3"
+            onClick={onClose}
+            aria-label="Close recent locations"
+            role="button"
+            tabIndex={0}
+            style={{ cursor: "pointer" }}
+          />
+        )}
       </div>
 
       {/* Actions Bar - shown when items selected */}

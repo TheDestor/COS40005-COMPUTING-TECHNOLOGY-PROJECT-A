@@ -37,12 +37,40 @@ import WeatherTownHandlerTesting from './WeatherTownHandlerTesting';
 import LeftSideBarTesting from './LeftSideBarTesting';
 import AiChatbot from './AiChatbot';
 
-// Sarawak bounds: [SouthWest, NorthEast]
+// Sarawak bounds: [SouthWest, NorthEast] 2x bigger than original bounds
 const sarawakBounds = [
-  [0.8, 109.5],   // Southwest corner (lat, lng)
-  [5.5, 115.5],   // Northeast corner (lat, lng)
+  [-1.55, 106.5],  // Southwest corner (lat, lng)
+  [7.85, 118.5],   // Northeast corner (lat, lng)
 ];
+
 const sarawakCenter = [2.5, 112.5]; // Rough center of Sarawak
+
+// Explicitly declared Sarawak boundary coordinates (keeps current 2x enlarged size)
+const sarawakBoundary = [[...sarawakBounds[0]], [...sarawakBounds[1]]];
+
+// Boundary check helper with inclusive edges and small epsilon to handle floating precision.
+// Returns { inside, onBoundary } and logs details for debugging.
+function checkBoundary(lat, lng, boundary = sarawakBoundary) {
+  const epsilon = 1e-6;
+  const south = boundary[0][0];
+  const west = boundary[0][1];
+  const north = boundary[1][0];
+  const east = boundary[1][1];
+
+  const insideLat = lat >= south - epsilon && lat <= north + epsilon;
+  const insideLng = lng >= west - epsilon && lng <= east + epsilon;
+
+  const inside = insideLat && insideLng;
+  const onBoundary =
+    inside &&
+    (Math.abs(lat - south) <= epsilon ||
+     Math.abs(lat - north) <= epsilon ||
+     Math.abs(lng - west) <= epsilon ||
+     Math.abs(lng - east) <= epsilon);
+
+  console.debug('[Boundary] check', { lat, lng, inside, onBoundary, south, west, north, east });
+  return { inside, onBoundary };
+}
 
 // Custom waypoint marker with number
 const createWaypointMarkerIcon = (number) => {
@@ -176,12 +204,37 @@ const categoryIcons = {
 
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
-  // Normalize coords from either {latitude, longitude} or {coordinates.{latitude, longitude}}
-  const rawLat = activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude;
-  const rawLng = activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude;
+  // Normalize coords from {latitude, longitude}, {coordinates.{latitude, longitude}}, or {lat,lng|lon}
+  const rawLat =
+    activeSearchLocation?.coordinates?.latitude ??
+    activeSearchLocation?.latitude ??
+    activeSearchLocation?.lat;
+  const rawLng =
+    activeSearchLocation?.coordinates?.longitude ??
+    activeSearchLocation?.longitude ??
+    activeSearchLocation?.lng ??
+    activeSearchLocation?.lon;
   const searchLat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
   const searchLng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
   const hasSearchCoords = Number.isFinite(searchLat) && Number.isFinite(searchLng);
+
+  // DEBUG: log marker render gating (only warn if anchor exists and invalid)
+  useEffect(() => {
+    const type = activeSearchLocation?.type || 'unknown';
+    console.debug('[MapContent] anchor-check', {
+      hasSearchCoords,
+      searchLat,
+      searchLng,
+      isRoutingActive,
+      type,
+    });
+    if (activeSearchLocation && !hasSearchCoords) {
+      console.warn('[MapContent] No valid search coordinates; marker suppressed.');
+    }
+    if (isRoutingActive) {
+      console.warn('[MapContent] Routing active; anchor marker intentionally hidden.');
+    }
+  }, [hasSearchCoords, searchLat, searchLng, isRoutingActive, activeSearchLocation]);
 
   const contextMenuItems = [
         { 
@@ -208,8 +261,8 @@ function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCateg
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {/* Anchor marker at searched location: hide while routing to avoid duplicate with route end pin */}
-      {hasSearchCoords && !isRoutingActive && (
+      {/* Anchor marker at searched location: hide while routing and enforce boundary */}
+      {hasSearchCoords && !isRoutingActive && checkBoundary(searchLat, searchLng).inside && (
         <Marker
           position={[searchLat, searchLng]}
           icon={(String(activeSearchLocation?.type || '').toLowerCase() === 'bookmark')
@@ -246,6 +299,10 @@ function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCateg
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
             return null; // skip invalid entries
           }
+
+          // Boundary check: only render markers inside Sarawak boundary (inclusive of edges)
+          const { inside } = checkBoundary(lat, lng);
+          if (!inside) return null;
 
           // category tokens to decide icon
           const lc = [
@@ -303,6 +360,9 @@ function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCateg
         shouldCluster ? (
           <MarkerClusterGroup disableClusteringAtZoom={18} spiderfyOnMaxZoom={true} zoomToBoundsOnClick={true}>
             {locations.map((loc, idx) => {
+              const { inside } = checkBoundary(loc.latitude, loc.longitude);
+              if (!inside) return null;
+
               const baseIcon = getIconForLocation(loc);
               const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
               const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
@@ -328,6 +388,9 @@ function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCateg
           </MarkerClusterGroup>
         ) : (
           locations.map((loc, idx) => {
+            const { inside } = checkBoundary(loc.latitude, loc.longitude);
+            if (!inside) return null;
+
             const baseIcon = getIconForLocation(loc);
             const selLat = selectedLocation?.latitude ?? selectedLocation?.lat;
             const selLng = selectedLocation?.longitude ?? selectedLocation?.lng;
@@ -688,20 +751,43 @@ function MapComponentTesting({  }) {
 
   // Handler for when the search bar selects a place
   const handlePlaceSelect = (place) => {
-    closeInfoWindow();
-    setLocations([]);
-    // Keep MapViewMenu inactive during search
-    setActiveOption(null);
-    // Clear any existing routing (polyline, markers, and sidebar state)
-    clearAllRoutingData();
-    if (leftSidebarRef.current && leftSidebarRef.current.clearAllRouting) {
-      leftSidebarRef.current.clearAllRouting();
-    }
-    setActiveSearchLocation(null);
-    setSelectedSearchBarPlace(null);
-    setSelectedSearchBarPlace({ ...place });
-    // NEW: also set activeSearchLocation to the selected place so downstream logic stays in sync
-    setActiveSearchLocation({ ...place });
+      closeInfoWindow();
+      setLocations([]);
+      // Keep MapViewMenu inactive during search
+      setActiveOption(null);
+      // Clear any existing routing (polyline, markers, and sidebar state)
+      clearAllRoutingData();
+      if (leftSidebarRef.current && leftSidebarRef.current.clearAllRouting) {
+        leftSidebarRef.current.clearAllRouting();
+      }
+
+      // Normalize coordinates from multiple shapes into numbers
+      const lat =
+        place?.coordinates?.latitude ??
+        place?.latitude ??
+        (typeof place?.geometry?.location?.lat === 'function'
+          ? place.geometry.location.lat()
+          : place?.geometry?.location?.lat) ??
+        place?.lat;
+
+      const lng =
+        place?.coordinates?.longitude ??
+        place?.longitude ??
+        (typeof place?.geometry?.location?.lng === 'function'
+          ? place.geometry.location.lng()
+          : place?.geometry?.location?.lng) ??
+        place?.lng ??
+        place?.lon;
+
+      const normalized = {
+        ...place,
+        latitude: typeof lat === 'string' ? parseFloat(lat) : lat,
+        longitude: typeof lng === 'string' ? parseFloat(lng) : lng,
+      };
+
+      // Set states directly — do not clear to null first
+      setSelectedSearchBarPlace(normalized);
+      setActiveSearchLocation(normalized);
   };
 
   // Handler for when MapViewMenu wants to zoom to a place
@@ -1332,17 +1418,10 @@ function MapComponentTesting({  }) {
           onMarkerClick={handleMarkerClick}
           selectedLocation={selectedLocation}
         />
-        {/* Allow nearby fetcher to run during routing so markers show */}
-        {selectedSearchBarPlace && (
+        {/* UPDATED: Use a single SearchHandler based on the combined anchor to avoid race/duplicates */}
+        {(selectedSearchBarPlace || activeSearchLocation) && (
           <SearchHandlerTesting
-            selectedSearchBarPlace={selectedSearchBarPlace}
-            setSearchNearbyPlaces={setSearchNearbyPlaces}
-            searchBarZoomTrigger={searchBarZoomTrigger}
-          />
-        )}
-        {activeSearchLocation && (
-          <SearchHandlerTesting
-            selectedSearchBarPlace={activeSearchLocation}
+            selectedSearchBarPlace={selectedSearchBarPlace || activeSearchLocation}
             setSearchNearbyPlaces={setSearchNearbyPlaces}
             searchBarZoomTrigger={searchBarZoomTrigger}
           />
@@ -1358,6 +1437,7 @@ function MapComponentTesting({  }) {
           zoomTrigger={zoomTrigger}
         />
         {osrmRouteCoords.length > 0 && (
+          // {!selectedLocation && osrmRouteCoords.length > 0 && (
           <>
             {/* Start marker - Green */}
             <Marker 
@@ -1443,6 +1523,7 @@ function MapComponentTesting({  }) {
             
             {/* Route polylines - show all alternatives */}
             {routeAlternatives.map((route, index) => {
+            {/* {!selectedLocation && routeAlternatives.map((route, index) => { */}
               return (
                 <Polyline 
                   key={index}
@@ -1462,13 +1543,6 @@ function MapComponentTesting({  }) {
       {selectedLocation && !showReviewPage && (
         <div className="custom-info-window-container"
           onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '350px',
-            transform: 'translateY(-50%)',
-            zIndex: 20000
-          }}
         >
           <CustomInfoWindow
             location={selectedLocation}
