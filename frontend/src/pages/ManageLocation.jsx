@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  FaSearch, FaChevronUp,
+  FaSearch,
+  FaChevronUp,
   FaBell,
   FaEnvelope,
   FaDownload,
@@ -12,7 +13,7 @@ import {
   FaMinus,
   FaCheckCircle,
   FaExclamationCircle,
-  FaFilter, 
+  FaFilter,
   FaCalendarAlt,
   FaChevronDown,
   FaEdit,
@@ -21,9 +22,10 @@ import {
   FaTag,
   FaList,
   FaMapMarkerAlt,
-  FaClock
-} from "react-icons/fa"; 
-import { MdDelete } from "react-icons/md"
+  FaClock,
+  FaCamera,
+} from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
 import Sidebar from "../components/Sidebar";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -34,7 +36,7 @@ import { useAuth } from "../context/AuthProvider";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
-import { Toaster, toast } from 'sonner';
+import { Toaster, toast } from "sonner";
 
 const buildPageList = (total, current) => {
   const pages = [];
@@ -57,9 +59,95 @@ const buildPageList = (total, current) => {
 
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total];
 };
-const paginate = (pageNumber) => {
-  if (pageNumber < 1 || pageNumber > totalPages) return;
-  setCurrentPage(pageNumber);
+
+const LocationImageUploader = ({
+  locationId,
+  locationImages,
+  setLocationImages,
+}) => {
+  const handleImageChange = (e) => {
+    if (!e.target.files || !e.target.files[0]) return;
+
+    const file = e.target.files[0];
+
+    // optional: limit size (example: <5MB)
+    const maxBytes = 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error("Image too large. Please use a file under 5 MB.");
+      return;
+    }
+
+    // create instant preview
+    const objectUrl = URL.createObjectURL(file);
+
+    setLocationImages((prev) => ({
+      ...prev,
+      [locationId]: {
+        file, // store actual File object
+        preview: objectUrl, // temporary local preview
+      },
+    }));
+  };
+
+  // either user-picked preview or nothing
+  const previewSrc = locationImages[locationId]?.preview || "";
+
+  return (
+    <div className="ml-image-upload-wrapper">
+      <label className="ml-image-label">Location Image</label>
+
+      <div
+        className={`ml-image-dropzone ${previewSrc ? "has-image" : ""}`}
+        onClick={() =>
+          document.getElementById(`ml-image-input-${locationId}`).click()
+        }
+      >
+        <input
+          id={`ml-image-input-${locationId}`}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleImageChange}
+        />
+
+        <div className="ml-upload-inner">
+          {previewSrc ? (
+            <img
+              src={previewSrc}
+              alt="Location"
+              className="ml-upload-preview"
+            />
+          ) : (
+            <>
+              <FaCamera className="ml-upload-icon" />
+              <span className="ml-upload-text">Upload location photo</span>
+              <small className="ml-upload-hint">
+                Click to choose image (JPG/PNG)
+              </small>
+            </>
+          )}
+        </div>
+      </div>
+
+      {previewSrc && (
+        <button
+          type="button"
+          className="ml-remove-image-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLocationImages((prev) => {
+              const next = { ...prev };
+              next[locationId] = { file: null, preview: "" };
+              return next;
+            });
+          }}
+        >
+          <FaTimes style={{ marginRight: "4px" }} />
+          Remove image
+        </button>
+      )}
+    </div>
+  );
 };
 const MapPreview = ({ latitude, longitude, onChange }) => {
   const mapRef = useRef();
@@ -302,7 +390,7 @@ const ManageLocation = () => {
 
   const scrollToTop = () => {
     if (mlContentRef.current) {
-      mlContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      mlContentRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -314,9 +402,9 @@ const ManageLocation = () => {
       setShowScrollTop(el.scrollTop > 200);
     };
 
-    el.addEventListener('scroll', onScroll);
+    el.addEventListener("scroll", onScroll);
     onScroll(); // initialize visibility
-    return () => el.removeEventListener('scroll', onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   // const [validationToast, setValidationToast] = useState({
@@ -462,9 +550,7 @@ const ManageLocation = () => {
       "Theme Park",
       "Business Attraction",
     ],
-    "Major Town": [
-      "Major Town",
-    ],
+    "Major Town": ["Major Town"],
     "Shopping & Leisure": [
       "Shopping Mall",
       "Supermarket",
@@ -709,44 +795,48 @@ const ManageLocation = () => {
   };
   const handleSaveAllLocations = async () => {
     try {
-      // Validate all locations before sending
+      // 1. Validate all locations before sending
       const validationResults = editingLocations.map((location, index) => {
         const errors = {};
-      
-        if (!location.category?.trim()) errors.category = "Category is required";
+
+        if (!location.category?.trim())
+          errors.category = "Category is required";
         if (!location.type?.trim()) errors.type = "Type is required";
-        if (!location.division?.trim()) errors.division = "Division is required";
+        if (!location.division?.trim())
+          errors.division = "Division is required";
         if (!location.name?.trim()) errors.name = "Name is required";
         if (!location.status?.trim()) errors.status = "Status is required";
-      
-        // New rules:
+
+        // Description rules
         if (hasWordLongerThan(location.description || "", 30)) {
           errors.description = "No single word may exceed 30 characters.";
         } else if (!location.description?.trim()) {
           errors.description = "Description is required";
         }
-      
+
+        // URL rule: no spaces
         if (/\s/.test(location.url || "")) {
           errors.url = "URL cannot contain spaces.";
         }
-      
+
+        // Lat/lon must be in Sarawak
         const lat = parseFloat(location.latitude);
         const lon = parseFloat(location.longitude);
         if (!isWithinSarawak(lat, lon)) {
           errors.latitude = "Location is outside Sarawak boundary.";
           errors.longitude = "Location is outside Sarawak boundary.";
         }
-      
+
         return { index, errors };
       });
 
-      // Check if any location has validation errors
+      // 2. If any have validation errors, block save and show error
       const hasErrors = validationResults.some(
         (result) => Object.keys(result.errors).length > 0
       );
 
       if (hasErrors) {
-        // Combine all errors into validationErrors state
+        // Flatten into validationErrors state shape
         const allErrors = {};
         validationResults.forEach((result) => {
           Object.keys(result.errors).forEach((field) => {
@@ -756,137 +846,156 @@ const ManageLocation = () => {
         });
 
         setValidationErrors(allErrors);
-        toast.error('Some locations have required fields missing or invalid. Please review and try again.');
+        toast.error(
+          "Some locations have required fields missing or invalid. Please review and try again."
+        );
         return;
       }
 
-      const t = toast.loading('Saving locations...');
-
+      // 3. Start saving
+      const t = toast.loading("Saving locations...");
       console.log("Starting to save locations:", editingLocations);
 
+      // 4. Build an array of async save calls, one per location
       const savePromises = editingLocations.map(async (location, index) => {
         try {
-          const locationData = {
-            id: location._id,
-            category: location.category,
-            type: location.type,
-            division: location.division,
-            name: location.name,
-            status: location.status,
-            latitude: parseFloat(location.latitude) || 0,
-            longitude: parseFloat(location.longitude) || 0,
-            description: location.description,
-            url: location.url || "",
-            image:
-              locationImages[location._id]?.preview || location.image || "", // Use the correct image
-          };
-
+          // Decide if this is a new location or update
           const isNewLocation = location._id.startsWith("temp-");
           const endpoint = isNewLocation
             ? "/api/locations/addLocation"
             : "/api/locations/updateLocation";
 
-          console.log(
-            `Saving location ${index + 1} to ${endpoint}:`,
-            locationData
-          );
+          // Check if this location has a new uploaded file in state
+          const imgState = locationImages[location._id];
+          const hasNewFile = imgState && imgState.file;
 
-          const response = await ky
-            .post(endpoint, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-              },
-              json: locationData,
-              timeout: 30000, // 30 second timeout
-            })
-            .json();
+          if (hasNewFile) {
+            // Case A: send multipart/form-data with the actual File
+            const formData = new FormData();
+            formData.append("id", location._id);
+            formData.append("category", location.category);
+            formData.append("type", location.type);
+            formData.append("division", location.division);
+            formData.append("name", location.name);
+            formData.append("status", location.status);
+            formData.append("latitude", parseFloat(location.latitude) || 0);
+            formData.append("longitude", parseFloat(location.longitude) || 0);
+            formData.append("description", location.description);
+            formData.append("url", location.url || "");
+            formData.append("imageFile", imgState.file); // the real file
 
-          console.log(`Location ${index + 1} saved successfully:`, response);
-          return { success: true, data: response };
-        } catch (err) {
-          console.error(`Error saving location ${index + 1}:`, err);
+            const response = await ky
+              .post(endpoint, {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  // do NOT manually set Content-Type for FormData
+                },
+                body: formData,
+                timeout: 30000,
+              })
+              .json();
 
-          let errorMessage = err.message;
+            return {
+              success: true,
+              data: response,
+              locationIndex: index,
+              locationName: location.name,
+            };
+          } else {
+            // Case B: no new image picked -> send JSON, keep old URL
+            const locationData = {
+              id: location._id,
+              category: location.category,
+              type: location.type,
+              division: location.division,
+              name: location.name,
+              status: location.status,
+              latitude: parseFloat(location.latitude) || 0,
+              longitude: parseFloat(location.longitude) || 0,
+              description: location.description,
+              url: location.url || "",
+              image: location.image || "", // keep existing
+            };
 
-          // Try to extract more detailed error information
-          if (err.response) {
-            try {
-              const errorBody = await err.response.json();
-              errorMessage =
-                errorBody.message || errorBody.error || errorMessage;
-              console.error(
-                `Server error details for location ${index + 1}:`,
-                errorBody
-              );
-            } catch (parseError) {
-              try {
-                const errorText = await err.response.text();
-                console.error(
-                  `Raw server response for location ${index + 1}:`,
-                  errorText
-                );
-                errorMessage = `Server error: ${errorText.substring(
-                  0,
-                  100
-                )}...`;
-              } catch (textError) {
-                console.error(
-                  `Could not read error response for location ${index + 1}`
-                );
-              }
-            }
+            const response = await ky
+              .post(endpoint, {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                json: locationData,
+                timeout: 30000,
+              })
+              .json();
+
+            return {
+              success: true,
+              data: response,
+              locationIndex: index,
+              locationName: location.name,
+            };
           }
-
+        } catch (error) {
+          console.error(
+            `Error saving location ${index + 1} (${location.name}):`,
+            error
+          );
           return {
             success: false,
-            error: errorMessage,
+            error: error.message || "Unknown error",
             locationIndex: index,
             locationName: location.name,
           };
         }
       });
 
+      // 5. Wait for all API calls to finish
       console.log("Waiting for all save promises to complete...");
       const results = await Promise.all(savePromises);
       console.log("All save results:", results);
 
-      const successfulSaves = results.filter((result) => result.success);
-      const failedSaves = results.filter((result) => !result.success);
+      const successfulSaves = results.filter((r) => r.success);
+      const failedSaves = results.filter((r) => !r.success);
 
+      // 6. Handle result summary
       if (failedSaves.length === 0) {
-        // All locations saved successfully
+        // all good
         closeModal();
 
-        // Refresh the locations list
         try {
           const refreshed = await ky.get("/api/locations").json();
+
+          console.log("refreshed locations:", refreshed); // 👈 ADD THIS HERE
           setLocations(refreshed);
-          toast.success(`${successfulSaves.length} location(s) saved successfully!`, { id: t });
+          toast.success(
+            `${successfulSaves.length} location(s) saved successfully!`,
+            { id: t }
+          );
         } catch (refreshError) {
           console.error("Error refreshing locations:", refreshError);
           toast.error(
-            `${successfulSaves.length} location(s) saved successfully, but could not refresh the list.`
+            `${successfulSaves.length} location(s) saved successfully, but could not refresh the list.`,
+            { id: t }
           );
         }
       } else {
-        // Some saves failed
+        // some failed
         const errorDetails = failedSaves
           .map(
-            (failed) =>
-              `Location "${failed.locationName}" (${
-                failed.locationIndex + 1
-              }): ${failed.error}`
+            (item) =>
+              `Location "${item.locationName}" (${item.locationIndex + 1}): ${
+                item.error
+              }`
           )
           .join("\n");
 
         toast.error(
-          `${successfulSaves.length} location(s) saved successfully, but ${failedSaves.length} failed:\n\n${errorDetails}`, { id: t }
+          `${successfulSaves.length} location(s) saved successfully, but ${failedSaves.length} failed:\n\n${errorDetails}`,
+          { id: t }
         );
 
-        // You might want to keep the modal open for retry, or close it
+        // still try partial refresh if at least one success
         if (successfulSaves.length > 0) {
-          // Optionally close modal if some succeeded, or keep open for retry
           closeModal();
           const refreshed = await ky.get("/api/locations").json();
           setLocations(refreshed);
@@ -921,10 +1030,12 @@ const ManageLocation = () => {
       setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
 
       // Show success toast notification - ADD THIS LINE
-      toast.success(`Location "${deleteModal.locationName}" has been deleted successfully!`);
+      toast.success(
+        `Location "${deleteModal.locationName}" has been deleted successfully!`
+      );
     } catch (error) {
       console.error("Error deleting location:", error);
-      toast.error('Failed to delete location. Please try again.');
+      toast.error("Failed to delete location. Please try again.");
     }
   };
 
@@ -932,32 +1043,85 @@ const ManageLocation = () => {
     setDeleteModal({ isOpen: false, locationId: null, locationName: "" });
   };
 
-  const handleEditClick = (location) => {
-    console.log("Location image URL:", location.image);
+  const didLocationChange = () => {
+    if (!editingLocation) return false;
 
-    // Go directly to edit mode, no confirmation needed
-    setEditingLocation({ ...location });
-
-    // Set image preview using the new locationImages state
-    if (location.image) {
-      setLocationImages((prev) => ({
-        ...prev,
-        [location._id]: {
-          file: null,
-          preview: location.image,
-        },
-      }));
-    } else {
-      // Clear any existing image for this location
-      setLocationImages((prev) => {
-        const newImages = { ...prev };
-        delete newImages[location._id];
-        return newImages;
-      });
+    // 1. get the 'before' version
+    const original = getOriginalForEditingLocation();
+    if (!original) {
+      // we couldn't find a snapshot. safest choice is assume changed so we DO save.
+      return true;
     }
 
-    // Close any confirmation modal
-    setEditModal({ isOpen: false, location: null });
+    // 2. fields to compare
+    const fieldsToCheck = [
+      "name",
+      "category",
+      "type",
+      "division",
+      "status",
+      "latitude",
+      "longitude",
+      "description",
+      "url",
+      "image",
+    ];
+
+    for (const field of fieldsToCheck) {
+      const beforeVal = original[field] ?? "";
+      const afterVal = editingLocation[field] ?? "";
+
+      if (String(beforeVal) !== String(afterVal)) {
+        return true; // found a difference, so yes it's changed
+      }
+    }
+
+    // 3. also consider if user picked a new file
+    const imgState = locationImages?.[editingLocation._id];
+    const hasNewFile = imgState && imgState.file;
+    if (hasNewFile) return true;
+
+    // 4. if we got here, nothing changed
+    return false;
+  };
+
+  // Make sure this constant exists somewhere above handleEditClick in the same component/file:
+  const API_BASE = "http://localhost:5050"; // <-- use your backend port here
+
+  const handleEditClick = (location) => {
+    // what user is editing right now
+    setEditingLocation({ ...location });
+
+    // snapshot BEFORE any edits, wrapped in an array
+    setOriginalEditingLocations([{ ...location }]);
+
+    let previewUrl = "";
+
+    if (location.image) {
+      if (
+        location.image.startsWith("http://") ||
+        location.image.startsWith("https://")
+      ) {
+        previewUrl = location.image;
+      } else if (location.image.startsWith("/uploads/")) {
+        const filenamePart = location.image.replace("/uploads/", "");
+        previewUrl = `http://localhost:5050/location-uploads/${filenamePart}`;
+      } else {
+        previewUrl = location.image;
+      }
+    }
+
+    console.log("Edit clicked location:", location);
+    console.log("location.image from DB:", location.image);
+    console.log("Resolved previewUrl for ManageLocation:", previewUrl);
+
+    setLocationImages((prev) => ({
+      ...prev,
+      [location._id]: {
+        file: null,
+        preview: previewUrl,
+      },
+    }));
   };
 
   // Remove the edit confirmation modal entirely, or keep it only for specific cases
@@ -994,116 +1158,115 @@ const ManageLocation = () => {
     setCancelModal({ isOpen: false });
   };
 
+  const getOriginalForEditingLocation = () => {
+    if (!editingLocation || !originalEditingLocations) return null;
+
+    // if it's somehow not an array, wrap it
+    const list = Array.isArray(originalEditingLocations)
+      ? originalEditingLocations
+      : [originalEditingLocations];
+
+    return list.find((loc) => loc._id === editingLocation._id) || null;
+  };
+
   const handleSaveEdit = async () => {
     try {
-      // Validate single location
-      const errors = {};
-
-      if (!editingLocation.category?.trim())
-        errors.category = "Category is required";
-      if (!editingLocation.type?.trim()) errors.type = "Type is required";
-      if (!editingLocation.division?.trim())
-        errors.division = "Division is required";
-      if (!editingLocation.name?.trim()) errors.name = "Name is required";
-      if (!editingLocation.status?.trim()) errors.status = "Status is required";
-      if (!editingLocation.description?.trim()) {
-        errors.description = "Description is required";
-      } else if (hasWordLongerThan(editingLocation.description, 30)) {
-        errors.description = "No single word may exceed 30 characters.";
-      }
-
-      // URL: no spaces (no '@' requirement)
-      if (/\s/.test(editingLocation.url || "")) {
-        errors.url = "URL cannot contain spaces.";
-      }
-
-      // Latitude/Longitude: must be inside Sarawak
-      const lat = parseFloat(editingLocation.latitude);
-      const lon = parseFloat(editingLocation.longitude);
-      if (!isNaN(lat) && !isNaN(lon)) {
-        if (!isWithinSarawak(lat, lon)) {
-          errors.latitude = "Location is outside Sarawak boundary.";
-          errors.longitude = "Location is outside Sarawak boundary.";
-        }
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setValidationErrors(errors);
-        toast.error('Please fix the highlighted errors.');
+      // 0. If there's no real change, don't hit the API at all.
+      const changed = didLocationChange();
+      if (!changed) {
+        // nothing changed -> don't bump updatedAt in DB
+        setEditingLocation(null); // close modal
+        toast.success("No changes to save.");
         return;
       }
 
-      const t = toast.loading('Saving location...');
+      // 1. Detect whether it's a brand new temp row or existing DB row
+      const isNewLocation = editingLocation._id.startsWith("temp-");
+      const endpoint = isNewLocation
+        ? "/api/locations/addLocation"
+        : "/api/locations/updateLocation";
 
-      const isNewLocation = editingLocation?._id?.startsWith("temp-");
+      // 2. Check for new image file this session
+      const imgState = locationImages[editingLocation._id];
+      const hasNewFile = imgState && imgState.file;
 
-      const locationData = {
-        id: editingLocation._id,
-        category: editingLocation.category,
-        type: editingLocation.type,
-        division: editingLocation.division,
-        name: editingLocation.name,
-        status: editingLocation.status,
-        latitude: parseFloat(editingLocation.latitude) || 0,
-        longitude: parseFloat(editingLocation.longitude) || 0,
-        description: editingLocation.description,
-        url: editingLocation.url || "",
-        image:
-          locationImages[editingLocation._id]?.preview ||
-          editingLocation.image ||
-          "", // Use the correct image
-      };
+      let response;
 
-      console.log("Saving single location:", locationData);
+      if (hasNewFile) {
+        // multipart/form-data path
+        const formData = new FormData();
+        formData.append("id", editingLocation._id);
+        formData.append("category", editingLocation.category);
+        formData.append("type", editingLocation.type);
+        formData.append("division", editingLocation.division);
+        formData.append("name", editingLocation.name);
+        formData.append("status", editingLocation.status);
+        formData.append("latitude", parseFloat(editingLocation.latitude) || 0);
+        formData.append(
+          "longitude",
+          parseFloat(editingLocation.longitude) || 0
+        );
+        formData.append("description", editingLocation.description);
+        formData.append("url", editingLocation.url || "");
+        formData.append("imageFile", imgState.file);
 
-      const response = await ky
-        .post(
-          isNewLocation
-            ? "/api/locations/addLocation"
-            : "/api/locations/updateLocation",
-          {
+        response = await ky
+          .post(endpoint, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: formData,
+            timeout: 30000,
+          })
+          .json();
+      } else {
+        // JSON path (no new file)
+        const locationData = {
+          id: editingLocation._id,
+          category: editingLocation.category,
+          type: editingLocation.type,
+          division: editingLocation.division,
+          name: editingLocation.name,
+          status: editingLocation.status,
+          latitude: parseFloat(editingLocation.latitude) || 0,
+          longitude: parseFloat(editingLocation.longitude) || 0,
+          description: editingLocation.description,
+          url: editingLocation.url || "",
+          image: editingLocation.image || "",
+        };
+
+        response = await ky
+          .post(endpoint, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
             json: locationData,
             timeout: 30000,
-          }
-        )
+          })
+          .json();
+      }
+
+      console.log("saveEdit response:", response);
+      toast.success("Location saved.");
+
+      // 3. Refetch fresh locations and update your UI
+      const refreshed = await ky
+        .get("/api/locations", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          timeout: 30000,
+        })
         .json();
 
-      console.log("Save success:", response);
+      setLocations(refreshed);
 
-      if (response.success) {
-        closeModal();
-        const refreshed = await ky.get("/api/locations").json();
-        setLocations(refreshed);
-         toast.success('Location saved successfully!', { id: t });
-      } else {
-         toast.error(`Save failed: ${response.message || "Unknown error"}`, { id: t });
-      }
+      // 4. Close the modal
+      setEditingLocation(null);
     } catch (err) {
-      console.error("Save failed:", err);
-
-      let errorMessage = err.message;
-
-      if (err.response) {
-        try {
-          const errorBody = await err.response.json();
-          errorMessage = errorBody.message || errorBody.error || errorMessage;
-          console.error("Server error details:", errorBody);
-        } catch (parseError) {
-          try {
-            const errorText = await err.response.text();
-            console.error("Raw server response:", errorText);
-            errorMessage = `Server error: ${errorText.substring(0, 100)}...`;
-          } catch (textError) {
-            console.error("Could not read error response");
-          }
-        }
-      }
-
-      toast.error(`Save failed: ${errorMessage}`, { id: t });
+      console.error("Failed to save location:", err);
+      toast.error("Failed to save location. Check console.");
     }
   };
 
@@ -1155,12 +1318,12 @@ const ManageLocation = () => {
 
   const downloadCSV = () => {
     if (filteredLocations.length === 0) {
-      toast.info('No data available to download.');
+      toast.info("No data available to download.");
       return;
     }
-    
+
     if (filteredLocations.length > 0) {
-      toast.success('Location data download successfully.');
+      toast.success("Location data download successfully.");
     }
 
     const headers = [
@@ -1207,15 +1370,25 @@ const ManageLocation = () => {
     if (editingLocations.length > 0 && multiModalRef.current) {
       // wait until layout paints, then scroll
       requestAnimationFrame(() => {
-        multiModalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        multiModalRef.current.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
   }, [currentLocationIndex, editingLocations.length]);
 
   // Add near other constants
   const divisionOptions = [
-    "Kuching","Sibu","Miri","Bintulu","Mukah","Betong",
-    "Samarahan","Limbang","Kapit","Sri Aman","Sarikei","Serian"
+    "Kuching",
+    "Sibu",
+    "Miri",
+    "Bintulu",
+    "Mukah",
+    "Betong",
+    "Samarahan",
+    "Limbang",
+    "Kapit",
+    "Sri Aman",
+    "Sarikei",
+    "Serian",
   ];
 
   // Rough Sarawak bounding box (tweak if you have exact polygon)
@@ -1226,7 +1399,7 @@ const ManageLocation = () => {
 
   const hasWordLongerThan = (text, limit) => {
     if (!text) return false;
-    return text.split(/\s+/).some(w => w.length > limit);
+    return text.split(/\s+/).some((w) => w.length > limit);
   };
 
   return (
@@ -1341,168 +1514,194 @@ const ManageLocation = () => {
 
         {/* Table */}
         <div className="reviews-table-container">
-        {isLoadingLocations ? (
-          <div style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>
-            Loading locations...
-          </div>
-        ) : locations.length === 0 ? (
-          <div style={{ padding: 32, textAlign: 'center', color: '#6b7280' }}>
-            No location found, please try refresh again.
-          </div>
-        ) : (
-          <>
-          <div className="MLtable-header">
-            <div className="header-cell">Location ID</div>
-            <div className="header-cell">Name</div>
-            <div className="header-cell">Category</div>
-            <div className="header-cell">Type</div>
-            <div className="header-cell">Division</div>
-            <div className="header-cell">Status</div>
-            <div className="header-cell">Last Updated</div>
-            <div className="header-cell">Action</div>
-          </div>
-
-          {currentRows.map((location) => (
-            <div key={location._id} className="MLtable-row">
-              <div className="table-cell">
-                {isNewLocationIndicator(location) && (
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: 8,
-                      height: 18,
-                      backgroundColor: '#ef4444',
-                      borderRadius: '9999px',
-                      marginRight: 6,
-                      verticalAlign: 'middle'
-                    }}
-                    aria-label="New"
-                    title="New"
-                  />
-                )}
-                {location._id}
-              </div>
-              <div className="table-cell">{location.name}</div>
-              <div className="table-cell">{location.category}</div>
-              <div className="table-cell">{location.type}</div>
-              <div className="table-cell">{location.division}</div>
-              <div className="table-cell">
-                <span
-                  className={`MLstatus-badge ${getStatusClass(
-                    location.status
-                  )}`}
-                >
-                  {location.status}
-                </span>
-              </div>
-              <div className="table-cell">{getTimeAgo(getEffectiveCreatedDate(location))}</div>
-              <div className="table-cell">
-                <button
-                  className="edit-button"
-                  onClick={() => handleEditClick(location)}
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  className="delete-button"
-                  onClick={() => handleDeleteClick(location._id, location.name)}
-                >
-                  <MdDelete />
-                </button>
-              </div>
+          {isLoadingLocations ? (
+            <div style={{ padding: 32, textAlign: "center", color: "#6b7280" }}>
+              Loading locations...
             </div>
-          ))}
-          {/* Card view for very small screens */}
-          <div className="MLcards-container">
-            {currentRows.map((location) => (
-              <div key={`${location._id}-card`} className="MLcard">
-                 <div className="MLcard-status">
-                  <span className={`MLstatus-badge ${getStatusClass(location.status)}`}>
-                    {location.status}
-                  </span>
-                  {isNewLocationIndicator(location) && (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: 8,
-                        height: 8,
-                        backgroundColor: '#ef4444',
-                        borderRadius: '9999px',
-                        marginLeft: 6,
-                        verticalAlign: 'middle'
-                      }}
-                      aria-label="New"
-                      title="New"
-                    />
-                  )}
-                </div>
-                <div className="MLcard-actions">
-                  <button
-                    className="edit-button"
-                    onClick={() => handleEditClick(location)}
-                    aria-label="Edit location"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    className="delete-button"
-                    onClick={() => handleDeleteClick(location._id, location.name)}
-                    aria-label="Delete location"
-                  >
-                    <MdDelete />
-                  </button>
-                </div>
-                <div className="MLcard-content">
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaIdCard /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Location ID</span>
-                      <span className="MLcard-value">
-                        {location._id}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaInfoCircle /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Name</span>
-                      <span className="MLcard-value">{location.name}</span>
-                    </div>
-                  </div>
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaTag /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Category</span>
-                      <span className="MLcard-value">{location.category}</span>
-                    </div>
-                  </div>
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaList /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Type</span>
-                      <span className="MLcard-value">{location.type}</span>
-                    </div>
-                  </div>
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaMapMarkerAlt /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Division</span>
-                      <span className="MLcard-value">{location.division}</span>
-                    </div>
-                  </div>
-                  <div className="MLcard-item">
-                    <span className="MLcard-icon"><FaClock /></span>
-                    <div className="MLcard-text">
-                      <span className="MLcard-label">Last Updated</span>
-                      <span className="MLcard-value">{getTimeAgo(getEffectiveCreatedDate(location))}</span>
-                    </div>
-                  </div>
-                </div>
+          ) : locations.length === 0 ? (
+            <div style={{ padding: 32, textAlign: "center", color: "#6b7280" }}>
+              No location found, please try refresh again.
+            </div>
+          ) : (
+            <>
+              <div className="MLtable-header">
+                <div className="header-cell">Location ID</div>
+                <div className="header-cell">Name</div>
+                <div className="header-cell">Category</div>
+                <div className="header-cell">Type</div>
+                <div className="header-cell">Division</div>
+                <div className="header-cell">Status</div>
+                <div className="header-cell">Last Updated</div>
+                <div className="header-cell">Action</div>
               </div>
-            ))}
-          </div>
-          </>
-        )}
+
+              {currentRows.map((location) => (
+                <div key={location._id} className="MLtable-row">
+                  <div className="table-cell">
+                    {isNewLocationIndicator(location) && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: 8,
+                          height: 18,
+                          backgroundColor: "#ef4444",
+                          borderRadius: "9999px",
+                          marginRight: 6,
+                          verticalAlign: "middle",
+                        }}
+                        aria-label="New"
+                        title="New"
+                      />
+                    )}
+                    {location._id}
+                  </div>
+                  <div className="table-cell">{location.name}</div>
+                  <div className="table-cell">{location.category}</div>
+                  <div className="table-cell">{location.type}</div>
+                  <div className="table-cell">{location.division}</div>
+                  <div className="table-cell">
+                    <span
+                      className={`MLstatus-badge ${getStatusClass(
+                        location.status
+                      )}`}
+                    >
+                      {location.status}
+                    </span>
+                  </div>
+                  <div className="table-cell">
+                    {getTimeAgo(getEffectiveCreatedDate(location))}
+                  </div>
+                  <div className="table-cell">
+                    <button
+                      className="edit-button"
+                      onClick={() => handleEditClick(location)}
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      className="delete-button"
+                      onClick={() =>
+                        handleDeleteClick(location._id, location.name)
+                      }
+                    >
+                      <MdDelete />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {/* Card view for very small screens */}
+              <div className="MLcards-container">
+                {currentRows.map((location) => (
+                  <div key={`${location._id}-card`} className="MLcard">
+                    <div className="MLcard-status">
+                      <span
+                        className={`MLstatus-badge ${getStatusClass(
+                          location.status
+                        )}`}
+                      >
+                        {location.status}
+                      </span>
+                      {isNewLocationIndicator(location) && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 8,
+                            height: 8,
+                            backgroundColor: "#ef4444",
+                            borderRadius: "9999px",
+                            marginLeft: 6,
+                            verticalAlign: "middle",
+                          }}
+                          aria-label="New"
+                          title="New"
+                        />
+                      )}
+                    </div>
+                    <div className="MLcard-actions">
+                      <button
+                        className="edit-button"
+                        onClick={() => handleEditClick(location)}
+                        aria-label="Edit location"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() =>
+                          handleDeleteClick(location._id, location.name)
+                        }
+                        aria-label="Delete location"
+                      >
+                        <MdDelete />
+                      </button>
+                    </div>
+                    <div className="MLcard-content">
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaIdCard />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Location ID</span>
+                          <span className="MLcard-value">{location._id}</span>
+                        </div>
+                      </div>
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaInfoCircle />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Name</span>
+                          <span className="MLcard-value">{location.name}</span>
+                        </div>
+                      </div>
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaTag />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Category</span>
+                          <span className="MLcard-value">
+                            {location.category}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaList />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Type</span>
+                          <span className="MLcard-value">{location.type}</span>
+                        </div>
+                      </div>
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaMapMarkerAlt />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Division</span>
+                          <span className="MLcard-value">
+                            {location.division}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="MLcard-item">
+                        <span className="MLcard-icon">
+                          <FaClock />
+                        </span>
+                        <div className="MLcard-text">
+                          <span className="MLcard-label">Last Updated</span>
+                          <span className="MLcard-value">
+                            {getTimeAgo(getEffectiveCreatedDate(location))}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Pagination Controls */}
@@ -1665,11 +1864,15 @@ const ManageLocation = () => {
                         });
                         clearValidationError("division");
                       }}
-                      className={`form-select ${validationErrors.division ? "error-border" : ""}`}
+                      className={`form-select ${
+                        validationErrors.division ? "error-border" : ""
+                      }`}
                     >
                       <option value="">Select division</option>
-                      {divisionOptions.map(d => (
-                        <option key={d} value={d}>{d}</option>
+                      {divisionOptions.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
                       ))}
                     </select>
                     {validationErrors.division && (
@@ -1716,9 +1919,10 @@ const ManageLocation = () => {
                           description: val,
                         });
                         if (hasWordLongerThan(val, 30)) {
-                          setValidationErrors(prev => ({
+                          setValidationErrors((prev) => ({
                             ...prev,
-                            description: "No single word may exceed 30 characters."
+                            description:
+                              "No single word may exceed 30 characters.",
                           }));
                         } else {
                           clearValidationError("description");
@@ -1748,9 +1952,9 @@ const ManageLocation = () => {
                           url: val,
                         });
                         if (/\s/.test(val)) {
-                          setValidationErrors(prev => ({
+                          setValidationErrors((prev) => ({
                             ...prev,
-                            url: "URL cannot contain spaces."
+                            url: "URL cannot contain spaces.",
                           }));
                         } else {
                           clearValidationError("url");
@@ -1800,52 +2004,11 @@ const ManageLocation = () => {
                   {/* Image Upload */}
                   <div className="form-group">
                     <label>Image</label>
-                    <div className="image-upload-container-ml">
-                      <div className="image-upload-area-ml">
-                        <input
-                          type="file"
-                          id={`image-upload-${editingLocation._id}`}
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(e, editingLocation._id)
-                          }
-                          className="image-file-input"
-                        />
-                        {locationImages[editingLocation._id]?.preview ? (
-                          <div className="image-preview-wrapper">
-                            <img
-                              src={locationImages[editingLocation._id].preview}
-                              alt="Preview"
-                              className="image-preview"
-                            />
-                            <button
-                              type="button"
-                              className="remove-image-btn"
-                              onClick={() => removeImage(editingLocation._id)}
-                            >
-                              <FaTimes />
-                            </button>
-                          </div>
-                        ) : (
-                          <label
-                            htmlFor={`image-upload-${editingLocation._id}`}
-                            className="image-upload-label"
-                          >
-                            <div className="image-upload-placeholder">
-                              <FaUpload className="upload-icon" />
-                              <span>
-                                {isUploading
-                                  ? "Uploading..."
-                                  : "Click to upload or drag and drop"}
-                              </span>
-                              <p className="image-upload-hint">
-                                PNG, JPG up to 5MB
-                              </p>
-                            </div>
-                          </label>
-                        )}
-                      </div>
-                    </div>
+                    <LocationImageUploader
+                      locationId={editingLocation._id}
+                      locationImages={locationImages}
+                      setLocationImages={setLocationImages}
+                    />
                   </div>
 
                   {/* Coordinates Row */}
@@ -1856,15 +2019,22 @@ const ManageLocation = () => {
                         type="number"
                         step="any"
                         name="latitude"
-                        value={editingLocation.latitude === 0 ? "" : editingLocation.latitude}
+                        value={
+                          editingLocation.latitude === 0
+                            ? ""
+                            : editingLocation.latitude
+                        }
                         onChange={(e) => {
                           const lat = parseFloat(e.target.value) || 0;
                           const lon = editingLocation.longitude ?? 0;
-                          setEditingLocation({ ...editingLocation, latitude: lat });
+                          setEditingLocation({
+                            ...editingLocation,
+                            latitude: lat,
+                          });
                           if (!isWithinSarawak(lat, lon)) {
-                            setValidationErrors(prev => ({
+                            setValidationErrors((prev) => ({
                               ...prev,
-                              latitude: "Location is outside Sarawak boundary."
+                              latitude: "Location is outside Sarawak boundary.",
                             }));
                           } else {
                             clearValidationError("latitude");
@@ -1889,15 +2059,23 @@ const ManageLocation = () => {
                         type="number"
                         step="any"
                         name="longitude"
-                        value={editingLocation.longitude === 0 ? "" : editingLocation.longitude}
+                        value={
+                          editingLocation.longitude === 0
+                            ? ""
+                            : editingLocation.longitude
+                        }
                         onChange={(e) => {
                           const lon = parseFloat(e.target.value) || 0;
                           const lat = editingLocation.latitude ?? 0;
-                          setEditingLocation({ ...editingLocation, longitude: lon });
+                          setEditingLocation({
+                            ...editingLocation,
+                            longitude: lon,
+                          });
                           if (!isWithinSarawak(lat, lon)) {
-                            setValidationErrors(prev => ({
+                            setValidationErrors((prev) => ({
                               ...prev,
-                              longitude: "Location is outside Sarawak boundary."
+                              longitude:
+                                "Location is outside Sarawak boundary.",
                             }));
                           } else {
                             clearValidationError("longitude");
@@ -1948,7 +2126,10 @@ const ManageLocation = () => {
         {/* Add Multiple Locations Modal */}
         {editingLocations.length > 0 && (
           <div className="modal-overlay-ml">
-            <div className="MLmodal-content multiple-locations-modal" ref={multiModalRef}>
+            <div
+              className="MLmodal-content multiple-locations-modal"
+              ref={multiModalRef}
+            >
               <div className="modal-header-with-navigation">
                 <div className="navigation-header">
                   <h3>Add Multiple Locations</h3>
@@ -2085,14 +2266,25 @@ const ManageLocation = () => {
                             name="division"
                             value={location.division}
                             onChange={(e) => {
-                              handleLocationChange(index, { ...location, division: e.target.value });
-                              clearValidationError(`locations[${index}].division`);
+                              handleLocationChange(index, {
+                                ...location,
+                                division: e.target.value,
+                              });
+                              clearValidationError(
+                                `locations[${index}].division`
+                              );
                             }}
-                            className={`form-select ${validationErrors[`locations[${index}].division`] ? "error-border" : ""}`}
+                            className={`form-select ${
+                              validationErrors[`locations[${index}].division`]
+                                ? "error-border"
+                                : ""
+                            }`}
                           >
                             <option value="">Select division</option>
-                            {divisionOptions.map(d => (
-                              <option key={d} value={d}>{d}</option>
+                            {divisionOptions.map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
                             ))}
                           </select>
                           {validationErrors[`locations[${index}].division`] && (
@@ -2134,24 +2326,38 @@ const ManageLocation = () => {
                           value={location.description}
                           onChange={(e) => {
                             const val = e.target.value;
-                            handleLocationChange(index, { ...location, description: val });
+                            handleLocationChange(index, {
+                              ...location,
+                              description: val,
+                            });
                             // live-validate: no single word > 30 chars
                             if (hasWordLongerThan(val, 30)) {
-                              setValidationErrors(prev => ({
+                              setValidationErrors((prev) => ({
                                 ...prev,
-                                [`locations[${index}].description`]: "No single word may exceed 30 characters."
+                                [`locations[${index}].description`]:
+                                  "No single word may exceed 30 characters.",
                               }));
                             } else {
-                              clearValidationError(`locations[${index}].description`);
+                              clearValidationError(
+                                `locations[${index}].description`
+                              );
                             }
                           }}
                           className={`form-textarea ${
-                            validationErrors[`locations[${index}].description`] ? "error-border" : ""
+                            validationErrors[`locations[${index}].description`]
+                              ? "error-border"
+                              : ""
                           }`}
                         />
-                        {validationErrors[`locations[${index}].description`] && (
+                        {validationErrors[
+                          `locations[${index}].description`
+                        ] && (
                           <div className="error-message-ml">
-                            {validationErrors[`locations[${index}].description`]}
+                            {
+                              validationErrors[
+                                `locations[${index}].description`
+                              ]
+                            }
                           </div>
                         )}
 
@@ -2163,18 +2369,24 @@ const ManageLocation = () => {
                             value={location.url || ""}
                             onChange={(e) => {
                               const val = e.target.value;
-                              handleLocationChange(index, { ...location, url: val });
-                          if (/\s/.test(val)) {
-                                setValidationErrors(prev => ({
+                              handleLocationChange(index, {
+                                ...location,
+                                url: val,
+                              });
+                              if (/\s/.test(val)) {
+                                setValidationErrors((prev) => ({
                                   ...prev,
-                                  [`locations[${index}].url`]: "URL cannot contain spaces."
+                                  [`locations[${index}].url`]:
+                                    "URL cannot contain spaces.",
                                 }));
                               } else {
                                 clearValidationError(`locations[${index}].url`);
                               }
                             }}
                             className={`form-input ${
-                              validationErrors[`locations[${index}].url`] ? "error-border" : ""
+                              validationErrors[`locations[${index}].url`]
+                                ? "error-border"
+                                : ""
                             }`}
                           />
                           {validationErrors[`locations[${index}].url`] && (
@@ -2218,56 +2430,11 @@ const ManageLocation = () => {
 
                       {/* RIGHT COLUMN */}
                       <div className="event-form-right">
-                        {/* Image Upload */}
-                        <div className="form-group">
-                          <label>Image</label>
-                          <div className="image-upload-container-ml">
-                            <div className="image-upload-area-ml">
-                              <input
-                                type="file"
-                                id={`image-upload-${location._id}`}
-                                accept="image/*"
-                                onChange={(e) =>
-                                  handleImageUpload(e, location._id)
-                                }
-                                className="image-file-input"
-                              />
-                              {locationImages[location._id]?.preview ? (
-                                <div className="image-preview-wrapper">
-                                  <img
-                                    src={locationImages[location._id].preview}
-                                    alt="Preview"
-                                    className="image-preview"
-                                  />
-                                  <button
-                                    type="button"
-                                    className="remove-image-btn"
-                                    onClick={() => removeImage(location._id)}
-                                  >
-                                    <FaTimes />
-                                  </button>
-                                </div>
-                              ) : (
-                                <label
-                                  htmlFor={`image-upload-${location._id}`}
-                                  className="image-upload-label"
-                                >
-                                  <div className="image-upload-placeholder">
-                                    <FaUpload className="upload-icon" />
-                                    <span>
-                                      {isUploading
-                                        ? "Uploading..."
-                                        : "Click to upload or drag and drop"}
-                                    </span>
-                                    <p className="image-upload-hint">
-                                      PNG, JPG up to 5MB
-                                    </p>
-                                  </div>
-                                </label>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                        <LocationImageUploader
+                          locationId={location._id}
+                          locationImages={locationImages}
+                          setLocationImages={setLocationImages}
+                        />
 
                         {/* Coordinates Row */}
                         <div className="form-row">
@@ -2277,29 +2444,47 @@ const ManageLocation = () => {
                               type="number"
                               step="any"
                               name="latitude"
-                              value={location.latitude === 0 ? "" : location.latitude}
+                              value={
+                                location.latitude === 0 ? "" : location.latitude
+                              }
                               onChange={(e) => {
                                 const lat = parseFloat(e.target.value) || 0;
                                 const lon = location.longitude ?? 0;
-                                handleLocationChange(index, { ...location, latitude: lat });
+                                handleLocationChange(index, {
+                                  ...location,
+                                  latitude: lat,
+                                });
                                 if (!isWithinSarawak(lat, lon)) {
-                                  setValidationErrors(prev => ({
+                                  setValidationErrors((prev) => ({
                                     ...prev,
-                                    [`locations[${index}].latitude`]: "Location is outside Sarawak boundary."
+                                    [`locations[${index}].latitude`]:
+                                      "Location is outside Sarawak boundary.",
                                   }));
                                 } else {
-                                  clearValidationError(`locations[${index}].latitude`);
-                                  clearValidationError(`locations[${index}].longitude`);
+                                  clearValidationError(
+                                    `locations[${index}].latitude`
+                                  );
+                                  clearValidationError(
+                                    `locations[${index}].longitude`
+                                  );
                                 }
                               }}
                               placeholder="Latitude"
                               className={`form-input ${
-                                validationErrors[`locations[${index}].latitude`] ? "error-border" : ""
+                                validationErrors[`locations[${index}].latitude`]
+                                  ? "error-border"
+                                  : ""
                               }`}
                             />
-                            {validationErrors[`locations[${index}].latitude`] && (
+                            {validationErrors[
+                              `locations[${index}].latitude`
+                            ] && (
                               <div className="error-message-ml">
-                                {validationErrors[`locations[${index}].latitude`]}
+                                {
+                                  validationErrors[
+                                    `locations[${index}].latitude`
+                                  ]
+                                }
                               </div>
                             )}
                           </div>
@@ -2310,29 +2495,51 @@ const ManageLocation = () => {
                               type="number"
                               step="any"
                               name="longitude"
-                              value={location.longitude === 0 ? "" : location.longitude}
+                              value={
+                                location.longitude === 0
+                                  ? ""
+                                  : location.longitude
+                              }
                               onChange={(e) => {
                                 const lon = parseFloat(e.target.value) || 0;
                                 const lat = location.latitude ?? 0;
-                                handleLocationChange(index, { ...location, longitude: lon });
+                                handleLocationChange(index, {
+                                  ...location,
+                                  longitude: lon,
+                                });
                                 if (!isWithinSarawak(lat, lon)) {
-                                  setValidationErrors(prev => ({
+                                  setValidationErrors((prev) => ({
                                     ...prev,
-                                    [`locations[${index}].longitude`]: "Location is outside Sarawak boundary."
+                                    [`locations[${index}].longitude`]:
+                                      "Location is outside Sarawak boundary.",
                                   }));
                                 } else {
-                                  clearValidationError(`locations[${index}].longitude`);
-                                  clearValidationError(`locations[${index}].latitude`);
+                                  clearValidationError(
+                                    `locations[${index}].longitude`
+                                  );
+                                  clearValidationError(
+                                    `locations[${index}].latitude`
+                                  );
                                 }
                               }}
                               placeholder="Longitude"
                               className={`form-input ${
-                                validationErrors[`locations[${index}].longitude`] ? "error-border" : ""
+                                validationErrors[
+                                  `locations[${index}].longitude`
+                                ]
+                                  ? "error-border"
+                                  : ""
                               }`}
                             />
-                            {validationErrors[`locations[${index}].longitude`] && (
+                            {validationErrors[
+                              `locations[${index}].longitude`
+                            ] && (
                               <div className="error-message-ml">
-                                {validationErrors[`locations[${index}].longitude`]}
+                                {
+                                  validationErrors[
+                                    `locations[${index}].longitude`
+                                  ]
+                                }
                               </div>
                             )}
                           </div>
@@ -2371,7 +2578,9 @@ const ManageLocation = () => {
                     <button
                       type="button"
                       className="side-nav-arrow left-arrow"
-                      onClick={() => { goToPrevLocation(); }}
+                      onClick={() => {
+                        goToPrevLocation();
+                      }}
                       disabled={currentLocationIndex === 0}
                       aria-label="Previous location"
                     >
@@ -2381,7 +2590,9 @@ const ManageLocation = () => {
                     <button
                       type="button"
                       className="side-nav-arrow right-arrow"
-                      onClick={() => { goToNextLocation(); }}
+                      onClick={() => {
+                        goToNextLocation();
+                      }}
                       disabled={
                         currentLocationIndex === editingLocations.length - 1
                       }
@@ -2406,7 +2617,7 @@ const ManageLocation = () => {
         )}
 
         <button
-          className={`scroll-to-top-btn ${showScrollTop ? 'visible' : ''}`}
+          className={`scroll-to-top-btn ${showScrollTop ? "visible" : ""}`}
           onClick={scrollToTop}
           aria-label="Scroll to top"
           title="Scroll to top"
