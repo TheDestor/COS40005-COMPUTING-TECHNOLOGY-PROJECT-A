@@ -483,9 +483,21 @@ function ManageBusiness() {
   const handleFileUpload = (e, type) => {
     const file = e.target.files[0];
     if (file) {
+      // Define allowed image formats
+      const allowedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+      const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
+      
       // Validate file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image file');
+        return;
+      }
+      
+      // Check if file format is supported
+      if (!allowedFormats.includes(file.type.toLowerCase())) {
+        toast.error('Only PNG, JPG, JPEG, and GIF images are supported. Please choose a different file.', {
+          duration: 5000,
+        });
         return;
       }
       
@@ -497,8 +509,10 @@ function ManageBusiness() {
 
       if (type === 'businessImage') {
         setBusinessImageFile(file);
+        toast.success('Business image selected successfully');
       } else if (type === 'ownerAvatar') {
         setOwnerAvatarFile(file);
+        toast.success('Owner avatar selected successfully');
       }
     }
   };
@@ -805,7 +819,7 @@ function ManageBusiness() {
                               <input
                                 type="file"
                                 id="business-image-upload"
-                                accept="image/*"
+                                accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/jpg,image/gif"
                                 onChange={(e) => handleFileUpload(e, 'businessImage')}
                                 style={{ display: 'none' }}
                               />
@@ -830,7 +844,7 @@ function ManageBusiness() {
                               <input
                                 type="file"
                                 id="owner-avatar-upload"
-                                accept="image/*"
+                                accept=".png,.jpg,.jpeg,.gif,image/png,image/jpeg,image/jpg,image/gif"
                                 onChange={(e) => handleFileUpload(e, 'ownerAvatar')}
                                 style={{ display: 'none' }}
                               />
