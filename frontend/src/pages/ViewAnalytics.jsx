@@ -2022,6 +2022,21 @@ function SystemUsageChart({ onRemove, isMenuOpen, onMenuToggle, onMenuClose }) {
             No system data available
           </div>
         )}
+        <div className="browser-legend">
+          {currentData.map((system, i) => (
+            <div key={i} className="legend-item">
+              <div className="browser-main">
+                <span className="browser-icon">{system.icon}</span>
+                <span>{system.name}</span>
+              </div>
+
+              <div className="legend-stats">
+                <strong>{system.value}%</strong>
+                <span>({system.count} sessions)</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tooltip - using original BU_tooltip class */}
