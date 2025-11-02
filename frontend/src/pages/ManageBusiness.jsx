@@ -430,7 +430,9 @@ function ManageBusiness() {
   }, [isLoggedIn, accessToken]);
 
   const filtered = businesses.filter(b => {
-    const passStatus = statusFilter === 'all' ? true : (b.status || '').toLowerCase() === statusFilter;
+    const passStatus = statusFilter === 'all' ? true 
+    : statusFilter === 're-amend' ? ['re-amend', 'rejected'].includes((b.status || '').toLowerCase())
+    : (b.status || '').toLowerCase() === statusFilter;
     const s = `${b.name} ${b.address} ${b.category}`.toLowerCase();
     return passStatus && s.includes(query.toLowerCase());
   });
