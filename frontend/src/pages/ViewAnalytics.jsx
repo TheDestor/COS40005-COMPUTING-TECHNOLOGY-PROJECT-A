@@ -46,6 +46,7 @@ const authFetch = async (url, options = {}) => {
 
   return response;
 };
+
 // Add this new component at the top level of your file (but not inside another component)
 function RestoreChartsModal({ visibleCharts, onRestore, onClose }) {
   const hiddenCharts = Object.entries(visibleCharts)
@@ -1417,18 +1418,35 @@ function SessionDeviceChart({
     return colors[deviceType] || "#6B7280";
   };
 
-  // Calculate chart arcs based on real data
+  // gauge geometry
+  const GAUGE_WIDTH = 360; // total SVG width
+  const GAUGE_HEIGHT = 180; // total SVG height
+  const GAUGE_CX = 180; // horizontal center
+  const GAUGE_CY = 160; // push arc toward bottom so it's not cut off
+  const GAUGE_R = 100; // radius
+  const STROKE_W = 24; // thickness of the arc
+
+  // total percentage (should be ~100 but we compute anyway)
   const total = deviceData.reduce((acc, d) => acc + d.value, 0);
+
+  // each segment gets a slice of 180 degrees
   const degrees = deviceData.map((d) => (d.value / total) * 180);
-  let startAngle = -90;
+
+  // start from -180deg (left) and sweep to 0deg (right) so it's horizontal
+  let startAngle = -180;
 
   const arcs = deviceData.map((d, i) => {
     const endAngle = startAngle + degrees[i];
-    const path = describeArc(175, 125, 80, startAngle, endAngle);
-    const transform = hoveredIndex === i ? "scale(1.05)" : "scale(1)";
-    const transition = "transform 0.2s ease";
+
+    const path = describeArc(GAUGE_CX, GAUGE_CY, GAUGE_R, startAngle, endAngle);
+
+    const isHovered = hoveredIndex === i;
+
+    // because the gauge is horizontal we scale from the gauge center
+    const transformOrigin = `${GAUGE_CX}px ${GAUGE_CY}px`;
 
     startAngle = endAngle;
+
     return (
       <g
         key={i}
@@ -1436,17 +1454,28 @@ function SessionDeviceChart({
         onMouseLeave={() => setHoveredIndex(null)}
         onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
         style={{
-          transformOrigin: "150px 125px",
-          transform,
-          transition,
+          transformOrigin,
+          transform: isHovered ? "scale(1.03)" : "scale(1)",
+          transition: "transform 0.2s ease",
         }}
       >
         <path
           d={path}
           fill="none"
           stroke={d.color}
-          strokeWidth="25"
+          strokeWidth={STROKE_W}
           strokeLinecap="round"
+        />
+
+        <path
+        //  d={path}
+        //  fill="none"
+        //  stroke={d.color}
+        //  strokeWidth={STROKE_W}
+        //  strokeLinecap="butt" // <-- was "round"
+        //  style={{
+        //    transition: "transform 0.2s ease",
+        //  }}
         />
       </g>
     );
@@ -1581,9 +1610,9 @@ function SessionDeviceChart({
         {deviceData.length > 0 ? (
           <>
             <svg
-              viewBox="0 0 350 250"
+              viewBox={`0 0 ${GAUGE_WIDTH} ${GAUGE_HEIGHT}`}
               width="100%"
-              height="250"
+              height={GAUGE_HEIGHT}
               className="device-chart"
             >
               {arcs}
@@ -1644,7 +1673,7 @@ function SessionDeviceChart({
             borderRadius: "8px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             pointerEvents: "none",
-            fontSize: "14px",
+            fontSize: "18px",
             zIndex: 999,
           }}
         >
@@ -2031,7 +2060,7 @@ function SystemUsageChart({ onRemove, isMenuOpen, onMenuToggle, onMenuClose }) {
               </div>
 
               <div className="legend-stats">
-                <strong>{system.value}%</strong>
+                <strong>{system.percent}%</strong>
                 <span>({system.count} sessions)</span>
               </div>
             </div>
@@ -2050,8 +2079,8 @@ function SystemUsageChart({ onRemove, isMenuOpen, onMenuToggle, onMenuClose }) {
             pointerEvents: "none",
             zIndex: 9999,
           }}
-          width="120"
-          height="28"
+          width="140"
+          height="35"
         >
           <rect
             className="BU_tooltip-bg"
@@ -2059,18 +2088,18 @@ function SystemUsageChart({ onRemove, isMenuOpen, onMenuToggle, onMenuClose }) {
             y="0"
             rx="4"
             ry="4"
-            width="120"
-            height="28"
+            width="140"
+            height="35"
             fill="#fff"
             stroke="#ccc"
           />
           <text
             className="BU_tooltip-text"
-            x="60"
-            y="20"
+            x="70"
+            y="25"
             textAnchor="middle"
             fill="#333"
-            fontSize="14"
+            fontSize="17"
           >
             {tooltip.name}: {tooltip.value}%
           </text>
@@ -2802,92 +2831,70 @@ function BusinessStatusChart({
   const [timeRange, setTimeRange] = useState("week"); // "week" or "month"
   const [approvalData, setApprovalData] = useState([]);
 
-  // Fetch approved businesses data
   const fetchApprovalData = async () => {
-    setLoading(true);
     try {
-      console.log(`🔄 Fetching approved businesses for ${timeRange}...`);
+      setLoading(true);
 
-      const response = await authFetch(`/api/businesses/approved`);
+      const response = await fetch("/api/businesses/approved", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Approved businesses data:", result);
+      const raw = await response.json(); // <-- only once
+      console.log("raw approval data from server:", raw);
 
-        if (result.success && result.data) {
-          // Transform the data based on time range
-          const transformedData = transformApprovalData(result.data, timeRange);
-          setApprovalData(transformedData);
-        } else if (Array.isArray(result)) {
-          // If the API returns array directly
-          const transformedData = transformApprovalData(result, timeRange);
-          setApprovalData(transformedData);
-        } else {
-          console.warn("⚠️ Unexpected data format:", result);
-          // Use mock data as fallback
-          setApprovalData(generateMockData(timeRange));
-        }
-      } else {
-        console.warn(
-          "⚠️ Failed to fetch approved businesses:",
-          response.status
-        );
-        // Use mock data as fallback
-        setApprovalData(generateMockData(timeRange));
+      if (!response.ok) {
+        console.error("Failed to fetch approval data:", response.status);
+        setApprovalData([]);
+        return;
       }
-    } catch (error) {
-      console.error("❌ Error fetching approval data:", error);
-      // Use mock data as fallback
-      setApprovalData(generateMockData(timeRange));
+
+      // take the array from raw.data
+      const businesses = Array.isArray(raw.data) ? raw.data : [];
+      if (businesses.length === 0) {
+        console.warn("No approved businesses in response");
+        setApprovalData([]);
+        return;
+      }
+
+      const transformed = transformApprovalData(businesses, timeRange);
+      setApprovalData(Array.isArray(transformed) ? transformed : []);
+    } catch (err) {
+      console.error("Error fetching approval data:", err);
+      setApprovalData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Transform API data to chart format
-  const transformApprovalData = (apiData, range) => {
-    console.log("🔄 TRANSFORMING DATA for range:", range);
-    console.log("Raw API data:", apiData);
-    // If no data, return empty
-    if (!apiData || apiData.length === 0) {
-      return generateMockData(range);
-    }
+  const transformApprovalData = (data, range) => {
+    if (!Array.isArray(data) || data.length === 0) return [];
 
-    // Extract dates from approved businesses
-    const businesses = Array.isArray(apiData) ? apiData : apiData.data || [];
-    console.log("Businesses to process:", businesses.length);
-
-    // Debug each business date
-    businesses.forEach((business, index) => {
-      const date = new Date(
-        business.approvedAt || business.updatedAt || business.createdAt
-      );
-      console.log(`Business ${index}:`, {
-        approvedAt: business.approvedAt,
-        updatedAt: business.updatedAt,
-        createdAt: business.createdAt,
-        parsedDate: date,
-        isValid: !isNaN(date.getTime()),
-      });
-    });
-
-    // Get approval dates (use createdAt, approvedAt, or updatedAt)
-    const dates = businesses
-      .map((business) => {
-        return new Date(
-          business.approvedAt || business.updatedAt || business.createdAt
-        );
+    // take all submissionDate values and convert to Date objects
+    const dates = data
+      .map((item) => {
+        // some older records might use submissionDate or createdAt
+        const ts = item.submissionDate || item.createdAt;
+        return ts ? new Date(ts) : null;
       })
-      .filter((date) => !isNaN(date.getTime()));
-
-    if (dates.length === 0) {
-      return generateMockData(range);
-    }
+      .filter(Boolean); // remove nulls
 
     if (range === "week") {
-      return groupByWeek(dates);
+      // [{ day: "Sun", count: N }, ... "Sat"]
+      return groupByWeek(dates).map((d) => ({
+        day: d.day,
+        count: d.count,
+      }));
     } else {
-      return groupByMonth(dates);
+      // [{ month: "Oct", count: N, year: 2025, monthIndex: 9 }, ...]
+      return groupByMonth(dates).map((d) => ({
+        month: d.month,
+        year: d.year,
+        monthIndex: d.monthIndex,
+        count: d.count,
+      }));
     }
   };
 
@@ -3292,8 +3299,12 @@ function BusinessStatusChart({
               <div className="stat-icon">⚡</div>
               <div className="stat-text">
                 <div className="value">
-                  {Math.max(...approvalData.map((d) => d.count))}
+                  {approvalData.length > 0
+                    ? Math.max(...approvalData.map((d) => d.count))
+                    : 0}
                 </div>
+                <div className="label">Peak in Period</div>
+
                 <div className="label">Peak Approvals</div>
               </div>
             </div>

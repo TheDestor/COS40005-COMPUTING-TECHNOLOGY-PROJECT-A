@@ -667,7 +667,6 @@
   width: 100%;
   height: 50%;
   margin-top: 25px;
-  margin-bottom: -50px;
 }
 
 /* Stats */
@@ -675,7 +674,7 @@
   position: relative;
   text-align: center;
   height: auto;
-  padding-top: 50px;
+  padding-top: 10px;
 }
 
 .device-number {

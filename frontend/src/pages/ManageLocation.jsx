@@ -2233,6 +2233,8 @@ const ManageLocation = () => {
                         </div>
 
                         {/* Description Field */}
+
+                        <label>Description *</label>
                         <textarea
                           name="description"
                           value={location.description}

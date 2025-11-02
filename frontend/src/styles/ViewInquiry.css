@@ -19,7 +19,9 @@
 .inquiry-options,
 .compact-options {
   position: relative;
-  z-index: 0;
+  z-index: 1; /* Originally 0, fixed problem button overlap filter in ViewInquries 
+  and Business Management. Same class name in both pages so problem here comes to 
+  Business Management too*/
 }
 
 .inquiry-statistics {
@@ -35,7 +37,7 @@
 }
 
 .stat:not(:last-child)::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -15px;
   top: 10%;
@@ -88,7 +90,7 @@
 }
 
 .filter-dropdown::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -8px;
   right: 40px; /* Position the triangle pointer near the right side */
@@ -99,7 +101,8 @@
   box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.filter-group, .clear-filters {
+.filter-group,
+.clear-filters {
   position: relative;
   z-index: 2;
 }
@@ -188,7 +191,7 @@
 }
 
 .inquiry-item.unread::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 6px;
@@ -261,7 +264,8 @@
   gap: 8px;
 }
 
-.status-badge-vi, .priority-badge {
+.status-badge-vi,
+.priority-badge {
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
@@ -549,7 +553,8 @@
     padding: 8px;
   }
 
-  .status-badge-vi, .priority-badge {
+  .status-badge-vi,
+  .priority-badge {
     padding: 4px 8px;
     font-size: 12px;
   }
@@ -591,20 +596,20 @@
 
 /* For screens smaller than 600px - REPLACE YOUR EXISTING @media (max-width: 600px) SECTION */
 @media (max-width: 600px) {
-.inquiry-content {
-  margin-top: 10px;
-}
+  .inquiry-content {
+    margin-top: 10px;
+  }
 
-.inquiry-container {
-  grid-template-columns: 1fr;
-  overflow: hidden;
-  position: relative;
-  height: calc(100vh - 280px);
-  margin: 0 10px 10px 10px;
-}
+  .inquiry-container {
+    grid-template-columns: 1fr;
+    overflow: hidden;
+    position: relative;
+    height: calc(100vh - 280px);
+    margin: 0 10px 10px 10px;
+  }
 
-.inquiry-list,
-.inquiry-detail {
+  .inquiry-list,
+  .inquiry-detail {
     position: absolute;
     top: 0;
     left: 0;
@@ -614,50 +619,50 @@
     box-shadow: none;
     border: none;
     background-color: white;
-}
+  }
 
-.inquiry-list {
+  .inquiry-list {
     transform: translateX(0);
     z-index: 2;
     pointer-events: auto;
-}
+  }
 
-.inquiry-detail {
+  .inquiry-detail {
     transform: translateX(100%);
     z-index: 1;
     display: flex;
     flex-direction: column;
     pointer-events: none;
-}
+  }
 
-.inquiry-container.mobile-detail-active .inquiry-list {
+  .inquiry-container.mobile-detail-active .inquiry-list {
     transform: translateX(-100%);
     pointer-events: none;
-}
+  }
 
-.inquiry-container.mobile-detail-active .inquiry-detail {
+  .inquiry-container.mobile-detail-active .inquiry-detail {
     transform: translateX(0);
     z-index: 3;
     pointer-events: auto;
-}
+  }
 
-/* FIXED: Proper spacing for mobile header */
-.inquiry-detail-header {
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 12px;
-  gap: 12px;
-}
+  /* FIXED: Proper spacing for mobile header */
+  .inquiry-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 12px;
+  }
 
-/* FIXED: Back button in its own row at the top */
-.header-top-row {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-  gap: 10px; /* Space between back button and action buttons */
-}
+  /* FIXED: Back button in its own row at the top */
+  .header-top-row {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    gap: 10px; /* Space between back button and action buttons */
+  }
 
-.back-button {
+  .back-button {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -672,34 +677,34 @@
     flex-shrink: 0;
     white-space: nowrap;
     width: fit-content; /* Back button takes only needed width */
-}
+  }
 
-.back-button:hover {
+  .back-button:hover {
     background-color: #e2e8f0;
-}
+  }
 
-/* FIXED: User info section comes after actions */
-.inquiry-user-info {
+  /* FIXED: User info section comes after actions */
+  .inquiry-user-info {
     width: 100%;
     flex-direction: row;
     align-items: center;
     margin-top: 0;
     padding-top: 12px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
+  }
 
-/* FIXED: Action buttons in their own row below back button */
-.inquiry-actions {
+  /* FIXED: Action buttons in their own row below back button */
+  .inquiry-actions {
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start; /* Align to left */
     align-items: center;
     gap: 6px;
     width: 100%; /* Take full width */
-}
+  }
 
-/* FIXED: Individual action buttons */
-.inquiry-action-btn {
+  /* FIXED: Individual action buttons */
+  .inquiry-action-btn {
     padding: 8px !important;
     min-width: 36px !important;
     width: 36px !important;
@@ -713,110 +718,108 @@
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-}
+  }
 
-.inquiry-actions .more-actions{
-  width: 36px;
-  height: 36px;
-  padding: 8px;
-}
+  .inquiry-actions .more-actions {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+  }
 
-.resolve-btn {
-  background-color: #dcfce7;
-  color: #16a34a;
-}
+  .resolve-btn {
+    background-color: #dcfce7;
+    color: #16a34a;
+  }
 
-.delete-btn {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
+  .delete-btn {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
 
-.print-btn {
-  background-color: #dbeafe;
-  color: #2563eb;
-}
+  .print-btn {
+    background-color: #dbeafe;
+    color: #2563eb;
+  }
 
-/* Print options wrapper */
-.print-options-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+  /* Print options wrapper */
+  .print-options-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
 
-/* Mobile header fixes */
-.compact-options {
-  padding: 8px 10px;
-  margin-bottom: 10px;
-}
+  /* Mobile header fixes */
+  .compact-options {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
 
-.inquiry-statistics {
-  gap: 8px;
-  font-size: 0.75rem;
-}
+  .inquiry-statistics {
+    gap: 8px;
+    font-size: 0.75rem;
+  }
 
-.stat {
-  padding: 6px 8px;
-}
+  .stat {
+    padding: 6px 8px;
+  }
 
-.stat-value {
-  font-size: 1rem;
-}
+  .stat-value {
+    font-size: 1rem;
+  }
 
-.stat-label {
-  font-size: 0.7rem;
-}
+  .stat-label {
+    font-size: 0.7rem;
+  }
 
-.filter-button {
-  padding: 6px 10px;
-  font-size: 0.75rem;
-}
+  .filter-button {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
 
-.compact-list {
-  width: 100%;
-  border-right: none;
-  overflow-y: auto;
-  max-height: 100%;
-}
+  .compact-list {
+    width: 100%;
+    border-right: none;
+    overflow-y: auto;
+    max-height: 100%;
+  }
 
-.pagination-container {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  border-top: 1px solid #e5e7eb;
-  padding: 10px;
-  z-index: 10;
-}
+  .pagination-container {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 10px;
+    z-index: 10;
+  }
 
-.pagination-info {
-  font-size: 0.7rem;
-  margin-bottom: 8px;
-}
+  .pagination-info {
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+  }
 
-.pagination-controls {
-  flex-direction: row;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+  .pagination-controls {
+    flex-direction: row;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
-.pagination-btn {
-  padding: 5px 10px;
-  font-size: 0.7rem;
-}
+  .pagination-btn {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
 
-.page-numbers {
-  display: flex;
-  gap: 3px;
-}
+  .page-numbers {
+    display: flex;
+    gap: 3px;
+  }
 
-.page-number {
-  padding: 5px 8px;
-  font-size: 0.7rem;
-  min-width: 30px;
+  .page-number {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    min-width: 30px;
+  }
 }
-}
-
-
 
 /* For very small screens smaller than 480px (e.g., small phones) */
 @media (max-width: 480px) {
@@ -829,7 +832,8 @@
     gap: 10px;
   }
 
-  .inquiry-list, .inquiry-detail {
+  .inquiry-list,
+  .inquiry-detail {
     min-height: 200px;
     max-height: 100vh;
   }
@@ -869,7 +873,8 @@
     gap: 5px;
   }
 
-  .status-badge-vi, .priority-badge {
+  .status-badge-vi,
+  .priority-badge {
     /* padding: 1px 5px; */
     font-size: 12px;
     padding: 4px 8px;
@@ -920,8 +925,8 @@
     margin-left: auto;
   }
   .inquiry-action-btn {
-      width: auto; /* Let buttons size naturally */
-      text-align: center; /* Center text within button */
+    width: auto; /* Let buttons size naturally */
+    text-align: center; /* Center text within button */
   }
 
   .inquiry-detail-content {
@@ -932,7 +937,7 @@
     gap: 8px;
     margin-bottom: 10px;
     padding-bottom: 8px;
-    flex-direction: column; 
+    flex-direction: column;
   }
 
   .meta-label {
@@ -962,4 +967,3 @@
     color: #333;
   }
 }
-
