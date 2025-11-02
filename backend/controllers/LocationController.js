@@ -2,6 +2,7 @@ import transporter from "../config/emailConfig.js";
 import { locationModel } from "../models/LocationModel.js";
 import { userModel } from "../models/UserModel.js";
 import { getNewLocationEmailTemplate } from "../utils/emailTemplates.js";
+import { put, del } from '@vercel/blob';
 
 export const getAllLocations = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ export const getAllLocations = async (req, res) => {
 
     const filter = {};
     if (type && type !== "All") {
-      filter.type = new RegExp(`^${type}$`, "i"); // optional: case-insensitive matching
+      filter.type = new RegExp(`^${type}$`, "i");
     }
 
     const locations = await locationModel
@@ -37,27 +38,25 @@ export const addLocation = async (req, res) => {
       longitude,
       description,
       url,
-      image, // might exist for JSON-only calls
+      image,
     } = req.body;
 
-    // basic required validation
     if (!category || !type || !division || !name || !status || !description) {
       return res
         .status(400)
         .json({ message: "Missing required fields.", success: false });
     }
 
-    // If a file was uploaded, build the image URL/path from req.file
-    // e.g. "/uploads/1730548459384_bako.jpg"
     let finalImage = image || "";
     if (req.file) {
-      // if you're serving static /uploads from express, something like:
-      // app.use('/uploads', express.static(path.resolve('uploads')))
-      finalImage = `/uploads/${req.file.filename}`;
+      const { url: blobUrl } = await put(req.file.originalname, req.file.buffer, {
+        access: 'public',
+        addRandomSuffix: true,
+      });
+      finalImage = blobUrl;
     }
 
     const locationData = {
-      id: null,
       category,
       type,
       division,
@@ -73,14 +72,13 @@ export const addLocation = async (req, res) => {
     const newLocation = await locationModel.create(locationData);
     console.log(newLocation);
 
-    // respond immediately
     res.status(201).json({
       message: "Location added successfully",
       success: true,
       newLocation,
     });
 
-    // async email notifications (unchanged)
+    // async email notifications
     (async () => {
       try {
         const usersToNotify = await userModel
@@ -88,9 +86,15 @@ export const addLocation = async (req, res) => {
           .select("email firstName lastName");
 
         if (usersToNotify.length > 0) {
-          for (const user of usersToNotify) {
-            const fullName = `${user.firstName} ${user.lastName}`;
+          let sendingLimitReached = false; // Flag to track if the limit is hit
 
+          for (const user of usersToNotify) {
+            // If the limit was reached in a previous iteration, stop sending
+            if (sendingLimitReached) {
+              break;
+            }
+
+            const fullName = `${user.firstName} ${user.lastName}`;
             const emailTemplate = getNewLocationEmailTemplate(
               locationData.name,
               fullName,
@@ -110,12 +114,19 @@ export const addLocation = async (req, res) => {
             try {
               await transporter.sendMail(mailOptions);
             } catch (mailErr) {
-              console.error("Email send failed for:", user.email, mailErr);
+              // Check if the error is specifically the daily sending limit error
+              if (mailErr.responseCode === 550 && mailErr.command === 'DATA') {
+                console.error("Gmail daily sending limit exceeded. Halting email notifications for this batch.");
+                sendingLimitReached = true;
+              } else {
+                // Log other email errors but don't stop the loop
+                console.error(`Email send failed for: ${user.email}`, mailErr);
+              }
             }
           }
         }
       } catch (notifyErr) {
-        console.error("Notification dispatch failed:", notifyErr);
+        console.error("Error fetching users for notification dispatch:", notifyErr);
       }
     })();
 
@@ -125,6 +136,7 @@ export const addLocation = async (req, res) => {
       "An error occured while trying to create new location:",
       error
     );
+
     return res.status(500).json({
       message: "An error occured while trying to create new location",
       success: false,
@@ -142,6 +154,24 @@ export const removeLocation = async (req, res) => {
         .json({ message: "Location ID is required.", success: false });
     }
 
+    // Find the location first to get its image URL
+    const locationToDelete = await locationModel.findById(id);
+
+    if (!locationToDelete) {
+      return res.status(404).json({ message: "Location not found.", success: false });
+    }
+
+    // If an image URL exists, delete it from Vercel Blob
+    if (locationToDelete.image) {
+      try {
+        await del(locationToDelete.image);
+      } catch (blobDelError) {
+        // Log the error but don't prevent the DB record from being deleted
+        console.error("Failed to delete blob, but continuing with DB deletion:", blobDelError);
+      }
+    }
+
+    // Finally, delete the location from the database
     await locationModel.findByIdAndDelete(id);
 
     return res
@@ -172,7 +202,7 @@ export const updateLocation = async (req, res) => {
       longitude,
       description,
       url,
-      image, // optional existing image
+      image,
     } = req.body;
 
     if (!id) {
@@ -185,7 +215,6 @@ export const updateLocation = async (req, res) => {
     }
 
     const updateFields = {};
-
     if (category !== undefined) updateFields.category = category;
     if (type !== undefined) updateFields.type = type;
     if (division !== undefined) updateFields.division = division;
@@ -196,15 +225,31 @@ export const updateLocation = async (req, res) => {
     if (description !== undefined) updateFields.description = description;
     if (url !== undefined) updateFields.url = url;
 
-    // If a NEW file was uploaded, prefer that for image
-    // Otherwise fall back to `image` sent in body (e.g. keep same URL)
+    // If a NEW file was uploaded, handle deleting the old one and uploading the new one
     if (req.file) {
-      updateFields.image = `/uploads/${req.file.filename}`;
+      // Find the existing location to get the old image URL
+      const existingLocation = await locationModel.findById(id);
+      if (existingLocation && existingLocation.image) {
+        // If an old image exists, delete it from Vercel Blob
+        try {
+          await del(existingLocation.image);
+        } catch (blobDelError) {
+          console.error("Failed to delete old blob, but continuing with update:", blobDelError);
+        }
+      }
+
+      // Upload the new image to Vercel Blob
+      const { url: blobUrl } = await put(req.file.originalname, req.file.buffer, {
+        access: 'public',
+        addRandomSuffix: true,
+      });
+      updateFields.image = blobUrl; // Set the new image URL for the update
     } else if (image !== undefined) {
+      // This handles cases where the image URL is being set manually or cleared
       updateFields.image = image;
     }
 
-    if (Object.keys(updateFields).length === 0) {
+    if (Object.keys(updateFields).length === 0 && !req.file) {
       return res
         .status(400)
         .json({ message: "No fields to update provided.", success: false });
@@ -216,6 +261,10 @@ export const updateLocation = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    if (!updatedLocation) {
+      return res.status(404).json({ message: "Location not found to update.", success: false });
+    }
+
     console.log("Location updated:", updatedLocation);
     return res.status(200).json({
       message: "Location updated successfully",
@@ -223,12 +272,10 @@ export const updateLocation = async (req, res) => {
       updatedLocation,
     });
   } catch (error) {
-    console.error(
-      "An error occured while trying to update this location:",
-      error
-    );
+    console.error("FULL ERROR DETAILS:", error);
+
     return res.status(500).json({
-      message: "An error occured while trying to update this location",
+      message: "An error occured while trying to create new location",
       success: false,
     });
   }

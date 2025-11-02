@@ -36,7 +36,7 @@ import { useAuth } from "../context/AuthProvider";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 
 const buildPageList = (total, current) => {
   const pages = [];
@@ -70,7 +70,6 @@ const LocationImageUploader = ({
 
     const file = e.target.files[0];
 
-    // optional: limit size (example: <5MB)
     const maxBytes = 5 * 1024 * 1024;
     if (file.size > maxBytes) {
       toast.error("Image too large. Please use a file under 5 MB.");
@@ -406,79 +405,6 @@ const ManageLocation = () => {
     onScroll(); // initialize visibility
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
-
-  // const [validationToast, setValidationToast] = useState({
-  //   isVisible: false,
-  //   messages: [],
-  // });
-
-  // ADD: Function to show validation toast
-  // const showValidationToast = (validationResults) => {
-  //   const errorMessages = [];
-
-  //   validationResults.forEach((result) => {
-  //     if (Object.keys(result.errors).length > 0) {
-  //       const locationPrefix =
-  //         validationResults.length > 1 ? `Location ${result.index + 1}: ` : "";
-
-  //       Object.keys(result.errors).forEach((field) => {
-  //         const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
-  //         errorMessages.push(`${locationPrefix}${fieldName} is required`);
-  //       });
-  //     }
-  //   });
-
-  //   if (errorMessages.length > 0) {
-  //     setValidationToast({
-  //       isVisible: true,
-  //       messages: errorMessages,
-  //     });
-
-  //     // Auto hide after 8 seconds
-  //     setTimeout(() => {
-  //       setValidationToast((prev) => ({ ...prev, isVisible: false }));
-  //     }, 8000);
-  //   }
-  // };
-
-  // ADD: Function to close validation toast
-  // const closeValidationToast = () => {
-  //   setValidationToast((prev) => ({ ...prev, isVisible: false }));
-  // };
-
-  // // Validation Toast Notification Component
-  // const ValidationToastNotification = ({ messages, onClose, isVisible }) => {
-  //   if (!isVisible || !messages || messages.length === 0) return null;
-
-  //   return (
-  //     <div
-  //       className={`toast-notification toast-warning ${
-  //         isVisible ? "toast-visible" : ""
-  //       }`}
-  //     >
-  //       <div className="toast-content">
-  //         <FaExclamationCircle className="toast-icon" />
-  //         <div className="validation-messages">
-  //           <strong>Please fill in the following required fields:</strong>
-  //           <ul>
-  //             {messages.map((message, index) => (
-  //               <li key={index}>{message}</li>
-  //             ))}
-  //           </ul>
-  //         </div>
-  //       </div>
-  //       <button className="toast-close" onClick={onClose}>
-  //         <FaTimes />
-  //       </button>
-  //     </div>
-  //   );
-  // };
-
-  // const [toast, setToast] = useState({
-  //   isVisible: false,
-  //   message: "",
-  //   type: "success",
-  // });
 
   // Confirmation modal states
   const [deleteModal, setDeleteModal] = useState({
@@ -882,13 +808,12 @@ const ManageLocation = () => {
             formData.append("longitude", parseFloat(location.longitude) || 0);
             formData.append("description", location.description);
             formData.append("url", location.url || "");
-            formData.append("imageFile", imgState.file); // the real file
+            formData.append("image", imgState.file); // the real file
 
             const response = await ky
               .post(endpoint, {
                 headers: {
                   Authorization: `Bearer ${accessToken}`,
-                  // do NOT manually set Content-Type for FormData
                 },
                 body: formData,
                 timeout: 30000,
@@ -1085,9 +1010,6 @@ const ManageLocation = () => {
     return false;
   };
 
-  // Make sure this constant exists somewhere above handleEditClick in the same component/file:
-  const API_BASE = "http://localhost:5050"; // <-- use your backend port here
-
   const handleEditClick = (location) => {
     // what user is editing right now
     setEditingLocation({ ...location });
@@ -1098,17 +1020,7 @@ const ManageLocation = () => {
     let previewUrl = "";
 
     if (location.image) {
-      if (
-        location.image.startsWith("http://") ||
-        location.image.startsWith("https://")
-      ) {
         previewUrl = location.image;
-      } else if (location.image.startsWith("/uploads/")) {
-        const filenamePart = location.image.replace("/uploads/", "");
-        previewUrl = `http://localhost:5050/location-uploads/${filenamePart}`;
-      } else {
-        previewUrl = location.image;
-      }
     }
 
     console.log("Edit clicked location:", location);
@@ -1208,7 +1120,7 @@ const ManageLocation = () => {
         );
         formData.append("description", editingLocation.description);
         formData.append("url", editingLocation.url || "");
-        formData.append("imageFile", imgState.file);
+        formData.append("image", imgState.file);
 
         response = await ky
           .post(endpoint, {

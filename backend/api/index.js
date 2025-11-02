@@ -167,11 +167,6 @@ app.get("/api/nominatim/reverse", nominatimLimiter, async (req, res) => {
   }
 });
 
-const locationUploadsDir = path.join(__dirname, "../uploads");
-console.log("[DEBUG] Serving location images from:", locationUploadsDir);
-
-app.use("/location-uploads", express.static(locationUploadsDir));
-
 // Start the express server on this port
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

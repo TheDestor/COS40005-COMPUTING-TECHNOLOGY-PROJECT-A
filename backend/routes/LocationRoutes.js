@@ -11,10 +11,22 @@ import {
   locationsLimiter,
   adminLocationModifyLimiter,
 } from "../middleware/rateLimiter.js";
-
-import { uploadSingleImage } from "../middleware/uploadMiddleware.js"; // <-- NEW
+import multer from "multer";
 
 const locationRouter = Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 4.5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif/;
+        const mimetype = allowedTypes.test(file.mimetype);
+
+        if (mimetype) {
+            return cb(null, true);
+        }
+        cb(new Error('Error: File upload only supports the following filetypes - ' + allowedTypes));
+    }
+});
 
 locationRouter.get("/", locationsLimiter, getAllLocations);
 
@@ -24,7 +36,7 @@ locationRouter.post(
   checkRole(["cbt_admin"]),
   adminLocationModifyLimiter,
   logAdminUsage("admin_location_add"),
-  uploadSingleImage, // <-- NEW: handle multipart/form-data & file
+  upload.single('image'),
   addLocation
 );
 
@@ -43,7 +55,7 @@ locationRouter.post(
   checkRole(["cbt_admin"]),
   adminLocationModifyLimiter,
   logAdminUsage("admin_location_update"),
-  uploadSingleImage, // <-- NEW: also allow updating image
+  upload.single('image'),
   updateLocation
 );
 
