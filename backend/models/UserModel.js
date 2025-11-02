@@ -62,11 +62,11 @@ const userSchema = new mongoose.Schema({
     notifications: {
         location: {
             type: Boolean,
-            default: true,
+            default: false,
         },
         event: {
             type: Boolean,
-            default: true,
+            default: false,
         }
     },
     resetPasswordToken: { type: String, default: null },

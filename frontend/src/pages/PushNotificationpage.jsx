@@ -5,9 +5,9 @@ import "../styles/PushNotificationpage.css";
 
 const PushNotificationPage = () => {
   const [notifications, setNotifications] = useState({
-    push: true,
-    location: true,
-    event: true,
+    push: false,
+    location: false,
+    event: false,
   });
 
   const [disabledSwitches, setDisabledSwitches] = useState({}); // 🔒 Track disabled switches
