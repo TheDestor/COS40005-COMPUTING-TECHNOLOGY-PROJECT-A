@@ -156,3 +156,144 @@ a:focus {
 .senior-mode-active .minimized-container-enp .minimized-text-enp {
   font-size: 1.25rem;
 }
+
+/* Explore major towns */
+.senior-mode-active .centered-about-section .text-content p,
+.senior-mode-active .section-header-container p {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .search-input {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .carousel-description-text,
+.senior-mode-active .carousel-description-actions a,
+.senior-mode-active .video-info h3,
+.senior-mode-active .video-info p {
+  font-size: 1.25rem;
+}
+
+/* Explore other pages */
+.senior-mode-active .hero-overlay-dp p,
+.senior-mode-active .overview-text-dp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .info-card-dp,
+.senior-mode-active .info-card-dp p {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .place-info-dp .place-type-dp,
+.senior-mode-active .place-info-dp h3,
+.senior-mode-active .place-info-dp .address-dp {
+  font-size: 1.25rem;
+}
+
+/* Contact Us Page */
+.senior-mode-active .header,
+.senior-mode-active .help-section,
+.senior-mode-active .form-section {
+  font-size: 1.25rem;
+}
+
+/* CBT Admin Dashboard */
+.senior-mode-active .greeting p,
+.senior-mode-active .viz-header p {
+  font-size: 1.25rem;
+}
+
+/* CBT View Inquiries Page */
+.senior-mode-active .search-bar input,
+.senior-mode-active .inquiry-statistics .stat span {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .inquiry-item .inquiry-brief div,
+.senior-mode-active .inquiry-item .inquiry-brief p,
+.senior-mode-active .inquiry-item .inquiry-name,
+.senior-mode-active .inquiry-item .inquiry-date {
+  font-size: 1.10rem;
+}
+
+.senior-mode-active .user-details .detail-email,
+.senior-mode-active .inquiry-meta .meta-item span,
+.senior-mode-active .inquiry-message h4,
+.senior-mode-active .inquiry-message .message-body,
+.senior-mode-active .inquiry-reply h4,
+.senior-mode-active .inquiry-reply form textarea {
+  font-size: 1.25rem;
+}
+
+/* CBT Add Event Page */
+.senior-mode-active .event-card .event-header h3,
+.senior-mode-active .event-card .event-header span,
+.senior-mode-active .event-content p,
+.senior-mode-active .event-detail-item .detail-content span,
+.senior-mode-active .event-date-badge span,
+.senior-mode-active .event-footer span {
+  font-size: 1.25rem;
+}
+
+/* CBT Business Management Page */
+.senior-mode-active .business-statistics .stat span,
+.senior-mode-active .business-brief .business-owner span,
+.senior-mode-active .business-brief div,
+.senior-mode-active .business-brief .business-status span {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .business-brief .business-header h4,
+.senior-mode-active .business-brief .business-header span {
+  font-size: 1rem;
+}
+
+.senior-mode-active .business-header-info span,
+.senior-mode-active .owner-info-header h4,
+.senior-mode-active .owner-info-header .owner-profile div p,
+.senior-mode-active .business-meta .meta-section h4,
+.senior-mode-active .business-meta .meta-section .meta-grid .meta-item span,
+.senior-mode-active .business-meta .meta-item span {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .business-meta .business-location-map h4,
+.senior-mode-active .business-description h4,
+.senior-mode-active .business-description .description-body,
+.senior-mode-active .admin-notes h4,
+.senior-mode-active .admin-notes form textarea {
+  font-size: 1.25rem;
+}
+
+/* System Admin Dashboard */
+.senior-mode-active .page-title p,
+.senior-mode-active .summary-container .summary-value-row small,
+.senior-mode-active .users-table-sa th,
+.senior-mode-active .users-table-sa td,
+.senior-mode-active .users-table-sa td span {
+  font-size: 1.25rem;
+}
+
+/* System Admin User Management */
+.senior-mode-active .search-container51 input,
+.senior-mode-active .user-table,
+.senior-mode-active .user-table th,
+.senior-mode-active .user-table span {
+  font-size: 1.25rem;
+}
+
+/* System Admin Data Management */
+.senior-mode-active .stat-card .stat-content h3,
+.senior-mode-active .stat-card .stat-content p,
+.senior-mode-active .table-wrapper th,
+.senior-mode-active .table-wrapper td {
+  font-size: 1.25rem;
+}
+
+/* System Admin System Security */
+.senior-mode-active .search-input-sp-wrapper input,
+.senior-mode-active .sessions-table,
+.senior-mode-active .sessions-table span {
+  font-size: 1.25rem;
+}
