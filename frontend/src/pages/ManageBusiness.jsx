@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../styles/ManageBusiness.css';
 import { useAuth } from '../context/AuthProvider';
-import axios from 'axios';
+import ky from 'ky';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -12,7 +12,7 @@ import { FaSearch, FaCamera, FaUpload, FaTimes, FaEye, FaCheck, FaExclamationTri
 import { RiArrowGoBackLine } from 'react-icons/ri';
 import { FaBuilding, FaMapMarkerAlt, FaTags, FaUser } from 'react-icons/fa';
 import { MdEmail } from "react-icons/md";
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -284,7 +284,6 @@ function ManageBusiness() {
     return out;
   };
 
-  // Add: detect any run of 30 or more non-space characters
   const hasConsecutiveNonSpaceRun = (s, max = 30) => /\S{30,}/.test(String(s || ''));
 
   const sanitizeInput = (val, type = 'text') => {
@@ -292,7 +291,7 @@ function ManageBusiness() {
     v = v.replace(/\s+/g, ' ').trimStart();
     switch (type) {
       case 'phone':
-        v = v.replace(/[^0-9-]/g, ''); // digits and dashes only
+        v = v.replace(/[^0-9-]/g, '');
         break;
       case 'url':
         v = v.replace(/[^\w\-.:/?#%&=+@~!*'();,]+/gi, '');
@@ -337,6 +336,7 @@ function ManageBusiness() {
       return '';
     }
   };
+
   const handleChange = (name, value) => {
     const type =
       name === 'phone' ? 'phone' :
@@ -361,46 +361,6 @@ function ManageBusiness() {
     return !!selected && isLoggedIn && !saving && requiredValid && !hasDirtyErrors && hasChanges;
   }, [selected, isLoggedIn, saving, form, baseForm, formErrors, dirtyFields, businessImageFile, ownerAvatarFile]);
 
-  const authAxios = useMemo(() => {
-    const inst = axios.create({
-      baseURL: 'http://localhost:5050',
-      withCredentials: true,
-    });
-    if (accessToken) inst.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-    
-    // Add response interceptor to handle session expiration
-    inst.interceptors.response.use(
-      (response) => response, // Pass through successful responses
-      (error) => {
-        // Check if error is 401 (Unauthorized) or 403 (Forbidden)
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-          const errorMessage = error.response.data?.message || '';
-          
-          // Check if it's a token-related error
-          if (errorMessage.includes('Forbidden') || errorMessage.includes('Unauthorized') || errorMessage.includes('token')) {
-            // Show user-friendly message
-            toast.error('Your session has expired. Please log in again.', {
-              duration: 5000,
-            });
-            
-            // Clear auth state and logout
-            logout();
-            
-            // Optional: Redirect to home page after a short delay
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 2000);
-          }
-        }
-        
-        // Return the error for further handling
-        return Promise.reject(error);
-      }
-    );
-    
-    return inst;
-  }, [accessToken, logout]);
-
   useEffect(() => {
     document.body.classList.add('manage-business-body');
     return () => document.body.classList.remove('manage-business-body');
@@ -415,9 +375,13 @@ function ManageBusiness() {
     setLoading(true);
     setError(null);
     try {
-      const r = await authAxios.get('/api/businesses/my-submissions');
-      const list = (r.data?.data || []).filter(Boolean);
+      const r = await ky.get('/api/businesses/my-submissions', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }).json();
+      
+      const list = (r.data || []).filter(Boolean);
       setBusinesses(list);
+
       if (list.length) {
         const b = list[0];
         setSelected(b);
@@ -441,9 +405,21 @@ function ManageBusiness() {
         setForm(null);
       }
     } catch (e) {
-      const msg = e.response?.data?.message || e.message || 'Failed to load your business submissions.';
-      setError(msg);
-      toast.error(msg);
+        if (e.name === 'HTTPError' && (e.response.status === 401 || e.response.status === 403)) {
+            toast.error('Your session has expired. Please log in again.', { duration: 5000 });
+            logout();
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+            return;
+        }
+        let msg = 'Failed to load your business submissions.';
+        try {
+            const errorBody = await e.response?.json();
+            msg = errorBody?.message || e.message;
+        } catch (parseError) {
+            msg = e.message;
+        }
+        setError(msg);
+        toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -483,25 +459,13 @@ function ManageBusiness() {
   const handleFileUpload = (e, type) => {
     const file = e.target.files[0];
     if (file) {
-      // Define allowed image formats
       const allowedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
-      const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif'];
       
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file');
-        return;
-      }
-      
-      // Check if file format is supported
       if (!allowedFormats.includes(file.type.toLowerCase())) {
-        toast.error('Only PNG, JPG, JPEG, and GIF images are supported. Please choose a different file.', {
-          duration: 5000,
-        });
+        toast.error('Only PNG, JPG, JPEG, and GIF images are supported.', { duration: 5000 });
         return;
       }
       
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size should be less than 5MB');
         return;
@@ -534,11 +498,10 @@ function ManageBusiness() {
       fileName = currentUrl.split('/').pop() || 'Current Image';
     }
     
-    // Limit filename length to 25 characters
-    if (fileName.length > 5) {
+    if (fileName.length > 25) {
       const extension = fileName.split('.').pop();
       const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
-      const truncatedName = nameWithoutExt.substring(0, 5);
+      const truncatedName = nameWithoutExt.substring(0, 20);
       fileName = `${truncatedName}...${extension ? '.' + extension : ''}`;
     }
     
@@ -563,7 +526,6 @@ function ManageBusiness() {
   const handleSubmitRequest = async () => {
     if (!selected || !isLoggedIn || !accessToken) return;
 
-    // Validate form first
     if (!validateForm()) {
       setShowConfirmationModal(false);
       return;
@@ -573,7 +535,6 @@ function ManageBusiness() {
       setSaving(true);
       setError(null);
       
-      // Create FormData to handle file upload
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('description', form.description);
@@ -584,24 +545,23 @@ function ManageBusiness() {
       formData.append('latitude', form.latitude);
       formData.append('longitude', form.longitude);
       
-      // Append images if changed
-      if (businessImageFile) {
-        formData.append('businessImage', businessImageFile);
-      }
-      if (ownerAvatarFile) {
-        formData.append('ownerAvatar', ownerAvatarFile);
-      }
+      if (businessImageFile) formData.append('businessImage', businessImageFile);
+      if (ownerAvatarFile) formData.append('ownerAvatar', ownerAvatarFile);
 
-      const upd = await authAxios.put(`/api/businesses/updateMyBusiness/${selected._id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const headers = { 'Authorization': `Bearer ${accessToken}` };
+
+      const upd = await ky.put(`/api/businesses/updateMyBusiness/${selected._id}`, {
+        body: formData,
+        headers: headers
+      }).json();
       
-      const stat = await authAxios.patch(`/api/businesses/updateMyBusinessStatus/${selected._id}`, { status: 'pending' });
+      const stat = await ky.patch(`/api/businesses/updateMyBusinessStatus/${selected._id}`, {
+        json: { status: 'pending' },
+        headers: headers
+      }).json();
       
-      if (upd.data?.success) {
-        const updated = { ...upd.data.data, status: stat.data?.data?.status || 'pending' };
+      if (upd?.success) {
+        const updated = { ...upd.data, status: stat?.data?.status || 'pending' };
         setBusinesses(prev => prev.map(x => (x._id === updated._id ? updated : x)));
         setSelected(updated);
         setBusinessImageFile(null);
@@ -610,14 +570,26 @@ function ManageBusiness() {
         setShowConfirmationModal(false);
         toast.success('Changes submitted successfully! Your business is now pending admin review.');
       } else {
-        const msg = upd.data?.message || 'Failed to submit update.';
+        const msg = upd?.message || 'Failed to submit update.';
         setError(msg);
         toast.error(msg);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to submit update.';
-      setError(msg);
-      toast.error(msg);
+        if (err.name === 'HTTPError' && (err.response.status === 401 || err.response.status === 403)) {
+            toast.error('Your session has expired. Please log in again.', { duration: 5000 });
+            logout();
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+            return;
+        }
+        let msg = 'Failed to submit update.';
+        try {
+            const errorBody = await err.response?.json();
+            msg = errorBody?.message || err.message;
+        } catch (parseError) {
+            msg = err.message;
+        }
+        setError(msg);
+        toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -625,13 +597,7 @@ function ManageBusiness() {
 
   const handleSubmitClick = (e) => {
     e.preventDefault();
-    
-    // Validate form first
-    if (!validateForm()) {
-      return;
-    }
-
-    // Show confirmation modal
+    if (!validateForm()) return;
     setShowConfirmationModal(true);
   };
 
@@ -777,7 +743,6 @@ function ManageBusiness() {
                           );
                         })()}
                       </div>
-                      {/* Editable Coordinates under the map */}
                       <div className="mb-coord-inputs">
                         <div className="mb-field">
                           <input
@@ -808,7 +773,6 @@ function ManageBusiness() {
 
                     {/* Form Section */}
                     <form id="mb-edit-form" onSubmit={handleSubmitClick} className="mb-form-section">
-                      {/* Image Upload Section */}
                       <div className="mb-image-upload-section">
                         <div className="mb-image-upload-row">
                           <div className="mb-upload-group">
@@ -863,7 +827,6 @@ function ManageBusiness() {
                         </div>
                       </div>
 
-                      {/* Form Fields */}
                       <div className="mb-form-fields">
                         <div className="mb-field-row">
                           <div className="mb-field">
@@ -951,7 +914,6 @@ function ManageBusiness() {
                     </form>
                   </div>
                   
-                  {/* Submit button placed at the bottom middle */}
                   <div className="mb-submit-section">
                     <div className="mb-actions">
                       <button type="submit" form="mb-edit-form" disabled={saving || !canSubmit}>
