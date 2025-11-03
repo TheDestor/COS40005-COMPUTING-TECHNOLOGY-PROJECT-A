@@ -456,7 +456,6 @@ const ManageLocation = () => {
   };
 
   const categoryOptions = [
-    "Major Town",
     "Attraction",
     "Shopping & Leisure",
     "Food & Beverages",
@@ -476,7 +475,7 @@ const ManageLocation = () => {
       "Theme Park",
       "Business Attraction",
     ],
-    "Major Town": ["Major Town"],
+
     "Shopping & Leisure": [
       "Shopping Mall",
       "Supermarket",
@@ -1020,7 +1019,7 @@ const ManageLocation = () => {
     let previewUrl = "";
 
     if (location.image) {
-        previewUrl = location.image;
+      previewUrl = location.image;
     }
 
     console.log("Edit clicked location:", location);
