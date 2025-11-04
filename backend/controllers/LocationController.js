@@ -2,7 +2,7 @@ import transporter from "../config/emailConfig.js";
 import { locationModel } from "../models/LocationModel.js";
 import { userModel } from "../models/UserModel.js";
 import { getNewLocationEmailTemplate } from "../utils/emailTemplates.js";
-import { put, del } from '@vercel/blob';
+import { put, del } from "@vercel/blob";
 
 export const getAllLocations = async (req, res) => {
   try {
@@ -10,17 +10,20 @@ export const getAllLocations = async (req, res) => {
 
     const filter = {};
     if (type && type !== "All") {
+      // case-insensitive exact match
       filter.type = new RegExp(`^${type}$`, "i");
     }
 
     const locations = await locationModel
       .find(filter)
       .sort({ createdAt: -1, updatedAt: -1 });
+
     return res.status(200).json(locations);
   } catch (error) {
-    console.error(error);
+    console.error("getAllLocations error:", error);
     return res.status(500).json({
       message: "An error occurred while loading locations.",
+      error: error.message,
       success: false,
     });
   }
@@ -41,19 +44,27 @@ export const addLocation = async (req, res) => {
       image,
     } = req.body;
 
+    // basic validation
     if (!category || !type || !division || !name || !status || !description) {
-      return res
-        .status(400)
-        .json({ message: "Missing required fields.", success: false });
+      return res.status(400).json({
+        message: "Missing required fields.",
+        success: false,
+      });
     }
 
+    // start with whatever the client sent
     let finalImage = image || "";
+
+    // if client uploaded a file (multer.memoryStorage), push to Vercel Blob
     if (req.file) {
-      const { url: blobUrl } = await put(req.file.originalname, req.file.buffer, {
-        access: 'public',
-        addRandomSuffix: true,
-      });
-      finalImage = blobUrl;
+      const blob = await put(
+        `locations/${Date.now()}-${req.file.originalname}`,
+        req.file.buffer,
+        {
+          access: "public",
+        }
+      );
+      finalImage = blob.url;
     }
 
     const locationData = {
@@ -70,75 +81,75 @@ export const addLocation = async (req, res) => {
     };
 
     const newLocation = await locationModel.create(locationData);
-    console.log(newLocation);
 
+    // send response right away
     res.status(201).json({
       message: "Location added successfully",
       success: true,
       newLocation,
     });
 
-    // async email notifications
     (async () => {
       try {
         const usersToNotify = await userModel
           .find({ "notifications.location": true })
           .select("email firstName lastName");
 
-        if (usersToNotify.length > 0) {
-          let sendingLimitReached = false; // Flag to track if the limit is hit
+        if (!usersToNotify.length) return;
 
-          for (const user of usersToNotify) {
-            // If the limit was reached in a previous iteration, stop sending
-            if (sendingLimitReached) {
-              break;
-            }
+        let sendingLimitReached = false;
 
-            const fullName = `${user.firstName} ${user.lastName}`;
-            const emailTemplate = getNewLocationEmailTemplate(
-              locationData.name,
-              fullName,
-              locationData.description,
-              locationData.category,
-              locationData.type
-            );
+        for (const user of usersToNotify) {
+          if (sendingLimitReached) break;
 
-            const mailOptions = {
-              to: user.email,
-              from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
-              subject: emailTemplate.subject,
-              html: emailTemplate.html,
-              text: emailTemplate.text,
-            };
+          const fullName = `${user.firstName} ${user.lastName}`;
+          const emailTemplate = getNewLocationEmailTemplate(
+            locationData.name,
+            fullName,
+            locationData.description,
+            locationData.category,
+            locationData.type
+          );
 
-            try {
-              await transporter.sendMail(mailOptions);
-            } catch (mailErr) {
-              // Check if the error is specifically the daily sending limit error
-              if (mailErr.responseCode === 550 && mailErr.command === 'DATA') {
-                console.error("Gmail daily sending limit exceeded. Halting email notifications for this batch.");
-                sendingLimitReached = true;
-              } else {
-                // Log other email errors but don't stop the loop
-                console.error(`Email send failed for: ${user.email}`, mailErr);
-              }
+          const mailOptions = {
+            to: user.email,
+            from: `"Sarawak Tourism 🌴" <${process.env.EMAIL_USER}>`,
+            subject: emailTemplate.subject,
+            html: emailTemplate.html,
+            text: emailTemplate.text,
+          };
+
+          try {
+            await transporter.sendMail(mailOptions);
+          } catch (mailErr) {
+            // if gmail daily limit hit, stop sending to others
+            if (mailErr.responseCode === 550 && mailErr.command === "DATA") {
+              console.error(
+                "Gmail daily sending limit exceeded. Halting email notifications for this batch."
+              );
+              sendingLimitReached = true;
+            } else {
+              console.error(`Email send failed for: ${user.email}`, mailErr);
             }
           }
         }
       } catch (notifyErr) {
-        console.error("Error fetching users for notification dispatch:", notifyErr);
+        console.error(
+          "Error fetching users for notification dispatch:",
+          notifyErr
+        );
       }
     })();
 
-    return; // response already sent
+    return; // we already sent the response
   } catch (error) {
     console.error(
-      "An error occured while trying to create new location:",
+      "An error occurred while trying to create new location:",
       error
     );
-
     return res.status(500).json({
-      message: "An error occured while trying to create new location",
+      message: "An error occurred while trying to create new location",
+      error: error.message,
       success: false,
     });
   }
@@ -149,41 +160,47 @@ export const removeLocation = async (req, res) => {
     const { id } = req.body;
 
     if (!id) {
-      return res
-        .status(400)
-        .json({ message: "Location ID is required.", success: false });
+      return res.status(400).json({
+        message: "Location ID is required.",
+        success: false,
+      });
     }
 
-    // Find the location first to get its image URL
+    // fetch the doc first to get its image
     const locationToDelete = await locationModel.findById(id);
-
     if (!locationToDelete) {
-      return res.status(404).json({ message: "Location not found.", success: false });
+      return res.status(404).json({
+        message: "Location not found.",
+        success: false,
+      });
     }
 
-    // If an image URL exists, delete it from Vercel Blob
+    // try deleting blob (non-fatal)
     if (locationToDelete.image) {
       try {
         await del(locationToDelete.image);
       } catch (blobDelError) {
-        // Log the error but don't prevent the DB record from being deleted
-        console.error("Failed to delete blob, but continuing with DB deletion:", blobDelError);
+        console.error(
+          "Failed to delete blob, but continuing with DB deletion:",
+          blobDelError
+        );
       }
     }
 
-    // Finally, delete the location from the database
     await locationModel.findByIdAndDelete(id);
 
-    return res
-      .status(200)
-      .json({ message: "Location removed successfully", success: true });
+    return res.status(200).json({
+      message: "Location removed successfully",
+      success: true,
+    });
   } catch (error) {
     console.error(
-      "An error occured while trying to delete this location:",
+      "An error occurred while trying to delete this location:",
       error
     );
     return res.status(500).json({
-      message: "An error occured while trying to delete this location",
+      message: "An error occurred while trying to delete this location",
+      error: error.message,
       success: false,
     });
   }
@@ -206,12 +223,10 @@ export const updateLocation = async (req, res) => {
     } = req.body;
 
     if (!id) {
-      return res
-        .status(400)
-        .json({
-          message: "Location ID is required for update.",
-          success: false,
-        });
+      return res.status(400).json({
+        message: "Location ID is required for update.",
+        success: false,
+      });
     }
 
     const updateFields = {};
@@ -225,34 +240,39 @@ export const updateLocation = async (req, res) => {
     if (description !== undefined) updateFields.description = description;
     if (url !== undefined) updateFields.url = url;
 
-    // If a NEW file was uploaded, handle deleting the old one and uploading the new one
+    // if a NEW file was uploaded
     if (req.file) {
-      // Find the existing location to get the old image URL
+      // get current doc so we can delete old image
       const existingLocation = await locationModel.findById(id);
+
       if (existingLocation && existingLocation.image) {
-        // If an old image exists, delete it from Vercel Blob
         try {
           await del(existingLocation.image);
         } catch (blobDelError) {
-          console.error("Failed to delete old blob, but continuing with update:", blobDelError);
+          console.error(
+            "Failed to delete old blob, but continuing with update:",
+            blobDelError
+          );
         }
       }
 
-      // Upload the new image to Vercel Blob
-      const { url: blobUrl } = await put(req.file.originalname, req.file.buffer, {
-        access: 'public',
-        addRandomSuffix: true,
-      });
-      updateFields.image = blobUrl; // Set the new image URL for the update
+      const blob = await put(
+        `locations/${Date.now()}-${req.file.originalname}`,
+        req.file.buffer,
+        {
+          access: "public",
+        }
+      );
+      updateFields.image = blob.url;
     } else if (image !== undefined) {
-      // This handles cases where the image URL is being set manually or cleared
       updateFields.image = image;
     }
 
     if (Object.keys(updateFields).length === 0 && !req.file) {
-      return res
-        .status(400)
-        .json({ message: "No fields to update provided.", success: false });
+      return res.status(400).json({
+        message: "No fields to update provided.",
+        success: false,
+      });
     }
 
     const updatedLocation = await locationModel.findByIdAndUpdate(
@@ -262,7 +282,10 @@ export const updateLocation = async (req, res) => {
     );
 
     if (!updatedLocation) {
-      return res.status(404).json({ message: "Location not found to update.", success: false });
+      return res.status(404).json({
+        message: "Location not found to update.",
+        success: false,
+      });
     }
 
     console.log("Location updated:", updatedLocation);
@@ -273,9 +296,9 @@ export const updateLocation = async (req, res) => {
     });
   } catch (error) {
     console.error("FULL ERROR DETAILS:", error);
-
     return res.status(500).json({
-      message: "An error occured while trying to create new location",
+      message: "An error occurred while trying to update this location",
+      error: error.message,
       success: false,
     });
   }

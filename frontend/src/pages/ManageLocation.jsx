@@ -64,6 +64,7 @@ const LocationImageUploader = ({
   locationId,
   locationImages,
   setLocationImages,
+  existingUrl = "", // 👈 new
 }) => {
   const handleImageChange = (e) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -89,7 +90,7 @@ const LocationImageUploader = ({
   };
 
   // either user-picked preview or nothing
-  const previewSrc = locationImages[locationId]?.preview || "";
+  const previewSrc = locationImages[locationId]?.preview || existingUrl || "";
 
   return (
     <div className="ml-image-upload-wrapper">
@@ -475,7 +476,6 @@ const ManageLocation = () => {
       "Theme Park",
       "Business Attraction",
     ],
-
     "Shopping & Leisure": [
       "Shopping Mall",
       "Supermarket",
@@ -1019,6 +1019,7 @@ const ManageLocation = () => {
     let previewUrl = "";
 
     if (location.image) {
+      // now everything should already be a full URL from Vercel Blob
       previewUrl = location.image;
     }
 
@@ -2232,7 +2233,6 @@ const ManageLocation = () => {
                         </div>
 
                         {/* Description Field */}
-
                         <label>Description *</label>
                         <textarea
                           name="description"
