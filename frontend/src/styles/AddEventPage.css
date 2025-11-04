@@ -2957,6 +2957,11 @@ p {
   }
 }
 
+.modal-detail-value.coordinates {
+    color:#2563eb;
+    text-decoration: underline;
+  }
+
 @media (max-width: 768px) {
   .ae-summary-date {
     flex: none;
@@ -2995,6 +3000,10 @@ p {
   .modal-detail-value {
     display: block;
     padding: 4px 0;
+  }
+
+  .modal-detail-value.coordinates {
+    color:#2563eb;
   }
   
   .modal-detail-label {

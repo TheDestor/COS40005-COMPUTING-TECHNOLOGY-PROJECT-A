@@ -482,6 +482,27 @@
   color: white;
 }
 
+.event-status-badge-enp {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  line-height: 1;            /* match icon height to text height */
+}
+
+/* Status icon visual tweaks for alignment and sizing */
+.event-status-badge-enp .status-icon-enp {
+  display: inline-block;
+  width: 1em;                /* exactly match text height */
+  height: 1em;               /* exactly match text height */
+  font-size: 1em;            /* scale with badge text size */
+  line-height: 1;            /* no extra vertical space */
+  margin-right: 8px;
+  vertical-align: middle;
+  transform: none;           /* remove baseline tweak */
+  color: inherit;
+}
+
 @media (max-width: 992px) {
     .minimized-container-enp.pulse-animation-enp {
         top: 150px;
@@ -492,7 +513,7 @@
         top: 70px; /* Default expanded position */
         transition: top 0.3s ease;
         max-height: 86vh;
-        z-index: 1000;
+        z-index: 100061;
     }
 
     .main-panel-container-enp.collapsed-enp {

@@ -8,7 +8,7 @@ import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import { toast } from 'sonner';
 
-const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
+function ProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -60,7 +60,6 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
   
 
   return (
-    <>
     <div className="profile-dropdown">
       <button className="profile-button" onClick={() => setIsOpen(!isOpen)}>
         {profileIcon}
@@ -141,7 +140,6 @@ const ProfileDropdown = ({ onLoginClick, onBookmarkToggle }) => {
         </div>
       )}
     </div>
-    </>
   );
 };
 

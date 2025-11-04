@@ -46,7 +46,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 20001; /* Keep toggle above the panel */
+  z-index: 2001; /* Keep toggle above the panel */
 }
 
 
@@ -63,7 +63,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 20000; /* Raised wrapper to match panel */
+  z-index: 2000; /* Raised wrapper to match panel */
 }
 
 
@@ -579,6 +579,7 @@
     width: 280px !important;
     bottom: 150px !important;
     border-radius: 12px;
+    z-index: 350000 !important; /* Above info window (200000), below dropdown (400002) */
   }
 
   .scroll-down-indicator {
@@ -590,6 +591,7 @@
   .collapse-toggle {
     top: 10rem;
     right: 280px !important;
+    z-index: 350001 !important; /* Keep toggle clickable above panel */
   }
 
   .tourist-info-wrapper.collapsed .collapse-toggle {
@@ -615,11 +617,17 @@
   .tourist-info-container {
     top: 130px !important;
     width: 300px;
+    z-index: 350000 !important; /* Ensure video panel sits above pop-out details */
   }
+
+  .tourist-info-wrapper {
+        z-index: 350001 !important; /* ensure wrapper/toggle stay above the panel itself */
+    }
 
   .collapse-toggle {
     top: 10.5rem;
     right: 300px;
+    z-index: 350001 !important;
   }
 
   .scroll-down-indicator p {
@@ -651,11 +659,13 @@
   .tourist-info-container {
     top: 130px !important;
     width: 200px !important;
+    z-index: 200001 !important; /* Keep consistent across mobile sizes */
   }
 
   .collapse-toggle {
     top: 10.5rem;
     right: 200px !important;
+    z-index: 200002 !important;
   }
   
   .tourist-info-container {

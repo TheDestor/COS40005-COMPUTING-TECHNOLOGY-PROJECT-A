@@ -301,7 +301,7 @@
   top: 50%;
   left: 48%;
   transform: translate(-100%, -50%);
-  z-index: 20000;
+  z-index: 200000;
   position: absolute;
   /* z-index: 1000; */
   max-width: 320px;
@@ -448,6 +448,7 @@
   .custom-info-window-container {
     position: absolute;
     left: 25% !important;
+    /* z-index: 300000 !important; */
   }
 }
 

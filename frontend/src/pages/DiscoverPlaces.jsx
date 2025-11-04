@@ -6,7 +6,7 @@ import defaultImage from '../assets/default.png';
 import '../styles/DiscoverPlaces.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { FaMapMarkerAlt, FaCalendarAlt, FaArrowUp, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud, FaCalendar, FaUsers } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarAlt, FaArrowUp, FaClock, FaExclamationTriangle, FaSearch, FaUtensils, FaBed, FaShoppingBag, FaBus, FaLandmark, FaChevronDown, FaEye, FaGlobe, FaLocationArrow, FaTag, FaPhone, FaEnvelope, FaSync, FaInfoCircle, FaCheckCircle, FaDatabase, FaCloud, FaCalendar, FaUsers, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import AIChatbot from '../components/AiChatbot.jsx';
 import LoginPage from '../pages/Loginpage.jsx';
@@ -62,11 +62,18 @@ function DiscoverPlaces() {
   const [scheduleSearchQuery, setScheduleSearchQuery] = useState('');
   const [scheduleFilterFilledOnly, setScheduleFilterFilledOnly] = useState(false);
 
+  // Calendar state
+  const [calendarView, setCalendarView] = useState('month'); // 'month' | 'week' | 'day'
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [selectedCalendarEvent, setSelectedCalendarEvent] = useState(null);
+
   // Define event-derived fields BEFORE any helpers that use them
   const eventType = locationData?.eventType || locationData?.type || selectedPlace?.eventType || selectedPlace?.type || null;
   const eventOrganizers = locationData?.eventOrganizers || selectedPlace?.eventOrganizers || null;
   const eventHashtags = locationData?.eventHashtags || selectedPlace?.eventHashtags || null;
   const dailySchedule = locationData?.dailySchedule || selectedPlace?.dailySchedule || [];
+  const eventWebsiteUrl = locationData?.websiteUrl || selectedPlace?.websiteUrl || null;
   
   // Event-only details flag for conditional rendering (hide category/type/division/website)
   const isEventDetail = Boolean(
@@ -75,6 +82,87 @@ function DiscoverPlaces() {
     locationData?.registrationRequired ||
     (locationData?.startDate && locationData?.endDate)
   );
+
+  // Build calendar events from the current event's dailySchedule
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const toDateOnly = (d) => {
+      const dd = new Date(d);
+      dd.setHours(0, 0, 0, 0);
+      return dd;
+    };
+
+    const start = locationData?.startDate ? toDateOnly(locationData.startDate) : null;
+    const end = locationData?.endDate ? toDateOnly(locationData.endDate) : null;
+
+    const statusFor = (dateOnly) => {
+      if (start && end) {
+        if (dateOnly >= start && dateOnly <= end) return 'ongoing';
+        if (dateOnly < start) return 'upcoming';
+        return 'past';
+      }
+      return dateOnly >= today ? 'upcoming' : 'past';
+    };
+
+    const built = Array.isArray(dailySchedule)
+      ? dailySchedule
+          .filter((s) => s?.date)
+          .map((s, idx) => {
+            const dateOnly = toDateOnly(s.date);
+            return {
+              id: `current-${idx}`,
+              date: dateOnly,
+              startTime: s.startTime || locationData?.startTime || '',
+              endTime: s.endTime || locationData?.endTime || '',
+              title: locationData?.name || 'Event',
+              description: locationData?.description || '',
+              type: eventType || 'Event',
+              status: statusFor(dateOnly),
+              eventId: locationData?.eventId || null,
+            };
+          })
+      : [];
+
+    setCalendarEvents(built);
+  }, [dailySchedule, locationData, eventType]);
+
+  const gotoPrev = () => {
+    const d = new Date(calendarDate);
+    if (calendarView === 'month') d.setMonth(d.getMonth() - 1);
+    else if (calendarView === 'week') d.setDate(d.getDate() - 7);
+    else d.setDate(d.getDate() - 1);
+    setCalendarDate(d);
+  };
+
+  const gotoNext = () => {
+    const d = new Date(calendarDate);
+    if (calendarView === 'month') d.setMonth(d.getMonth() + 1);
+    else if (calendarView === 'week') d.setDate(d.getDate() + 7);
+    else d.setDate(d.getDate() + 1);
+    setCalendarDate(d);
+  };
+
+  const formatTimeDP = (t) => {
+    if (!t) return '';
+    const [h, m] = String(t).split(':');
+    return `${String(h).padStart(2, '0')}:${String(m || '00').padStart(2, '0')}`;
+  };
+
+  const eventsOnDate = (date) => {
+    const d0 = new Date(date);
+    d0.setHours(0, 0, 0, 0);
+    return calendarEvents.filter((ev) => {
+      const ed = new Date(ev.date);
+      ed.setHours(0, 0, 0, 0);
+      return ed.getTime() === d0.getTime();
+    });
+  };
+
+  const handleEventClick = (ev) => {
+    setSelectedCalendarEvent(ev);
+  };
 
   const getTodayScheduleInfo = useCallback(() => {
     if (!isEventDetail) return null;
@@ -246,9 +334,11 @@ function DiscoverPlaces() {
                 endDate: ev.endDate,
                 startTime: ev.startTime,
                 endTime: ev.endTime,
+                websiteUrl: ev.websiteUrl,
                 // Optional: treat as event category/type
                 category: 'Events',
-                type: 'Event'
+                type: 'Event',
+                eventId: ev._id || id
               });
   
               if (isMounted) {
@@ -713,6 +803,24 @@ function DiscoverPlaces() {
                             </span>
                           </div>
                         )}
+                        {eventWebsiteUrl && (
+                          <p className="event-detail-dp">
+                            <FaGlobe className="detail-icon-dp" />
+                            <a
+                              href={eventWebsiteUrl}
+                              title="Click to copy link"
+                              style={{ color: '#0d6efd', textDecoration: 'underline', cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigator.clipboard.writeText(eventWebsiteUrl)
+                                  .then(() => toast.success('Website URL copied'))
+                                  .catch(() => toast.error('Failed to copy link'));
+                              }}
+                            >
+                              {eventWebsiteUrl}
+                            </a>
+                          </p>
+                        )}
 
                         {/* Location details */}
                         <div className="location-info-dp">
@@ -770,7 +878,7 @@ function DiscoverPlaces() {
               {showScheduleSection && (
                 <>
                   {/* Show today's specific time if available */}
-                  {(() => {
+                  {/* {(() => {
                     const scheduleInfo = getTodayScheduleInfo();
                     if (scheduleInfo?.startTime) {
                       return (
@@ -786,7 +894,7 @@ function DiscoverPlaces() {
                       );
                     }
                     return null;
-                  })()}
+                  })()} */}
 
                   {/* Show daily schedule table only if dailySchedule exists and has entries */}
                   {getTodayScheduleInfo()?.hasDailySchedule && (
@@ -863,6 +971,98 @@ function DiscoverPlaces() {
               )}
             </div>
           )}
+
+            {/* Calendar Section */}
+            <section className="calendar-section-dp">
+              <div className="calendar-toolbar-dp">
+                <button className={`calendar-nav-btn-dp`} onClick={gotoPrev} title="Previous">
+                  <FaChevronLeft />
+                </button>
+                <div className="calendar-current-label-dp">
+                  {calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                <button className={`calendar-nav-btn-dp`} onClick={gotoNext} title="Next">
+                  <FaChevronRight />
+                </button>
+
+                <div className="calendar-view-toggle-dp">
+                  <button
+                    className={`calendar-view-btn-dp ${calendarView === 'month' ? 'active-dp' : ''}`}
+                    onClick={() => setCalendarView('month')}
+                  >
+                    Month
+                  </button>
+                  <button
+                    className={`calendar-view-btn-dp ${calendarView === 'week' ? 'active-dp' : ''}`}
+                    onClick={() => setCalendarView('week')}
+                  >
+                    Week
+                  </button>
+                  <button
+                    className={`calendar-view-btn-dp ${calendarView === 'day' ? 'active-dp' : ''}`}
+                    onClick={() => setCalendarView('day')}
+                  >
+                    Day
+                  </button>
+                </div>
+              </div>
+
+              <div className={`calendar-content-dp fadeSwitch-dp ${calendarView}`}>
+                {calendarView === 'month' && (
+                  <CalendarMonthGrid
+                    baseDate={calendarDate}
+                    eventsOnDate={eventsOnDate}
+                    onEventClick={handleEventClick}
+                    formatTimeDP={formatTimeDP}
+                  />
+                )}
+
+                {calendarView === 'week' && (
+                  <CalendarWeekGrid
+                    baseDate={calendarDate}
+                    eventsOnDate={eventsOnDate}
+                    onEventClick={handleEventClick}
+                    formatTimeDP={formatTimeDP}
+                  />
+                )}
+
+                {calendarView === 'day' && (
+                  <CalendarDayList
+                    baseDate={calendarDate}
+                    eventsOnDate={eventsOnDate}
+                    onEventClick={handleEventClick}
+                    formatTimeDP={formatTimeDP}
+                  />
+                )}
+              </div>
+            </section>
+
+            {selectedCalendarEvent && (
+              <div className="calendar-modal-overlay-dp" onClick={() => setSelectedCalendarEvent(null)}>
+                <div className="calendar-modal-dp" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="calendar-modal-title-dp">{selectedCalendarEvent.title}</h3>
+                  <p className="calendar-modal-time-dp">
+                    {selectedCalendarEvent.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}{' '}
+                    {selectedCalendarEvent.startTime && `• ${formatTimeDP(selectedCalendarEvent.startTime)} - ${formatTimeDP(selectedCalendarEvent.endTime)}`}
+                  </p>
+                  <p className="calendar-modal-desc-dp">{selectedCalendarEvent.description || 'No description.'}</p>
+                  <div className="calendar-modal-actions-dp">
+                    <button className="calendar-modal-btn-dp" onClick={() => setSelectedCalendarEvent(null)}>Close</button>
+                    {locationData?.eventId && (
+                      <button
+                        className="calendar-modal-btn-primary-dp"
+                        onClick={() => {
+                          setSelectedCalendarEvent(null);
+                          navigate(`/discover/${generateSlug(locationData.name)}`, { state: locationData });
+                        }}
+                      >
+                        View Details
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Map Section */}
             <div className="map-section-dp">
@@ -1040,5 +1240,124 @@ function DiscoverPlaces() {
     </div>
   );
 };
+
+function CalendarMonthGrid({ baseDate, eventsOnDate, onEventClick, formatTimeDP }) {
+  const start = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const startDay = start.getDay();
+  const gridStart = new Date(start);
+  gridStart.setDate(start.getDate() - startDay);
+
+  const days = Array.from({ length: 42 }).map((_, i) => {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    return d;
+  });
+
+  const isSameMonth = (d) => d.getMonth() === baseDate.getMonth();
+
+  return (
+    <div className="calendar-grid-month-dp">
+      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((wd) => (
+        <div key={wd} className="calendar-weekday-header-dp">{wd}</div>
+      ))}
+      {days.map((d, idx) => {
+        const evs = eventsOnDate(d);
+        return (
+          <div key={idx} className={`calendar-day-cell-dp ${isSameMonth(d) ? '' : 'muted-dp'}`}>
+            <div className="calendar-day-number-dp">{d.getDate()}</div>
+            <div className="calendar-day-events-dp">
+              {evs.map((ev) => (
+                <button
+                  key={ev.id}
+                  className={`calendar-event-pill-dp status-${ev.status}`}
+                  title={`${formatTimeDP(ev.startTime)} - ${formatTimeDP(ev.endTime)} ${ev.title}`}
+                  onClick={() => onEventClick(ev)}
+                >
+                  <span className="status-dot-dp" aria-hidden="true"></span>
+                  {ev.startTime ? `${formatTimeDP(ev.startTime)} ` : ''}{ev.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CalendarWeekGrid({ baseDate, eventsOnDate, onEventClick, formatTimeDP }) {
+  const start = new Date(baseDate);
+  start.setDate(baseDate.getDate() - baseDate.getDay()); // Sunday
+  const days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+
+  return (
+    <div className="calendar-grid-week-dp">
+      {days.map((d) => {
+        const evs = eventsOnDate(d);
+        return (
+          <div key={d.toISOString()} className="calendar-week-day-dp">
+            <div className="calendar-week-day-header-dp">
+              <span className="calendar-week-day-name-dp">
+                {d.toLocaleDateString('en-US', { weekday: 'short' })}
+              </span>
+              <span className="calendar-week-day-date-dp">
+                {d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+            <div className="calendar-week-events-dp">
+              {evs.length === 0 ? (
+                <div className="calendar-empty-dp">No events</div>
+              ) : evs.map((ev) => (
+                <button
+                  key={ev.id}
+                  className={`calendar-event-card-dp status-${ev.status}`}
+                  onClick={() => onEventClick(ev)}
+                >
+                  <div className="calendar-event-time-dp">
+                    <span className="status-dot-dp" aria-hidden="true"></span>
+                    {ev.startTime ? `${formatTimeDP(ev.startTime)} - ${formatTimeDP(ev.endTime)}` : 'All day'}
+                  </div>
+                  {/* <div className="calendar-event-title-dp">{ev.title}</div> */}
+                  {ev.description && <div className="calendar-event-desc-dp">{ev.description}</div>}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CalendarDayList({ baseDate, eventsOnDate, onEventClick, formatTimeDP }) {
+  const evs = eventsOnDate(baseDate);
+
+  return (
+    <div className="calendar-day-list-dp">
+      <div className="calendar-day-header-dp">
+        {baseDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      </div>
+      {evs.length === 0 ? (
+        <div className="calendar-empty-dp">No events for this day</div>
+      ) : evs.map((ev) => (
+        <button
+          key={ev.id}
+          className={`calendar-event-row-dp status-${ev.status}`}
+          onClick={() => onEventClick(ev)}
+        >
+          <span className="calendar-event-time-dp">
+            <span className="status-dot-dp" aria-hidden="true"></span>
+            {ev.startTime ? `${formatTimeDP(ev.startTime)} - ${formatTimeDP(ev.endTime)}` : 'All day'}
+          </span>
+          {/* <span className="calendar-event-title-dp">{ev.title}</span> */}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default DiscoverPlaces;

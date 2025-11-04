@@ -1181,11 +1181,11 @@ const LeftSidebarTesting = forwardRef(({
           return;
         }
 
-        // Prepare current location label
+        // Prepare current location label and coords
         const label = "Current Location";
         const coords = { lat: latitude, lng: longitude };
 
-        // Read and validate input field values
+        // Determine how to apply current location based on filled inputs
         const startText = (startingPoint || "").trim();
         const destText = (currentDestinationInput || "").trim();
         const hasStart = startText.length > 0;
@@ -1193,25 +1193,20 @@ const LeftSidebarTesting = forwardRef(({
 
         try {
           if (hasStart && hasDest) {
-            // Both fields filled → add as waypoint
+            // Both fields filled → add current location as a waypoint
             setAddDestinations(prev => [...prev, label]);
             setWaypointCoords(prev => [...prev, coords]);
             toast.success("Current location added as waypoint");
-          } else if (!hasStart && !hasDest) {
-            // Both empty → set as destination
+          } else if (hasStart) {
+            // Only starting filled → set current location as destination
             setCurrentDestinationInput(label);
             setDestinationCoords(coords);
             toast.success("Current location set as destination");
-          } else if (!hasStart) {
-            // Starting point empty → set as starting point
+          } else {
+            // Starting empty → set current location as starting point
             setStartingPoint(label);
             setStartingPointCoords(coords);
             toast.success("Current location set as starting point");
-          } else {
-            // Destination empty → set as destination
-            setCurrentDestinationInput(label);
-            setDestinationCoords(coords);
-            toast.success("Current location set as destination");
           }
         } finally {
           setIsLocationFetching(false);

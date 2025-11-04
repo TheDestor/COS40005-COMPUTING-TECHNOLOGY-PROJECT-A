@@ -2,7 +2,7 @@
    1. Searchbar Container Styles
 ============================ */
 .styled-searchbar-container {
-  z-index: 999; /* above .sidebar100 (9999) */
+  z-index: 10000; /* Lower than left sidebar (100070) so it sits behind */
   background-color: #efefef;
   border-radius: 999px;
   padding: 4px 16px;
@@ -335,14 +335,14 @@
     max-width: 100vw !important;
     width: 90vw;
     position: relative;
-    z-index: 10010;
+    z-index: 10000; /* keep below left sidebar on mobile too */
   }
 
   .pac-container, .recent-dropdown5 {
     left: 0;
     width: 100% !important;
     position: absolute;
-    z-index: 10020;
+    z-index: 10005; /* dropdown stays beneath sidebar */
     pointer-events: auto;
   }
 }

@@ -19,16 +19,16 @@
 
 /* Overlay background for the login modal */
 .overlay {
-  position: fixed; /* Stays in place regardless of scrolling */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0,0,0,0.3); /* Semi-transparent black */
-  display: flex; /* Use flexbox for centering */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-  z-index: 9999; /* Ensure it's on top of other content */
+  background-color: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000000; /* Keep login modal above header + dropdown + info window */
 }
 
 /* Main login container (modal box) */

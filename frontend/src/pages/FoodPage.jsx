@@ -601,7 +601,7 @@ const FoodBeveragePage = () => {
   }), [data, searchQuery, sortOrder]);
 
   // 🚀 COMMENTED OUT: Blocking loading condition (keep the code but don't use it)
-  /* if (loading && data.length === 0) {
+  if (loading && data.length === 0) {
     return (
       <div className="category-page">
         <MenuNavbar onLoginClick={handleLoginClick} />
@@ -611,7 +611,7 @@ const FoodBeveragePage = () => {
         </div>
       </div>
     );
-  } */
+  }
 
   return (
     <div className="category-page">

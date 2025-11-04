@@ -10,7 +10,7 @@
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 2000;
+  z-index: 100060;
   padding: 0;
   overflow: hidden; /* Changed from auto to hidden */
   opacity: 0;

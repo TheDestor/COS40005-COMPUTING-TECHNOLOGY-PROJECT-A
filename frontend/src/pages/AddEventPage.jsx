@@ -126,6 +126,14 @@ const EventCard = ({ event, type, onEdit, onDelete, onClick, isNew = false, onMa
     });
   };
 
+  // Copy website URL handler for view mode
+  const copyWebsiteUrl = () => {
+    if (!event?.websiteUrl) return;
+    navigator.clipboard.writeText(event.websiteUrl)
+      .then(() => toast.success('Website URL copied to clipboard!'))
+      .catch(() => toast.error('Failed to copy URL'));
+  };
+
   const handleCardClick = (e) => {
     // Mark event as seen if it's new
     if (isNew && onMarkAsSeen) {
@@ -433,7 +441,8 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
         longitude: event.coordinates?.longitude || 110.3592,
         eventOrganizers: event.eventOrganizers || '',
         eventHashtags: event.eventHashtags || '',
-        dailySchedule: event.dailySchedule || []
+        dailySchedule: event.dailySchedule || [],
+        websiteUrl: event.websiteUrl || '' 
       };
 
       // For past events, store the original image URL
@@ -555,6 +564,14 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
   const handleImageUpload = (e) => {
     if (e.target.files && e.target.files[0]) { 
       const file = e.target.files[0];
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error('Event image must be 5MB or less.');
+        e.target.value = '';
+        setImageFile(null);
+        setUploadedImage(null);
+        return;
+      }
       setImageFile(file);
       const objectUrl = URL.createObjectURL(file);
       setUploadedImage(objectUrl);
@@ -737,6 +754,20 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                     <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                       Separate multiple hashtags with commas
                     </small>
+                  </div>
+
+                  <div className="form-group-ae">
+                    <label>Website URL</label>
+                    <input
+                      type="url"
+                      name="websiteUrl"
+                      value={editForm.websiteUrl || ''}
+                      onChange={handleInputChange}
+                      className="form-input"
+                      pattern="https?://.*"
+                      title="Enter a valid URL starting with http:// or https://"
+                      placeholder="https://example.com"
+                    />
                   </div>
 
                   <div className="form-group-ae">
@@ -1083,6 +1114,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
               eventHashtags: typeof editForm.eventHashtags === 'string' 
                 ? editForm.eventHashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
                 : editForm.eventHashtags || [],
+              websiteUrl: editForm.websiteUrl || '', // NEW: include website
               imageFile: imageFile,
               originalImageUrl: editForm.originalImageUrl || event.imageUrl
             };
@@ -1206,13 +1238,48 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
                       {event.eventOrganizers || 'Not specified'}
                     </span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Event Hashtags</span>
                     <span className="modal-detail-value">
                       {event.eventHashtags || 'Not specified'}
                     </span>
                   </div>
+
+                  {event.websiteUrl && (
+                    <div className="modal-detail-item">
+                      <span className="modal-detail-label">Website URL</span>
+                      <span
+                        className="modal-detail-value coordinates"
+                        title="Click to copy link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(event.websiteUrl)
+                            .then(() => toast.success('Website URL copied'))
+                            .catch(() => toast.error('Failed to copy URL'));
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            navigator.clipboard.writeText(event.websiteUrl)
+                              .then(() => toast.success('Website URL copied'))
+                              .catch(() => toast.error('Failed to copy URL'));
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {event.websiteUrl}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -1450,6 +1517,7 @@ const AddEventPage = () => {
   // New fields
   const [eventOrganizers, setEventOrganizers] = useState('');
   const [eventHashtags, setEventHashtags] = useState('');
+  const [eventWebsiteUrl, setEventWebsiteUrl] = useState(''); // NEW: website url
   
   // State for Past/Upcoming Events
   const [events, setEvents] = useState([]);
@@ -1737,6 +1805,14 @@ const AddEventPage = () => {
   const handleImageUpload = (e) => {
     if (e.target.files && e.target.files[0]) { 
       const file = e.target.files[0];
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error('Event image must be 5MB or less.');
+        e.target.value = '';
+        setImageFile(null);
+        setUploadedImage(null);
+        return;
+      }
       setImageFile(file);
       const objectUrl = URL.createObjectURL(file);
       setUploadedImage(objectUrl);
@@ -2204,12 +2280,12 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     if (!imageFile) {
       errors.push('Event image is required.');
     } else {
-      const maxSize = 4.5 * 1024 * 1024; // 4.5MB
+      const maxSize = 5 * 1024 * 1024; // 4.5MB
       if (!imageFile.type?.startsWith('image/')) {
         errors.push('Event image must be an image file.');
       }
       if (imageFile.size > maxSize) {
-        errors.push('Event image must be 4.5MB or less.');
+        errors.push('Event image must be 5MB or less.');
       }
     }
 
@@ -2220,6 +2296,15 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     const errors = validateEventForm();
     if (errors.length) {
       toast.error(`Form not completed:\n- ${errors.join('\n- ')}`);
+      return false;
+    }
+
+    // Website URL validation: require full http(s) URL for Add Event page
+    const websiteUrl = (eventWebsiteUrl ?? '').trim();
+    const fullHttpUrlPattern = /^(https?:\/\/)([A-Za-z0-9-]+\.)+[A-Za-z]{2,}(:\d{2,5})?(\/\S*)?$/;
+
+    if (!websiteUrl || !fullHttpUrlPattern.test(websiteUrl)) {
+      toast.error('Please enter a full URL starting with http:// or https://');
       return false;
     }
 
@@ -2248,24 +2333,25 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     }
 
     const formData = new FormData();
-    formData.append('name', eventName);
-    formData.append('description', eventDescription);
-    formData.append('eventType', selectedEventType);
-    formData.append('latitude', latitude.toString());
-    formData.append('longitude', longitude.toString());
-    formData.append('eventOrganizers', eventOrganizers);
-    // Normalize hashtags before sending (covers any leftover raw input)
-    formData.append('eventHashtags', normalizeHashtags(eventHashtags));
+      formData.append('name', eventName);
+      formData.append('description', eventDescription);
+      formData.append('eventType', selectedEventType);
+      formData.append('latitude', latitude.toString());
+      formData.append('longitude', longitude.toString());
+      formData.append('eventOrganizers', eventOrganizers);
+      // Normalize hashtags before sending (covers any leftover raw input)
+      formData.append('eventHashtags', normalizeHashtags(eventHashtags));
+      formData.append('websiteUrl', websiteUrl);
 
-    const selectedAudiences = [];
-    if (targetAudience.tourist) selectedAudiences.push('Tourist');
-    if (targetAudience.localBusiness) selectedAudiences.push('Local Business');
-    if (targetAudience.other && otherAudience.trim() !== '') selectedAudiences.push(otherAudience.trim());
-    formData.append('targetAudience', JSON.stringify(selectedAudiences));
+      const selectedAudiences = [];
+      if (targetAudience.tourist) selectedAudiences.push('Tourist');
+      if (targetAudience.localBusiness) selectedAudiences.push('Local Business');
+      if (targetAudience.other && otherAudience.trim() !== '') selectedAudiences.push(otherAudience.trim());
+      formData.append('targetAudience', JSON.stringify(selectedAudiences));
 
-    formData.append('registrationRequired', registrationRequired);
-    formData.append('startDate', toYMD(startDate));
-    formData.append('endDate', toYMD(endDate));
+      formData.append('registrationRequired', registrationRequired);
+      formData.append('startDate', toYMD(startDate));
+      formData.append('endDate', toYMD(endDate));
 
     if (timeMode === 'uniform') {
       formData.append('startTime', startTime);
@@ -2289,6 +2375,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
 
     formData.append('image', imageFile);
 
+    const loadingId = toast.loading('Submitting event...');
     try {
       const response = await ky.post(
         '/api/event/addEvent',
@@ -2296,6 +2383,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
       ).json();
 
       clearForm();
+      setEventWebsiteUrl('');
       return true;
     } catch (error) {
       let msg = 'Error publishing event.';
@@ -2305,6 +2393,8 @@ const getMinStartTimeForDate = (dateOrYmd) => {
       } catch {}
       toast.error(msg);
       return false;
+    } finally {
+      toast.dismiss(loadingId);
     }
   };
 
@@ -2379,6 +2469,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
   };
 
   const updateEvent = async (eventId) => {
+    let loadingId;
     try {
       // Validation: today's start time must be strictly later than now
       const now = new Date();
@@ -2402,6 +2493,14 @@ const getMinStartTimeForDate = (dateOrYmd) => {
           toast.error('For today, start time must be later than the current time.');
           return;
         }
+      }
+
+      // Validate website URL if present for edit form
+      const websiteUrl = (editForm.websiteUrl || '').trim();
+      const fullHttpUrlPattern = /^(https?:\/\/)([A-Za-z0-9-]+\.)+[A-Za-z]{2,}(:\d{2,5})?(\/\S*)?$/;
+      if (websiteUrl && !fullHttpUrlPattern.test(websiteUrl)) {
+        toast.error('Please enter a full URL starting with http:// or https://');
+        return;
       }
 
       const formData = new FormData();
@@ -2435,6 +2534,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
         normalizedEditHashtags = '';
       }
       formData.append('eventHashtags', normalizedEditHashtags);
+      formData.append('websiteUrl', websiteUrl);
 
       // Audience
       const audiences = editForm.targetAudience ? editForm.targetAudience.split(',').map(a => a.trim()).filter(a => a) : [];
@@ -2463,6 +2563,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
         formData.append('image', imageFile);
       }
 
+      loadingId = toast.loading('Updating event...');
       const response = await ky.put(
         `/api/event/updateEvent/${eventId}`,
         {
@@ -2521,6 +2622,8 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error('Failed to update event');
+    } finally {
+      if (loadingId) toast.dismiss(loadingId);
     }
   };
 
@@ -2556,6 +2659,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
           ? eventData.eventHashtags.join(', ') 
           : eventData.eventHashtags || ''
       );
+      formData.append('websiteUrl', eventData.websiteUrl || ''); // NEW: send website
       
       // Handle target audience
       formData.append('targetAudience', JSON.stringify(eventData.targetAudience));
@@ -2693,6 +2797,22 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                   />
               <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
                 Separate multiple hashtags with commas
+              </small>
+            </div>
+
+            <div className="form-group-ae">
+              <label>Website URL</label>
+              <input
+                type="url"
+                placeholder="https://example.com"
+                value={eventWebsiteUrl}
+                onChange={(e) => setEventWebsiteUrl(e.target.value)}
+                className="form-input"
+                pattern="https?://.*"
+                title="Enter a valid URL starting with http:// or https://"
+              />
+              <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
+                Optional: official event website
               </small>
             </div>
 

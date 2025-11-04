@@ -74,6 +74,7 @@
 /* ============================
    4. Header Container Styles
 ============================ */
+/* Header Container */
 .top-header-container {
   position: fixed;
   top: 0;
@@ -81,7 +82,7 @@
   width: 100%;
   padding: 10px 20px;
   box-sizing: border-box;
-  z-index: 1000;
+  z-index: 100040; /* Below .sidebar100 (100070) and .side-panel100 (100060) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,5 +297,13 @@
 .leaflet-marker-icon.custom-leaflet-icon.highlighted-marker {
   border-radius: 50% !important;
   border: 3px solid #ffeb3b !important;
+}
+
+/* Ensure weather and the icon beside it are interactive and on top */
+.date-time-weather-container,
+.profile-dropdown {
+  position: relative;
+  z-index: 400001; /* Above header container and info window */
+  pointer-events: auto;
 }
 

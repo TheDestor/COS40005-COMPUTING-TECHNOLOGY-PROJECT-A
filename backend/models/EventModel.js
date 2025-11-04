@@ -27,6 +27,7 @@ const eventSchema = new mongoose.Schema({
   },
   eventOrganizers: { type: String, default: '' },
   eventHashtags: [{ type: String }],
+  websiteUrl: { type: String, default: '' }, // NEW: website url
   dailySchedule: [{
       date: { type: Date, required: true },
       startTime: { type: String, required: true },

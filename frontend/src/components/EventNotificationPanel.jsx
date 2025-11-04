@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaTimes, FaChevronRight, FaBell, FaChevronDown, FaChevronUp, FaExclamationCircle, FaHistory, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaClock, FaTimes, FaChevronRight, FaBell, FaChevronDown, FaChevronUp, FaExclamationCircle, FaHistory, FaAngleLeft, FaAngleRight, FaDotCircle } from 'react-icons/fa';
+import { GoDotFill } from "react-icons/go";
 import { useNavigate } from 'react-router-dom';
 import '../styles/EventNotificationPanel.css';
 
-const EventNotificationPanel = () => {
+function EventNotificationPanel() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,25 +13,6 @@ const EventNotificationPanel = () => {
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [eventCategory, setEventCategory] = useState('all');
   const navigate = useNavigate();
-
-  // Set initial expanded state based on screen size
-  useEffect(() => {
-    const checkScreenSize = () => {
-      if (window.innerWidth <= 768) {
-        setIsExpanded(false); // Collapsed by default on mobile
-      } else {
-        setIsExpanded(true); // Expanded by default on desktop
-      }
-    };
-
-    // Check on mount
-    checkScreenSize();
-
-    // Listen for resize events
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   // Auto-minimize when clicking outside
   useEffect(() => {
@@ -279,12 +261,13 @@ const EventNotificationPanel = () => {
           </div>
         </div>
         <div className="header-controls-enp">
-          <button
+          {/* Removed collapse toggle button */}
+          {/* <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="header-btn-enp"
           >
             {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
+          </button> */}
           <button
             onClick={() => setIsMinimized(true)}
             className="header-btn-enp"
@@ -303,10 +286,10 @@ const EventNotificationPanel = () => {
           {events.length > 0 && (
             <div className="category-tabs-container-enp">
               {[
-                { id: 'all', label: 'All', count: eventCounts.all },
+                // { id: 'all', label: 'All', count: eventCounts.all },
                 { id: 'ongoing', label: 'Happening', count: eventCounts.ongoing },
                 { id: 'upcoming', label: 'Upcoming', count: eventCounts.upcoming },
-                { id: 'past', label: 'Past', count: eventCounts.past }
+                // { id: 'past', label: 'Past', count: eventCounts.past }
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -334,9 +317,19 @@ const EventNotificationPanel = () => {
                   <div className="event-card-container-enp">
                     <div className="event-card-enp">
                       <div className={`event-status-badge-enp ${currentEvent.category}-enp`}>
-                        {currentEvent.category === 'ongoing' ? '🔴 Happening Now' : 
-                         currentEvent.category === 'upcoming' ? '📅 Upcoming' : 
-                         '📜 Past Event'}
+                        {currentEvent.category === 'ongoing' ? (
+                          <>
+                            <GoDotFill className="status-icon-enp" /> Happening Now
+                          </>
+                        ) : currentEvent.category === 'upcoming' ? (
+                          <>
+                            <FaCalendarAlt className="status-icon-enp" /> Upcoming
+                          </>
+                        ) : (
+                          <>
+                            <FaHistory className="status-icon-enp" /> Past Event
+                          </>
+                        )}
                       </div>
                       
                       {currentEvent.imageUrl && (

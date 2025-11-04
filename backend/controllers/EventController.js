@@ -29,9 +29,19 @@ export const getAllEvents = async (req, res) => {
     }
 }
 
+// Helper: normalize website URL to https and ensure scheme
+const normalizeWebsiteUrl = (url) => {
+  const trimmed = (url || '').trim();
+  if (!trimmed) return '';
+  // Preserve scheme; accept only http(s)
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // No scheme -> treat as invalid (frontend blocks submission anyway)
+  return '';
+}
+
 export const addEvent = async (req, res) => {
     try {
-        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule } = req.body;
+        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule, websiteUrl } = req.body;
         const imageFile = req.file;
 
         console.log('Request body:', req.body);
@@ -123,6 +133,8 @@ export const addEvent = async (req, res) => {
             return res.status(400).json({ message: "Provide either uniform start/end time or a valid daily schedule.", success: false });
         }
 
+        const normalizedWebsiteUrl = normalizeWebsiteUrl(websiteUrl);
+
         const newEventData = {
             name,
             description,
@@ -137,7 +149,8 @@ export const addEvent = async (req, res) => {
                 longitude: parseFloat(longitude)
             },
             eventOrganizers: eventOrganizers || '',
-            eventHashtags: hashtagsArray
+            eventHashtags: hashtagsArray,
+            websiteUrl: normalizedWebsiteUrl
         };
 
         if (hasAdvancedSchedule) {
@@ -196,7 +209,7 @@ export const addEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule } = req.body;
+        const { name, description, eventType, targetAudience, registrationRequired, startDate, endDate, startTime, endTime, latitude, longitude, eventOrganizers, eventHashtags, dailySchedule, websiteUrl } = req.body;
         const imageFile = req.file;
 
         const existingEvent = await eventModel.findById(id);
@@ -217,6 +230,10 @@ export const updateEvent = async (req, res) => {
             },
             eventOrganizers: eventOrganizers || ''
         };
+
+        if (websiteUrl !== undefined) {
+            updateData.websiteUrl = normalizeWebsiteUrl(websiteUrl); // NEW: normalize on update
+        }
 
         if (eventHashtags !== undefined) {
             updateData.eventHashtags = (eventHashtags || '')

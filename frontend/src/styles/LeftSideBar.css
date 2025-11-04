@@ -10,7 +10,7 @@
   flex-direction: column;
   align-items: center;
   padding-top: 30px;
-  z-index: 9999;
+  z-index: 100070;
   padding-bottom: 10px;
   box-sizing: border-box;
 }  
@@ -61,7 +61,7 @@
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 2000;
+  z-index: 100060;
   padding: 0;
   overflow-y: auto; /* Enable scrolling */
   opacity: 0;

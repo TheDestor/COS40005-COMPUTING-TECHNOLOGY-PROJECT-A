@@ -3,7 +3,7 @@
   --nearby-drawer-bg: #fff;
   --nearby-drawer-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
   --nearby-drawer-radius: 12px;
-  --nearby-drawer-z: 2000;
+  --nearby-drawer-z: 100060;
   --nearby-drawer-transition: 340ms cubic-bezier(0.22, 1, 0.36, 1);
   --recent-border: 1px solid rgba(0, 0, 0, 0.08);
   --recent-header-bg: linear-gradient(135deg, #6c5dd3 0%, #3b82f6 100%);

@@ -382,13 +382,13 @@ const AttractionsPage = () => {
         onAttractionsHover={preloadData}
       />
 
-      {/* 🚀 FIXED: Simple and reliable loading condition
+      🚀 FIXED: Simple and reliable loading condition
       {showLoading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
           <p>Loading Attractions...</p>
         </div>
-      )} */}
+      )}
 
       {/* 🚀 ALWAYS SHOW CONTENT - cached data appears instantly */}
       <div className="hero-banner">
