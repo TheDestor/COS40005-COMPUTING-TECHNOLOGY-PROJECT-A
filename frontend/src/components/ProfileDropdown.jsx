@@ -8,7 +8,7 @@ import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import { toast } from 'sonner';
 
-function ProfileDropdown() {
+function ProfileDropdown({ onLoginClick, onBookmarkToggle }) {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -30,16 +30,15 @@ function ProfileDropdown() {
     // Check if user is on the map page (root route)
     if (location.pathname === '/') {
       // User is already on the map page, just toggle bookmark
-      if (onBookmarkToggle) {
+      if (typeof onBookmarkToggle === 'function') {
         onBookmarkToggle();
+      } else {
+        // fallback: open bookmark panel on map
+        navigate('/', { state: { openBookmark: true } });
       }
     } else {
       // User is on a different page, navigate to map and trigger bookmark toggle
-      navigate('/', { 
-        state: { 
-          openBookmark: true 
-        } 
-      });
+      navigate('/', { state: { openBookmark: true } });
     }
     setIsOpen(false);
   };
@@ -74,7 +73,12 @@ function ProfileDropdown() {
                 <button
                   className="login-button2"
                   onClick={() => {
-                    onLoginClick();
+                    if (typeof onLoginClick === 'function') {
+                      onLoginClick();
+                    } else {
+                      // safe fallback: navigate to a login route if available
+                      navigate('/login', { state: { from: location } });
+                    }
                     setIsOpen(false);
                   }}
                 >
