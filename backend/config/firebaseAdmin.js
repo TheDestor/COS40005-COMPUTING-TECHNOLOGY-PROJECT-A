@@ -1,6 +1,6 @@
 // import admin from 'firebase-admin';
 // import serviceAccount from '../backend/serviceAccountKey.json';
-//
+
 // const admin = require('firebase-admin');
 // require('dotenv').config();
 
