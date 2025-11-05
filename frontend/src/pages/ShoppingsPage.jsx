@@ -261,14 +261,10 @@ const ShoppingLeisurePage = () => {
     processShopping
   );
 
-  // 🚀 FIXED: Better loading state management
   useEffect(() => {
-    // Hide loading when we have data OR when loading is complete without data
     if (!loading || data.length > 0) {
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setShowLoading(false), 300);
+      return () => clearTimeout(t);
     }
   }, [loading, data.length]);
 
@@ -365,7 +361,14 @@ const ShoppingLeisurePage = () => {
       </div>
 
       {/* 🚀 CONTENT ALWAYS SHOWS - cached data appears instantly */}
-      <div className="cards-section">
+      <div className={`cards-section ${showLoading ? 'cards-section--loading' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading Shopping & Leisure...</p>
+          </div>
+        )}
+
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)

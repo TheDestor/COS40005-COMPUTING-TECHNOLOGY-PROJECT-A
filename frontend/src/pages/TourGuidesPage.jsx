@@ -682,9 +682,16 @@ const TourGuidePage = () => {
         </div>
       </div>
 
-      {/* 🚀 UPDATED: Cards section with better loading logic */}
-      <div className="cards-section">
-        {filteredData.length > 0 ? (
+       {/* 🚀 UPDATED: Cards section with loading state */}
+      <section className={`cards-section ${showLoading ? 'cards-section--loading' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading tour guides...</p>
+          </div>
+        )}
+        
+        {!showLoading && filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)
             .map((item, index) => (
@@ -743,14 +750,13 @@ const TourGuidePage = () => {
               </div>
             ))
         ) : (
-          // 🚀 UPDATED: Only show empty state if not loading and truly no data
           !showLoading && (
             <div className="no-results">
               <p>No tour guides found. Try adjusting your search criteria.</p>
             </div>
           )
         )}
-      </div>
+      </section>
 
       {filteredData.length > visibleItems && (
         <div className="pagination-controls100">

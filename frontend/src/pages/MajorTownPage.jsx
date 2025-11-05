@@ -17,6 +17,7 @@ const MajorTownPage = () => {
   const [sortOrder, setSortOrder] = useState('default');
   const [visibleItems, setVisibleItems] = useState(12);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showLoading, setShowLoading] = useState(true); // ADDED
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -58,6 +59,14 @@ const MajorTownPage = () => {
     fetchMajorTowns, 
     processMajorTowns
   );
+
+  // ADDED: hide localized loader once data is available or loading completes
+  useEffect(() => {
+    if (!loading || data.length > 0) {
+      const t = setTimeout(() => setShowLoading(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [loading, data.length]);
 
   const handleLoginClick = () => setShowLogin(true);
   const closeLogin = () => setShowLogin(false);
@@ -164,6 +173,13 @@ const MajorTownPage = () => {
 
       {/* 🚀 CONTENT ALWAYS SHOWS - cached data appears instantly */}
       <div className="cards-section">
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading Major Towns...</p>
+          </div>
+        )}
+
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)
@@ -208,8 +224,7 @@ const MajorTownPage = () => {
               </div>
             ))
         ) : (
-          // 🚀 Only show empty state if not loading and truly no data
-          !loading && data.length === 0 && (
+          !showLoading && data.length === 0 && (
             <div className="empty-state">
               <p>No major towns found.</p>
             </div>

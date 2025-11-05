@@ -600,18 +600,16 @@ const FoodBeveragePage = () => {
     return matchesSearch && matchesSort;
   }), [data, searchQuery, sortOrder]);
 
-  // 🚀 COMMENTED OUT: Blocking loading condition (keep the code but don't use it)
-  if (loading && data.length === 0) {
-    return (
-      <div className="category-page">
-        <MenuNavbar onLoginClick={handleLoginClick} />
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading Food & Beverages...</p>
-        </div>
-      </div>
-    );
-  }
+  // 🚀 ADD: Better loading state management
+  useEffect(() => {
+    // Hide loading when we have data OR when loading is complete without data
+    if (!loading || data.length > 0) {
+      const timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data.length]);
 
   return (
     <div className="category-page">
@@ -688,7 +686,14 @@ const FoodBeveragePage = () => {
       </div>
 
       {/* 🚀 UPDATED: Cards section with better loading logic */}
-      <div className="cards-section">
+      <div className={`cards-section ${showLoading ? 'cards-section--loading' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading food & beverages...</p>
+          </div>
+        )}
+        
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)

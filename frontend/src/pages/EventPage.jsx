@@ -215,14 +215,10 @@ function EventPage () {
     fetchEvents();
   }, [user]); // Refetch when user changes
 
-  // 🚀 ADDED: Better loading state management
   useEffect(() => {
-    // Hide loading when we have data OR when loading is complete without data
     if (!loading || data.length > 0) {
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setShowLoading(false), 300);
+      return () => clearTimeout(t);
     }
   }, [loading, data.length]);
 
@@ -511,7 +507,14 @@ function EventPage () {
       </div>
 
       {/* 🚀 UPDATED: Cards section with better loading logic */}
-      <div className={`cards-section ${displayedCount === 1 ? 'cards-section--one' : displayedCount === 2 ? 'cards-section--two' : ''}`}>
+      <div className={`cards-section ${showLoading ? 'cards-section--loading' : ''} ${displayedCount === 1 ? 'cards-section--one' : displayedCount === 2 ? 'cards-section--two' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading Events...</p>
+          </div>
+        )}
+
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)

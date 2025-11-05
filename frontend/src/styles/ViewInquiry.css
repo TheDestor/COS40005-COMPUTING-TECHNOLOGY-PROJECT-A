@@ -19,10 +19,7 @@
 .inquiry-options,
 .compact-options {
   position: relative;
-  z-index: 1; /* Originally 0, fixed problem button overlap filter in ViewInquries 
-  and Business Management. Same class name in both pages so problem here comes to 
-  Business Management too*/
-}
+  }
 
 .inquiry-statistics {
   display: flex;
@@ -53,7 +50,7 @@
 /* FIXED: Reduced z-index to be below notification dropdown */
 .filter-dropdown-container {
   position: relative;
-  z-index: 10;
+  /* z-index: 10; */
 }
 
 .filter-button {
@@ -86,7 +83,7 @@
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   padding: 16px;
-  z-index: 5;
+  /* z-index: 5; */
 }
 
 .filter-dropdown::before {

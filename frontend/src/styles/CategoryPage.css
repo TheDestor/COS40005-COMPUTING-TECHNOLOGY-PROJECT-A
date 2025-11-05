@@ -321,6 +321,9 @@
   max-width: 1400px;
   margin: 0 auto;
   box-sizing: border-box;
+  /* Add a min-height so the loader has space when there are no cards yet */
+  min-height: 40vh;         /* slightly less height so loader sits higher */
+  position: relative;
 }
 
 .cards-section.cards-section--one {
@@ -958,6 +961,24 @@
   color: white;
 }
 
+/* Center loader within cards section and nudge upward */
+.section-loading {
+  position: absolute;
+  left: 50%;
+  top: 40%;               /* place slightly above true center */
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Ensure enough space so the loader sits well when there are no cards */
+.cards-section--loading {
+  min-height: 60vh;
+  padding: 2rem 1rem;
+}
+
 /* Loading Spinner */
 .loading-spinner {
   display: flex;
@@ -1528,6 +1549,10 @@
     justify-items: center;
     padding: 1rem;
     gap: 1.2rem;
+  }
+  
+  .section-loading {
+    top: 38%;
   }
 }
 

@@ -2280,7 +2280,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
     if (!imageFile) {
       errors.push('Event image is required.');
     } else {
-      const maxSize = 5 * 1024 * 1024; // 4.5MB
+      const maxSize = 5 * 1024 * 1024; // 5MB
       if (!imageFile.type?.startsWith('image/')) {
         errors.push('Event image must be an image file.');
       }

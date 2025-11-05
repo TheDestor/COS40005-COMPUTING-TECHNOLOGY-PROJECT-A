@@ -382,15 +382,16 @@ const AttractionsPage = () => {
         onAttractionsHover={preloadData}
       />
 
-      {/* 🚀 FIXED: Simple and reliable loading condition */}
-      {showLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Loading Attractions...</p>
-        </div>
-      )}
+      {/* REMOVE the full-page overlay block that was covering the entire page */}
+      {/* It looked like:
+          {showLoading && (
+            <div className="loading-overlay">
+              <div className="spinner"></div>
+              <p>Loading Attractions...</p>
+            </div>
+          )}
+      */}
 
-      {/* 🚀 ALWAYS SHOW CONTENT - cached data appears instantly */}
       <div className="hero-banner">
         <div className="hero-video-bg">
           <iframe
@@ -445,8 +446,15 @@ const AttractionsPage = () => {
         </div>
       </div>
 
-      {/* 🚀 CONTENT ALWAYS SHOWS - cached data appears instantly */}
-      <div className="cards-section">
+      {/* Loader scoped to the cards grid only */}
+      <div className={`cards-section ${showLoading ? 'cards-section--loading' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading attractions...</p>
+          </div>
+        )}
+
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)

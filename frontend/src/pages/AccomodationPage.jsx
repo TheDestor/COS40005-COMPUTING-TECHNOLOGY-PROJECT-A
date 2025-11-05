@@ -13,13 +13,14 @@ import { FaSearch, FaArrowUp } from 'react-icons/fa';
 
 const HERO_VIDEO_ID = 'Jsk5kvZ-DHo'; 
 
+// Method: AccommodationPage
 const AccommodationPage = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('all');
   const [visibleItems, setVisibleItems] = useState(12);
   const [currentCategory] = useState('Accommodation');
-  const [showLoading, setShowLoading] = useState(true); // 🚀 ADDED for instant loading
+  const [showLoading, setShowLoading] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -493,14 +494,10 @@ const AccommodationPage = () => {
     processAccommodation
   );
 
-  // 🚀 ADDED: Better loading state management
   useEffect(() => {
-    // Hide loading when we have data OR when loading is complete without data
     if (!loading || data.length > 0) {
-      const timer = setTimeout(() => {
-        setShowLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setShowLoading(false), 300);
+      return () => clearTimeout(t);
     }
   }, [loading, data.length]);
 
@@ -546,14 +543,7 @@ const AccommodationPage = () => {
         onLoginClick={handleLoginClick} 
         onAccommodationHover={preloadData}
       />
-
-      {/* 🚀 ADDED: Loading overlay only during initial load
-      {showLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Loading Accommodation...</p>
-        </div>
-      )} */}
+      {/* Remove any full-page loading-overlay block if present */}
 
       <div className="hero-banner">
         <div className="hero-video-bg">
@@ -610,8 +600,15 @@ const AccommodationPage = () => {
         </div>
       </div>
 
-      {/* 🚀 UPDATED: Cards section with better loading logic */}
-      <div className="cards-section">
+      {/* Loader scoped to the cards grid only */}
+      <div className={`cards-section ${showLoading ? 'cards-section--loading' : ''}`}>
+        {showLoading && (
+          <div className="section-loading">
+            <div className="spinner"></div>
+            <p>Loading accommodation...</p>
+          </div>
+        )}
+
         {filteredData.length > 0 ? (
           filteredData
             .slice(0, visibleItems)
@@ -671,10 +668,9 @@ const AccommodationPage = () => {
               </div>
             ))
         ) : (
-          // 🚀 UPDATED: Only show empty state if not loading and truly no data
           !showLoading && (
             <div className="no-results">
-              <p>No accommodation places found. Try adjusting your search criteria.</p>
+              <p>No accommodation found. Try adjusting your search criteria.</p>
             </div>
           )
         )}

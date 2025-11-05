@@ -46,7 +46,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 2001; /* Keep toggle above the panel */
+  z-index: 20001; /* Keep toggle above the panel */
 }
 
 

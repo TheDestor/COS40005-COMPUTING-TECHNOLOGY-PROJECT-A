@@ -1639,7 +1639,7 @@
     /* Filter dropdown mobile fix */
     .filter-dropdown-container {
       position: relative;
-      z-index: 10;
+      /* z-index: 10;s */
     }
   
     .filter-dropdown {
@@ -2036,7 +2036,7 @@
     /* Filter dropdown mobile fix */
     .filter-dropdown-container {
       position: relative;
-      z-index: 10;
+      /* z-index: 10; */
     }
   
     .filter-dropdown {
@@ -2428,6 +2428,9 @@
   .notification-overlay.active {
     display: block;
   }
+}
+
+.notification-dropdown {
   top: calc(100% + 10px);
   right: 0;
   width: 380px;
@@ -2619,7 +2622,7 @@
 
 .filter-dropdown-container {
   position: relative;
-  z-index: 10;
+  /* z-index: 10; */
 }
 
 .filter-btn, .filter-button {
@@ -2636,6 +2639,11 @@
   color: #4b5563;
   transition: all 0.2s ease;
   min-height: 44px;
+}
+
+.business-location-map .leaflet-container,
+.business-location-map .leaflet-pane {
+  z-index: 0;
 }
 
 .filter-btn:hover, .filter-button:hover {
@@ -3609,7 +3617,7 @@
   /* Filter dropdown mobile fix */
   .filter-dropdown-container {
     position: relative;
-    z-index: 10;
+    /* z-index: 10; */
   }
 
   .filter-dropdown {
@@ -4006,7 +4014,7 @@
   /* Filter dropdown mobile fix */
   .filter-dropdown-container {
     position: relative;
-    z-index: 10;
+    /* z-index: 10; */
   }
 
   .filter-dropdown {
