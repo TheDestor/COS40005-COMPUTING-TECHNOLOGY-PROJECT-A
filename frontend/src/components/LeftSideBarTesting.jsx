@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
-import { FaBars, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaChevronDown, FaChevronUp, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
+import { FaRoute, FaClock, FaBuilding, FaMapMarkerAlt, FaSearch, FaBookmark, FaLayerGroup, FaLocationArrow, FaChevronDown, FaChevronUp, FaCar, FaBus, FaWalking, FaBicycle, FaMotorcycle, FaPlane, FaCopy, FaShare, FaCompass, FaMapPin } from 'react-icons/fa';
 import { MdManageAccounts, MdAddLocationAlt } from 'react-icons/md';
 import { toast } from 'sonner';
 import '../styles/LeftSideBar.css';
@@ -2211,8 +2211,9 @@ useEffect(() => {
       </NearbyPlacesDrawer>
 
       <div className="sidebar100">
-        <div className="menu-icon100" onClick={toggleSidebar}>
-          <FaBars />
+        <div className="menu-icon100 menu-icon100-route" onClick={toggleSidebar}>
+          <FaRoute className="icon100" />
+          <span className="label100-route desktop-only">Route</span>
         </div>
         <div
           className={`menu-item100${activeMenu === 'recent' ? ' active' : ''}`}

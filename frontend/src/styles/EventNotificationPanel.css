@@ -3,7 +3,7 @@
 /* Loading State */
 .loading-container-enp {
   position: fixed;
-  top: 100px;
+  top: 120px;
   right: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -107,7 +107,7 @@
   top: 70px; /* Default position when expanded */
   right: 20px;
   width: 360px;
-  max-height: 90vh;
+  max-height: 76vh;
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
@@ -512,7 +512,7 @@
     .main-panel-container-enp {
         top: 70px; /* Default expanded position */
         transition: top 0.3s ease;
-        max-height: 86vh;
+        max-height: 75vh;
         z-index: 100061;
     }
 

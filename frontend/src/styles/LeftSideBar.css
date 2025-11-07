@@ -22,6 +22,39 @@
   color: #333;
 }
 
+/* Route-only styles to match Recent/Bookmark/Nearby without touching their classes */
+.menu-icon100-route {
+  display: flex;
+  flex-direction: column !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon100-route .icon100 {
+  margin-bottom: 6px !important;
+}
+
+.label100-route {
+  display: block !important;     /* default: show on laptop/desktop */
+  font-size: 11px;
+  color: #333;
+  text-align: center;
+}
+
+/* Hide Route label on mobile */
+@media (max-width: 640px) {
+  .label100-route {
+    display: none !important;
+  }
+}
+
+/* Hide Route label on tablet */
+@media (max-width: 1024px) {
+  .label100-route {
+    display: none !important;
+  }
+}
+
 .menu-item101,
 .menu-item100 {
   display: flex;
@@ -1165,4 +1198,13 @@
 
 .add-destination-remove-btn:hover {
   background: #f8d7da;
+}
+
+.sidebar1001 .menu-item1001 {
+  flex-direction: column !important;
+}
+
+.sidebar1001 .label1001 {
+  display: block !important;
+  text-align: center;
 }

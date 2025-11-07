@@ -200,7 +200,7 @@ const MajorTownPage = () => {
                   />
                   <div className="card-content">
                     <h3>{highlightMatch(item.name)}</h3>
-                    <div className="rating">⭐⭐⭐⭐⭐</div>
+                    {/* <div className="rating">⭐⭐⭐⭐⭐</div> */}
                     <div className="desc-scroll">
                       <p>{item.desc}</p>
                     </div>

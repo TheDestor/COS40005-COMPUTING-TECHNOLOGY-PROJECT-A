@@ -138,7 +138,16 @@
   background-color: #007bff; /* Primary blue color */
   transition: width 0.3s ease; /* Smooth expansion */
 }
-
+.input-help { color: #6b7280; font-size: .7rem; margin-top: .25rem; margin-left: 10px;}
+/* Inline form error messages */
+.form-error {
+  color: #d32f2f; /* red */
+  background: rgba(211,47,47,0.06);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+}
 /* Expand underline on hover for all tabs */
 .login-tab:hover::after {
   width: 100%;
@@ -711,7 +720,7 @@
 
 /* For screens up to 480px (e.g., most mobile phones) */
 @media screen and (max-width: 480px) {
-
+  .input-help { font-size: .65rem; margin-left: 0px;}
 
   .login-wrapper {
     margin: 10px; /* Smaller margin */

@@ -223,14 +223,19 @@ function LoginPage({ onClose }) {
           <form onSubmit={handleSubmit} className="form-content">
             <div className="form-group100">
               <input
+                id="identifier-input"
                 type="text"
                 className="input-field100"
                 placeholder="Email/Phone Number"
                 name="identifier"
                 value={identifier}
                 onChange={handleInputChange}
+                aria-describedby="identifier-help"
                 required
               />
+              <small id="identifier-help" className="input-help">
+                Include the country code +60 (e.g. +60123456789) for phone login.
+              </small>
             </div>
 
             <div className="form-group100">
