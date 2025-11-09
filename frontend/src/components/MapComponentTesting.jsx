@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -102,6 +102,104 @@ const createWaypointMarkerIcon = (number) => {
   });
 };
 
+// Helper: label Leaflet markers with accessible names and activate on Enter/Space
+const MarkerAriaLabeler = ({
+  locations = [],
+  nearbyPlaces = [],
+  activeSearchLocation,
+  activeCategory,
+  isRoutingActive,
+}) => {
+  const map = useMap();
+
+  // Normalize coord helpers
+  const getLat = (obj) =>
+    obj?.coordinates?.latitude ?? obj?.latitude ?? obj?.lat;
+  const getLng = (obj) =>
+    obj?.coordinates?.longitude ?? obj?.longitude ?? obj?.lng ?? obj?.lon;
+  const getName = (obj) =>
+    obj?.name || obj?.display_name || obj?.label || 'Marker';
+
+  const epsilon = 1e-5;
+
+  // Build list of visible markers based on current gating
+  const visible = [];
+  try {
+    // Anchor search marker: only when not routing
+    const sLat = getLat(activeSearchLocation);
+    const sLng = getLng(activeSearchLocation);
+    if (!isRoutingActive && Number.isFinite(sLat) && Number.isFinite(sLng)) {
+      visible.push({ lat: sLat, lng: sLng, name: getName(activeSearchLocation) });
+    }
+
+    // Nearby places markers
+    for (const p of nearbyPlaces || []) {
+      const lat = getLat(p);
+      const lng = getLng(p);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        visible.push({ lat, lng, name: getName(p) });
+      }
+    }
+
+    // Category/location markers: only when no active search anchor and not routing
+    if (!activeSearchLocation && !isRoutingActive) {
+      for (const l of locations || []) {
+        const lat = getLat(l);
+        const lng = getLng(l);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          visible.push({ lat, lng, name: getName(l) });
+        }
+      }
+    }
+  } catch {}
+
+  useEffect(() => {
+    // Defer to allow Leaflet to mount icon elements
+    const t = setTimeout(() => {
+      map.eachLayer((layer) => {
+        // Only label real markers; skip clusters
+        const isMarker = layer instanceof L.Marker;
+        const iconEl = layer?._icon;
+        if (!isMarker || !iconEl) return;
+        if (iconEl.classList.contains('marker-cluster')) return;
+
+        const ll = layer.getLatLng?.();
+        if (!ll) return;
+
+        // Match marker to nearest visible entry by coordinates
+        const match = visible.find(
+          (v) =>
+            Math.abs(v.lat - ll.lat) < epsilon && Math.abs(v.lng - ll.lng) < epsilon
+        );
+        const name = match?.name || 'Marker';
+
+        // Apply accessible attributes
+        iconEl.setAttribute('role', 'button');
+        iconEl.setAttribute('tabindex', '0');
+        iconEl.setAttribute('aria-label', name);
+        iconEl.setAttribute('title', name);
+
+        // Keyboard activation: Enter/Space should trigger the same as click
+        if (!iconEl.dataset.kbActivateBound) {
+          const onKeyDown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              // Dispatch native click on the icon element
+              iconEl.click();
+            }
+          };
+          iconEl.addEventListener('keydown', onKeyDown);
+          iconEl.dataset.kbActivateBound = '1';
+        }
+      });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [map, activeSearchLocation, isRoutingActive, activeCategory, locations, nearbyPlaces]);
+
+  return null;
+};
+
 // Helper to create a Leaflet icon from an image
 const createIcon = (iconUrl) =>
   new L.Icon({
@@ -202,6 +300,40 @@ const categoryIcons = {
   'Waypoint': waypointMarkerIcon,
 };
 
+// Screen reader announcer component
+const ScreenReaderAnnouncer = ({ activeSearchLocation, isRoutingActive }) => {
+  const rawLat =
+    activeSearchLocation?.coordinates?.latitude ??
+    activeSearchLocation?.latitude ??
+    activeSearchLocation?.lat;
+  const rawLng =
+    activeSearchLocation?.coordinates?.longitude ??
+    activeSearchLocation?.longitude ??
+    activeSearchLocation?.lng ??
+    activeSearchLocation?.lon;
+  const lat = typeof rawLat === 'string' ? parseFloat(rawLat) : rawLat;
+  const lng = typeof rawLng === 'string' ? parseFloat(rawLng) : rawLng;
+
+  const name =
+    activeSearchLocation?.display_name ||
+    activeSearchLocation?.name ||
+    activeSearchLocation?.label ||
+    'selected location';
+
+  const message =
+    isRoutingActive
+      ? 'Routing active: search marker hidden while route is displayed.'
+      : (Number.isFinite(lat) && Number.isFinite(lng))
+        ? `Map centered on ${name}, latitude ${lat.toFixed(5)}, longitude ${lng.toFixed(5)}.`
+        : 'Map ready.';
+
+  return (
+    <div className="sr-only" aria-live="polite" aria-atomic="true">
+      {message}
+    </div>
+  );
+};
+
 // Separate component for map content to ensure proper context
 function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCategory, isRoutingActive, onMarkerClick, selectedLocation }) {
   // Normalize coords from {latitude, longitude}, {coordinates.{latitude, longitude}}, or {lat,lng|lon}
@@ -256,9 +388,20 @@ function MapContent({ locations, nearbyPlaces, activeSearchLocation, activeCateg
 
   return (
     <>
+      <ScreenReaderAnnouncer
+        activeSearchLocation={activeSearchLocation}
+        isRoutingActive={isRoutingActive}
+      />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"
+      />
+      <MarkerAriaLabeler
+        locations={locations}
+        nearbyPlaces={nearbyPlaces}
+        activeSearchLocation={activeSearchLocation}
+        activeCategory={activeCategory}
+        isRoutingActive={isRoutingActive}
       />
 
       {/* Anchor marker at searched location: hide while routing and enforce boundary */}

@@ -1,0 +1,76 @@
+/* Visually-hidden utility for live regions and labels */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Visually hidden skip link; only shows on keyboard focus */
+.skip-link {
+  position: absolute !important;
+  left: -10000px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* When focused, show at bottom center for keyboard users */
+.skip-link:focus,
+.skip-link:focus-visible {
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  bottom: 16px !important;
+  width: auto !important;
+  height: auto !important;
+  clip: auto !important;
+  clip-path: none !important;
+  overflow: visible !important;
+
+  display: inline-block !important;
+  padding: 8px 12px !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  z-index: 10000 !important;
+}
+
+/* Restrict strong focus outline to interactive elements only */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 4px solid #000000;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* Optional: minor size tweak for small screens */
+@media (max-width: 640px) {
+  .skip-link {
+    bottom: 12px !important;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+}
+
+/* High-contrast focus ring for keyboard navigation (NVDA-friendly) */
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus,
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+  box-shadow: none;
+}

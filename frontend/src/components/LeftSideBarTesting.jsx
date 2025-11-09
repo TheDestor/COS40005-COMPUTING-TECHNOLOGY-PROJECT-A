@@ -2211,23 +2211,38 @@ useEffect(() => {
       </NearbyPlacesDrawer>
 
       <div className="sidebar100">
-        <div className="menu-icon100 menu-icon100-route" onClick={toggleSidebar}>
-          <FaRoute className="icon100" />
+        <div
+          className="menu-icon100 menu-icon100-route"
+          onClick={toggleSidebar}
+          role="button"
+          aria-label="Open Route panel"
+          tabIndex={0}
+          onKeyDown={(e) => handleAccessibleKeyDown(e, toggleSidebar)}
+        >
+          <FaRoute className="icon100" aria-hidden="true" />
           <span className="label100-route desktop-only">Route</span>
         </div>
         <div
           className={`menu-item100${activeMenu === 'recent' ? ' active' : ''}`}
           onClick={toggleRecentSection}
+          role="button"
+          aria-label="Open Recent"
+          tabIndex={0}
+          onKeyDown={(e) => handleAccessibleKeyDown(e, toggleRecentSection)}
         >
-          <FaClock className="icon100" />
+          <FaClock className="icon100" aria-hidden="true" />
           <span className="label100">Recent</span>
         </div>
       
         <div
           className={`menu-item100${activeMenu === 'bookmark' ? ' active' : ''}`}
           onClick={toggleBookmark}
+          role="button"
+          aria-label="Open Bookmark"
+          tabIndex={0}
+          onKeyDown={(e) => handleAccessibleKeyDown(e, toggleBookmark)}
         >
-          <FaBookmark className="icon100" />
+          <FaBookmark className="icon100" aria-hidden="true" />
           <span className="label100">Bookmark</span>
         </div>
 
@@ -2235,16 +2250,11 @@ useEffect(() => {
           className={`menu-item100${activeMenu === 'nearby' ? ' active' : ''}`}
           onClick={toggleNearbyDrawer}
           role="button"
-          aria-label="Toggle nearby places"
-          title="Nearby Places"
+          aria-label="Open Nearby"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              toggleNearbyDrawer();
-            }
-          }}
+          onKeyDown={(e) => handleAccessibleKeyDown(e, toggleNearbyDrawer)}
         >
-          <FaCompass className="icon100" />
+          <FaCompass className="icon100" aria-hidden="true" />
           <span className="label100">Nearby</span>
         </div>
 

@@ -42,7 +42,7 @@
 	justify-content: center;
 	animation: pulseFloat 2.2s ease-in-out infinite;
 	overflow: visible;
-	z-index: 100;
+	z-index: 300000 !important;
 }
 .ai-toggle-btn.burst::after {
 	content: '';
