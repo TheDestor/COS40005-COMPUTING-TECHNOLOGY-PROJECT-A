@@ -1,16 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
 import "../styles/PushNotificationpage.css";
 
 const PushNotificationPage = () => {
-  const [notifications, setNotifications] = useState({
-    push: false,
-    location: false,
-    event: false,
+  const [notifications, setNotifications] = useState(() => {
+    const savedNotifications = localStorage.getItem("notifications");
+    return savedNotifications
+      ? JSON.parse(savedNotifications)
+      : {
+          push: false,
+          location: false,
+          event: false,
+        };
   });
 
   const [disabledSwitches, setDisabledSwitches] = useState({}); // 🔒 Track disabled switches
+
+  useEffect(() => {
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+  }, [notifications]);
 
   const notificationLabels = {
     push: "Push notifications",
@@ -25,10 +34,9 @@ const PushNotificationPage = () => {
     setDisabledSwitches((prev) => ({ ...prev, [key]: true }));
 
     // Toggle the value
-    const newStatus = !notifications[key];
     setNotifications((prev) => ({
       ...prev,
-      [key]: newStatus,
+      [key]: !prev[key],
     }));
 
     // Re-enable after 1s
@@ -39,7 +47,9 @@ const PushNotificationPage = () => {
 
   return (
     <div className="push-notification-container">
-      <h2><MdNotificationsNone size={22} /> Notifications</h2>
+      <h2>
+        <MdNotificationsNone size={22} /> Notifications
+      </h2>
 
       {Object.entries(notifications).map(([key, value]) => (
         <div className="notification-item-pn" key={key}>
@@ -58,7 +68,6 @@ const PushNotificationPage = () => {
           />
         </div>
       ))}
-      
     </div>
   );
 };
