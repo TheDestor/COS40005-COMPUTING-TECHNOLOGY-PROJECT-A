@@ -16,10 +16,11 @@
    2. Profile Button Styles
 ============================ */
 .profile-button {
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   background-color: #efefef;
+  border: 2px solid #345678 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,7 +130,7 @@
 }
 
 .user-icon2 {
-  color: #cacaca;
+  color: #345678;
 }
 
 /* ============================
@@ -249,8 +250,8 @@
   }
 
   .profile-button {
-    width: 32px;
-    height: 32px;
+    /* width: 32px;
+    height: 32px; */
     font-size: 14px;
   }
 

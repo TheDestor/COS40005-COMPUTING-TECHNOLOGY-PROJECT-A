@@ -42,7 +42,7 @@
 	justify-content: center;
 	animation: pulseFloat 2.2s ease-in-out infinite;
 	overflow: visible;
-	z-index: 300000 !important;
+	z-index: 100040 !important;
 }
 .ai-toggle-btn.burst::after {
 	content: '';
@@ -855,6 +855,7 @@
     height: min(78vh, 520px);
     height: clamp(420px, 78vh, 520px);
     border-radius: clamp(10px, 2vw, 12px);
+	z-index: 100040;
   }
   .ai-suggestions { gap: clamp(8px, 3vw, 12px); padding: clamp(8px, 2.8vw, 12px); }
 }

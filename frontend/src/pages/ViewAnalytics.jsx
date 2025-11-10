@@ -1009,11 +1009,13 @@ function EventOverviewChart({
               onClick={fetchEventsData}
               disabled={loading}
               style={{
-                padding: "8px",
+                padding: "6px 8px",
                 borderRadius: "6px",
                 border: "1px solid #E2E7EB",
                 backgroundColor: "white",
                 cursor: "pointer",
+                color: "rgb(107, 114, 128)",
+                fontSize: "14px",
               }}
               title="Refresh data"
             >
@@ -1675,6 +1677,7 @@ function SessionDeviceChart({
             pointerEvents: "none",
             fontSize: "18px",
             zIndex: 999,
+            color: "#374151",
           }}
         >
           <strong>{deviceData[hoveredIndex].label}</strong>:{" "}
@@ -3239,11 +3242,13 @@ function BusinessStatusChart({
               onClick={fetchApprovalData}
               disabled={loading}
               style={{
-                padding: "8px",
+                padding: "6px 8px",
                 borderRadius: "6px",
                 border: "1px solid #E2E7EB",
                 backgroundColor: "white",
                 cursor: "pointer",
+                color: "rgb(107, 114, 128)",
+                fontSize: "14px",
               }}
               title="Refresh data"
             >

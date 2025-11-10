@@ -33,10 +33,34 @@ import "../styles/ManageLocation.css";
 import ky from "ky";
 import { useMap } from "react-leaflet";
 import { useAuth } from "../context/AuthProvider";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Rectangle } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useMapEvents } from "react-leaflet";
 import { toast } from "sonner";
+
+// Define Sarawak geographic boundaries and helpers
+const SARAWAK_BOUNDS = {
+  minLat: 0.85,
+  maxLat: 5.45,
+  minLng: 109.5,
+  maxLng: 115.6,
+};
+
+const SARAWAK_RECT_BOUNDS = [
+  [SARAWAK_BOUNDS.minLat, SARAWAK_BOUNDS.minLng],
+  [SARAWAK_BOUNDS.maxLat, SARAWAK_BOUNDS.maxLng],
+];
+
+const isWithinSarawak = (lat, lng) => {
+  return (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    lat >= SARAWAK_BOUNDS.minLat &&
+    lat <= SARAWAK_BOUNDS.maxLat &&
+    lng >= SARAWAK_BOUNDS.minLng &&
+    lng <= SARAWAK_BOUNDS.maxLng
+  );
+};
 
 const buildPageList = (total, current) => {
   const pages = [];
@@ -156,6 +180,15 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
     useMapEvents({
       click: (e) => {
         const { lat, lng } = e.latlng;
+        if (!isWithinSarawak(lat, lng)) {
+          toast.error("Selected coordinates are outside Sarawak.", {
+            description:
+              `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}. ` +
+              `Valid lat ${SARAWAK_BOUNDS.latMin}–${SARAWAK_BOUNDS.latMax}, ` +
+              `lng ${SARAWAK_BOUNDS.lngMin}–${SARAWAK_BOUNDS.lngMax}.`,
+          });
+          return; // do not update marker outside bounds
+        }
         onChange(lat, lng);
       },
     });
@@ -180,8 +213,19 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
 
   const handleMarkerDragEnd = (e) => {
     const { lat, lng } = e.target.getLatLng();
+    if (!isWithinSarawak(lat, lng)) {
+      toast.error("Selected coordinates are outside Sarawak.", {
+        description:
+          `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}. ` +
+          `Valid lat ${SARAWAK_BOUNDS.latMin}–${SARAWAK_BOUNDS.latMax}, ` +
+          `lng ${SARAWAK_BOUNDS.lngMin}–${SARAWAK_BOUNDS.lngMax}.`,
+      });
+      return; // keep marker at last valid position
+    }
     onChange(lat, lng);
   };
+
+  const coordValid = isWithinSarawak(latitude, longitude);
 
   return (
     <div
@@ -195,6 +239,15 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
       <div style={{ marginBottom: "5px", fontSize: "14px", color: "#666" }}>
         Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
       </div>
+      <div
+        style={{
+          marginBottom: "6px",
+          fontSize: "13px",
+          color: coordValid ? "#059669" : "#dc2626",
+        }}
+      >
+        {coordValid ? "Within Sarawak" : "Outside Sarawak — adjust pin or input"}
+      </div>
 
       <MapContainer
         center={[latitude, longitude]}
@@ -207,6 +260,10 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors"
+        />
+        <Rectangle
+          bounds={SARAWAK_RECT_BOUNDS}
+          pathOptions={{ color: "#10b981", weight: 2, fillOpacity: 0.08 }}
         />
         <MapEventsHandler />
         <MapCenterUpdater />
@@ -425,11 +482,27 @@ const ManageLocation = () => {
   });
 
   const handleCoordinatesChange = (lat, lng) => {
+    // keep state in sync; map handlers already prevent invalid changes
     setEditingLocation((prev) => ({
       ...prev,
       latitude: lat,
       longitude: lng,
     }));
+
+    const valid = isWithinSarawak(lat, lng);
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      const key = "editing.coordinates";
+      if (!valid) {
+        next[key] =
+          `Coordinates (${lat.toFixed(6)}, ${lng.toFixed(6)}) are outside Sarawak. ` +
+          `Valid lat ${SARAWAK_BOUNDS.latMin}–${SARAWAK_BOUNDS.latMax}, ` +
+          `lng ${SARAWAK_BOUNDS.lngMin}–${SARAWAK_BOUNDS.lngMax}.`;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -717,6 +790,30 @@ const ManageLocation = () => {
     const updatedLocations = [...editingLocations];
     updatedLocations[index] = updatedLocation;
     setEditingLocations(updatedLocations);
+
+    // Manual entry validation
+    if (
+      typeof updatedLocation.latitude === "number" &&
+      typeof updatedLocation.longitude === "number"
+    ) {
+      const valid = isWithinSarawak(
+        updatedLocation.latitude,
+        updatedLocation.longitude
+      );
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        const key = `locations[${index}].coordinates`;
+        if (!valid) {
+          next[key] =
+            "Coordinates are outside Sarawak. " +
+            `Valid lat ${SARAWAK_BOUNDS.latMin}–${SARAWAK_BOUNDS.latMax}, ` +
+            `lng ${SARAWAK_BOUNDS.lngMin}–${SARAWAK_BOUNDS.lngMax}.`;
+        } else {
+          delete next[key];
+        }
+        return next;
+      });
+    }
   };
   const handleSaveAllLocations = async () => {
     try {
@@ -744,37 +841,38 @@ const ManageLocation = () => {
           errors.url = "URL cannot contain spaces.";
         }
 
-        // Lat/lon must be in Sarawak
+        // Coordinates must be within Sarawak bounds
         const lat = parseFloat(location.latitude);
         const lon = parseFloat(location.longitude);
         if (!isWithinSarawak(lat, lon)) {
-          errors.latitude = "Location is outside Sarawak boundary.";
-          errors.longitude = "Location is outside Sarawak boundary.";
+          errors.coordinates =
+            `Coordinates must be within Sarawak. ` +
+            `Lat ${SARAWAK_BOUNDS.latMin}–${SARAWAK_BOUNDS.latMax}, ` +
+            `Lng ${SARAWAK_BOUNDS.lngMin}–${SARAWAK_BOUNDS.lngMax}.`;
         }
 
         return { index, errors };
       });
 
-      // 2. If any have validation errors, block save and show error
+      // Prevent submission if any coordinates are invalid
       const hasErrors = validationResults.some(
-        (result) => Object.keys(result.errors).length > 0
+        (r) => Object.keys(r.errors).length > 0
       );
-
       if (hasErrors) {
-        // Flatten into validationErrors state shape
-        const allErrors = {};
-        validationResults.forEach((result) => {
-          Object.keys(result.errors).forEach((field) => {
-            allErrors[`locations[${result.index}].${field}`] =
-              result.errors[field];
+        setValidationErrors((prev) => {
+          const next = { ...prev };
+          validationResults.forEach(({ index, errors }) => {
+            Object.entries(errors).forEach(([k, v]) => {
+              next[`locations[${index}].${k}`] = v;
+            });
           });
+          return next;
         });
-
-        setValidationErrors(allErrors);
-        toast.error(
-          "Some locations have required fields missing or invalid. Please review and try again."
-        );
-        return;
+        toast.error("Please fix validation errors before saving.", {
+          description:
+            "One or more locations have coordinates outside Sarawak.",
+        });
+        return; // stop submission
       }
 
       // 3. Start saving
@@ -1943,7 +2041,7 @@ const ManageLocation = () => {
                             ...editingLocation,
                             latitude: lat,
                           });
-                          if (!isWithinSarawak(lat, lon)) {
+                          if (!isWithinSarawakBounds(lat, lon)) {
                             setValidationErrors((prev) => ({
                               ...prev,
                               latitude: "Location is outside Sarawak boundary.",
@@ -1983,7 +2081,7 @@ const ManageLocation = () => {
                             ...editingLocation,
                             longitude: lon,
                           });
-                          if (!isWithinSarawak(lat, lon)) {
+                          if (!isWithinSarawakBounds(lat, lon)) {
                             setValidationErrors((prev) => ({
                               ...prev,
                               longitude:
@@ -2367,7 +2465,7 @@ const ManageLocation = () => {
                                   ...location,
                                   latitude: lat,
                                 });
-                                if (!isWithinSarawak(lat, lon)) {
+                                if (!isWithinSarawakBounds(lat, lon)) {
                                   setValidationErrors((prev) => ({
                                     ...prev,
                                     [`locations[${index}].latitude`]:
@@ -2420,7 +2518,7 @@ const ManageLocation = () => {
                                   ...location,
                                   longitude: lon,
                                 });
-                                if (!isWithinSarawak(lat, lon)) {
+                                if (!isWithinSarawakBounds(lat, lon)) {
                                   setValidationErrors((prev) => ({
                                     ...prev,
                                     [`locations[${index}].longitude`]:

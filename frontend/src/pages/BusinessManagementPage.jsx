@@ -23,6 +23,7 @@ import '../styles/Dashboard.css';
 import '../styles/BusinessManagementPage.css';
 import axios from 'axios';
 import { useAuth } from '../context/AuthProvider'; // Fixed import path
+import { toast } from 'sonner';
 
 // Fallback images (in case API images fail to load)
 import defaultBusinessImage from '../assets/default-business.jpg';
@@ -115,6 +116,33 @@ const BusinessManagement = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastBusinessCount, setLastBusinessCount] = useState(0);
+
+  const [confirmAction, setConfirmAction] = useState(null); // 'approve' | 're-amend' | 'delete'
+  const [confirmTargetId, setConfirmTargetId] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const cancelBtnRef = useRef(null);
+
+  const openConfirm = (type, id) => {
+    setConfirmAction(type);
+    setConfirmTargetId(id);
+  };
+
+  const closeConfirm = () => {
+    if (confirmLoading) return;
+    setConfirmAction(null);
+    setConfirmTargetId(null);
+  };
+
+  useEffect(() => {
+    if (confirmAction) {
+      cancelBtnRef.current?.focus();
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') closeConfirm();
+      };
+      document.addEventListener('keydown', onKeyDown);
+      return () => document.removeEventListener('keydown', onKeyDown);
+    }
+  }, [confirmAction]);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -473,18 +501,28 @@ const BusinessManagement = () => {
             `Business "${business.name}" status updated to ${newStatus}`,
             newStatus === 'approved' ? 'success' : newStatus === 'rejected' ? 'warning' : 'info'
           );
+          toast.success(
+            newStatus === 'approved'
+              ? `Business "${business.name}" approved`
+              : newStatus === 'rejected'
+              ? `Business "${business.name}" moved to re-amend`
+              : `Business "${business.name}" status updated`
+          );
         }
         
       } else {
         addNotification('Failed to update business status: ' + response.data.message, 'error');
+        toast.error(response.data.message || 'Failed to update business status');
       }
     } catch (err) {
       console.error('Error updating business status:', err);
       
       if (err.response && err.response.status === 403) {
         addNotification('Access denied. You do not have permission to update business status.', 'error');
+        toast.error('Access denied.');
       } else {
         addNotification('Error updating business status: ' + (err.response?.data?.message || err.message), 'error');
+        toast.error(err.response?.data?.message || err.message || 'Error updating business status');
       }
     }
   };
@@ -511,9 +549,9 @@ const BusinessManagement = () => {
       return;
     }
 
-    if (!window.confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
-      return;
-    }
+    // if (!window.confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
+    //   return;
+    // }
     
     try {
       const response = await authAxios.delete(`/api/businesses/deleteBusiness/${id}`);
@@ -535,18 +573,41 @@ const BusinessManagement = () => {
         
         // Add notification for deletion
         addNotification(`Business "${businessName}" deleted successfully`, 'success');
+        toast.success(`Business "${businessName}" deleted successfully`);
         
       } else {
         addNotification('Failed to delete business: ' + response.data.message, 'error');
+        toast.error(response.data.message || 'Failed to delete business');
       }
     } catch (err) {
       console.error('Error deleting business:', err);
       
       if (err.response && err.response.status === 403) {
         addNotification('Access denied. You do not have permission to delete businesses.', 'error');
+        toast.error('Access denied.');
       } else {
         addNotification('Error deleting business: ' + (err.response?.data?.message || err.message), 'error');
+        toast.error(err.response?.data?.message || err.message || 'Error deleting business');
       }
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction || !confirmTargetId) return;
+    setConfirmLoading(true);
+    try {
+      if (confirmAction === 'approve') {
+        await handleApproveBusiness(confirmTargetId);
+      } else if (confirmAction === 're-amend') {
+        await handleRejectBusiness(confirmTargetId);
+      } else if (confirmAction === 'delete') {
+        await handleDeleteBusiness(confirmTargetId);
+      }
+      closeConfirm();
+    } catch (e) {
+      toast.error(e?.message || 'Action failed. Please try again.');
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -1134,6 +1195,58 @@ const BusinessManagement = () => {
               )}
             </div>
             
+            {confirmAction && (
+          <div
+            className="confirm-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bm-confirmation-title"
+            onClick={closeConfirm}
+          >
+            <div
+              className="confirm-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="bm-confirmation-title" className="confirm-modal-title">
+                {confirmAction === 'approve'
+                  ? 'Confirm Approve'
+                  : confirmAction === 're-amend'
+                  ? 'Confirm Re-amend'
+                  : 'Confirm Delete'}
+              </h3>
+              <p className="confirm-modal-body">
+                {confirmAction === 'approve'
+                  ? 'Are you sure you want to approve this business?'
+                  : confirmAction === 're-amend'
+                  ? 'Are you sure you want to move this business to re-amend?'
+                  : 'Are you sure you want to delete this business?'}
+              </p>
+              <div className="confirm-modal-actions">
+                <button
+                  ref={cancelBtnRef}
+                  className="modal-cancel-btn"
+                  onClick={closeConfirm}
+                  disabled={confirmLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={
+                    confirmAction === 'delete'
+                      ? 'modal-delete-btn'
+                      : 'modal-confirm-btn'
+                  }
+                  onClick={handleConfirmAction}
+                  disabled={confirmLoading}
+                  aria-busy={confirmLoading}
+                >
+                  {confirmLoading ? 'Working…' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
             {/* Right panel - Selected business detail */}
             {selectedBusiness ? (
               <div className="business-detail compact-detail">
@@ -1169,26 +1282,29 @@ const BusinessManagement = () => {
                   </div>
                   
                   <div className="business-actions compact-actions">
-                    <button 
-                      className={`business-action-btn approve-btn ${selectedBusiness.status === 'approved' ? 'disabled' : ''}`}
-                      onClick={() => handleApproveBusiness(selectedBusiness._id)}
-                      disabled={selectedBusiness.status === 'approved'}
-                    >
-                      {selectedBusiness.status === 'approved' ? 'Approved' : 'Approve'}
-                    </button>
-                    <button 
-                      className={`business-action-btn reject-btn ${selectedBusiness.status === 'rejected' ? 'disabled' : ''}`}
-                      onClick={() => handleRejectBusiness(selectedBusiness._id)}
-                      disabled={selectedBusiness.status === 'rejected'}
-                    >
-                      {selectedBusiness.status === 'rejected' ? 'Re-amend' : 'Re-amend'}
-                    </button>
-                    <button 
-                      className="business-action-btn delete-btn"
-                      onClick={() => handleDeleteBusiness(selectedBusiness._id)}
-                    >
-                      <FaTrash /> Delete
-                    </button>
+                    <div className="inquiry-actions">
+                      <button 
+                        className={`business-action-btn approve-btn ${selectedBusiness.status === 'approved' ? 'disabled' : ''}`}
+                        onClick={() => openConfirm('approve', selectedBusiness._id)}
+                        disabled={selectedBusiness.status === 'approved'}
+                      >
+                        {selectedBusiness.status === 'approved' ? 'Approved' : 'Approve'}
+                      </button>
+                      <button 
+                        className={`business-action-btn reject-btn ${selectedBusiness.status === 'rejected' ? 'disabled' : ''}`}
+                        onClick={() => openConfirm('re-amend', selectedBusiness._id)}
+                        disabled={selectedBusiness.status === 'rejected'}
+                      >
+                        {selectedBusiness.status === 'rejected' ? 'Re-amend' : 'Re-amend'}
+                      </button>
+                      <button 
+                        className="business-action-btn delete-btn"
+                        onClick={() => openConfirm('delete', selectedBusiness._id)}
+                        title="Delete"
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                    </div>
                     <div
                       className="print-actions"
                       ref={printOptionsRef}

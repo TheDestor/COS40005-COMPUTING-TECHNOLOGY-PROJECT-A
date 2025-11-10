@@ -40,10 +40,89 @@ const ViewInquiry = () => {
   const [inquiries, setInquiries] = useState([]);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [replyText, setReplyText] = useState('');
+  // Confirmation modal state
+  const [confirmState, setConfirmState] = useState({ open: false, type: null, targetId: null });
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const cancelBtnRef = useRef(null);
+
+  const openConfirm = (type, targetId) => {
+    setConfirmState({ open: true, type, targetId });
+  };
+
+  const closeConfirm = () => {
+    if (confirmLoading) return;
+    setConfirmState({ open: false, type: null, targetId: null });
+  };
+
+  // Focus the cancel button and attach ESC handler when modal opens
+  useEffect(() => {
+    if (confirmState.open) {
+      cancelBtnRef.current?.focus();
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          closeConfirm();
+        }
+      };
+      document.addEventListener('keydown', onKeyDown);
+      return () => document.removeEventListener('keydown', onKeyDown);
+    }
+  }, [confirmState.open]);
+
+  // Dedicated reply action (no event)
+  const performSendReply = async () => {
+    if (!selectedInquiry) return;
+    if (!replyText.trim()) {
+      toast.error('Reply cannot be empty.');
+      return;
+    }
+    try {
+      await handleMarkResolved(selectedInquiry.id);
+      setReplyText('');
+      toast.success('Reply sent successfully!');
+    } catch (error) {
+      toast.error('Failed to send reply. Please try again.');
+    }
+  };
+
+  const confirmTitle = confirmState.type === 'resolve'
+    ? 'Confirm Resolve'
+    : confirmState.type === 'delete'
+    ? 'Confirm Delete'
+    : confirmState.type === 'reply'
+    ? 'Confirm Send Reply'
+    : 'Confirm';
+
+  const confirmMessage = confirmState.type === 'resolve'
+    ? 'Are you sure you want to mark this as resolved?'
+    : confirmState.type === 'delete'
+    ? 'Are you sure you want to delete this item?'
+    : confirmState.type === 'reply'
+    ? 'Are you sure you want to send this reply?'
+    : '';
+
+  const handleConfirmAction = async () => {
+    if (!confirmState.type) return;
+    setConfirmLoading(true);
+    try {
+      if (confirmState.type === 'resolve' && confirmState.targetId) {
+        await handleMarkResolved(confirmState.targetId);
+      } else if (confirmState.type === 'delete' && confirmState.targetId) {
+        await handleDeleteInquiry(confirmState.targetId);
+      } else if (confirmState.type === 'reply') {
+        await performSendReply();
+      }
+      closeConfirm();
+    } catch (err) {
+      toast.error(err?.message || 'Action failed. Please try again.');
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
   const { accessToken } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const [showInquiryDetail, setShowInquiryDetail] = useState(false);
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   // Notification states
   const [notifications, setNotifications] = useState([]);
@@ -163,6 +242,7 @@ const ViewInquiry = () => {
   };
 
   const fetchInquiries = async (showRefreshNotification = false) => {
+    setLoading(true);
     try {
       const response = await ky.get(
         "/api/inquiry/getAllInquiries",
@@ -243,6 +323,8 @@ const ViewInquiry = () => {
     } catch (error) {
       console.error(error);
       addNotification('Failed to load inquiries', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -422,15 +504,8 @@ const ViewInquiry = () => {
 
   const handleSubmitReply = (e) => {
     e.preventDefault();
-    if (!replyText.trim()) return;
-
-    console.log(`Reply to inquiry #${selectedInquiry.id}:`, replyText);
-
-    handleMarkResolved(selectedInquiry.id);
-
-    setReplyText('');
-
-    alert("Reply sent successfully!");
+    if (!selectedInquiry) return;
+    openConfirm('reply', selectedInquiry.id);
   };
 
   // Print functionality
@@ -700,8 +775,9 @@ const ViewInquiry = () => {
                 className="refresh-btn"
                 onClick={handleRefresh}
                 title="Refresh data"
+                disabled={loading}
               >
-                <FaSync />
+                <FaSync className={loading ? 'spinning' : ''} />
               </button>
               <div className="notification-wrapper" ref={notificationRef}>
                 <div 
@@ -921,7 +997,7 @@ const ViewInquiry = () => {
                       <div className="inquiry-actions">
                         <button 
                           className="inquiry-action-btn resolve-btn"
-                          onClick={() => handleMarkResolved(selectedInquiry.id)}
+                          onClick={() => openConfirm('resolve', selectedInquiry.id)}
                           title="Mark as Resolved"
                         >
                           <FaCheck />
@@ -941,7 +1017,7 @@ const ViewInquiry = () => {
                         </div>
                         <button 
                           className="inquiry-action-btn delete-btn"
-                          onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                          onClick={() => openConfirm('delete', selectedInquiry.id)}
                           title="Delete Inquiry"
                         >
                           <FaTrash />
@@ -962,7 +1038,7 @@ const ViewInquiry = () => {
                     <div className="inquiry-actions">
                       <button 
                         className="inquiry-action-btn resolve-btn"
-                        onClick={() => handleMarkResolved(selectedInquiry.id)}
+                        onClick={() => openConfirm('resolve', selectedInquiry.id)}
                         title="Mark as Resolved"
                       >
                         <FaCheck /> Resolve
@@ -982,7 +1058,7 @@ const ViewInquiry = () => {
                       </div>
                       <button 
                         className="inquiry-action-btn delete-btn"
-                        onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                        onClick={() => openConfirm('delete', selectedInquiry.id)}
                         title="Delete Inquiry"
                       >
                         <FaTrash /> Delete
@@ -1044,11 +1120,120 @@ const ViewInquiry = () => {
         </div>
       </div>
 
+      {/* Confirmation Modal */}
+      {confirmState.open && (
+        <div
+          className="confirmation-overlay-vi"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirmation-modal-title"
+          onClick={closeConfirm}
+        >
+          <div
+            className="confirmation-modal-vi"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="confirmation-modal-title" className="confirm-modal-title">
+              {confirmTitle}
+            </h3>
+            <p className="confirm-modal-body">
+              {confirmMessage}
+            </p>
+            <div className="confirm-modal-actions">
+              <button
+                ref={cancelBtnRef}
+                className="modal-cancel-btn"
+                onClick={closeConfirm}
+                disabled={confirmLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className={
+                  confirmState.type === 'delete'
+                    ? 'modal-delete-btn'
+                    : 'modal-confirm-btn'
+                }
+                onClick={handleConfirmAction}
+                disabled={confirmLoading}
+                aria-busy={confirmLoading}
+              >
+                {confirmLoading ? 'Working…' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Embedded styles for mobile responsiveness */}
       <style>{`
         /* Mobile overflow prevention */
         * {
           box-sizing: border-box;
+        }
+
+        /* Confirmation modal styling */
+        .confirmation-overlay-vi {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+        }
+        .confirmation-modal-vi {
+          background: #fff;
+          border-radius: 10px;
+          width: 90%;
+          max-width: 420px;
+          box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+          padding: 20px;
+          outline: none;
+        }
+        .confirmation-title-vi {
+          margin: 0 0 8px 0;
+          font-size: 18px;
+          font-weight: 600;
+        }
+        .confirmation-message-vi {
+          margin: 0 0 18px 0;
+          color: #444;
+        }
+        .confirmation-actions-vi {
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+        }
+        .modal-cancel-btn-vi {
+          background: #e5e7eb;
+          border: none;
+          color: #111827;
+          padding: 8px 14px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .modal-confirm-btn-vi {
+          background: #2563eb;
+          border: none;
+          color: #fff;
+          padding: 8px 14px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .modal-delete-btn-vi {
+          background: #dc2626;
+          border: none;
+          color: #fff;
+          padding: 8px 14px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .modal-cancel-btn-vi:disabled,
+        .modal-confirm-btn-vi:disabled,
+        .modal-delete-btn-vi:disabled {
+          opacity: 0.75;
+          cursor: not-allowed;
         }
 
         .dashboard-header {
@@ -1456,7 +1641,7 @@ const ViewInquiry = () => {
           cursor: pointer;
           font-size: 0.9rem;
           color: #2c3345;
-          transition: all 0.2s ease;
+          // transition: all 0.2s ease;
           margin-right: 10px;
         }
 
@@ -1601,25 +1786,25 @@ const ViewInquiry = () => {
             right: 30px;
           }
 
-          /* Filter dropdown mobile fix */
-          .filter-dropdown-container {
-            position: relative;
-            z-index: 100;
-          }
+          // /* Filter dropdown mobile fix */
+          // .filter-dropdown-container {
+          //   position: relative;
+          //   z-index: 100;
+          // }
 
-          .filter-dropdown {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 300px;
-            z-index: 50;
-          }
+          // .filter-dropdown {
+          //   position: fixed;
+          //   top: 50%;
+          //   left: 50%;
+          //   transform: translate(-50%, -50%);
+          //   width: 90%;
+          //   max-width: 300px;
+          //   z-index: 50;
+          // }
 
-          .filter-dropdown::before {
-            display: none;
-          }
+          // .filter-dropdown::before {
+          //   display: none;
+          // }
 
           /* Print dropdown mobile fix */
           .print-dropdown {
