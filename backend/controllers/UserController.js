@@ -1,6 +1,7 @@
 import { contactUsModel } from "../models/ContactUsModel.js";
 import { userModel } from "../models/UserModel.js";
 import { del, put } from "@vercel/blob"
+import { notificationModel } from "../models/NotificationModel.js";
 
 // @desc Update user profile information
 // @route POST /updateUserProfile
@@ -161,12 +162,35 @@ export const contactUs = async (req, res) => {
             category: category,
             topic: topic,
             message: message
-        })
+        });
+
+        // CREATE NOTIFICATION FOR NEW INQUIRY ⬇️
+        try {
+            await notificationModel.create({
+                type: 'inquiry_submission',
+                message: `New inquiry from "${name}": ${topic}`,
+                inquiryId: contactUs._id,
+                inquiryName: name,
+                inquiryTopic: topic,
+                targetRole: 'cbt_admin',
+                targetUserId: null,
+                read: false,
+                priority: 'medium',
+                metadata: {
+                    category: category,
+                    email: email,
+                    submissionDate: new Date()
+                }
+            });
+            console.log('✅ Notification created for new inquiry submission');
+        } catch (notifError) {
+            console.error('❌ Failed to create notification:', notifError);
+        }
 
         res.status(201).json({ message: "Contact form submission successful.", success: true });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "An internal server error occured during login.", success: false });
+        res.status(500).json({ message: "An internal server error occured during contact form submission.", success: false });
     }
 }
 

@@ -126,9 +126,7 @@ const ViewInquiry = () => {
   
   // Notification states
   const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [lastInquiryCount, setLastInquiryCount] = useState(0);
-  
+  const [showNotifications, setShowNotifications] = useState(false);  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -170,36 +168,71 @@ const ViewInquiry = () => {
     };
   }, [showPrintOptions, showNotifications]);
 
-  // Add notification when new inquiry is detected
-  const addNotification = (message, type = 'info') => {
-    const newNotification = {
-      id: Date.now(),
-      message,
-      type,
-      time: new Date().toLocaleString(),
-      read: false,
-      timestamp: Date.now()
-    };
+  // Fetch notifications from backend
+  const fetchNotifications = async () => {
+    if (!accessToken) return;
     
-    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
+    try {
+      const response = await ky.get('/api/notifications', {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        searchParams: { limit: 50 }
+      }).json();
+      
+      if (response.success) {
+        setNotifications(response.data || []);
+        console.log('✅ Notifications loaded:', response.data);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching notifications:', error);
+    }
   };
 
   // Mark notification as read
-  const markNotificationRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  const markNotificationRead = async (id) => {
+    try {
+      await ky.patch(`/api/notifications/${id}/read`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }).json();
+      
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification._id === id 
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   // Mark all notifications as read
-  const markAllNotificationsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const markAllNotificationsRead = async () => {
+    try {
+      await ky.patch('/api/notifications/mark-all-read', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }).json();
+      
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  // Local notification helper (for UI feedback only)
+  const addLocalNotification = (message, type = 'info') => {
+    const newNotification = {
+      _id: Date.now().toString(),
+      message,
+      type,
+      createdAt: new Date().toISOString(),
+      read: false,
+      targetRole: 'cbt_admin'
+    };
+    
+    setNotifications(prev => [newNotification, ...prev]);
   };
 
   // Get notification type styling
@@ -269,31 +302,6 @@ const ViewInquiry = () => {
 
         mappedInquiries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Check for new inquiries (notifications)
-        if (lastInquiryCount > 0 && mappedInquiries.length > lastInquiryCount) {
-          const newInquiryCount = mappedInquiries.length - lastInquiryCount;
-          const newInquiries = mappedInquiries.slice(0, newInquiryCount);
-          
-          // Add notifications for new inquiries
-          newInquiries.forEach(inquiry => {
-            addNotification(
-              `New inquiry from "${inquiry.name}": ${inquiry.subject}`,
-              'info'
-            );
-          });
-          
-          // Add summary notification if multiple new inquiries
-          if (newInquiryCount > 1) {
-            addNotification(
-              `${newInquiryCount} new inquiries received`,
-              'info'
-            );
-          }
-        }
-        
-        // Update inquiry count for future notifications
-        setLastInquiryCount(mappedInquiries.length);
-
         if (mappedInquiries.length > 0) {
           const firstInquiry = mappedInquiries[0];
           if (firstInquiry.status === "Unread") {
@@ -315,14 +323,14 @@ const ViewInquiry = () => {
 
         // Show refresh notification if manually refreshed
         if (showRefreshNotification) {
-          addNotification('Inquiry data refreshed successfully', 'success');
+          addLocalNotification('Inquiry data refreshed successfully', 'success');
         }
       } else {
         setInquiries([]);
       }
     } catch (error) {
       console.error(error);
-      addNotification('Failed to load inquiries', 'error');
+      addLocalNotification('Failed to load inquiries', 'error');
     } finally {
       setLoading(false);
     }
@@ -343,21 +351,24 @@ const ViewInquiry = () => {
     return () => clearInterval(intervalId);
   }, [accessToken]);
 
-  // Initialize notifications with welcome message
+  // Initial notification loading
   useEffect(() => {
-    if (notifications.length === 0) {
-      setNotifications([
-        {
-          id: 1,
-          message: "Welcome to Inquiries Management Dashboard",
-          type: "info",
-          time: new Date().toLocaleString(),
-          read: false,
-          timestamp: Date.now()
-        }
-      ]);
+    if (accessToken) {
+      fetchNotifications();
     }
-  }, []);
+  }, [accessToken]);
+
+  // Auto-refresh notifications every 30 seconds
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const intervalId = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [accessToken]);
+
 
   // Manual refresh handler
   const handleRefresh = () => {
@@ -438,7 +449,7 @@ const ViewInquiry = () => {
   
         const inquiry = inquiries.find(i => i.id === id);
         if (inquiry) {
-          addNotification(`Inquiry from "${inquiry.name}" marked as resolved`, 'success');
+          addLocalNotification(`Inquiry from "${inquiry.name}" marked as resolved`, 'success');
         }
         
         toast.success("Inquiry marked as resolved");
@@ -492,7 +503,7 @@ const ViewInquiry = () => {
       if (response.success) {
         toast.success("Inquiry deleted");
         if (inquiry) {
-          addNotification(`Inquiry from "${inquiry.name}" deleted successfully`, 'success');
+          addLocalNotification(`Inquiry from "${inquiry.name}" deleted successfully`, 'success');
         }
       } else {
         toast.error("An error occured while trying to delete inquiry");
@@ -749,7 +760,7 @@ const ViewInquiry = () => {
   };
 
   // Get unread notification count
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read && n.type === 'inquiry_submission').length;
 
   return (
     <div className="dashboard-container">
@@ -803,16 +814,16 @@ const ViewInquiry = () => {
                       )}
                     </div>
                     <div className="notification-list">
-                      {notifications.length > 0 ? (
-                        notifications.map(notification => (
+                    {notifications.filter(n => n.type === 'inquiry_submission').length > 0 ? (
+                      notifications.filter(n => n.type === 'inquiry_submission').map(notification => (
                           <div 
-                            key={notification.id} 
+                            key={notification._id} 
                             className={`notification-item ${notification.read ? 'read' : 'unread'} ${getNotificationTypeClass(notification.type)}`}
-                            onClick={() => markNotificationRead(notification.id)}
-                          >
+                            onClick={() => markNotificationRead(notification._id)}
+                            >
                             <div className="notification-content">
                               <p className="notification-message">{notification.message}</p>
-                              <span className="notification-time">{notification.time}</span>
+                              <span className="notification-time">{new Date(notification.createdAt).toLocaleString()}</span>
                             </div>
                             <div className="notification-type-indicator"></div>
                           </div>

@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['business_submission', 'business_approved', 'business_rejected', 'business_updated', 'business_deleted'],
+        enum: ['business_submission', 'business_approved', 'business_rejected', 'business_updated', 'business_deleted', 'inquiry_submission'],
         default: 'business_submission'
     },
     
