@@ -115,7 +115,6 @@ const BusinessManagement = () => {
   // Notification states
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [lastBusinessCount, setLastBusinessCount] = useState(0);
 
   const [confirmAction, setConfirmAction] = useState(null); // 'approve' | 're-amend' | 'delete'
   const [confirmTargetId, setConfirmTargetId] = useState(null);
@@ -205,36 +204,63 @@ const BusinessManagement = () => {
     }
   });
 
-  // Add notification when new business is detected
-  const addNotification = (message, type = 'info') => {
+  // Notification when Business submit
+  const fetchNotifications = async () => {
+    if (!isLoggedIn || !accessToken || !isAdmin) return;
+    
+    try {
+      const response = await authAxios.get('/api/notifications', {
+        params: { limit: 50 }
+      });
+      
+      if (response.data.success) {
+        setNotifications(response.data.data || []);
+        console.log('✅ Notifications loaded:', response.data.data);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching notifications:', error);
+    }
+  };
+
+  // Local notification helper (for UI feedback only)
+  const addLocalNotification = (message, type = 'info') => {
     const newNotification = {
-      id: Date.now(),
+      _id: Date.now().toString(),
       message,
       type,
-      time: new Date().toLocaleString(),
+      createdAt: new Date().toISOString(),
       read: false,
-      timestamp: Date.now()
+      targetRole: 'cbt_admin'
     };
     
-    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep only last 50 notifications
+    setNotifications(prev => [newNotification, ...prev]);
   };
 
-  // Mark notification as read
-  const markNotificationRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  // NOTIFICATION AS READ
+  const markNotificationRead = async (id) => {
+    try {
+      await authAxios.patch(`/api/notifications/${id}/read`);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification._id === id 
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  // Mark all notifications as read
-  const markAllNotificationsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const markAllNotificationsRead = async () => {
+    try {
+      await authAxios.patch('/api/notifications/mark-all-read');
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
   };
 
   // Get notification type styling
@@ -297,30 +323,6 @@ const BusinessManagement = () => {
       if (response.data.success) {
         let businessData = response.data.data || [];
 
-        // Check for new businesses (notifications)
-        if (lastBusinessCount > 0 && businessData.length > lastBusinessCount) {
-          const newBusinessCount = businessData.length - lastBusinessCount;
-          const newBusinesses = businessData.slice(0, newBusinessCount);
-          
-          // Add notifications for new businesses
-          newBusinesses.forEach(business => {
-            addNotification(
-              `New business submission: "${business.name}" by ${business.owner}`,
-              'info'
-            );
-          });
-          
-          // Add summary notification if multiple new businesses
-          if (newBusinessCount > 1) {
-            addNotification(
-              `${newBusinessCount} new business submissions received`,
-              'info'
-            );
-          }
-        }
-        
-        // Update business count for future notifications
-        setLastBusinessCount(businessData.length);
 
         // Client-side filtering as fallback (only if backend doesn't handle the filters properly)
         if (filterStatus !== 'all') {
@@ -352,10 +354,10 @@ const BusinessManagement = () => {
         
         // Clear any previous errors on successful fetch
         setError(null);
-        
+
         // Show refresh notification if manually refreshed
         if (showRefreshNotification) {
-          addNotification('Business data refreshed successfully', 'success');
+          addLocalNotification('Business data refreshed successfully', 'success');
         }
       } else {
         setError('Failed to load businesses: ' + (response.data.message || 'Unknown error'));
@@ -415,21 +417,24 @@ const BusinessManagement = () => {
     return () => clearInterval(intervalId);
   }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory]);
 
-  // Initialize notifications with some sample data
+
+  // Initial notification loading
   useEffect(() => {
-    if (isAdmin && notifications.length === 0) {
-      setNotifications([
-        {
-          id: 1,
-          message: "Welcome to Business Management Dashboard",
-          type: "info",
-          time: new Date().toLocaleString(),
-          read: false,
-          timestamp: Date.now()
-        }
-      ]);
+    if (isLoggedIn && accessToken && isAdmin) {
+      fetchNotifications();
     }
-  }, [isAdmin]);
+  }, [isLoggedIn, accessToken, isAdmin]);
+
+  // Auto-refresh notifications every 30 seconds
+  useEffect(() => {
+    if (!isLoggedIn || !accessToken || !isAdmin) return;
+
+    const intervalId = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [isLoggedIn, accessToken, isAdmin]);
 
   // Format date to readable string
   const formatDate = (dateString) => {
@@ -497,7 +502,7 @@ const BusinessManagement = () => {
         // Add notification for status update
         const business = businesses.find(b => b._id === id);
         if (business) {
-          addNotification(
+          addLocalNotification(
             `Business "${business.name}" status updated to ${newStatus}`,
             newStatus === 'approved' ? 'success' : newStatus === 'rejected' ? 'warning' : 'info'
           );
@@ -511,17 +516,14 @@ const BusinessManagement = () => {
         }
         
       } else {
-        addNotification('Failed to update business status: ' + response.data.message, 'error');
         toast.error(response.data.message || 'Failed to update business status');
       }
     } catch (err) {
       console.error('Error updating business status:', err);
       
       if (err.response && err.response.status === 403) {
-        addNotification('Access denied. You do not have permission to update business status.', 'error');
         toast.error('Access denied.');
       } else {
-        addNotification('Error updating business status: ' + (err.response?.data?.message || err.message), 'error');
         toast.error(err.response?.data?.message || err.message || 'Error updating business status');
       }
     }
@@ -572,21 +574,18 @@ const BusinessManagement = () => {
         }
         
         // Add notification for deletion
-        addNotification(`Business "${businessName}" deleted successfully`, 'success');
+        addLocalNotification(`Business "${businessName}" deleted successfully`, 'success');
         toast.success(`Business "${businessName}" deleted successfully`);
         
       } else {
-        addNotification('Failed to delete business: ' + response.data.message, 'error');
         toast.error(response.data.message || 'Failed to delete business');
       }
     } catch (err) {
       console.error('Error deleting business:', err);
       
       if (err.response && err.response.status === 403) {
-        addNotification('Access denied. You do not have permission to delete businesses.', 'error');
         toast.error('Access denied.');
       } else {
-        addNotification('Error deleting business: ' + (err.response?.data?.message || err.message), 'error');
         toast.error(err.response?.data?.message || err.message || 'Error deleting business');
       }
     }
@@ -620,7 +619,8 @@ const BusinessManagement = () => {
     console.log(`Admin notes for business #${selectedBusiness._id}:`, adminNotes);
     
     // Add notification for notes saved
-    addNotification(`Notes saved for business "${selectedBusiness.name}"`, 'success');
+    addLocalNotification(`Notes saved for business "${selectedBusiness.name}"`, 'success');
+    toast.success(`Notes saved for business "${selectedBusiness.name}"`);
     setAdminNotes('');
   };
 
@@ -966,14 +966,13 @@ const BusinessManagement = () => {
                       {notifications.length > 0 ? (
                         notifications.map(notification => (
                           <div 
-                            key={notification.id} 
+                            key={notification._id} 
                             className={`notification-item ${notification.read ? 'read' : 'unread'} ${getNotificationTypeClass(notification.type)}`}
-                            onClick={() => markNotificationRead(notification.id)}
+                            onClick={() => markNotificationRead(notification._id)}
                           >
                             <div className="notification-content">
                               <p className="notification-message">{notification.message}</p>
-                              <span className="notification-time">{notification.time}</span>
-                            </div>
+                              <span className="notification-time">{new Date(notification.createdAt).toLocaleString()}</span>                            </div>
                             <div className="notification-type-indicator"></div>
                           </div>
                         ))

@@ -2,6 +2,7 @@ import { businessModel } from '../models/BusinessModel.js';
 import mongoose from 'mongoose';
 import { put, del } from '@vercel/blob';
 import path from 'path';
+import { createNotification } from './NotificationController.js';
 
 // Helper function to save uploaded file to Vercel Blob
 const saveFileToBlob = async (file) => {
@@ -95,6 +96,27 @@ export const addBusiness = async (req, res) => {
         console.log('=== END BUSINESS CREATION DEBUG ===');
 
         await newBusiness.save();
+
+        // ✅ CREATE NOTIFICATION FOR CBT ADMIN
+        try {
+            await createNotification({
+                type: 'business_submission',
+                message: `New business submission: "${newBusiness.name}" by ${newBusiness.owner}`,
+                businessId: newBusiness._id,
+                businessName: newBusiness.name,
+                ownerName: newBusiness.owner,
+                targetRole: 'cbt_admin',
+                priority: newBusiness.priority || 'medium',
+                metadata: {
+                    category: newBusiness.category,
+                    submissionDate: newBusiness.submissionDate
+                }
+            });
+            console.log('✅ Notification created for new business submission');
+        } catch (notifError) {
+            console.error('⚠️ Failed to create notification:', notifError);
+            // Don't fail the business creation if notification fails
+        }
 
         res.status(201).json({
             success: true,

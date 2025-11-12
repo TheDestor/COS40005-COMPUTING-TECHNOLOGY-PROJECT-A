@@ -8,6 +8,7 @@ import locationRouter from "../routes/LocationRoutes.js";
 import inquiryRouter from "../routes/InquiryRoutes.js";
 import eventRouter from "../routes/EventRoutes.js";
 import businessRouter from "../routes/BusinessRoutes.js";
+import notificationRouter from "../routes/NotificationRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import aiRouter from "../routes/AiRoutes.js";
@@ -100,6 +101,7 @@ app.use("/api/user", userRouter);
 app.use("/api/inquiry", inquiryRouter);
 app.use("/api/event", eventRouter);
 app.use("/api/businesses", businessRouter);
+app.use("/api/notifications", notificationRouter);  // ✅ NEW NOTIFICATION ROUTE
 app.use("/api/ai", aiRouter);
 app.use("/api/graphhopper", graphHopperRouter);
 app.use("/api/userManagement", UserManagementRouter);
