@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/MapLayers.css';
-import roadmap from '../assets/roadmap.png';
-import satellite from '../assets/satellite.png';
-import terrain from '../assets/terrain.png';
-import hybrid from '../assets/hybrid.png';
+import roadmap from '../assets/roadmap(2).png';
+import satellite from '../assets/satellite(2).png';
 
 const basemaps = [
   {

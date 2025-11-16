@@ -205,12 +205,25 @@
   font-weight: 500;
   color: #555;
   transition: all 0.2s ease;
-  min-width: 120px; /* Reduced minimum width */
-  max-width: 200px; /* Added maximum width */
+  min-width: 120px;
+  max-width: 200px;
   justify-content: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* New: Selected icon beside text in mobile toggle */
+.dropdown-selected-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px; /* align with .dropdown-toggle-icon */
+  color: #555;
+}
+
+.dropdown-toggle-button:hover .dropdown-selected-icon {
+  color: #007bff;
 }
 
 .dropdown-toggle-button:hover {

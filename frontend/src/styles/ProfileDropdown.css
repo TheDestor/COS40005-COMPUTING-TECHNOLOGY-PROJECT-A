@@ -191,7 +191,7 @@
 
   .profile-button {
     width: 36px;
-    height: 36px;
+    height: 40px;
     font-size: 16px;
   }
 
@@ -250,8 +250,8 @@
   }
 
   .profile-button {
-    /* width: 32px;
-    height: 32px; */
+    width: 32px;
+    height: 36px; 
     font-size: 14px;
   }
 
@@ -340,15 +340,15 @@
 /* Small Mobile Phones (320px and below) */
 @media (max-width: 320px) {
   .profile-button {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     font-size: 12px;
   }
 
-  .profile-icon3 {
+  /* .profile-icon3 {
     width: 28px;
     height: 28px;
-  }
+  } */
 
   .icon-wrapper2 {
     width: 24px;

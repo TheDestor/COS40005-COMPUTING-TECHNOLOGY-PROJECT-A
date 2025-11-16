@@ -3172,7 +3172,7 @@ p {
   .confirm-modal { padding: 20px; max-width: 92%; }
   .confirm-modal-title { font-size: 18px; }
   .confirm-modal-body { font-size: 14px; }
-  .confirm-modal-actions { flex-direction: column; }
+  /* .confirm-modal-actions { flex-direction: column; } */
   /* .modal-cancel-btn, .modal-confirm-btn { width: 100%; } */
 }
 

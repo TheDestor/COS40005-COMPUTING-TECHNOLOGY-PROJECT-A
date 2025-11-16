@@ -127,6 +127,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
     const formData = new FormData();
     formData.append('avatar', selectedFile);
 
+    const toastId = toast.loading('Updating image...');
     try {
       const response = await ky.post(
         "/api/user/updateAvatar",
@@ -137,12 +138,14 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
       ).json();
 
       if (response.url) {
-        onUploadSuccess(response.url);
+        onUploadSuccess(response.url, toastId);
         onClose();
       } else {
+        toast.error('Failed to update image.', { id: toastId });
         console.log("Upload failed no URL hsa been returned");
       }
     } catch (error) {
+      toast.error('Error updating image.', { id: toastId });
       console.error("Upload error:", error);
     }
   }, [selectedFile, accessToken, onUploadSuccess, onClose]);
@@ -205,7 +208,7 @@ const AvatarModal = ({ onClose, onUploadSuccess, accessToken, currentAvatarUrl }
         </div>
 
         <div className="modal-actions">
-          <button onClick={onClose} className="cancel-btn6">Cancel</button>
+          <button onClick={onClose} className="cancel-btn">Cancel</button>
           <button onClick={handleSave} className="save-btn-ps" disabled={!selectedFile}>Save</button>
         </div>
       </div>
@@ -314,78 +317,94 @@ const ProfileSettingsPage = () => {
   };
 
   const handleUpdateProfile = async () => {
-        const updatePayload = {
-            _id: user._id,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            nationality: selectedCountry.name,
-        };
+    const updatePayload = {
+      _id: user._id,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      nationality: selectedCountry.name,
+    };
 
-        try {
-            const response = await ky.post(
-                "/api/user/updateUserProfile",
-                {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-                    json: updatePayload,
-                    credentials: 'include'
-                }
-            ).json();
-
-            const { success, message } = response;
-
-            if (success) {
-                if (updateUserContext && response) {
-                    updateUserContext(response.updatedUser)
-                }
-                toast.success('Profile updated successfully');
-                setIsEditingProfile(false);
-            } else {
-                toast.error(message || 'Failed to update profile');
-                console.error(message);
-            }
-        } catch (error) {
-            let msg = 'Failed to update profile';
-            if (error.response) {
-                try {
-                    const errJson = await error.response.json();
-                    msg = errJson?.message || msg;
-                } catch {}
-            } else {
-                msg = error.message || msg;
-            }
-            toast.error(msg);
-            console.error("Error updating profile:", error);
-        } finally {
-            setShowConfirmModal(false);
+    const toastId = toast.loading('Saving profile changes...');
+    try {
+      const response = await ky.post(
+        "/api/user/updateUserProfile",
+        {
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+          json: updatePayload,
+          credentials: 'include'
         }
-    }
+      ).json();
 
-  const handleAvatarUploadSuccess = useCallback((newAvatarUrl) => {
+      const { success, message } = response;
+
+      if (success) {
+        if (updateUserContext && response) {
+          updateUserContext(response.updatedUser);
+        }
+        toast.success('Profile updated successfully', { id: toastId });
+        setIsEditingProfile(false);
+      } else {
+        toast.error(message || 'Failed to update profile', { id: toastId });
+        console.error(message);
+      }
+    } catch (error) {
+      let msg = 'Failed to update profile';
+      if (error.response) {
+        try {
+          const errJson = await error.response.json();
+          msg = errJson?.message || msg;
+        } catch {}
+      } else {
+        msg = error.message || msg;
+      }
+      toast.error(msg, { id: toastId });
+      console.error("Error updating profile:", error);
+    } finally {
+      setShowConfirmModal(false);
+    }
+  };
+
+  const handleAvatarUploadSuccess = useCallback((newAvatarUrl, toastId) => {
     if (updateUserContext) {
       updateUserContext({ ...user, avatarUrl: newAvatarUrl });
     }
+    toast.success('Profile image updated successfully', { id: toastId });
     setShowPhotoModal(false);
   }, [updateUserContext, user]);
 
+  // Add: confirmation modal for removing avatar/image
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!showRemoveConfirm) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowRemoveConfirm(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showRemoveConfirm]);
+
   const handleRemoveAvatar = async () => {
-    if (window.confirm("Are you sure you want to remove your profile picture?")) {
-      try {
-        const response = await ky.post(
-          "/api/user/removeAvatar",
-          { headers: { 'Authorization': `Bearer ${accessToken}` } }
-        ).json();
-  
-        if (response.success) {
-          updateUserContext({avatarUrl: null});
-          console.log("Avatar removed successfully");
-        } else {
-          console.log(response.message || "Failed to remove avatar.");
-        }
-      } catch (error) {
-        console.error("Error removing avatar:", error);
+    const toastId = toast.loading('Removing image...');
+    try {
+      const response = await ky.post(
+        "/api/user/removeAvatar",
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      ).json();
+
+      if (response.success) {
+        updateUserContext({ avatarUrl: null });
+        toast.success("Image removed.", { id: toastId });
+      } else {
+        toast.error(response.message || "Failed to remove image.", { id: toastId });
       }
+    } catch (error) {
+      toast.error("Error removing image.", { id: toastId });
+      console.error("Error removing avatar:", error);
+    } finally {
+      setShowRemoveConfirm(false);
     }
-  }
+  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -413,7 +432,13 @@ const ProfileSettingsPage = () => {
                   <MdOutlinePhoto /> Change
                 </button>
 
-                <button className="remove-btn" onClick={handleRemoveAvatar} disabled={!user?.avatarUrl}><MdDelete /> Remove</button>
+                <button
+                  className="remove-btn"
+                  onClick={() => setShowRemoveConfirm(true)}
+                  disabled={!user?.avatarUrl}
+                >
+                  <MdDelete /> Remove
+                </button>
               </div>
               <div className="field-group nationality-group">
                 <label>Nationality</label>
@@ -578,6 +603,28 @@ const ProfileSettingsPage = () => {
             <div className="popup-actions">
               <button className="modal-cancel-btn" onClick={() => setShowConfirmModal(false)}>Cancel</button>
               <button className="modal-confirm-btn" onClick={handleUpdateProfile}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New: Remove Image confirmation modal */}
+      {showRemoveConfirm && (
+        <div
+          className="confirm-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-image-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowRemoveConfirm(false);
+          }}
+        >
+          <div className="confirm-modal" role="document">
+            <h4 id="remove-image-title">Are you sure you want to remove this image?</h4>
+            <p>This action will remove your current profile image.</p>
+            <div className="popup-actions">
+              <button className="modal-cancel-btn" onClick={() => setShowRemoveConfirm(false)}>Cancel</button>
+              <button className="modal-confirm-btn" onClick={handleRemoveAvatar}>Confirm</button>
             </div>
           </div>
         </div>

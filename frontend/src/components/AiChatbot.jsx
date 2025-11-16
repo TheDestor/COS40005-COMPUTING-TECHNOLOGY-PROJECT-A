@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles/AiChatbot.css';
-import { IoIosSend, IoIosArrowDown } from "react-icons/io";
+import { IoIosSend, IoIosArrowDown, IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { RxCross1, RxReset } from "react-icons/rx";
 import { RiRobot2Fill } from "react-icons/ri";
 import AiLogo from '../assets/AiLogo.gif';
@@ -30,6 +30,88 @@ export default function AiChatbot({ visibleByDefault = false }) {
 		'Plan a 2-day 1-night trip in Kuching',
 		'Cultural sites to visit',
 	];
+    const suggRef = useRef(null);
+    const [suggPage, setSuggPage] = useState(0);
+    const [suggPages, setSuggPages] = useState(1);
+    const [showScrollbar, setShowScrollbar] = useState(true); // toggle if needed
+    const touchStateRef = useRef({ down: false, startX: 0, startScroll: 0 });
+
+    const recalcPages = () => {
+        const el = suggRef.current;
+        if (!el) return;
+        const pages = Math.max(1, Math.ceil(el.scrollWidth / el.clientWidth));
+        setSuggPages(pages);
+        const page = Math.round(el.scrollLeft / el.clientWidth);
+        setSuggPage(Math.min(pages - 1, Math.max(0, page)));
+    };
+
+    useEffect(() => {
+        // Recalc on open/resize
+        const onResize = () => recalcPages();
+        window.addEventListener('resize', onResize);
+        const id = setTimeout(recalcPages, 0);
+        return () => {
+            window.removeEventListener('resize', onResize);
+            clearTimeout(id);
+        };
+    }, [open]);
+
+    const onSuggestionsScroll = () => {
+        const el = suggRef.current;
+        if (!el) return;
+        const page = Math.round(el.scrollLeft / el.clientWidth);
+        setSuggPage(Math.min(suggPages - 1, Math.max(0, page)));
+    };
+
+    const scrollPage = (dir) => {
+        const el = suggRef.current;
+        if (!el) return;
+        const amount = Math.max(120, el.clientWidth - 40);
+        el.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    };
+
+    const scrollToPage = (idx) => {
+        const el = suggRef.current;
+        if (!el) return;
+        const target = Math.min(suggPages - 1, Math.max(0, idx));
+        el.scrollTo({ left: target * el.clientWidth, behavior: 'smooth' });
+    };
+
+    const onSuggestionsKeyDown = (e) => {
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            scrollPage(1);
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            scrollPage(-1);
+        }
+    };
+
+    const getX = (e) => (e.touches && e.touches[0]?.clientX) ?? e.clientX;
+    const onTouchStart = (e) => {
+        const el = suggRef.current;
+        if (!el) return;
+        touchStateRef.current.down = true;
+        touchStateRef.current.startX = getX(e);
+        touchStateRef.current.startScroll = el.scrollLeft;
+    };
+    const onTouchMove = (e) => {
+        const el = suggRef.current;
+        const st = touchStateRef.current;
+        if (!el || !st.down) return;
+        const dx = getX(e) - st.startX;
+        el.scrollLeft = st.startScroll - dx; // natural drag
+    };
+    const snapToNearestPage = () => {
+        const el = suggRef.current;
+        if (!el) return;
+        const page = Math.round(el.scrollLeft / el.clientWidth);
+        scrollToPage(page);
+    };
+    const onTouchEnd = () => {
+        touchStateRef.current.down = false;
+        snapToNearestPage();
+    };
 
 	useEffect(() => {
 		if (open) {
@@ -106,9 +188,20 @@ export default function AiChatbot({ visibleByDefault = false }) {
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
 
-	// Minimal, safe-ish markdown (bold, italic, ### heading, line breaks)
+	// Strip model control tokens like <|begin_of_sentence|> or fullwidth variants
+	const normalizeModelOutput = (text) => {
+		return String(text)
+			.replace(/<\|\s*begin[^|>]*\|>/gi, '')
+			.replace(/<\|\s*end[^|>]*\|>/gi, '')
+			.replace(/[＜<][\|｜]?begin[^＜>｜|]*[\|｜]?[＞>]/gi, '')
+			.replace(/[＜<][\|｜]?end[^＜>｜|]*[\|｜]?[＞>]/gi, '')
+			.replace(/<\|\s*im_start\s*\|>|<\|\s*im_end\s*\|>/gi, '')
+			.replace(/<\/s>|<s>/gi, '');
+	};
+
+	// Minimal, safe-ish markdown (bold, italic, #/##/### heading, line breaks)
 	const mdToHtmlLite = (text) => {
-        const esc = escapeHtml(text);
+        const esc = escapeHtml(normalizeModelOutput(text));
         const lines = esc.split('\n');
     
         let res = [];
@@ -147,11 +240,15 @@ export default function AiChatbot({ visibleByDefault = false }) {
                 continue;
             }
     
-            // headings (### ...)
-            if (line.startsWith('### ')) {
+            // headings (#, ##, ###)
+            const mH = raw.match(/^\s*(#{1,3})\s+(.*)$/);
+            if (mH) {
                 flushPara();
                 closeLists();
-                res.push('<div class="ai-h3">' + inline(line.slice(4)) + '</div>');
+                const level = mH[1].length;
+                const text = inline(mH[2]);
+                const cls = level === 1 ? 'ai-h1' : level === 2 ? 'ai-h2' : 'ai-h3';
+                res.push(`<div class="${cls}">${text}</div>`);
                 continue;
             }
     
@@ -239,14 +336,15 @@ export default function AiChatbot({ visibleByDefault = false }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: MODEL, messages: newMessages })
             });
-    
+
             if (!res.ok) {
                 const t = await res.text().catch(() => '');
                 throw new Error(`Request failed (${res.status}): ${t || res.statusText}`);
             }
-    
+
             const data = await res.json();
-            const reply = data?.choices?.[0]?.message?.content?.trim() || 'Sorry, I could not generate a response.';
+            const replyRaw = data?.choices?.[0]?.message?.content ?? '';
+            const reply = normalizeModelOutput(replyRaw).trim();
             typewriterAppend(reply);
         } catch (err) {
             setError(err.message || 'Unexpected error');
@@ -350,11 +448,36 @@ export default function AiChatbot({ visibleByDefault = false }) {
                         </button>
                     </div>
 
-                    <div className="ai-suggestions">
-                        {suggestions.map((s, idx) => (
-                            <button key={idx} className="ai-chip" onClick={() => handleSuggestionClick(s)}>
-                                {s}
-                            </button>
+                    <div className="ai-suggestions-nav">
+                        <div
+                            className={`ai-suggestions ${showScrollbar ? 'show-scrollbar' : 'hide-scrollbar'}`}
+                            ref={suggRef}
+                            tabIndex={0}
+                            role="region"
+                            aria-label="AI suggestions"
+                            onKeyDown={onSuggestionsKeyDown}
+                            onScroll={onSuggestionsScroll}
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                        >
+                            {suggestions.map((s, idx) => (
+                                <button key={idx} className="ai-chip" onClick={() => handleSuggestionClick(s)}>
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="ai-suggest-dots" role="navigation" aria-label="Suggestions pagination">
+                        {Array.from({ length: suggPages }, (_, i) => (
+                            <button
+                                key={i}
+                                className={`ai-suggest-dot ${i === suggPage ? 'active' : ''}`}
+                                onClick={() => scrollToPage(i)}
+                                aria-current={i === suggPage ? 'page' : undefined}
+                                aria-label={`Go to suggestions page ${i + 1}`}
+                            />
                         ))}
                     </div>
 

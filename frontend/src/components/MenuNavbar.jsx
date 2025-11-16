@@ -25,7 +25,7 @@ const MenuNavbar = ({
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState({ name: 'Major Town', icon: <FaLocationDot />, path: '/major-towns' });
+  const [selectedMobileMenuItem, setSelectedMobileMenuItem] = useState({ name: 'Map', icon: <FaMapLocationDot />, path: '/' });
   const location = useLocation();
 
   // 🚀 RATE LIMITING: Track last preload times for each category
@@ -180,8 +180,12 @@ const MenuNavbar = ({
           <button
             className={`dropdown-toggle-button ${selectedMobileMenuItem ? 'active' : ''}`}
             onClick={handleDropdownToggle}
+            aria-label={`Select menu: ${selectedMobileMenuItem?.name || ''}`}
           >
-            <span className="dropdown-toggle-text">{selectedMobileMenuItem.name}</span>
+            <span className="dropdown-selected-icon">
+              {selectedMobileMenuItem?.icon}
+            </span>
+            <span className="dropdown-toggle-text">{selectedMobileMenuItem?.name}</span>
             <span className="dropdown-toggle-icon">
               {isDropdownOpen ? <FiChevronUp /> : <FiChevronDown />}
             </span>

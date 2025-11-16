@@ -968,17 +968,12 @@
     box-sizing: border-box;
   }
 
-  /* Hide text labels to match the image */
-  .label100 {
-    display: none;
-  }
-
   /* Style each icon container to look like the buttons in the image */
   .menu-icon100,
   .menu-item100,
   .menu-item101 {
     margin: 0;
-    width: 50px;
+    width: 60px;
     height: 50px;
     display: flex;
     justify-content: center;
@@ -989,6 +984,14 @@
     transition: background-color 0.2s, transform 0.2s;
     position: relative;
     border: 2px solid transparent;
+  }
+
+  .label100 {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    /* border-radius: 4px; */
+    /* text-transform: uppercase; */
   }
   
   .menu-item101 {
@@ -1005,11 +1008,11 @@
   /* Adjust icon styles for better visibility and touch */
   .icon100,
   .menu-icon100 > svg {
-    font-size: 24px;
+    font-size: 20px;
     margin-bottom: 0;
   }
 
-  /* Highlight the active item */
+  /* Highlight the active item */ 
   .menu-icon100.active,
   .menu-item100.active,
   .menu-item101.active {
@@ -1020,6 +1023,11 @@
   }
 
   /* Make the icon itself blue when active */
+  .menu-item100.active .label100,
+  .menu-item101.active .label100 {
+    color: #007bff;
+  }
+
   .menu-item100.active .icon100,
   .menu-item101.active .icon100,
   .menu-icon100.active > svg {
@@ -1112,15 +1120,15 @@
   .menu-icon100,
   .menu-item100,
   .menu-item101 {
-    width: 44px;
-    height: 44px;
+    width: 55px;
+    height: 50px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
   }
 
   .icon100,
   .menu-icon100 > svg {
-    font-size: 22px;
+    font-size: 20px;
     margin-bottom: 0;
   }
 

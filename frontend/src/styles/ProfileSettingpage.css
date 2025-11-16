@@ -3,7 +3,7 @@
    ========================================================================== */
 .profile-settings-container {
   display: flex;
-  height: 100vh; 
+  /* height: 100vh;  */
   margin-top: 60px;   
   width: 100vw;
   font-family: 'Segoe UI', sans-serif;
@@ -184,6 +184,11 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+  }
+
+  .cancel-btn6:hover {
+    background-color: #f2f2f2;
+    /* box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2); */
   }
   
   .cancel-btn6:active {
@@ -627,7 +632,7 @@
     flex-direction: row;
     justify-content: center;
     gap: 10px;
-    width: 100%;
+    /* width: 100%; */
   }
 
   .change-btn, .remove-btn {
@@ -706,6 +711,11 @@
 
 /* Mobile Phones (480px and below) */
 @media screen and (max-width: 480px) {
+  .main-content {
+    margin: 10px !important;
+    padding: 15px;
+  }
+
   .profile-settings-container {
     margin-top: 70px;
   }
@@ -719,7 +729,7 @@
     height: 75px;
     font-size: 12px;
     padding: 8px 5px;
-    width: calc(25% - 8px);
+    width: calc(25% + 10px);
   }
 
   .sidebar-item123 .sidebar-icon123 {
@@ -742,8 +752,17 @@
   }
 
   .picture-buttons {
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: center;
+  }
+
+  .avatar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .input-with-icon4 button {
+    font-size: 13px;
+    padding: 0;
   }
 
   .change-btn, .remove-btn {
@@ -819,4 +838,150 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+.profile-settings-container {
+  background: linear-gradient(180deg, #f5f8ff 0%, #ffffff 100%);
+}
+
+.main-content {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin: 24px;
+}
+
+.sidebar50 {
+  background-color: #ffffff;
+  border-right: 1px solid #e6eef6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-header-profile h2 {
+  color: #1f2937;
+}
+
+.edit-profile-btn {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.profile-picture img {
+  border: 3px solid #e5e7eb;
+  box-shadow: 0 10px 24px rgba(13, 110, 253, 0.08);
+}
+
+.profile-picture:hover img {
+  border-color: #0d6efd;
+  box-shadow: 0 14px 30px rgba(13, 110, 253, 0.15);
+}
+
+.change-btn {
+  background: linear-gradient(135deg, #0d6efd, #00b4d8);
+  color: white;
+  box-shadow: 0 8px 20px rgba(13, 110, 253, 0.18);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.change-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+}
+
+.remove-btn {
+  background-color: #e53935;
+  color: white;
+  box-shadow: 0 8px 20px rgba(229, 57, 53, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.remove-btn:hover {
+  background-color: #c62828;
+  transform: translateY(-2px);
+}
+
+.cancel-btn6,
+.update-btn,
+.edit-profile-btn,
+.change-btn,
+.remove-btn {
+  outline: none;
+}
+
+.cancel-btn6:focus-visible,
+.update-btn:focus-visible,
+.edit-profile-btn:focus-visible,
+.change-btn:focus-visible,
+.remove-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.35);
+}
+
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.avatar-modal {
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Tabs */
+.tab-header button {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.tab-header button.active {
+  background: #0d6efd;
+  color: white;
+}
+
+.tab-header button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.35);
+}
+
+/* Avatar gallery */
+.avatar-img {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-img:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.avatar-img.selected {
+  box-shadow: 0 0 0 3px #0d6efd;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1rem;
+}
+/* Edit button color and interactions */
+.edit-profile-btn {
+  background: linear-gradient(135deg, #2563eb, #4f46e5); /* vibrant blue-indigo */
+  color: #ffffff;
+  border: none;
+  padding: 6px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+  filter: brightness(1.03);
+}
+
+.edit-profile-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.35);
+}
+
+.edit-profile-btn:active {
+  transform: translateY(0);
 }

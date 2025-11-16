@@ -770,7 +770,7 @@
     display: grid;
     grid-template-columns: 380px 1fr;
     gap: 24px;
-    min-height: 600px;
+    /* min-height: 600px; */
   }
   
   /* ========================================
@@ -2749,7 +2749,7 @@
   display: grid;
   grid-template-columns: 380px 1fr;
   gap: 24px;
-  min-height: 600px;
+  /* min-height: 600px; */
 }
 
 /* ========================================
@@ -4080,6 +4080,7 @@
 
   .business-options {
     padding: 8px 10px;
+    display: block;
   }
   
   .business-statistics {

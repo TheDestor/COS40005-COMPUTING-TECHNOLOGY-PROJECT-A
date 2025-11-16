@@ -835,7 +835,7 @@
 }
 
 @media (max-width: 768px) {
-  .ai-panel { right: 3vw; bottom: 10vh; width: clamp(300px, 84vw, 360px); height: clamp(400px, 70vh, 520px); border-radius: clamp(12px, 2.2vw, 14px); }
+  .ai-panel { right: 3vw; bottom: 11vh; width: clamp(300px, 84vw, 360px); height: clamp(400px, 70vh, 520px); border-radius: clamp(12px, 2.2vw, 14px); }
   .ai-bubble-content p { text-align: left; }
 }
 
@@ -858,4 +858,91 @@
 	z-index: 100040;
   }
   .ai-suggestions { gap: clamp(8px, 3vw, 12px); padding: clamp(8px, 2.8vw, 12px); }
+}
+/* Navigation wrapper for suggestions */
+.ai-suggestions-nav {
+  position: relative;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Keep existing scroller; add smooth behavior and padding for arrows */
+.ai-suggestions {
+  scroll-behavior: smooth;
+  scroll-padding-left: 64px;
+  scroll-padding-right: 64px;
+}
+
+/* Optional scrollbar visibility control */
+.ai-suggestions.hide-scrollbar { scrollbar-width: none; }
+.ai-suggestions.hide-scrollbar::-webkit-scrollbar { display: none; }
+.ai-suggestions.show-scrollbar::-webkit-scrollbar { height: 6px; }
+
+/* Left/right arrows – accessible 48x48px touch targets */
+.ai-suggest-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  z-index: 1;
+}
+.ai-suggest-arrow.left { left: 8px; }
+.ai-suggest-arrow.right { right: 8px; }
+.ai-suggest-arrow:hover { transform: translateY(-50%) scale(1.04); border-color: #93c5fd; }
+.ai-suggest-arrow:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(147,197,253,0.9); }
+.ai-suggest-arrow:active { transform: translateY(-50%) scale(0.98); }
+
+/* Pagination dots/indicators */
+.ai-suggest-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* gap: 8px; */
+  background: #ffffff;
+  /* padding: 8px 12px 12px 12px; */
+  border-top: 0;
+}
+.ai-suggest-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+.ai-suggest-dot::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+.ai-suggest-dot.active::after {
+  width: 10px; height: 10px;
+  background: #2563eb;
+}
+.ai-suggest-dot:hover { transform: scale(1.06); }
+.ai-suggest-dot:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(147,197,253,0.9); }
+
+/* Ensure chips retain touch-friendly size and snap behavior */
+.ai-chip {
+  min-width: 110px;
+  scroll-snap-align: start;
 }

@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthProvider.jsx';
 import NearbyPlacesPanel from './NearbyPlacesPanel';
 import NearbyPlacesDrawer from './NearbyPlacesDrawer';
 import { UseBookmarkContext } from '../context/BookmarkProvider.jsx';
+import { useLocation } from 'react-router-dom';
 
 function ComprehensiveAutocompleteInput({ value, onChange, onSelect, onManualSubmit, placeholder }) {
   const [suggestions, setSuggestions] = useState([]);
@@ -780,10 +781,20 @@ const LeftSidebarTesting = forwardRef(({
   const routeAbortRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const [panelHeight, setPanelHeight] = useState(() => (isMobile ? 30 : undefined));
+  const location = useLocation();
 
   useEffect(() => {
     if (isMobile) setPanelHeight(30);
   }, [isMobile]);
+
+  // Auto-open Business form based on navigation state
+  useEffect(() => {
+    if (location.state?.openBusinessForm) {
+      setShowBusiness(true);
+      // Clear navigation state to avoid re-triggering
+      window.history.replaceState({}, '', location.pathname + location.search);
+    }
+  }, [location.state, location.pathname, location.search]);
 
   // Compute a robust anchor for distance: prefer search selection, then recent selection, then destination
   const anchorCoords = useMemo(() => {
@@ -2212,7 +2223,7 @@ useEffect(() => {
 
       <div className="sidebar100">
         <div
-          className="menu-icon100 menu-icon100-route"
+          className="menu-item100 menu-icon100"
           onClick={toggleSidebar}
           role="button"
           aria-label="Open Route panel"
@@ -2220,7 +2231,7 @@ useEffect(() => {
           onKeyDown={(e) => handleAccessibleKeyDown(e, toggleSidebar)}
         >
           <FaRoute className="icon100" aria-hidden="true" />
-          <span className="label100-route desktop-only">Route</span>
+          <span className="label100 desktop-only">Route</span>
         </div>
         <div
           className={`menu-item100${activeMenu === 'recent' ? ' active' : ''}`}
@@ -2258,7 +2269,7 @@ useEffect(() => {
           <span className="label100">Nearby</span>
         </div>
 
-        {isLoggedIn && user?.role === 'business' && (
+        {isLoggedIn && user?.role === 'business' && !isMobile && (
           <div
             className={`menu-item100${activeMenu === 'business' ? ' active' : ''}`}
             onClick={() => {
@@ -2276,7 +2287,7 @@ useEffect(() => {
           </div>
         )}
 
-        {isLoggedIn && user?.role === 'business' && (
+        {isLoggedIn && user?.role === 'business' && !isMobile && (
           <div
             className={`menu-item100${activeMenu === 'managebusiness' ? ' active' : ''}`}
             onClick={() => {

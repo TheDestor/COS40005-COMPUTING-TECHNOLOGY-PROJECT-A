@@ -831,6 +831,7 @@
   .inquiry-options {
     padding: 10px;
     gap: 10px;
+    display: block;
   }
 
   .inquiry-statistics {

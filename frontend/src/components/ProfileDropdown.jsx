@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { FiSettings, FiInfo, FiBookmark } from 'react-icons/fi';
-import { FaRegUserCircle, FaUser } from "react-icons/fa";
+import { FaRegUserCircle, FaUser, FaBuilding } from "react-icons/fa"; // NEW: icon for Business Form
 import { AiOutlineDashboard } from "react-icons/ai";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider.jsx';
 import '../styles/ProfileDropdown.css';
 import defaultUserImage from "../assets/Kuching.png";
 import { toast } from 'sonner';
+import { MdManageAccounts } from 'react-icons/md'; // NEW: icon for Manage Business
 
 function ProfileDropdown({ onLoginClick, onBookmarkToggle }) {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768; // NEW: mobile check
 
   const handleSuccess = (msg) => {
     toast.success(msg);
@@ -118,6 +120,33 @@ function ProfileDropdown({ onLoginClick, onBookmarkToggle }) {
                   <FiBookmark size={18} />
                   Bookmark
                 </button>
+
+                {/* NEW: Move Business actions into profile dropdown for mobile */}
+                {isMobile && user?.role === 'business' && (
+                  <>
+                    <button
+                      className="menu-item51"
+                      onClick={() => {
+                        navigate('/', { state: { openBusinessForm: true } });
+                        setIsOpen(false);
+                      }}
+                    >
+                      <FaBuilding size={18} />
+                      Business Form
+                    </button>
+                    <button
+                      className="menu-item51"
+                      onClick={() => {
+                        navigate('/manage-business');
+                        setIsOpen(false);
+                      }}
+                    >
+                      <MdManageAccounts size={18} />
+                      Manage Business
+                    </button>
+                  </>
+                )}
+
                 <button className="menu-item51" onClick={() => { navigate('/profile-settings'); setIsOpen(false); }}>
                   <FaRegUserCircle size={18} />
                   Profile Setting
@@ -145,6 +174,6 @@ function ProfileDropdown({ onLoginClick, onBookmarkToggle }) {
       )}
     </div>
   );
-};
+}
 
 export default ProfileDropdown;

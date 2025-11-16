@@ -3410,7 +3410,7 @@ const getMinStartTimeForDate = (dateOrYmd) => {
                     confirmAction === 'publish'
                       ? 'modal-confirm-btn'
                       : confirmAction === 'delete'
-                        ? 'modal-delete-btn-av'
+                        ? 'modal-delete-btn'
                         : 'modal-confirm-btn'
                   }
                   onClick={handleConfirm}
