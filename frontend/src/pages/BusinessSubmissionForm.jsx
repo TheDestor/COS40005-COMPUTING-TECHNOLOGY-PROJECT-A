@@ -16,7 +16,7 @@ import {
   FaArrowRight,
 } from 'react-icons/fa';
 import '../styles/BusinessSubmissionForm.css';
-import ky from 'ky';
+import api from '../utils/api';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -477,12 +477,9 @@ const BusinessSubmissionForm = ({ isOpen, onClose, onSubmitSuccess }) => {
           // Set initial status
           formDataToSend.append('status', 'pending');
 
-          // Main API call to backend endpoint using ky
-          const responseData = await ky.post('/api/businesses/addBusiness', {
+          // Main API call to backend endpoint using api client with auto token refresh
+          const responseData = await api.post('api/businesses/addBusiness', {
             body: formDataToSend,
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
           }).json();
 
           console.log('Submission successful:', responseData);

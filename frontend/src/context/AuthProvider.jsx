@@ -57,14 +57,70 @@ export const AuthProvider = ({ children }) => {
             setAccessToken(token);
             // Set the user as logged in
             setIsLoggedIn(true);
+            
+            // 🆕 Store token in localStorage for persistence
+            localStorage.setItem('accessToken', token);
         } catch (error) {
             console.error("Failed to decode token or set user:", error);
             // Reset auth state as logged out
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
+            localStorage.removeItem('accessToken');
         }
     }, []);
+
+    // 🆕 NEW: Refresh access token function
+    const refreshAccessToken = useCallback(async () => {
+        try {
+            console.log('🔄 Attempting to refresh token...');
+            
+            const response = await ky.post('/api/auth/refresh', {
+                credentials: 'include',
+                timeout: 10000
+            }).json();
+
+            if (response.success && response.accessToken) {
+                console.log('✅ Token refreshed successfully');
+                processToken(response.accessToken);
+                return response.accessToken;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('❌ Token refresh failed:', error);
+            
+            // If refresh fails, logout user
+            setIsLoggedIn(false);
+            setUser(null);
+            setAccessToken(null);
+            localStorage.removeItem('accessToken');
+            return null;
+        }
+    }, [processToken]);
+
+    // 🆕 NEW: Check token expiration and refresh if needed
+    const checkAndRefreshToken = useCallback(async () => {
+        const token = accessToken || localStorage.getItem('accessToken');
+        if (!token) return null;
+
+        try {
+            const decoded = jwtDecode(token);
+            const currentTime = Date.now() / 1000;
+            const timeUntilExpiry = decoded.exp - currentTime;
+
+            // Refresh if token expires in less than 2 minutes
+            if (timeUntilExpiry < 120) {
+                console.log('⏰ Token expiring soon, refreshing...');
+                return await refreshAccessToken();
+            }
+
+            return token;
+        } catch (error) {
+            console.error('Error checking token:', error);
+            return await refreshAccessToken();
+        }
+    }, [accessToken, refreshAccessToken]);
 
     // Check the users authentication status on initial load
     const checkAuthStatus = useCallback(async () => {
@@ -93,57 +149,27 @@ export const AuthProvider = ({ children }) => {
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
+            localStorage.removeItem('accessToken');
         } finally {
             setIsLoading(false);
         }
     }, [processToken]);
-    // const checkAuthStatus = useCallback(async () => {
-    //     console.log("Checking auth status");
-    //     setIsLoading(true);
-    
-    //     const maxRetries = 3;
-    //     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-    
-    //     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    //         try {
-    //             const response = await ky.get("/api/auth/refresh", {
-    //                 credentials: 'include',
-    //             }).json();
-    
-    //             console.log("AuthProvider: Refresh response", response);
-    //             processToken(response.accessToken);
-    //             console.log("AuthProvider: Refresh successful.");
-    //             return; // Success: exit function
-    //         } catch (error) {
-    //             const status = error.response?.status;
-    //             const message = await error.response?.text();
-    
-    //             if (status === 401 || status === 403) {
-    //                 console.log("User not authenticated. This can be safely ignored.");
-    //                 break; // Don't retry unauthorized
-    //             }
-    
-    //             if (attempt < maxRetries) {
-    //                 console.warn(`Retry attempt ${attempt} failed. Retrying...`, message);
-    //                 await delay(1000 * Math.pow(2, attempt)); // exponential backoff: 2s, 4s, 8s...
-    //             } else {
-    //                 console.error("AuthProvider: Refresh API failed after retries:", message || error.message);
-    //             }
-    //         }
-    //     }
-    
-    //     // If we reach here, all attempts failed — reset auth state
-    //     setIsLoggedIn(false);
-    //     setUser(null);
-    //     setAccessToken(null);
-    //     setIsLoading(false);
-    // }, [processToken]);
-    
 
     // Run auth status check when the auth provider mounts
     useEffect(() => {
         checkAuthStatus();
     }, [checkAuthStatus]);
+
+    // 🆕 NEW: Set up automatic token refresh (every 5 minutes)
+    useEffect(() => {
+        if (!accessToken || !isLoggedIn) return;
+
+        const interval = setInterval(() => {
+            checkAndRefreshToken();
+        }, 5 * 60 * 1000); // Check every 5 minutes
+
+        return () => clearInterval(interval);
+    }, [accessToken, isLoggedIn, checkAndRefreshToken]);
 
     /**
      * Logs the user in by sending credentials to the login endpoint.
@@ -180,6 +206,7 @@ export const AuthProvider = ({ children }) => {
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
+            localStorage.removeItem('accessToken');
             if (error.response) {
                 try {
                     const errorJson = await error.response.json();
@@ -205,6 +232,7 @@ export const AuthProvider = ({ children }) => {
             setAccessToken(null);
             setUser(null);
             setIsLoggedIn(false);
+            localStorage.removeItem('accessToken');
             console.log("Logged out");
         }
     };
@@ -226,22 +254,21 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     function setUpRecaptcha(identifier) {
-    if (!auth) {
-        console.error("Firebase auth is undefined!");
-        return;
-    }
-    console.log(auth);
-    
-    const recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {},
+        if (!auth) {
+            console.error("Firebase auth is undefined!");
+            return;
+        }
+        console.log(auth);
         
-    );
-    recaptchaVerifier.render();
-    return signInWithPhoneNumber(auth, identifier, recaptchaVerifier);
-}
-
+        const recaptchaVerifier = new RecaptchaVerifier(
+            auth,
+            "recaptcha-container",
+            {},
+            
+        );
+        recaptchaVerifier.render();
+        return signInWithPhoneNumber(auth, identifier, recaptchaVerifier);
+    }
 
     // The value object provided to the AuthContext.Consumer components.
     // It includes the authentication state and functions to modify it.
@@ -253,7 +280,9 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         updateUserContext,
-        setUpRecaptcha
+        setUpRecaptcha,
+        refreshAccessToken,      // 🆕 NEW: Expose refresh function
+        checkAndRefreshToken     // 🆕 NEW: Expose check function
     };
 
     // Render the AuthContext.Provider, passing the 'value' object.
