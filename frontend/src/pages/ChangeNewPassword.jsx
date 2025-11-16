@@ -1,6 +1,6 @@
 // ChangeNewPassword component
 import React, { useState } from "react";
-import ky from "ky";
+import api from "../utils/api";
 import { useAuth } from "../context/AuthProvider.jsx";
 import "../styles/ChangeNewPassword.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -80,12 +80,10 @@ function ChangeNewPassword({ showProviderNote }) {
         const toastId = toast.loading('Updating password...');
         setIsUpdating(true);
         try {
-            const response = await ky.post(
-                "/api/user/updatePassword",
+            const response = await api.post(
+                "api/user/updatePassword",
                 {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
                     json: { currentPassword, newPassword },
-                    credentials: 'include'
                 }
             ).json();
 
@@ -126,10 +124,9 @@ function ChangeNewPassword({ showProviderNote }) {
                 password: user?.authProvider === "google" ? undefined : formData.currentPassword,
             };
 
-            await ky
-                .delete("/api/user/deleteAccount", {
+            await api
+                .delete("api/user/deleteAccount", {
                     json: payload,
-                    headers: { Authorization: `Bearer ${accessToken}` },
                 })
                 .json();
 
