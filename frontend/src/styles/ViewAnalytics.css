@@ -1520,8 +1520,7 @@
 
 @media screen and (max-width: 768px) {
   .viewanalytics-container {
-    grid-template-columns: 1fr; /* Ensures a single column */
-    /* Redefine grid-template-areas to stack all charts vertically */
+    grid-template-columns: 1fr;
     grid-template-areas:
       "user-engagement"
       "business-participation"
@@ -1533,23 +1532,48 @@
     padding: 10px;
   }
 
-  /* Further adjustments for mobile */
-  .ue-card,
-  .business-chart-wrapper,
-  .traffic-card,
-  .device-chart-card,
-  .browser-card,
+  /* Fix for Users Overview chart overflow */
   .UO_chart-container {
+    overflow: hidden;
     padding: 1rem;
   }
 
-  .stats {
-    flex-direction: column;
+  .chart-wrapper {
+    width: 100%;
+    overflow-x: auto;
   }
 
-  .stat-box {
-    flex: 1 1 100%;
-    min-width: 100%;
+  .UO_chart-svg {
+    width: 100%;
+    min-width: 600px; /* Ensure chart has enough space */
+    height: 300px;
+    margin-left: 0;
+    top: 0;
+  }
+
+  /* Adjust header layout for mobile */
+  .UO_chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    height: auto;
+    min-height: 90px;
+  }
+
+  .UO_dropdown-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Ensure data summary fits */
+  .data-summary {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .summary-item {
+    width: 100%;
   }
 }
 
