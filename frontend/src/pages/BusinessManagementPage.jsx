@@ -345,17 +345,25 @@ const BusinessManagement = () => {
           setBusinessCategories([]);
         }
         
-        // Select first business by default if no business is selected and we have data
+        // 👇 FIXED: Preserve selected business during auto-refresh
         if (businessData.length > 0) {
-          if (!selectedBusiness || !businessData.find(b => b._id === selectedBusiness._id)) {
+          // If there's a currently selected business, try to keep it selected
+          if (selectedBusiness) {
+            const stillExists = businessData.find(b => b._id === selectedBusiness._id);
+            if (stillExists) {
+              // Update the selected business with fresh data
+              setSelectedBusiness(stillExists);
+            } else {
+              // Business was deleted, select first one
+              setSelectedBusiness(businessData[0]);
+            }
+          } else {
+            // No business selected yet, select the first one
             setSelectedBusiness(businessData[0]);
           }
         } else {
           setSelectedBusiness(null);
         }
-        
-        // Clear any previous errors on successful fetch
-        setError(null);
 
         // Show refresh notification if manually refreshed
         if (showRefreshNotification) {
@@ -417,7 +425,7 @@ const BusinessManagement = () => {
     }, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
-  }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory]);
+  }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory, selectedBusiness]); // ADDED selectedBusiness
 
 
   // Initial notification loading
@@ -453,10 +461,14 @@ const BusinessManagement = () => {
   // Function to handle business selection
   const handleSelectBusiness = (business) => {
     setSelectedBusiness(business);
+    
+    // FIXED: Always start with empty textarea (saved notes show in green box)
+    setAdminNotes('');
+    
     if (isMobile) {
       setShowBusinessDetail(true);
     }
-  
+
     // If the business was pending, mark it as in-review
     if (business.status === 'pending') {
       handleUpdateBusinessStatus(business._id, 'in-review');
@@ -622,18 +634,68 @@ const BusinessManagement = () => {
     }
   };
 
-  // Handler for submitting admin notes
-  const handleSubmitNotes = (e) => {
+  // Handler for submitting internal admin notes
+  const handleSubmitNotes = async (e) => {
     e.preventDefault();
-    if (!adminNotes.trim() || !selectedBusiness) return;
+    if (!selectedBusiness) return;
     
-    // Here you could save the notes to the backend if needed
-    console.log(`Admin notes for business #${selectedBusiness._id}:`, adminNotes);
+    // Get new notes
+    const newNotes = adminNotes.trim();
+    if (!newNotes) {
+      toast.error('Please enter some notes before saving');
+      return;
+    }
     
-    // Add notification for notes saved
-    addLocalNotification(`Notes saved for business "${selectedBusiness.name}"`, 'success');
-    toast.success(`Notes saved for business "${selectedBusiness.name}"`);
-    setAdminNotes('');
+    try {
+      // 👇 APPEND: Combine existing notes with new notes
+      const existingNotes = selectedBusiness.internalAdminNotes || '';
+      const timestamp = new Date().toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Format: [Date] New note
+      const formattedNewNote = `[${timestamp}] ${newNotes}`;
+      
+      // Combine: existing + new (separated by double newline)
+      const combinedNotes = existingNotes 
+        ? `${existingNotes}\n\n${formattedNewNote}`
+        : formattedNewNote;
+      
+      const response = await authAxios.patch(
+        `/api/businesses/updateInternalAdminNotes/${selectedBusiness._id}`,
+        { internalAdminNotes: combinedNotes }
+      );
+      
+      if (response.data.success) {
+        const updatedBusiness = response.data.data;
+        
+        // Update businesses list
+        const updatedBusinesses = businesses.map(item => {
+          if (item._id === selectedBusiness._id) {
+            return { ...item, internalAdminNotes: updatedBusiness.internalAdminNotes };
+          }
+          return item;
+        });
+        setBusinesses(updatedBusinesses);
+        
+        // Update selected business
+        setSelectedBusiness(updatedBusiness);
+        
+        // 👇 Clear textarea after saving
+        setAdminNotes('');
+        
+        toast.success(`Note added successfully!`);
+      } else {
+        toast.error(response.data.message || 'Failed to save internal notes');
+      }
+    } catch (error) {
+      console.error('Error saving internal notes:', error);
+      toast.error('Failed to save internal notes');
+    }
   };
 
   // Manual refresh handler
@@ -1466,22 +1528,88 @@ const BusinessManagement = () => {
                     </div>
                   </div>
                   
-                  <div className="admin-notes compact-notes">
-                    <h4>Admin Notes:</h4>
-                    <form onSubmit={handleSubmitNotes}>
+                  {/* 👇 NEW BEAUTIFUL ADMIN NOTES SECTION */}
+                  <div className="admin-notes-section">
+                    <div className="admin-notes-header">
+                      <h4>📝 Internal Admin Notes</h4>
+                      <span className="admin-notes-badge">Private - Admin Only</span>
+                    </div>
+                    
+                    <p className="admin-notes-description">
+                      💡 These notes are private and only visible to administrators. Business owners cannot see this.
+                    </p>
+                    
+                    {/* Show saved notes in a nice display box */}
+                    {selectedBusiness?.internalAdminNotes && (
+                      <div className="saved-notes-display">
+                        <div className="saved-notes-header">
+                          <span className="saved-notes-label">✅ Saved Notes:</span>
+                          <button 
+                            type="button"
+                            className="clear-notes-btn"
+                            onClick={async () => {
+                              if (window.confirm('⚠️ This will permanently delete ALL internal notes for this business. Are you sure?')) {
+                                try {
+                                  const response = await authAxios.patch(
+                                    `/api/businesses/updateInternalAdminNotes/${selectedBusiness._id}`,
+                                    { internalAdminNotes: null }
+                                  );
+                                  
+                                  if (response.data.success) {
+                                    const updatedBusiness = response.data.data;
+                                    
+                                    // Update businesses list
+                                    const updatedBusinesses = businesses.map(item => {
+                                      if (item._id === selectedBusiness._id) {
+                                        return { ...item, internalAdminNotes: null };
+                                      }
+                                      return item;
+                                    });
+                                    setBusinesses(updatedBusinesses);
+                                    
+                                    // Update selected business
+                                    setSelectedBusiness(updatedBusiness);
+                                    
+                                    // Clear textarea
+                                    setAdminNotes('');
+                                    
+                                    toast.success('All internal notes deleted');
+                                  }
+                                } catch (error) {
+                                  console.error('Error clearing notes:', error);
+                                  toast.error('Failed to clear notes');
+                                }
+                              }
+                            }}
+                            title="Delete all notes permanently"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        <div className="saved-notes-content">
+                          {selectedBusiness.internalAdminNotes}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <form onSubmit={handleSubmitNotes} className="admin-notes-form">
                       <textarea
-                        className="compact-textarea"
-                        placeholder="Add notes or comments about this business listing..."
+                        className="admin-notes-textarea"
+                        placeholder="Add a new note... (e.g., 'Called owner', 'Approved documents', 'Needs follow-up')"
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
+                        rows={4}
                       ></textarea>
-                      <div className="notes-actions">
+                      
+                      <div className="admin-notes-footer">
+                        <div className="notes-char-count">
+                          {adminNotes.length} characters
+                        </div>
                         <button 
                           type="submit" 
-                          className="save-notes-btn"
-                          disabled={!adminNotes.trim()}
+                          className="save-notes-btn-new"
                         >
-                          <FaCheck /> Save Notes
+                          <FaCheck /> Add Note
                         </button>
                       </div>
                     </form>

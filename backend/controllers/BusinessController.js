@@ -395,6 +395,60 @@ export const updateBusinessStatus = async (req, res) => {
     }
 };
 
+// NEW: Update internal admin notes (admin only)
+export const updateInternalAdminNotes = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { internalAdminNotes } = req.body;
+        
+        // Validate ID format
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid business ID format"
+            });
+        }
+        
+        // Find business first to check if it exists
+        const business = await businessModel.findById(id);
+        if (!business) {
+            return res.status(404).json({
+                success: false,
+                message: "Business not found"
+            });
+        }
+
+        // Authorization check: Only admin can update internal notes
+        const isAdmin = req.role === 'cbt_admin';
+        if (!isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Only admins can update internal notes."
+            });
+        }
+
+        // Update internal notes
+        const updatedBusiness = await businessModel.findByIdAndUpdate(
+            id,
+            { internalAdminNotes: internalAdminNotes ? String(internalAdminNotes).trim() : null },
+            { new: true, runValidators: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            message: "Internal admin notes updated successfully",
+            data: updatedBusiness
+        });
+    } catch (error) {
+        console.error("Error updating internal admin notes:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to update internal admin notes",
+            error: error.message
+        });
+    }
+};
+
 // Get all businesses by owner (authenticated user), any status
 export const getBusinessesByOwner = async (req, res) => {
   try {
