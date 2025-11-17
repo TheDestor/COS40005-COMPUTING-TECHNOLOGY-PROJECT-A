@@ -49,8 +49,8 @@ function LoginPage({ onClose }) {
         typeof api.render === 'function'
           ? api.render
           : api.enterprise && typeof api.enterprise.render === 'function'
-          ? api.enterprise.render
-          : null;
+            ? api.enterprise.render
+            : null;
 
       if (!renderFn) {
         setRecaptchaError('Verification unavailable. Please refresh or try again.');
@@ -140,6 +140,11 @@ function LoginPage({ onClose }) {
     } catch (error) {
       console.error('An error occured during login:', error);
       toast.error('Login failed. Please try again.');
+    } finally {
+      if (window.grecaptcha && captchaWidgetIdRef.current !== null) {
+        window.grecaptcha.reset(captchaWidgetIdRef.current);
+      }
+      setRecaptchaToken(null);
     }
   };
 
@@ -161,7 +166,7 @@ function LoginPage({ onClose }) {
             'postLoginToast',
             JSON.stringify({ type: 'success', message: 'Google login successful!' })
           );
-        } catch {}
+        } catch { }
         window.location.reload();
         // toast after reload (handled globally)
       } else {
@@ -180,27 +185,27 @@ function LoginPage({ onClose }) {
 
   // Close button behavior: route-aware and state-preserving
   const handleClose = () => {
-      // If used as an overlay/modal, just close it
-      if (typeof onClose === 'function') {
-          onClose();
-          return;
-      }
-  
-      const fromLocation = location.state?.from;
-      const cameFromProtected = !!fromLocation; // ProtectedRoute passes state.from
-  
-      if (cameFromProtected) {
-          // Requirement 1: protected page -> root
-          navigate('/', { replace: true, state: { from: fromLocation } });
+    // If used as an overlay/modal, just close it
+    if (typeof onClose === 'function') {
+      onClose();
+      return;
+    }
+
+    const fromLocation = location.state?.from;
+    const cameFromProtected = !!fromLocation; // ProtectedRoute passes state.from
+
+    if (cameFromProtected) {
+      // Requirement 1: protected page -> root
+      navigate('/', { replace: true, state: { from: fromLocation } });
+    } else {
+      // Requirement 2/3/4: other pages -> go back (preserves state/params/query)
+      if (window.history.length > 1) {
+        navigate(-1);
       } else {
-          // Requirement 2/3/4: other pages -> go back (preserves state/params/query)
-          if (window.history.length > 1) {
-              navigate(-1);
-          } else {
-              // Fallback if no history
-              navigate('/', { replace: true });
-          }
+        // Fallback if no history
+        navigate('/', { replace: true });
       }
+    }
   };
 
   return (

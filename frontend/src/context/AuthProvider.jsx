@@ -179,7 +179,6 @@ export const AuthProvider = ({ children }) => {
      * @returns {Promise<object>} - A promise resolving to { success: true } or { success: false, message: string }.
      */
     const login = async (identifier, password, recaptchaToken) => {
-        setIsLoading(true);
         try {
             const response = await ky.post(
                 "/api/auth/login",
@@ -195,14 +194,11 @@ export const AuthProvider = ({ children }) => {
                 let redirectTo = '/';
                 if (userInfo.role === "cbt_admin") redirectTo = '/dashboard';
                 else if (userInfo.role === "system_admin") redirectTo = '/admin-dashboard';
-                setIsLoading(false);
                 return { success: true, user: userInfo, redirectTo };
             } else {
-                setIsLoading(false);
                 return { success: false, message: response.message || "Login failed" };
             }
         } catch (error) {
-            setIsLoading(false);
             setIsLoggedIn(false);
             setUser(null);
             setAccessToken(null);
