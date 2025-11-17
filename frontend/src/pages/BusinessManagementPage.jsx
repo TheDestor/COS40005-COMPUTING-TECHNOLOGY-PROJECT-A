@@ -468,11 +468,6 @@ const BusinessManagement = () => {
     if (isMobile) {
       setShowBusinessDetail(true);
     }
-
-    // If the business was pending, mark it as in-review
-    if (business.status === 'pending') {
-      handleUpdateBusinessStatus(business._id, 'in-review');
-    }
   };
 
   // Handler for going back to business list on mobile
@@ -877,8 +872,6 @@ const BusinessManagement = () => {
     switch (status) {
       case 'pending':
         return 'status-badge-pending';
-      case 'in-review':
-        return 'status-badge-progress';
       case 'approved':
         return 'status-badge-approved';
       case 'rejected':
@@ -1072,10 +1065,6 @@ const BusinessManagement = () => {
                 <span className="stat-label">Pending</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{businesses.filter(b => b.status === 'in-review').length}</span>
-                <span className="stat-label">In Review</span>
-              </div>
-              <div className="stat">
                 <span className="stat-value">{businesses.filter(b => b.status === 'approved').length}</span>
                 <span className="stat-label">Approved</span>
               </div>
@@ -1111,7 +1100,6 @@ const BusinessManagement = () => {
                       >
                         <option value="all">All</option>
                         <option value="pending">Pending</option>
-                        <option value="in-review">In Review</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Re-amend</option>
                       </select>
@@ -1198,9 +1186,9 @@ const BusinessManagement = () => {
                             : business.description}
                         </div>
                         <div className="business-status">
-                          <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
-                            {business.status === 'in-review' ? 'In Review' : business.status.charAt(0).toUpperCase() + business.status.slice(1)}
-                          </span>
+                        <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
+                          {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+                        </span>
                           <span className={`priority-badge ${getPriorityBadgeClass(business.priority)}`}>
                             {renderPriorityIcon(business.priority)}
                             {business.priority.charAt(0).toUpperCase() + business.priority.slice(1)}
@@ -1377,7 +1365,7 @@ const BusinessManagement = () => {
                     <div className="business-header-info">
                       <h3 className="detail-name">{selectedBusiness.name}</h3>
                       <span className={`status-badge ${getStatusBadgeClass(selectedBusiness.status)}`}>
-                        {selectedBusiness.status === 'in-review' ? 'In Review' : selectedBusiness.status.charAt(0).toUpperCase() + selectedBusiness.status.slice(1)}
+                        {selectedBusiness.status.charAt(0).toUpperCase() + selectedBusiness.status.slice(1)}
                       </span>
                     </div>
                   </div>
