@@ -780,7 +780,7 @@ function MapComponentTesting({  }) {
 
   // Updated handleDirectionsClick function
   const handleDirectionsClick = (locationData) => {
-  console.log('Directions clicked for:', locationData);
+  // console.log('Directions clicked for:', locationData);
   
   // Use the ref to call LeftSideBarTesting's internal method
   if (leftSidebarRef.current && leftSidebarRef.current.setDestinationFromExternal) {
@@ -1273,11 +1273,11 @@ function MapComponentTesting({  }) {
             division = closestLocation.division || '';
             dataFound = true;
             
-            console.log('Found matching backend location data');
+            // console.log('Found matching backend location data');
           }
         }
       } catch (locationError) {
-        console.log('Backend location API not available');
+        // console.log('Backend location API not available');
       }
 
       // Step 2: If no location data found, check business locations
@@ -1318,12 +1318,12 @@ function MapComponentTesting({  }) {
                 division = closestBusiness.division || '';
                 dataFound = true;
                 
-                console.log('Found matching business data');
+                // console.log('Found matching business data');
               }
             }
           }
         } catch (businessError) {
-          console.log('Backend business API not available');
+          // console.log('Backend business API not available');
         }
       }
 
@@ -1374,12 +1374,12 @@ function MapComponentTesting({  }) {
                 division = closestEvent.division || '';
                 dataFound = true;
                 
-                console.log('Found matching event data');
+                // console.log('Found matching event data');
               }
             }
           }
         } catch (eventError) {
-          console.log('Backend event API not available');
+          // console.log('Backend event API not available');
         }
       }
 
@@ -1391,7 +1391,7 @@ function MapComponentTesting({  }) {
       }
 
     } catch (error) {
-      console.log('Enhanced data fetching failed, using coordinates only');
+      // console.log('Enhanced data fetching failed, using coordinates only');
     }
     
     return {
