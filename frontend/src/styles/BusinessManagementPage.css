@@ -704,7 +704,7 @@
   
   .filter-group {
     position: relative;
-    z-index: 2;
+    /* z-index: 2; */
   }
   
   .filter-group label {
@@ -2683,7 +2683,7 @@
 
 .filter-group {
   position: relative;
-  z-index: 2;
+  /* z-index: 2; */
 }
 
 .filter-group label {
@@ -3411,12 +3411,16 @@
   }
   
   .business-statistics {
-    width: 100%;
+    /* width: 100%; */
     justify-content: flex-start;
   }
   
   .filter-dropdown {
     width: 260px;
+  }
+
+  .business-options {
+    flex-direction: row !important;
   }
 }
 
@@ -3479,7 +3483,7 @@
 
   .business-list {
     transform: translateX(0);
-    z-index: 2;
+    /* z-index: 2; */
   }
 
   .business-detail {
@@ -3556,6 +3560,7 @@
     margin: 0;
     position: relative;
     max-width: calc(100% - 100px);
+    padding: 0 !important;
   }
 
   .search-bar input {
@@ -3604,12 +3609,13 @@
 
   .notification-dropdown {
     position: fixed;
-    top: 120px;
-    right: 10px;
-    left: 10px;
-    width: auto;
+    top: 140px;
+    right: 20px;
+    /* left: 10px; */
+    /* width: auto; */
     max-width: none;
     z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 
   .notification-dropdown::before {
@@ -3624,7 +3630,7 @@
 
   .filter-dropdown {
     position: fixed;
-    top: 50%;
+    top: 67%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
@@ -3633,7 +3639,7 @@
   }
 
   .filter-dropdown::before {
-    display: none;
+    right: 130px;
   }
 
   /* Filter group styling for mobile */
@@ -3946,6 +3952,24 @@
   }
 }
 
+@media (max-width: 576px) {
+  .notification-dropdown {
+    width: auto;
+    top: 200px;
+    left: auto;
+  }
+
+  .filter-dropdown {
+    position: fixed;
+    top: 74%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 300px;
+    z-index: 20;
+  }
+}
+
 /* ========================================
    RESPONSIVE - SMALL MOBILE (480px and below)
    ======================================== */
@@ -3966,6 +3990,7 @@
 
   .search-bar {
     max-width: calc(100% - 90px);
+    min-width: 100%;
   }
 
   .search-bar input {
@@ -4005,7 +4030,7 @@
 
   .notification-dropdown {
     position: fixed;
-    top: 100px;
+    top: 230px;
     right: 10px;
     left: 10px;
     width: auto;
@@ -4021,12 +4046,8 @@
 
   .filter-dropdown {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 300px;
-    z-index: 20;
+    top: 46%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   }
 
   .filter-dropdown::before {
@@ -4210,6 +4231,11 @@
 
 /* Prevent horizontal scroll on all mobile devices */
 @media (max-width: 768px) {
+  .search-bar {
+    max-width: calc(100% - 90px);
+    min-width: 0;
+  }
+
   body {
     overflow-x: hidden;
   }
@@ -4427,4 +4453,31 @@ html {
 
 .notification-overlay.active {
   display: block;
+}
+
+@media (max-width: 399px) {
+  .notification-dropdown {
+    width: auto;
+    top: 180px !important;
+  }
+}
+
+@media (max-width: 1020px) {
+  .business-options {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .business-options {
+    flex-direction: column !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .filter-dropdown {
+    position: fixed;
+    top: 42%;
+    /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); */
+  }
 }

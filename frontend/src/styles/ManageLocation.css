@@ -2572,7 +2572,7 @@
   }
 
   .action-icons {
-    gap: 12px;
+    gap: 12px !important;
   }
 
   .icon-wrapper {
@@ -3146,7 +3146,7 @@
   }
 
   .action-icons {
-    justify-content: center;
+    justify-content: center !important;
     width: 100%;
   }
 

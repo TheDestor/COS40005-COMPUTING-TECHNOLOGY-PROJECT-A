@@ -48,7 +48,7 @@
 }
 
 /* FIXED: Reduced z-index to be below notification dropdown */
-.filter-dropdown-container {
+.filter-dropdown-vi-container {
   position: relative;
   /* z-index: 10; */
 }
@@ -73,7 +73,7 @@
 }
 
 /* FIXED: Reduced z-index to ensure it stays below notification */
-.filter-dropdown {
+.filter-dropdown-vi {
   position: absolute;
   right: auto;
   left: -130px; /* This will position it more toward the statistics area */
@@ -86,7 +86,7 @@
   /* z-index: 5; */
 }
 
-.filter-dropdown::before {
+.filter-dropdown-vi::before {
   content: "";
   position: absolute;
   top: -8px;
@@ -101,7 +101,7 @@
 .filter-group,
 .clear-filters {
   position: relative;
-  z-index: 2;
+  /* z-index: 2; */
 }
 
 .filter-group label {
@@ -628,7 +628,7 @@
 
   .inquiry-list {
     transform: translateX(0);
-    z-index: 2;
+    /* z-index: 2; */
     pointer-events: auto;
   }
 
