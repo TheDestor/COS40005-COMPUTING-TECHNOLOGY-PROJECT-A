@@ -44,6 +44,11 @@ const businessSchema = new mongoose.Schema({
         trim: true, 
         default: null 
     },
+    internalAdminNotes: { 
+        type: String, 
+        trim: true, 
+        default: null 
+    },
 
     // Agreement
     agreement: { type: Boolean, required: true, default: false }
