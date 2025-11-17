@@ -132,6 +132,23 @@ a:focus {
   font-size: 1.25rem;
 }
 
+.senior-mode-active .menu-item51,
+.senior-mode-active .user-info {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .edit-profile-btn,
+.senior-mode-active .change-btn,
+.senior-mode-active .remove-btn {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .form-group2,
+.senior-mode-active .delete-account-section,
+.senior-mode-active .notification-item-pn {
+  font-size: 1.25rem;
+}
+
 .senior-mode-active .faq-list-item,
 .senior-mode-active .sidebar-item123 {
   font-size: 1.25rem;

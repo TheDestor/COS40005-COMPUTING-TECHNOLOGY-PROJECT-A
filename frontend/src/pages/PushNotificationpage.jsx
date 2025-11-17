@@ -2,47 +2,47 @@ import { useState, useEffect } from "react";
 import Switch from "react-switch";
 import { MdNotificationsNone } from "react-icons/md";
 import "../styles/PushNotificationpage.css";
+import api from "../utils/api.js"
+import { useAuth } from "../context/AuthProvider.jsx";
 
 const PushNotificationPage = () => {
-  const [notifications, setNotifications] = useState(() => {
-    const savedNotifications = localStorage.getItem("notifications");
-    return savedNotifications
-      ? JSON.parse(savedNotifications)
-      : {
-          push: false,
-          location: false,
-          event: false,
-        };
-  });
-
-  const [disabledSwitches, setDisabledSwitches] = useState({}); // 🔒 Track disabled switches
+  const { user, updateUserContext } = useAuth();
+  const [notifications, setNotifications] = useState(user.notifications);
+  const [disabledSwitches, setDisabledSwitches] = useState({});
 
   useEffect(() => {
-    localStorage.setItem("notifications", JSON.stringify(notifications));
-  }, [notifications]);
+    setNotifications(user.notifications);
+  }, [user.notifications]);
 
   const notificationLabels = {
-    push: "Push notifications",
     location: "Location-based notifications",
     event: "Event notifications",
   };
 
-  const handleSwitchChange = (key) => {
-    if (disabledSwitches[key]) return; // Prevent interaction during cooldown
+  const handleSwitchChange = async (key) => {
+    if (disabledSwitches[key]) return;
 
-    // Disable switch for 1 second
     setDisabledSwitches((prev) => ({ ...prev, [key]: true }));
 
-    // Toggle the value
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    const originalNotifications = notifications;
+    const newNotifications = {
+      ...originalNotifications,
+      [key]: !originalNotifications[key],
+    };
 
-    // Re-enable after 1s
-    setTimeout(() => {
-      setDisabledSwitches((prev) => ({ ...prev, [key]: false }));
-    }, 1000);
+    setNotifications(newNotifications);
+
+    try {
+      await api.post('api/user/notifications', { json: { notifications: newNotifications } });
+      updateUserContext({ notifications: newNotifications });
+    } catch (error) {
+      console.error("Error updating notification settings:", error);
+      setNotifications(originalNotifications);
+    } finally {
+      setTimeout(() => {
+        setDisabledSwitches((prev) => ({ ...prev, [key]: false }));
+      }, 1000);
+    }
   };
 
   return (

@@ -51,7 +51,8 @@ export const AuthProvider = ({ children }) => {
                 role: userInfo.role,
                 nationality: userInfo.nationality,
                 avatarUrl: userInfo.avatarUrl,
-                authProvider: userInfo.authProvider
+                authProvider: userInfo.authProvider,
+                notifications: userInfo.notifications
             });
             // Store the valid access token
             setAccessToken(token);

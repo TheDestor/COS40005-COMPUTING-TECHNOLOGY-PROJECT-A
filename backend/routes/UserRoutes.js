@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { contactUs, removeAvatar, updateAvatar, updatePassword, updateUserProfile, deleteAccount } from "../controllers/UserController.js";
+import { contactUs, removeAvatar, updateAvatar, updatePassword, updateUserProfile, deleteAccount, updateNotificationSettings } from "../controllers/UserController.js";
 import { verifyJWT } from "../middleware/AuthMiddleware.js";
 import multer from "multer";
 import { updatePasswordLimiter, updateProfileLimiter, contactUsLimiter } from "../middleware/rateLimiter.js";
@@ -23,6 +23,7 @@ userRouter.post("/updatePassword", verifyJWT, updatePasswordLimiter, updatePassw
 userRouter.post("/updateAvatar", verifyJWT, upload.single('avatar'), updateAvatar);
 userRouter.post("/removeAvatar", verifyJWT, removeAvatar);
 userRouter.post("/contactUs", contactUsLimiter, contactUs);
+userRouter.post("/notifications", verifyJWT, updateNotificationSettings);
 userRouter.delete("/deleteAccount", verifyJWT, deleteAccount);
 
 export default userRouter;
