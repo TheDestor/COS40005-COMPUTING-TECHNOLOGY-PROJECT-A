@@ -106,7 +106,24 @@ a:focus {
 }
 
 /* Senior Mode */
-.senior-mode-active button {
+.senior-mode-active .header-title-enp,
+.senior-mode-active .header-subtitle-enp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .category-tab-enp,
+.senior-mode-active .view-details-btn-enp,
+.senior-mode-active .nav-btn-enp,
+.senior-mode-active .nav-counter-enp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .book-btn,
+.senior-mode-active .info-header,
+.senior-mode-active .info-desc,
+.senior-mode-active .info-row-text,
+.senior-mode-active .info-footer .footer-icon,
+.senior-mode-active .info-footer .footer-item {
   font-size: 1.25rem;
 }
 
