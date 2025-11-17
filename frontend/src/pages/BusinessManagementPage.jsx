@@ -120,6 +120,7 @@ const BusinessManagement = () => {
   const [confirmTargetId, setConfirmTargetId] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const cancelBtnRef = useRef(null);
+  const [tempAdminNotes, setTempAdminNotes] = useState(''); // For capturing notes in modal
 
   const openConfirm = (type, id) => {
     setConfirmAction(type);
@@ -130,6 +131,7 @@ const BusinessManagement = () => {
     if (confirmLoading) return;
     setConfirmAction(null);
     setConfirmTargetId(null);
+    setTempAdminNotes(''); // NEW: Clear notes on close
   };
 
   useEffect(() => {
@@ -467,7 +469,7 @@ const BusinessManagement = () => {
   };
 
   // Handler for updating business status
-  const handleUpdateBusinessStatus = async (id, newStatus) => {
+  const handleUpdateBusinessStatus = async (id, newStatus, notes = '') => {
     if (!isLoggedIn || !accessToken) {
       setError('Authentication required. Please log in.');
       return;
@@ -480,14 +482,19 @@ const BusinessManagement = () => {
 
     try {
       const response = await authAxios.patch(`/api/businesses/updateBusinessStatus/${id}`, {
-        status: newStatus
+        status: newStatus,
+        adminNotes: notes || null // 👈 NEW: Send admin notes
       });
       
       if (response.data.success) {
         // Update businesses list
         const updatedBusinesses = businesses.map(item => {
           if (item._id === id) {
-            return { ...item, status: newStatus };
+            return { 
+              ...item, 
+              status: newStatus,
+              adminNotes: notes || null // 👈 NEW: Update local state
+            };
           }
           return item;
         });
@@ -496,7 +503,11 @@ const BusinessManagement = () => {
         
         // Update selected business if it's the one that was modified
         if (selectedBusiness && selectedBusiness._id === id) {
-          setSelectedBusiness({ ...selectedBusiness, status: newStatus });
+          setSelectedBusiness({ 
+            ...selectedBusiness, 
+            status: newStatus,
+            adminNotes: notes || null // 👈 NEW: Update selected business
+          });
         }
         
         // Add notification for status update
@@ -596,12 +607,13 @@ const BusinessManagement = () => {
     setConfirmLoading(true);
     try {
       if (confirmAction === 'approve') {
-        await handleApproveBusiness(confirmTargetId);
+        await handleUpdateBusinessStatus(confirmTargetId, 'approved', tempAdminNotes); // 👈 Pass notes
       } else if (confirmAction === 're-amend') {
-        await handleRejectBusiness(confirmTargetId);
+        await handleUpdateBusinessStatus(confirmTargetId, 'rejected', tempAdminNotes); // 👈 Pass notes
       } else if (confirmAction === 'delete') {
         await handleDeleteBusiness(confirmTargetId);
       }
+      setTempAdminNotes(''); // 👈 Clear notes after action
       closeConfirm();
     } catch (e) {
       toast.error(e?.message || 'Action failed. Please try again.');
@@ -1195,56 +1207,84 @@ const BusinessManagement = () => {
             </div>
             
             {confirmAction && (
-          <div
-            className="confirm-modal-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bm-confirmation-title"
-            onClick={closeConfirm}
-          >
-            <div
-              className="confirm-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 id="bm-confirmation-title" className="confirm-modal-title">
-                {confirmAction === 'approve'
-                  ? 'Confirm Approve'
-                  : confirmAction === 're-amend'
-                  ? 'Confirm Re-amend'
-                  : 'Confirm Delete'}
-              </h3>
-              <p className="confirm-modal-body">
-                {confirmAction === 'approve'
-                  ? 'Are you sure you want to approve this business?'
-                  : confirmAction === 're-amend'
-                  ? 'Are you sure you want to move this business to re-amend?'
-                  : 'Are you sure you want to delete this business?'}
-              </p>
-              <div className="confirm-modal-actions">
-                <button
-                  ref={cancelBtnRef}
-                  className="modal-cancel-btn"
-                  onClick={closeConfirm}
-                  disabled={confirmLoading}
+              <div
+                className="confirm-modal-overlay"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="bm-confirmation-title"
+                onClick={closeConfirm}
+              >
+                <div
+                  className="confirm-modal"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Cancel
-                </button>
-                <button
-                  className={
-                    confirmAction === 'delete'
-                      ? 'modal-delete-btn'
-                      : 'modal-confirm-btn'
-                  }
-                  onClick={handleConfirmAction}
-                  disabled={confirmLoading}
-                  aria-busy={confirmLoading}
-                >
-                  {confirmLoading ? 'Working…' : 'Confirm'}
-                </button>
+                  <h3 id="bm-confirmation-title" className="confirm-modal-title">
+                    {confirmAction === 'approve'
+                      ? 'Confirm Approve'
+                      : confirmAction === 're-amend'
+                      ? 'Confirm Re-amend'
+                      : 'Confirm Delete'}
+                  </h3>
+                  <p className="confirm-modal-body">
+                    {confirmAction === 'approve'
+                      ? 'Are you sure you want to approve this business?'
+                      : confirmAction === 're-amend'
+                      ? 'Are you sure you want to move this business to re-amend?'
+                      : 'Are you sure you want to delete this business?'}
+                  </p>
+                  
+                  {/* 👇 NEW: Admin Notes Section (only for approve/re-amend) */}
+                  {(confirmAction === 'approve' || confirmAction === 're-amend') && (
+                    <div className="confirm-modal-notes">
+                      <label htmlFor="admin-notes-input" className="notes-label">
+                        {confirmAction === 're-amend' ? 'Feedback for Business Owner:' : 'Notes (Optional):'}
+                      </label>
+                      <textarea
+                        id="admin-notes-input"
+                        className="notes-textarea"
+                        placeholder={
+                          confirmAction === 're-amend'
+                            ? 'Please provide feedback on what needs improvement...'
+                            : 'Add any notes about this approval...'
+                        }
+                        value={tempAdminNotes}
+                        onChange={(e) => setTempAdminNotes(e.target.value)}
+                        rows={4}
+                        disabled={confirmLoading}
+                      />
+                      <div className="notes-hint">
+                        {confirmAction === 're-amend' 
+                          ? 'The business owner will see this feedback in their dashboard.'
+                          : 'These notes will be visible to the business owner.'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="confirm-modal-actions">
+                    <button
+                      ref={cancelBtnRef}
+                      className="modal-cancel-btn"
+                      onClick={closeConfirm}
+                      disabled={confirmLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={
+                        confirmAction === 'delete'
+                          ? 'modal-delete-btn'
+                          : 'modal-confirm-btn'
+                      }
+                      onClick={handleConfirmAction}
+                      disabled={confirmLoading}
+                      aria-busy={confirmLoading}
+                    >
+                      {confirmLoading ? 'Working…' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
             {/* Right panel - Selected business detail */}
             {selectedBusiness ? (
@@ -1345,6 +1385,25 @@ const BusinessManagement = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/*  NEW: Admin Feedback Section */}
+                  {selectedBusiness.adminNotes && (
+                    <div className="admin-feedback-section">
+                      <div className="admin-feedback-header">
+                        <h4>
+                          {selectedBusiness.status === 'rejected' ? '⚠️ Feedback Required' : '✅ Admin Notes'}
+                        </h4>
+                      </div>
+                      <div className={`admin-feedback-content ${selectedBusiness.status === 'rejected' ? 'feedback-warning' : 'feedback-info'}`}>
+                        <p>{selectedBusiness.adminNotes}</p>
+                      </div>
+                      {selectedBusiness.status === 'rejected' && (
+                        <div className="feedback-action-hint">
+                          Please review the feedback above and update your business details accordingly before resubmitting.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="business-meta compact-meta">
                     <div className="meta-section">

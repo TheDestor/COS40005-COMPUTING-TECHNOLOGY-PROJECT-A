@@ -125,6 +125,26 @@ export const addBusiness = async (req, res) => {
         });
     } catch (error) {
         console.error("Error adding business:", error);
+        
+        // NEW: error handling
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => {
+                if (err.kind === 'minlength') {
+                    return `${err.path} must be at least ${err.properties.minlength} characters. Currently ${err.value.length} characters.`;
+                }
+                if (err.kind === 'maxlength') {
+                    return `${err.path} must be less than ${err.properties.maxlength} characters. Currently ${err.value.length} characters.`;
+                }
+                return err.message;
+            });
+            
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed. Please check your inputs.',
+                errors: errors
+            });
+        }
+        
         res.status(500).json({
             success: false,
             message: "Failed to add business",
@@ -286,7 +306,7 @@ export const getBusinessesByStatus = async (req, res) => {
 export const updateBusinessStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, priority } = req.body;
+        const { status, priority, adminNotes } = req.body; // Added adminNotes
         
         // Validate ID format
         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -342,6 +362,11 @@ export const updateBusinessStatus = async (req, res) => {
         const updateData = {};
         if (status) updateData.status = status;
         if (priority) updateData.priority = priority;
+        
+        //  NEW: Save admin notes if provided
+        if (adminNotes !== undefined) {
+            updateData.adminNotes = adminNotes ? String(adminNotes).trim() : null;
+        }
         
         const updatedBusiness = await businessModel.findByIdAndUpdate(
             id,
@@ -494,6 +519,28 @@ export const updateBusinessDetails = async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating business details:", error);
+        
+        // NEW: error handling for validation errors
+        if (error.name === 'ValidationError') {
+            const errors = Object.values(error.errors).map(err => {
+                // Format user-friendly error messages
+                if (err.kind === 'minlength') {
+                    return `${err.path} must be at least ${err.properties.minlength} characters. Currently ${err.value.length} characters.`;
+                }
+                if (err.kind === 'maxlength') {
+                    return `${err.path} must be less than ${err.properties.maxlength} characters. Currently ${err.value.length} characters.`;
+                }
+                return err.message;
+            });
+            
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed. Please check your inputs.',
+                errors: errors,
+                details: error.message
+            });
+        }
+        
         res.status(500).json({
             success: false,
             message: "Failed to update business details",

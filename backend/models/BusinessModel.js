@@ -38,6 +38,12 @@ const businessSchema = new mongoose.Schema({
         enum: ['high', 'medium', 'low'], 
         default: 'low' 
     },
+    // Admin feedback notes
+    adminNotes: { 
+        type: String, 
+        trim: true, 
+        default: null 
+    },
 
     // Agreement
     agreement: { type: Boolean, required: true, default: false }
