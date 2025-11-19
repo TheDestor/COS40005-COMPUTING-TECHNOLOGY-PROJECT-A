@@ -181,11 +181,28 @@ export const newsletterSubscribeLimiter = rateLimit({
 });
 
 // AI chat new limiter
+// aiChatLimiter: add handler + env-config to expose Retry-After and structured JSON
 export const aiChatLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
+  windowMs: Number(process.env.AI_CHAT_WINDOW_MS) || 60 * 1000,
+  max: Number(process.env.AI_CHAT_MAX) || 20,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res /*, next*/) => {
+    const windowMs = Number(process.env.AI_CHAT_WINDOW_MS) || 60 * 1000;
+    const retryMs =
+      req.rateLimit?.resetTime instanceof Date
+        ? Math.max(0, req.rateLimit.resetTime.getTime() - Date.now())
+        : windowMs;
+    const retryAfterSeconds = Math.ceil(retryMs / 1000);
+
+    res.set('Retry-After', String(retryAfterSeconds));
+    return res.status(429).json({
+      success: false,
+      code: 'RATE_LIMITED',
+      message: 'Too many AI chat requests. Slow down.',
+      retryAfterSeconds,
+    });
+  },
   message: { success: false, message: 'Too many AI chat requests. Slow down.' },
 });
 

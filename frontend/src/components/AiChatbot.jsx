@@ -5,10 +5,6 @@ import { RxCross1, RxReset } from "react-icons/rx";
 import { RiRobot2Fill } from "react-icons/ri";
 import AiLogo from '../assets/AiLogo.gif';
 
-const API_ENDPOINT = '/api/ai/chat';
-const MODEL = 'deepseek/deepseek-chat-v3.1:free';
-// const MODEL = 'deepseek/deepseek-r1-0528:free';
-
 export default function AiChatbot({ visibleByDefault = false }) {
 	const [open, setOpen] = useState(visibleByDefault);
 	const [entered, setEntered] = useState(false);
@@ -18,6 +14,7 @@ export default function AiChatbot({ visibleByDefault = false }) {
 	const [input, setInput] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
+    const [errorDetail, setErrorDetail] = useState(null);
     const listRef = useRef(null);
 	const typeTimerRef = useRef(null);
 	const [burst, setBurst] = useState(false);
@@ -35,6 +32,11 @@ export default function AiChatbot({ visibleByDefault = false }) {
     const [suggPages, setSuggPages] = useState(1);
     const [showScrollbar, setShowScrollbar] = useState(true); // toggle if needed
     const touchStateRef = useRef({ down: false, startX: 0, startScroll: 0 });
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const cooldownTimerRef = useRef(null);
+
+    // Define API endpoint safely (use Vite env if set, otherwise default)
+    const API_ENDPOINT = (import.meta?.env?.VITE_AI_CHAT_ENDPOINT) || '/api/ai/chat';
 
     const recalcPages = () => {
         const el = suggRef.current;
@@ -321,36 +323,129 @@ export default function AiChatbot({ visibleByDefault = false }) {
 	const sendMessage = async (e) => {
         e.preventDefault();
         setError('');
+        setErrorDetail(null);
         const text = input.trim();
         if (!text || loading) return;
-    
+
+        if (cooldownSeconds > 0) {
+            setError(`Please wait ${cooldownSeconds}s before sending another message.`);
+            setErrorDetail({ status: 429, code: 'RATE_LIMITED', retryAfterSeconds: cooldownSeconds, source: 'CLIENT_COOLDOWN' });
+            console.warn('AiChatbot: blocked by client cooldown', { cooldownSeconds });
+            return;
+        }
+
         const newMessages = [...messages, { role: 'user', content: text }];
         setMessages(newMessages);
         setInput('');
         setLoading(true);
         setSendFly(true);
-    
+
         try {
+            const bodyPayload = { messages: newMessages };
+            // Remove client-side process.env usage; server handles model selection
+            console.log('AiChatbot: sending request', {
+                endpoint: API_ENDPOINT,
+                modelSelection: 'server',
+                payloadSummary: { messagesCount: newMessages.length }
+            });
+
             const res = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: MODEL, messages: newMessages })
+                body: JSON.stringify(bodyPayload)
             });
 
+            console.log('AiChatbot: response received', {
+                status: res.status,
+                retryAfterHeader: res.headers.get('Retry-After')
+            });
+
+            // Handle rate limit with header/body extraction
+            if (res.status === 429) {
+                let retryAfter = Number(res.headers.get('Retry-After')) || 0;
+                let detailBody = null;
+                if (!retryAfter) {
+                    try {
+                        detailBody = await res.json();
+                        retryAfter = Number(detailBody?.retryAfterSeconds) || 15;
+                    } catch (parseErr) {
+                        console.warn('AiChatbot: failed to parse 429 body as JSON', parseErr);
+                    }
+                }
+
+                console.warn('AiChatbot: 429 Too Many Requests', {
+                    retryAfter,
+                    detailBody
+                });
+
+                setCooldownSeconds(retryAfter || 15);
+                setError(`Too many requests. Try again in ${retryAfter || 15}s.`);
+                setErrorDetail(detailBody || { status: 429, code: 'RATE_LIMITED', retryAfterSeconds: retryAfter || 15 });
+
+                if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+                cooldownTimerRef.current = setInterval(() => {
+                    setCooldownSeconds(prev => {
+                        if (prev <= 1) {
+                            clearInterval(cooldownTimerRef.current);
+                            cooldownTimerRef.current = null;
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+
+                return;
+            }
+
             if (!res.ok) {
-                const t = await res.text().catch(() => '');
-                throw new Error(`Request failed (${res.status}): ${t || res.statusText}`);
+                let detail = null;
+                let rawText = '';
+                try {
+                    detail = await res.json();
+                } catch {
+                    try {
+                        rawText = await res.text();
+                    } catch {
+                        rawText = '';
+                    }
+                }
+
+                // Prefer provider-style error fields if present
+                const providerMsg = detail?.error?.message || detail?.message || '';
+                const providerCode = detail?.error?.code || detail?.code;
+                const providerMeta = detail?.error?.metadata || detail?.metadata;
+
+                // Build a readable message
+                let humanMsg = providerMsg || rawText || 'Unknown error';
+                if (providerCode) humanMsg = `${humanMsg} (code: ${providerCode})`;
+
+                console.error('AiChatbot: request failed', {
+                    status: res.status,
+                    reason: { message: providerMsg || rawText || 'Unknown', code: providerCode, metadata: providerMeta },
+                    detail
+                });
+
+                setError(`Request failed (${res.status}): ${humanMsg}`);
+                setErrorDetail(detail || { status: res.status, raw: rawText || humanMsg });
+                return;
             }
 
             const data = await res.json();
+            console.log('AiChatbot: success', {
+                choicesLen: Array.isArray(data?.choices) ? data.choices.length : 0
+            });
+
             const replyRaw = data?.choices?.[0]?.message?.content ?? '';
             const reply = normalizeModelOutput(replyRaw).trim();
             typewriterAppend(reply);
         } catch (err) {
+            console.error('AiChatbot: unexpected error', err);
             setError(err.message || 'Unexpected error');
+            setErrorDetail({ message: err.message || String(err) });
         } finally {
             setLoading(false);
             setSendFly(false);
+            console.log('AiChatbot: sendMessage finished');
         }
     };
 
@@ -491,9 +586,13 @@ export default function AiChatbot({ visibleByDefault = false }) {
                             placeholder="Ask about Sarawak tourism…"
                             className="ai-input"
                         />
-                        <button type="submit" disabled={loading} className={`ai-send-btn${(sendFly || loading) ? ' flying' : ''}`}>
+                        <button type="submit" disabled={loading || cooldownSeconds > 0} className={`ai-send-btn${(sendFly || loading) ? ' flying' : ''}`}>
                             <IoIosSend className="ai-send-icon" />
-                            {!(sendFly || loading) && <span className="ai-send-text">Send</span>}
+                            {!(sendFly || loading) && (
+                                <span className="ai-send-text">
+                                    {cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Send'}
+                                </span>
+                            )}
                         </button>
                     </form>
                 </div>
