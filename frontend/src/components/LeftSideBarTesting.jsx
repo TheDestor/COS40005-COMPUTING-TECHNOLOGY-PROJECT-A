@@ -746,6 +746,48 @@ const LeftSidebarTesting = forwardRef(({
   const { user, isLoggedIn } = useAuth();
   // Add bookmark context to feed bookmarks into Nearby panel
   const { bookmarks } = UseBookmarkContext();
+
+  // Load backend locations and merge into nearby places
+  const [backendLocations, setBackendLocations] = useState([]);
+  const backendNearbyPlaces = useMemo(() => {
+    return (backendLocations || []).map((loc) => {
+      const lat = typeof (loc.latitude ?? loc.lat) === 'string' ? parseFloat(loc.latitude ?? loc.lat) : (loc.latitude ?? loc.lat);
+      const lng = typeof (loc.longitude ?? loc.lng) === 'string' ? parseFloat(loc.longitude ?? loc.lng) : (loc.longitude ?? loc.lng);
+      return {
+        place_id: loc._id || loc.id || `${loc.name}-${lat}-${lng}`,
+        name: loc.name || loc.title || 'Location',
+        vicinity: loc.division || loc.description || loc.region || 'Location',
+        rating: null,
+        user_ratings_total: 0,
+        latitude: lat,
+        longitude: lng,
+        lat,
+        lng,
+        coordinates: { latitude: lat, longitude: lng },
+        type: loc.type || loc.category || 'Location',
+        image: loc.image,
+        description: loc.description || loc.division || ''
+      };
+    });
+  }, [backendLocations]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/locations');
+        const data = await res.json();
+        if (!cancelled) {
+          const arr = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+          setBackendLocations(arr);
+        }
+      } catch {
+        if (!cancelled) setBackendLocations([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState('Car');
   const [startingPoint, setStartingPoint] = useState('');
@@ -771,6 +813,9 @@ const LeftSidebarTesting = forwardRef(({
   const [routeAlternatives, setRouteAlternatives] = useState([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  const allNearbyPlaces = useMemo(() => {
+    return [...(nearbyPlaces || []), ...(backendNearbyPlaces || [])];
+  }, [nearbyPlaces, backendNearbyPlaces]);
   const [activeMenu, setActiveMenu] = useState('');
   const [routeSummary, setRouteSummary] = useState(null);
   const autoCalculatedRef = useRef(false);
@@ -842,6 +887,37 @@ const LeftSidebarTesting = forwardRef(({
     return Math.abs(plat - anchor.lat) < EPS && Math.abs(plng - anchor.lng) < EPS;
   }, []);
 
+  const isWithinRadius = useCallback((place, anchor, radiusM = 1000) => {
+    if (!anchor || !place) return true;
+    const plat =
+      (typeof place?.geometry?.location?.lat === 'function'
+        ? place.geometry.location.lat()
+        : place?.geometry?.location?.lat) ??
+      place?.latitude ??
+      place?.coordinates?.latitude ??
+      place?.lat;
+
+    const plng =
+      (typeof place?.geometry?.location?.lng === 'function'
+        ? place.geometry.location.lng()
+        : place?.geometry?.location?.lng) ??
+      place?.longitude ??
+      place?.coordinates?.longitude ??
+      place?.lng;
+
+    if (!Number.isFinite(plat) || !Number.isFinite(plng)) return false;
+
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(plat - anchor.lat);
+    const dLon = toRad(plng - anchor.lng);
+    const lat1 = toRad(anchor.lat);
+    const lat2 = toRad(plat);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    const dist = 2 * R * Math.asin(Math.sqrt(a));
+    return dist <= radiusM;
+  }, []);
+
   // Close all panels
   const closeAllPanels = () => {
     setSidebarExpanded(false);
@@ -868,7 +944,6 @@ const LeftSidebarTesting = forwardRef(({
   }, []);
 
   const matchesCategoryInSidebar = (place, cat) => {
-    if (!cat || cat === 'all') return true;
     const tokens = [
       (place.category || ''),
       (place.type || ''),
@@ -879,19 +954,32 @@ const LeftSidebarTesting = forwardRef(({
       ...(Array.isArray(place?.properties?.categories) ? place.properties.categories : []),
     ].filter(Boolean).map((s) => String(s).toLowerCase());
 
+    const isToilet = tokens.some((s) =>
+      s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+    );
+
+    if (!cat || cat === 'all') {
+      // Include everything in "All" (toilet and pharmacy included)
+      return true;
+    }
+
     if (cat === 'restaurant') {
       return tokens.some((s) =>
         s.includes('restaurant') || s.includes('food') || s.includes('cafe') || s.includes('eat')
       );
     }
     if (cat === 'toilet') {
-      return tokens.some((s) =>
-        s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
-      );
+      return isToilet;
     }
     if (cat === 'pharmacy') {
       return tokens.some((s) =>
         s.includes('pharmacy') || s.includes('chemist') || s.includes('drugstore')
+      );
+    }
+    if (cat === 'hotel') {
+      // Match Hotels/Accommodation/Guest houses to align with map markers
+      return tokens.some((s) =>
+        s.includes('hotel') || s.includes('accommodation') || s.includes('guest')
       );
     }
     return false;
@@ -2165,9 +2253,9 @@ useEffect(() => {
   // Keep map state synchronized with panel updates
   useEffect(() => {
     if (onNearbyPlacesChange) {
-      onNearbyPlacesChange(nearbyPlaces);
+      onNearbyPlacesChange(allNearbyPlaces);
     }
-  }, [nearbyPlaces, onNearbyPlacesChange]);
+  }, [allNearbyPlaces, onNearbyPlacesChange]);
 
   // Notify parent component when route info changes
   useEffect(() => {
@@ -2206,14 +2294,16 @@ useEffect(() => {
         selectedCategory={nearbyFilterCategory}
         onCategoryChange={onNearbyFilterCategoryChange}
       >
-        {/* Nearby Around Selection */}
         <NearbyPlacesPanel
           title="Nearby Around Selection"
           places={(
-            ((activeSearchLocation || destinationCoords) ? nearbyPlaces : (searchNearbyPlaces || []))
+            [
+              ...(((activeSearchLocation || destinationCoords) ? nearbyPlaces : (searchNearbyPlaces || []))),
+              ...backendNearbyPlaces
+            ]
               .filter((p) => matchesCategoryInSidebar(p, nearbyFilterCategory))
-              // Exclude the anchor/bookmark location itself from the list
               .filter((p) => !isSamePlaceAsAnchor(p, anchorCoords))
+              .filter((p) => nearbyFilterCategory !== 'all' || isWithinRadius(p, anchorCoords, 5000))
           )}
           anchorCoords={anchorCoords}
           onItemClick={handleNearbyPlaceClick}
@@ -2532,9 +2622,9 @@ useEffect(() => {
               <FaCompass className="explore-icon" />
               Explore Nearby
             </div>
-            {nearbyPlaces.length > 0 ? (
+            {allNearbyPlaces.length > 0 ? (
               <div className="nearby-places-container100">
-                {nearbyPlaces.map((place, index) => (
+                {allNearbyPlaces.map((place, index) => (
                   <div 
                     key={index} 
                     className={`nearby-place-item100 ${selectedPlace?.place_id === place.place_id ? 'selected-place' : ''}`}
@@ -2569,7 +2659,7 @@ useEffect(() => {
               </div>
               <NearbyPlacesPanel
                 title="Explore Nearby"
-                places={nearbyPlaces}
+                places={allNearbyPlaces}
                 anchorCoords={{
                   lat: activeSearchLocation?.coordinates?.latitude ?? activeSearchLocation?.latitude,
                   lng: activeSearchLocation?.coordinates?.longitude ?? activeSearchLocation?.longitude
@@ -2584,8 +2674,7 @@ useEffect(() => {
                     setIsLoading(true);
                     fetchNearbyPlaces({ lat, lng }, 1000)
                       .then((p) => setNearbyPlaces(p || []))
-                      .catch(() => setNearbyError('Failed to load nearby places'))
-                      .finally(() => setIsLoading(false));
+                      .catch(() => setNearbyError('Failed to load nearby places'));
                   }
                 }}
                 onItemClick={handleNearbyPlaceClick}
