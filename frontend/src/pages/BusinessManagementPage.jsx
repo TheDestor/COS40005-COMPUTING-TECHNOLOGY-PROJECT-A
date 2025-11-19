@@ -54,6 +54,8 @@ const defaultIcon = new L.Icon({
 
 // Map Modal Component for showing coordinates
 const MapModal = ({ latitude, longitude }) => {
+  const safeLat = latitude || 1.5; // Default to Sarawak center
+  const safeLng = longitude || 110.3;
   const [markerPos, setMarkerPos] = useState([latitude, longitude]);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ const MapModal = ({ latitude, longitude }) => {
   return (
     <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
       <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
-        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+        Coordinates: {safeLat.toFixed(6)}, {safeLng.toFixed(6)}
       </div>
       <MapContainer
         center={[latitude, longitude]}
@@ -324,8 +326,7 @@ const BusinessManagement = () => {
       
       if (response.data.success) {
         let businessData = response.data.data || [];
-
-
+      
         // Client-side filtering as fallback (only if backend doesn't handle the filters properly)
         if (filterStatus !== 'all') {
           businessData = businessData.filter(business => business.status === filterStatus);
@@ -334,18 +335,10 @@ const BusinessManagement = () => {
         if (filterCategory !== 'all') {
           businessData = businessData.filter(business => business.category === filterCategory);
         }
-
+      
         setBusinesses(businessData);
         
-        // Extract unique categories for filter dropdown
-        if (businessData.length > 0) {
-          const categories = [...new Set(businessData.map(b => b.category).filter(Boolean))];
-          setBusinessCategories(categories);
-        } else {
-          setBusinessCategories([]);
-        }
-        
-        // 👇 FIXED: Preserve selected business during auto-refresh
+        // FIXED: Preserve selected business during auto-refresh
         if (businessData.length > 0) {
           // If there's a currently selected business, try to keep it selected
           if (selectedBusiness) {
@@ -364,7 +357,7 @@ const BusinessManagement = () => {
         } else {
           setSelectedBusiness(null);
         }
-
+      
         // Show refresh notification if manually refreshed
         if (showRefreshNotification) {
           addLocalNotification('Business data refreshed successfully', 'success');
@@ -413,8 +406,30 @@ const BusinessManagement = () => {
   useEffect(() => {
     if (isLoggedIn && accessToken) {
       fetchBusinesses();
+      
+      // 👇 NEW: Fetch categories ONLY on first load (not on filter changes)
+      if (businessCategories.length === 0) {
+        fetchAllCategories();
+      }
     }
   }, [isLoggedIn, accessToken, page, filterStatus, filterCategory]);
+
+  // 👇 NEW: Separate function to fetch all categories once
+  const fetchAllCategories = async () => {
+    try {
+      const response = await authAxios.get('/api/businesses/getAllBusinesses', {
+        params: { limit: 1000 } // Get all to extract categories
+      });
+      
+      if (response.data.success) {
+        const allBusinesses = response.data.data || [];
+        const categories = [...new Set(allBusinesses.map(b => b.category).filter(Boolean))];
+        setBusinessCategories(categories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   // Auto-refresh businesses every 30 seconds to check for new submissions
   useEffect(() => {
@@ -1500,13 +1515,15 @@ const BusinessManagement = () => {
                     </div>
 
                     {/* NEW: Add Location Map */}
-                    <div className="business-location-map">
-                      <h4>Location Map</h4>
-                      <MapModal 
-                        latitude={selectedBusiness.latitude} 
-                        longitude={selectedBusiness.longitude} 
-                      />
-                    </div>
+                    {selectedBusiness?.latitude && selectedBusiness?.longitude && (
+                      <div className="business-location-map">
+                        <h4>Location Map</h4>
+                        <MapModal 
+                          latitude={selectedBusiness.latitude} 
+                          longitude={selectedBusiness.longitude} 
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="business-description compact-description">
