@@ -1022,10 +1022,14 @@ const BusinessManagement = () => {
                 <FaSync className={loading ? 'spinning' : ''} />
               </button>
               <div className="notification-wrapper" ref={notificationRef}>
-                <div 
-                  className="icon-wrapper notification-icon"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                >
+              <div 
+                className="icon-wrapper notification-icon"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowFilterMenu(false); //  Close filter when opening notifications
+                  setShowPrintOptions(false); //  Close print options too
+                }}
+              >
                   <FaBell className="action-icon" />
                   {unreadCount > 0 && (
                     <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -1095,10 +1099,14 @@ const BusinessManagement = () => {
             
             <div className="business-filters">
               <div className="filter-dropdown-container">
-                <button 
-                  className="filter-button"
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                >
+              <button 
+                className="filter-button"
+                onClick={() => {
+                  setShowFilterMenu(!showFilterMenu);
+                  setShowNotifications(false); //  Close notifications when opening filter
+                  setShowPrintOptions(false); //  Close print options too
+                }}
+              >
                   <FaFilter /> Filter
                 </button>
                 
@@ -1415,7 +1423,11 @@ const BusinessManagement = () => {
                     >
                       <button
                         className="business-action-btn print-btn"
-                        onClick={() => setShowPrintOptions(!showPrintOptions)}
+                        onClick={() => {
+                          setShowPrintOptions(!showPrintOptions);
+                          setShowNotifications(false); //  Close notifications when opening print
+                          setShowFilterMenu(false); //  Close filter when opening print
+                        }}
                       >
                         <FaPrint />
                       </button>
