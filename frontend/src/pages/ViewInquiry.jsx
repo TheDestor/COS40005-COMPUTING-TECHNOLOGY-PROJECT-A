@@ -791,10 +791,14 @@ const ViewInquiry = () => {
                 <FaSync className={loading ? 'spinning' : ''} />
               </button>
               <div className="notification-wrapper" ref={notificationRef}>
-                <div 
-                  className="icon-wrapper notification-icon"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                >
+              <div 
+                className="icon-wrapper notification-icon"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowFilterMenu(false); // Close filter
+                  setShowPrintOptions(false); // Close print
+                }}
+              >
                   <FaBell className="action-icon" />
                   {unreadCount > 0 && (
                     <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -864,10 +868,14 @@ const ViewInquiry = () => {
 
             <div className="inquiry-filters">
               <div className="filter-dropdown-vi-container">
-                <button
-                  className="filter-button"
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                >
+              <button
+                className="filter-button"
+                onClick={() => {
+                  setShowFilterMenu(!showFilterMenu);
+                  setShowNotifications(false); // Close notifications
+                  setShowPrintOptions(false); // Close print
+                }}
+              >
                   <FaFilter /> Filter
                 </button>
 
@@ -1055,11 +1063,14 @@ const ViewInquiry = () => {
                         <FaCheck /> Resolve
                       </button>
                       <div className="print-options-wrapper" ref={printOptionsRef}>
-                        <button 
-                          className="inquiry-action-btn print-btn"
-                          onClick={() => setShowPrintOptions(!showPrintOptions)}
-                          title="Print options"
-                        >
+                      <button 
+                        className="inquiry-action-btn print-btn"
+                        onClick={() => {
+                          setShowPrintOptions(!showPrintOptions);
+                          setShowNotifications(false); //  Close notifications
+                          setShowFilterMenu(false); //  Close filter
+                        }}
+                      >
                           <FaPrint /> Print
                         </button>
                         <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
