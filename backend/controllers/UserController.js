@@ -244,3 +244,42 @@ export const deleteAccount = async (req, res) => {
         return res.status(500).json({ success: false, message: "An internal server error occurred while deleting account" });
     }
 };
+
+export const updateNotificationSettings = async (req, res) => {
+  try {
+    const { notifications } = req.body;
+    const _id = req.user;
+
+    const updateData = {};
+    if (notifications.location !== undefined) {
+      updateData["notifications.location"] = notifications.location;
+    }
+    if (notifications.event !== undefined) {
+      updateData["notifications.event"] = notifications.event;
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      _id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("notifications");
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found.",
+        success: false,
+      });
+    }
+
+    res.status(200).json({
+      message: "Notification settings updated successfully.",
+      success: true,
+      notifications: updatedUser.notifications,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "An internal server error occurred.",
+      success: false,
+    });
+  }
+};

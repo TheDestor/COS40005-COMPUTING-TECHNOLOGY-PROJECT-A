@@ -583,6 +583,7 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
       toast.error('Geolocation is not supported by your browser');
       return;
     }
+    const loadingId = toast.loading('Locating current position...', { duration: Infinity });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const [clat, clng] = clampToBounds(pos.coords.latitude, pos.coords.longitude);
@@ -591,10 +592,11 @@ const EventModal = ({ event, isOpen, onClose, type, onSave, editForm, setEditFor
           latitude: clat,
           longitude: clng
         }));
+        toast.success(`Location set to ${clat.toFixed(4)}, ${clng.toFixed(4)}`, { id: loadingId, duration: 2000 });
       },
       (err) => {
         const msg = err?.message || 'Unable to retrieve your location';
-        toast.error(msg);
+        toast.error(msg, { id: loadingId, duration: 3000 });
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -1846,18 +1848,18 @@ const AddEventPage = () => {
       toast.error('Geolocation is not supported by your browser');
       return;
     }
+    const loadingId = toast.loading('Locating current position...', { duration: Infinity });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const [clat, clng] = clampToBounds(pos.coords.latitude, pos.coords.longitude);
-        setEditForm(prev => ({
-          ...prev,
-          latitude: clat,
-          longitude: clng
-        }));
+        setLatitude(clat);
+        setLongitude(clng);
+        setCoordinatesInput(`${clat.toFixed(4)}, ${clng.toFixed(4)}`);
+        toast.success(`Location set to ${clat.toFixed(4)}, ${clng.toFixed(4)}`, { id: loadingId, duration: 2000 });
       },
       (err) => {
         const msg = err?.message || 'Unable to retrieve your location';
-        toast.error(msg);
+        toast.error(msg, { id: loadingId, duration: 3000 });
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );

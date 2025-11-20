@@ -106,12 +106,46 @@ a:focus {
 }
 
 /* Senior Mode */
-.senior-mode-active button {
+.senior-mode-active .header-title-enp,
+.senior-mode-active .header-subtitle-enp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .category-tab-enp,
+.senior-mode-active .view-details-btn-enp,
+.senior-mode-active .nav-btn-enp,
+.senior-mode-active .nav-counter-enp {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .book-btn,
+.senior-mode-active .info-header,
+.senior-mode-active .info-desc,
+.senior-mode-active .info-row-text,
+.senior-mode-active .info-footer .footer-icon,
+.senior-mode-active .info-footer .footer-item {
   font-size: 1.25rem;
 }
 
 .senior-mode-active .settings-container .sidebar-item,
 .senior-mode-active .settings-container .content-section h2 {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .menu-item51,
+.senior-mode-active .user-info {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .edit-profile-btn,
+.senior-mode-active .change-btn,
+.senior-mode-active .remove-btn {
+  font-size: 1.25rem;
+}
+
+.senior-mode-active .form-group2,
+.senior-mode-active .delete-account-section,
+.senior-mode-active .notification-item-pn {
   font-size: 1.25rem;
 }
 

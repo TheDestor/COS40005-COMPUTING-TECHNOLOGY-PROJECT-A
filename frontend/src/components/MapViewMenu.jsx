@@ -128,11 +128,11 @@ const createSWRCache = () => {
           if (now - value.timestamp < CACHE_DURATION) {
             cache.set(key, value);
           } else {
-            console.log(`🗑️ Removing expired cache: ${key}`);
+            // console.log(`🗑️ Removing expired cache: ${key}`);
           }
         });
         
-        console.log('📦 Loaded persistent cache from localStorage');
+        // console.log('📦 Loaded persistent cache from localStorage');
         
         // Clean up expired items from localStorage
         const validCache = {};
@@ -268,12 +268,12 @@ const globalCache = createSWRCache();
 const startBackgroundRefresh = () => {
   if (typeof window === 'undefined') return null;
   
-  console.log('🔄 Starting background cache refresh system (60s interval)...');
+  // console.log('🔄 Starting background cache refresh system (60s interval)...');
   
   // Refresh cache every 60 seconds
   const refreshInterval = setInterval(async () => {
     const stats = globalCache.getStats();
-    console.log(`🔄 Background cache refresh cycle started... (${stats.valid} valid items)`);
+    // console.log(`🔄 Background cache refresh cycle started... (${stats.valid} valid items)`);
     
     const keys = globalCache.getAllKeys();
     let refreshedCount = 0;
@@ -321,7 +321,7 @@ const startBackgroundRefresh = () => {
             const data = await response.json();
             globalCache.set(key, data);
             refreshedCount++;
-            console.log(`✅ Refreshed ${key}`);
+            // console.log(`✅ Refreshed ${key}`);
           } else {
             failedCount++;
           }
@@ -331,7 +331,7 @@ const startBackgroundRefresh = () => {
             const data = await response.json();
             globalCache.set(key, data.events || []);
             refreshedCount++;
-            console.log(`✅ Refreshed ${key}`);
+            // console.log(`✅ Refreshed ${key}`);
           } else {
             failedCount++;
           }
@@ -342,7 +342,7 @@ const startBackgroundRefresh = () => {
             const data = await response.json();
             globalCache.set(key, data.data || []);
             refreshedCount++;
-            console.log(`✅ Refreshed ${key}`);
+            // console.log(`✅ Refreshed ${key}`);
           } else {
             failedCount++;
           }
@@ -357,7 +357,7 @@ const startBackgroundRefresh = () => {
             if (!canCategory || !canGlobal) {
               const waitCat = globalCache.rateLimiter.getWaitTime(category);
               const waitGlobal = globalCache.rateLimiter.getGlobalWaitTime();
-              console.log(`⏳ Rate limited for ${category}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
+              // console.log(`⏳ Rate limited for ${category}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
               rateLimitedCount++;
               continue;
             }
@@ -388,7 +388,7 @@ const startBackgroundRefresh = () => {
               const newKey = `overpass_${category}_${currentPos.lat.toFixed(4)}_${currentPos.lng.toFixed(4)}_10000`;
               globalCache.set(newKey, elements);
               refreshedCount++;
-              console.log(`✅ Refreshed Overpass data for ${category}`);
+              // console.log(`✅ Refreshed Overpass data for ${category}`);
             }
           }
         }
@@ -399,9 +399,9 @@ const startBackgroundRefresh = () => {
     }
     
     if (refreshedCount > 0 || failedCount > 0 || rateLimitedCount > 0) {
-      console.log(`✅ Background refresh completed: ${refreshedCount} items updated, ${failedCount} failed, ${rateLimitedCount} rate limited`);
+      // console.log(`✅ Background refresh completed: ${refreshedCount} items updated, ${failedCount} failed, ${rateLimitedCount} rate limited`);
     } else {
-      console.log('ℹ️ No items needed refresh this cycle');
+      // console.log('ℹ️ No items needed refresh this cycle');
     }
   }, 60000); // 60 seconds
   
@@ -459,7 +459,7 @@ const useParallelPreload = () => {
 
     // Check if cache is already fully populated - INSTANT EXPERIENCE
     if (globalCache.isFullyPopulated()) {
-      console.log('⚡ Cache is fully populated - INSTANT EXPERIENCE AVAILABLE');
+      // console.log('⚡ Cache is fully populated - INSTANT EXPERIENCE AVAILABLE');
       setPreloadProgress(100);
       setPreloadMessage('Instant experience ready!');
       setIsInstantExperience(true);
@@ -471,14 +471,14 @@ const useParallelPreload = () => {
     const lastPreload = localStorage.getItem('mapview_last_preload_v2');
     const now = Date.now();
     if (lastPreload && now - parseInt(lastPreload) < 60 * 60 * 1000) {
-      console.log('⚡ Using recently pre-loaded data');
+      // console.log('⚡ Using recently pre-loaded data');
       setPreloadProgress(100);
       setPreloadMessage('Loading cached data...');
       setTimeout(() => setIsPreloading(false), 500);
       return;
     }
 
-    console.log('🚀 ENHANCED PARALLEL Pre-loading 500 items per category...');
+    // console.log('🚀 ENHANCED PARALLEL Pre-loading 500 items per category...');
     setIsPreloading(true);
     setIsInstantExperience(false);
     setPreloadProgress(0);
@@ -493,7 +493,7 @@ const useParallelPreload = () => {
         const progress = Math.min(Math.round((completedBatches / totalBatches) * 100), 95);
         setPreloadProgress(progress);
         setPreloadMessage(message);
-        console.log(`📊 Enhanced parallel pre-load: ${progress}% - ${message}`);
+        // console.log(`📊 Enhanced parallel pre-load: ${progress}% - ${message}`);
       };
 
       // BATCH 1: Load Major Towns + Events in PARALLEL (Core data)
@@ -557,7 +557,7 @@ const useParallelPreload = () => {
         fetchWithOptimizedTimeout(`/api/businesses/approved?category=${encodeURIComponent(category)}&limit=500`)
           .then(businesses => {
             globalCache.set(`businesses_${category}`, businesses.data || []);
-            console.log(`✅ Loaded ${businesses.data?.length || 0} ${category} businesses`);
+            // console.log(`✅ Loaded ${businesses.data?.length || 0} ${category} businesses`);
             return businesses.data || [];
           })
           .catch(error => {
@@ -602,7 +602,7 @@ const useParallelPreload = () => {
       
       const missingKeys = essentialKeys.filter(key => !globalCache.has(key));
       if (missingKeys.length > 0) {
-        console.log('⚠️ Missing cache keys:', missingKeys);
+        // console.log('⚠️ Missing cache keys:', missingKeys);
         // Could trigger re-fetch for missing data here if needed
       }
       
@@ -612,9 +612,9 @@ const useParallelPreload = () => {
       updateProgress('Finalizing...', 1);
       localStorage.setItem('mapview_last_preload_v2', now.toString());
       setPreloadProgress(100);
-      setPreloadMessage('All 500-item data loaded!');
+      setPreloadMessage('All data loaded!');
 
-      console.log('🎉 ENHANCED PARALLEL pre-load complete with 500 items per category');
+      // console.log('🎉 ENHANCED PARALLEL pre-load complete with 500 items per category');
 
       // Start background refresh after preload completes
       setTimeout(() => {
@@ -657,7 +657,7 @@ const useParallelPreload = () => {
 
         const key = `overpass_${category}_${currentPos.lat.toFixed(4)}_${currentPos.lng.toFixed(4)}_10000`;
         globalCache.set(key, elements);
-        console.log(`✅ Loaded ${elements.length} ${category} Overpass points`);
+        // console.log(`✅ Loaded ${elements.length} ${category} Overpass points`);
       }
     } catch (error) {
       console.error(`Overpass load failed for ${category}:`, error);
@@ -865,7 +865,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const cached = dataCacheRef.current.get('major_towns');
     if (!cached) return [];
     
-    console.log('⚡ Loading Major Towns from cache');
+    // console.log('⚡ Loading Major Towns from cache');
     return cached
       .filter(item => 
         item && 
@@ -891,7 +891,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const cached = dataCacheRef.current.get('backend_locations');
     if (!cached) return [];
     
-    console.log(`⚡ Loading ${categoryName} from backend cache`);
+    // console.log(`⚡ Loading ${categoryName} from backend cache`);
     return cached.filter(item => {
       switch(categoryName.toLowerCase()) {
         case 'attractions': return item.category === 'Attraction';
@@ -923,7 +923,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const cached = dataCacheRef.current.get(`businesses_${apiCategory}`);
     if (!cached) return [];
     
-    console.log(`⚡ Loading ${categoryName} businesses from cache`);
+    // console.log(`⚡ Loading ${categoryName} businesses from cache`);
     return cached
       .filter(b => b && b.latitude != null && b.longitude != null)
       .slice(0, 500)
@@ -953,7 +953,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const cached = dataCacheRef.current.get('events');
     if (!cached) return [];
     
-    console.log('⚡ Loading Events from cache');
+    // console.log('⚡ Loading Events from cache');
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
   
@@ -1015,12 +1015,12 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     const exactCached = dataCacheRef.current.get(exactKey);
     
     if (exactCached) {
-      console.log(`⚡ Loading exact nearby ${categoryName} Overpass data from cache: ${exactCached.length} items`);
+      // console.log(`⚡ Loading exact nearby ${categoryName} Overpass data from cache: ${exactCached.length} items`);
       return exactCached;
     }
     
     // If no exact match, search for any cached Overpass data for this category
-    console.log(`🔍 Searching for any cached Overpass data for ${categoryName}...`);
+    // console.log(`🔍 Searching for any cached Overpass data for ${categoryName}...`);
     const allKeys = dataCacheRef.current.getAllKeys();
     const overpassKeys = allKeys.filter(key => 
       key.startsWith(`overpass_${categoryName}_`) && dataCacheRef.current.get(key)
@@ -1038,7 +1038,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       }, overpassKeys[0]);
       
       const cachedData = dataCacheRef.current.get(mostRecentKey);
-      console.log(`⚡ Loading cached ${categoryName} Overpass data from ${mostRecentKey}: ${cachedData.length} items`);
+      // console.log(`⚡ Loading cached ${categoryName} Overpass data from ${mostRecentKey}: ${cachedData.length} items`);
       return cachedData;
     }
     
@@ -1061,7 +1061,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
       if (!res.ok) {
         if (res.status === 401) {
-          console.log('🔐 401 Unauthorized - using cached or static data');
+          // console.log('🔐 401 Unauthorized - using cached or static data');
           const cached = getInstantMajorTowns();
           if (cached.length) return cached;
         }
@@ -1131,7 +1131,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       
       if (!res.ok) {
         if (res.status === 401) {
-          console.log('🔐 401 Unauthorized - User not logged in, using cached data');
+          // console.log('🔐 401 Unauthorized - User not logged in, using cached data');
           return getInstantBusinessesData(menuCategoryName);
         }
         return [];
@@ -1184,7 +1184,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       
       if (!res.ok) {
         if (res.status === 401) {
-          console.log('🔐 401 Unauthorized - User not logged in, using cached data');
+          // console.log('🔐 401 Unauthorized - User not logged in, using cached data');
           return getInstantEventsData();
         }
         return [];
@@ -1264,7 +1264,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('🔐 401 Unauthorized - User not logged in, using cached data');
+          // console.log('🔐 401 Unauthorized - User not logged in, using cached data');
           return getInstantBackendData(categoryName);
         }
         return [];
@@ -1312,7 +1312,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     // Cache first
     const cached = dataCacheRef.current.get(key);
     if (cached) {
-      console.log(`✅ Using cached Overpass data for ${categoryName}: ${cached.length} items`);
+      // console.log(`✅ Using cached Overpass data for ${categoryName}: ${cached.length} items`);
       return cached;
     }
 
@@ -1322,14 +1322,14 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     if (!canCategory || !canGlobal) {
       const waitCat = globalCache.rateLimiter.getWaitTime(categoryName);
       const waitGlobal = globalCache.rateLimiter.getGlobalWaitTime();
-      console.log(`⏳ Rate limited for ${categoryName}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
+      // console.log(`⏳ Rate limited for ${categoryName}. Wait: cat=${Math.round(waitCat/1000)}s, global=${Math.round(waitGlobal/1000)}s`);
 
       // Prefer a nearby cached fallback if available
       const fallbackKey = `overpass_${categoryName}_${DEFAULT_CENTER.lat.toFixed(4)}_${DEFAULT_CENTER.lng.toFixed(4)}_10000`;
       return globalCache.get(fallbackKey) || [];
     }
 
-    console.log(`📍 Fetching fresh Overpass data for ${categoryName}...`);
+    // console.log(`📍 Fetching fresh Overpass data for ${categoryName}...`);
     const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 10000)));
 
     try {
@@ -1353,7 +1353,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       }).filter(Boolean).slice(0, 500);
 
       dataCacheRef.current.set(key, elements);
-      console.log(`💾 Cached Overpass data for ${categoryName}: ${elements.length} items`);
+      // console.log(`💾 Cached Overpass data for ${categoryName}: ${elements.length} items`);
 
       return elements;
     } catch (e) {
@@ -1403,7 +1403,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           .slice(0, 500);
       }
 
-      console.log(`✅ COMPLETE loaded ${completeData.length} ${categoryName} items`);
+      // console.log(`✅ COMPLETE loaded ${completeData.length} ${categoryName} items`);
       return completeData;
     } catch (error) {
       console.error('Complete fetch error:', error);
@@ -1424,7 +1424,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
   // ULTRA FAST INSTANT LOADER - Always tries cache first INCLUDING OVERPASS
   const fetchPlacesByCategoryInstant = useCallback(async (categoryName) => {
-    console.log(`⚡ INSTANT loading attempt: ${categoryName}`);
+    // console.log(`⚡ INSTANT loading attempt: ${categoryName}`);
     
     let instantData = [];
 
@@ -1442,12 +1442,12 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       const businessResults = getInstantBusinessesData(categoryName);
       const overpassResults = getInstantOverpassData(categoryName);
 
-      console.log(`📊 Cache results for ${categoryName}:`, {
-        backend: backendResults.length,
-        business: businessResults.length,
-        overpass: overpassResults.length,
-        total: backendResults.length + businessResults.length + overpassResults.length
-      });
+      // console.log(`📊 Cache results for ${categoryName}:`, {
+      //   backend: backendResults.length,
+      //   business: businessResults.length,
+      //   overpass: overpassResults.length,
+      //   total: backendResults.length + businessResults.length + overpassResults.length
+      // });
 
       instantData = [...backendResults, ...businessResults, ...overpassResults];
       
@@ -1464,11 +1464,11 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
     // Return instant data immediately if available
     if (instantData.length > 0) {
-      console.log(`✅ INSTANT SUCCESS: Loaded ${instantData.length} ${categoryName} items from cache`);
+      // console.log(`✅ INSTANT SUCCESS: Loaded ${instantData.length} ${categoryName} items from cache`);
       return instantData;
     }
 
-    console.log(`❌ INSTANT FAILED: No cached data for ${categoryName}`);
+    // console.log(`❌ INSTANT FAILED: No cached data for ${categoryName}`);
     return null; // No cached data available
   }, [
     getInstantMajorTowns,
@@ -1480,7 +1480,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
 
   // Enhanced menu item click handler with ULTRA FAST instant loading INCLUDING OVERPASS
   const handleMenuItemClick = useCallback(async (item) => {
-    console.log(`🎯 Clicked: ${item.name}`);
+    // console.log(`🎯 Clicked: ${item.name}`);
     
     // Clear routing if needed
     if (isRoutingActive && activeOption === null && onClearRouting) {
@@ -1517,10 +1517,10 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           window.mapRef.setZoom(item.name === 'Major Town' ? 10 : 14);
         }
         
-        console.log(`⚡ INSTANT SUCCESS: Displayed ${instantData.length} ${item.name} items`);
+        // console.log(`⚡ INSTANT SUCCESS: Displayed ${instantData.length} ${item.name} items`);
       } else {
         // FAILED: No cached data, show loading and fetch fresh data
-        console.log(`⏳ No cached data for ${item.name}, fetching complete data...`);
+        // console.log(`⏳ No cached data for ${item.name}, fetching complete data...`);
         const completeData = await fetchPlacesByCategoryComplete(item.name);
         
         setLocationsData(completeData);
@@ -1532,7 +1532,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       setTimeout(() => {
         fetchPlacesByCategoryComplete(item.name).then(freshData => {
           if (freshData.length > 0) {
-            console.log(`🔄 Background refresh completed for ${item.name}`);
+            // console.log(`🔄 Background refresh completed for ${item.name}`);
           }
         });
       }, 1000);
@@ -1575,7 +1575,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 99999,
+        zIndex: 99999999999 ,
         flexDirection: 'column',
         animation: 'fadeIn 0.3s ease'
       }}>
@@ -1659,7 +1659,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     setHasPreloaded(hasCachedData);
     
     if (hasCachedData) {
-      console.log('⚡ Using cached data for instant experience');
+      // console.log('⚡ Using cached data for instant experience');
       // Start background refresh immediately if we have cached data
       setTimeout(() => {
         refreshIntervalRef.current = startBackgroundRefresh();
@@ -1675,7 +1675,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     // Even faster Major Town loading for 500 data
     const loadTimer = setTimeout(() => {
       if (isFirstLoad && !activeOption) {
-        console.log('🚀 ULTRA-FAST start - loading Major Town with 500 data');
+        // console.log('🚀 ULTRA-FAST start - loading Major Town with 500 data');
         const majorTownItem = menuItems.find(item => item.name === 'Major Town');
         if (majorTownItem) {
           handleMenuItemClick(majorTownItem);
@@ -1693,7 +1693,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
   // Auto-load Major Town on first render if we have cached data
   useEffect(() => {
     if (hasPreloaded && isFirstLoad && !activeOption) {
-      console.log('🚀 First load with cached data - auto-loading Major Town');
+      // console.log('🚀 First load with cached data - auto-loading Major Town');
       const majorTownItem = menuItems.find(item => item.name === 'Major Town');
       if (majorTownItem) {
         handleMenuItemClick(majorTownItem);
@@ -1711,7 +1711,7 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
         dataCacheRef.current.get('events');
       
       setHasPreloaded(!!hasData);
-      console.log('📊 Pre-load status:', hasData ? 'HAS CACHED DATA' : 'NO CACHED DATA');
+      // console.log('📊 Pre-load status:', hasData ? 'HAS CACHED DATA' : 'NO CACHED DATA');
     };
 
     checkPreloadStatus();

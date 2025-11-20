@@ -54,6 +54,8 @@ const defaultIcon = new L.Icon({
 
 // Map Modal Component for showing coordinates
 const MapModal = ({ latitude, longitude }) => {
+  const safeLat = latitude || 1.5; // Default to Sarawak center
+  const safeLng = longitude || 110.3;
   const [markerPos, setMarkerPos] = useState([latitude, longitude]);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ const MapModal = ({ latitude, longitude }) => {
   return (
     <div style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
       <div style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
-        Coordinates: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+        Coordinates: {safeLat.toFixed(6)}, {safeLng.toFixed(6)}
       </div>
       <MapContainer
         center={[latitude, longitude]}
@@ -120,6 +122,7 @@ const BusinessManagement = () => {
   const [confirmTargetId, setConfirmTargetId] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const cancelBtnRef = useRef(null);
+  const [tempAdminNotes, setTempAdminNotes] = useState(''); // For capturing notes in modal
 
   const openConfirm = (type, id) => {
     setConfirmAction(type);
@@ -130,6 +133,7 @@ const BusinessManagement = () => {
     if (confirmLoading) return;
     setConfirmAction(null);
     setConfirmTargetId(null);
+    setTempAdminNotes(''); // NEW: Clear notes on close
   };
 
   useEffect(() => {
@@ -322,8 +326,7 @@ const BusinessManagement = () => {
       
       if (response.data.success) {
         let businessData = response.data.data || [];
-
-
+      
         // Client-side filtering as fallback (only if backend doesn't handle the filters properly)
         if (filterStatus !== 'all') {
           businessData = businessData.filter(business => business.status === filterStatus);
@@ -332,29 +335,29 @@ const BusinessManagement = () => {
         if (filterCategory !== 'all') {
           businessData = businessData.filter(business => business.category === filterCategory);
         }
-
+      
         setBusinesses(businessData);
         
-        // Extract unique categories for filter dropdown
+        // FIXED: Preserve selected business during auto-refresh
         if (businessData.length > 0) {
-          const categories = [...new Set(businessData.map(b => b.category).filter(Boolean))];
-          setBusinessCategories(categories);
-        } else {
-          setBusinessCategories([]);
-        }
-        
-        // Select first business by default if no business is selected and we have data
-        if (businessData.length > 0) {
-          if (!selectedBusiness || !businessData.find(b => b._id === selectedBusiness._id)) {
+          // If there's a currently selected business, try to keep it selected
+          if (selectedBusiness) {
+            const stillExists = businessData.find(b => b._id === selectedBusiness._id);
+            if (stillExists) {
+              // Update the selected business with fresh data
+              setSelectedBusiness(stillExists);
+            } else {
+              // Business was deleted, select first one
+              setSelectedBusiness(businessData[0]);
+            }
+          } else {
+            // No business selected yet, select the first one
             setSelectedBusiness(businessData[0]);
           }
         } else {
           setSelectedBusiness(null);
         }
-        
-        // Clear any previous errors on successful fetch
-        setError(null);
-
+      
         // Show refresh notification if manually refreshed
         if (showRefreshNotification) {
           addLocalNotification('Business data refreshed successfully', 'success');
@@ -403,8 +406,30 @@ const BusinessManagement = () => {
   useEffect(() => {
     if (isLoggedIn && accessToken) {
       fetchBusinesses();
+      
+      // 👇 NEW: Fetch categories ONLY on first load (not on filter changes)
+      if (businessCategories.length === 0) {
+        fetchAllCategories();
+      }
     }
   }, [isLoggedIn, accessToken, page, filterStatus, filterCategory]);
+
+  // 👇 NEW: Separate function to fetch all categories once
+  const fetchAllCategories = async () => {
+    try {
+      const response = await authAxios.get('/api/businesses/getAllBusinesses', {
+        params: { limit: 1000 } // Get all to extract categories
+      });
+      
+      if (response.data.success) {
+        const allBusinesses = response.data.data || [];
+        const categories = [...new Set(allBusinesses.map(b => b.category).filter(Boolean))];
+        setBusinessCategories(categories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   // Auto-refresh businesses every 30 seconds to check for new submissions
   useEffect(() => {
@@ -415,7 +440,7 @@ const BusinessManagement = () => {
     }, 30000); // 30 seconds
 
     return () => clearInterval(intervalId);
-  }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory]);
+  }, [isLoggedIn, accessToken, isAdmin, page, filterStatus, filterCategory, selectedBusiness]); // ADDED selectedBusiness
 
 
   // Initial notification loading
@@ -451,13 +476,12 @@ const BusinessManagement = () => {
   // Function to handle business selection
   const handleSelectBusiness = (business) => {
     setSelectedBusiness(business);
+    
+    // FIXED: Always start with empty textarea (saved notes show in green box)
+    setAdminNotes('');
+    
     if (isMobile) {
       setShowBusinessDetail(true);
-    }
-  
-    // If the business was pending, mark it as in-review
-    if (business.status === 'pending') {
-      handleUpdateBusinessStatus(business._id, 'in-review');
     }
   };
 
@@ -467,7 +491,7 @@ const BusinessManagement = () => {
   };
 
   // Handler for updating business status
-  const handleUpdateBusinessStatus = async (id, newStatus) => {
+  const handleUpdateBusinessStatus = async (id, newStatus, notes = '') => {
     if (!isLoggedIn || !accessToken) {
       setError('Authentication required. Please log in.');
       return;
@@ -480,14 +504,19 @@ const BusinessManagement = () => {
 
     try {
       const response = await authAxios.patch(`/api/businesses/updateBusinessStatus/${id}`, {
-        status: newStatus
+        status: newStatus,
+        adminNotes: notes || null // 👈 NEW: Send admin notes
       });
       
       if (response.data.success) {
         // Update businesses list
         const updatedBusinesses = businesses.map(item => {
           if (item._id === id) {
-            return { ...item, status: newStatus };
+            return { 
+              ...item, 
+              status: newStatus,
+              adminNotes: notes || null // 👈 NEW: Update local state
+            };
           }
           return item;
         });
@@ -496,7 +525,11 @@ const BusinessManagement = () => {
         
         // Update selected business if it's the one that was modified
         if (selectedBusiness && selectedBusiness._id === id) {
-          setSelectedBusiness({ ...selectedBusiness, status: newStatus });
+          setSelectedBusiness({ 
+            ...selectedBusiness, 
+            status: newStatus,
+            adminNotes: notes || null // 👈 NEW: Update selected business
+          });
         }
         
         // Add notification for status update
@@ -596,12 +629,13 @@ const BusinessManagement = () => {
     setConfirmLoading(true);
     try {
       if (confirmAction === 'approve') {
-        await handleApproveBusiness(confirmTargetId);
+        await handleUpdateBusinessStatus(confirmTargetId, 'approved', tempAdminNotes); // 👈 Pass notes
       } else if (confirmAction === 're-amend') {
-        await handleRejectBusiness(confirmTargetId);
+        await handleUpdateBusinessStatus(confirmTargetId, 'rejected', tempAdminNotes); // 👈 Pass notes
       } else if (confirmAction === 'delete') {
         await handleDeleteBusiness(confirmTargetId);
       }
+      setTempAdminNotes(''); // 👈 Clear notes after action
       closeConfirm();
     } catch (e) {
       toast.error(e?.message || 'Action failed. Please try again.');
@@ -610,18 +644,68 @@ const BusinessManagement = () => {
     }
   };
 
-  // Handler for submitting admin notes
-  const handleSubmitNotes = (e) => {
+  // Handler for submitting internal admin notes
+  const handleSubmitNotes = async (e) => {
     e.preventDefault();
-    if (!adminNotes.trim() || !selectedBusiness) return;
+    if (!selectedBusiness) return;
     
-    // Here you could save the notes to the backend if needed
-    console.log(`Admin notes for business #${selectedBusiness._id}:`, adminNotes);
+    // Get new notes
+    const newNotes = adminNotes.trim();
+    if (!newNotes) {
+      toast.error('Please enter some notes before saving');
+      return;
+    }
     
-    // Add notification for notes saved
-    addLocalNotification(`Notes saved for business "${selectedBusiness.name}"`, 'success');
-    toast.success(`Notes saved for business "${selectedBusiness.name}"`);
-    setAdminNotes('');
+    try {
+      // 👇 APPEND: Combine existing notes with new notes
+      const existingNotes = selectedBusiness.internalAdminNotes || '';
+      const timestamp = new Date().toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Format: [Date] New note
+      const formattedNewNote = `[${timestamp}] ${newNotes}`;
+      
+      // Combine: existing + new (separated by double newline)
+      const combinedNotes = existingNotes 
+        ? `${existingNotes}\n\n${formattedNewNote}`
+        : formattedNewNote;
+      
+      const response = await authAxios.patch(
+        `/api/businesses/updateInternalAdminNotes/${selectedBusiness._id}`,
+        { internalAdminNotes: combinedNotes }
+      );
+      
+      if (response.data.success) {
+        const updatedBusiness = response.data.data;
+        
+        // Update businesses list
+        const updatedBusinesses = businesses.map(item => {
+          if (item._id === selectedBusiness._id) {
+            return { ...item, internalAdminNotes: updatedBusiness.internalAdminNotes };
+          }
+          return item;
+        });
+        setBusinesses(updatedBusinesses);
+        
+        // Update selected business
+        setSelectedBusiness(updatedBusiness);
+        
+        // 👇 Clear textarea after saving
+        setAdminNotes('');
+        
+        toast.success(`Note added successfully!`);
+      } else {
+        toast.error(response.data.message || 'Failed to save internal notes');
+      }
+    } catch (error) {
+      console.error('Error saving internal notes:', error);
+      toast.error('Failed to save internal notes');
+    }
   };
 
   // Manual refresh handler
@@ -803,8 +887,6 @@ const BusinessManagement = () => {
     switch (status) {
       case 'pending':
         return 'status-badge-pending';
-      case 'in-review':
-        return 'status-badge-progress';
       case 'approved':
         return 'status-badge-approved';
       case 'rejected':
@@ -940,10 +1022,14 @@ const BusinessManagement = () => {
                 <FaSync className={loading ? 'spinning' : ''} />
               </button>
               <div className="notification-wrapper" ref={notificationRef}>
-                <div 
-                  className="icon-wrapper notification-icon"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                >
+              <div 
+                className="icon-wrapper notification-icon"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowFilterMenu(false); //  Close filter when opening notifications
+                  setShowPrintOptions(false); //  Close print options too
+                }}
+              >
                   <FaBell className="action-icon" />
                   {unreadCount > 0 && (
                     <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -998,10 +1084,6 @@ const BusinessManagement = () => {
                 <span className="stat-label">Pending</span>
               </div>
               <div className="stat">
-                <span className="stat-value">{businesses.filter(b => b.status === 'in-review').length}</span>
-                <span className="stat-label">In Review</span>
-              </div>
-              <div className="stat">
                 <span className="stat-value">{businesses.filter(b => b.status === 'approved').length}</span>
                 <span className="stat-label">Approved</span>
               </div>
@@ -1017,10 +1099,14 @@ const BusinessManagement = () => {
             
             <div className="business-filters">
               <div className="filter-dropdown-container">
-                <button 
-                  className="filter-button"
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                >
+              <button 
+                className="filter-button"
+                onClick={() => {
+                  setShowFilterMenu(!showFilterMenu);
+                  setShowNotifications(false); //  Close notifications when opening filter
+                  setShowPrintOptions(false); //  Close print options too
+                }}
+              >
                   <FaFilter /> Filter
                 </button>
                 
@@ -1037,7 +1123,6 @@ const BusinessManagement = () => {
                       >
                         <option value="all">All</option>
                         <option value="pending">Pending</option>
-                        <option value="in-review">In Review</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Re-amend</option>
                       </select>
@@ -1124,9 +1209,9 @@ const BusinessManagement = () => {
                             : business.description}
                         </div>
                         <div className="business-status">
-                          <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
-                            {business.status === 'in-review' ? 'In Review' : business.status.charAt(0).toUpperCase() + business.status.slice(1)}
-                          </span>
+                        <span className={`status-badge ${getStatusBadgeClass(business.status)}`}>
+                          {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+                        </span>
                           <span className={`priority-badge ${getPriorityBadgeClass(business.priority)}`}>
                             {renderPriorityIcon(business.priority)}
                             {business.priority.charAt(0).toUpperCase() + business.priority.slice(1)}
@@ -1195,56 +1280,84 @@ const BusinessManagement = () => {
             </div>
             
             {confirmAction && (
-          <div
-            className="confirm-modal-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="bm-confirmation-title"
-            onClick={closeConfirm}
-          >
-            <div
-              className="confirm-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 id="bm-confirmation-title" className="confirm-modal-title">
-                {confirmAction === 'approve'
-                  ? 'Confirm Approve'
-                  : confirmAction === 're-amend'
-                  ? 'Confirm Re-amend'
-                  : 'Confirm Delete'}
-              </h3>
-              <p className="confirm-modal-body">
-                {confirmAction === 'approve'
-                  ? 'Are you sure you want to approve this business?'
-                  : confirmAction === 're-amend'
-                  ? 'Are you sure you want to move this business to re-amend?'
-                  : 'Are you sure you want to delete this business?'}
-              </p>
-              <div className="confirm-modal-actions">
-                <button
-                  ref={cancelBtnRef}
-                  className="modal-cancel-btn"
-                  onClick={closeConfirm}
-                  disabled={confirmLoading}
+              <div
+                className="confirm-modal-overlay"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="bm-confirmation-title"
+                onClick={closeConfirm}
+              >
+                <div
+                  className="confirm-modal"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Cancel
-                </button>
-                <button
-                  className={
-                    confirmAction === 'delete'
-                      ? 'modal-delete-btn'
-                      : 'modal-confirm-btn'
-                  }
-                  onClick={handleConfirmAction}
-                  disabled={confirmLoading}
-                  aria-busy={confirmLoading}
-                >
-                  {confirmLoading ? 'Working…' : 'Confirm'}
-                </button>
+                  <h3 id="bm-confirmation-title" className="confirm-modal-title">
+                    {confirmAction === 'approve'
+                      ? 'Confirm Approve'
+                      : confirmAction === 're-amend'
+                      ? 'Confirm Re-amend'
+                      : 'Confirm Delete'}
+                  </h3>
+                  <p className="confirm-modal-body">
+                    {confirmAction === 'approve'
+                      ? 'Are you sure you want to approve this business?'
+                      : confirmAction === 're-amend'
+                      ? 'Are you sure you want to move this business to re-amend?'
+                      : 'Are you sure you want to delete this business?'}
+                  </p>
+                  
+                  {/* 👇 NEW: Admin Notes Section (only for approve/re-amend) */}
+                  {(confirmAction === 'approve' || confirmAction === 're-amend') && (
+                    <div className="confirm-modal-notes">
+                      <label htmlFor="admin-notes-input" className="notes-label">
+                        {confirmAction === 're-amend' ? 'Feedback for Business Owner:' : 'Notes (Optional):'}
+                      </label>
+                      <textarea
+                        id="admin-notes-input"
+                        className="notes-textarea"
+                        placeholder={
+                          confirmAction === 're-amend'
+                            ? 'Please provide feedback on what needs improvement...'
+                            : 'Add any notes about this approval...'
+                        }
+                        value={tempAdminNotes}
+                        onChange={(e) => setTempAdminNotes(e.target.value)}
+                        rows={4}
+                        disabled={confirmLoading}
+                      />
+                      <div className="notes-hint">
+                        {confirmAction === 're-amend' 
+                          ? 'The business owner will see this feedback in their dashboard.'
+                          : 'These notes will be visible to the business owner.'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="confirm-modal-actions">
+                    <button
+                      ref={cancelBtnRef}
+                      className="modal-cancel-btn"
+                      onClick={closeConfirm}
+                      disabled={confirmLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={
+                        confirmAction === 'delete'
+                          ? 'modal-delete-btn'
+                          : 'modal-confirm-btn'
+                      }
+                      onClick={handleConfirmAction}
+                      disabled={confirmLoading}
+                      aria-busy={confirmLoading}
+                    >
+                      {confirmLoading ? 'Working…' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
             {/* Right panel - Selected business detail */}
             {selectedBusiness ? (
@@ -1275,7 +1388,7 @@ const BusinessManagement = () => {
                     <div className="business-header-info">
                       <h3 className="detail-name">{selectedBusiness.name}</h3>
                       <span className={`status-badge ${getStatusBadgeClass(selectedBusiness.status)}`}>
-                        {selectedBusiness.status === 'in-review' ? 'In Review' : selectedBusiness.status.charAt(0).toUpperCase() + selectedBusiness.status.slice(1)}
+                        {selectedBusiness.status.charAt(0).toUpperCase() + selectedBusiness.status.slice(1)}
                       </span>
                     </div>
                   </div>
@@ -1310,7 +1423,11 @@ const BusinessManagement = () => {
                     >
                       <button
                         className="business-action-btn print-btn"
-                        onClick={() => setShowPrintOptions(!showPrintOptions)}
+                        onClick={() => {
+                          setShowPrintOptions(!showPrintOptions);
+                          setShowNotifications(false); //  Close notifications when opening print
+                          setShowFilterMenu(false); //  Close filter when opening print
+                        }}
                       >
                         <FaPrint />
                       </button>
@@ -1345,6 +1462,25 @@ const BusinessManagement = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/*  NEW: Admin Feedback Section */}
+                  {selectedBusiness.adminNotes && (
+                    <div className="admin-feedback-section">
+                      <div className="admin-feedback-header">
+                        <h4>
+                          {selectedBusiness.status === 'rejected' ? '⚠️ Feedback Required' : '✅ Admin Notes'}
+                        </h4>
+                      </div>
+                      <div className={`admin-feedback-content ${selectedBusiness.status === 'rejected' ? 'feedback-warning' : 'feedback-info'}`}>
+                        <p>{selectedBusiness.adminNotes}</p>
+                      </div>
+                      {selectedBusiness.status === 'rejected' && (
+                        <div className="feedback-action-hint">
+                          Please review the feedback above and update your business details accordingly before resubmitting.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="business-meta compact-meta">
                     <div className="meta-section">
@@ -1391,13 +1527,15 @@ const BusinessManagement = () => {
                     </div>
 
                     {/* NEW: Add Location Map */}
-                    <div className="business-location-map">
-                      <h4>Location Map</h4>
-                      <MapModal 
-                        latitude={selectedBusiness.latitude} 
-                        longitude={selectedBusiness.longitude} 
-                      />
-                    </div>
+                    {selectedBusiness?.latitude && selectedBusiness?.longitude && (
+                      <div className="business-location-map">
+                        <h4>Location Map</h4>
+                        <MapModal 
+                          latitude={selectedBusiness.latitude} 
+                          longitude={selectedBusiness.longitude} 
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="business-description compact-description">
@@ -1407,22 +1545,88 @@ const BusinessManagement = () => {
                     </div>
                   </div>
                   
-                  <div className="admin-notes compact-notes">
-                    <h4>Admin Notes:</h4>
-                    <form onSubmit={handleSubmitNotes}>
+                  {/* 👇 NEW BEAUTIFUL ADMIN NOTES SECTION */}
+                  <div className="admin-notes-section">
+                    <div className="admin-notes-header">
+                      <h4>📝 Internal Admin Notes</h4>
+                      <span className="admin-notes-badge">Private - Admin Only</span>
+                    </div>
+                    
+                    <p className="admin-notes-description">
+                      💡 These notes are private and only visible to administrators. Business owners cannot see this.
+                    </p>
+                    
+                    {/* Show saved notes in a nice display box */}
+                    {selectedBusiness?.internalAdminNotes && (
+                      <div className="saved-notes-display">
+                        <div className="saved-notes-header">
+                          <span className="saved-notes-label">✅ Saved Notes:</span>
+                          <button 
+                            type="button"
+                            className="clear-notes-btn"
+                            onClick={async () => {
+                              if (window.confirm('⚠️ This will permanently delete ALL internal notes for this business. Are you sure?')) {
+                                try {
+                                  const response = await authAxios.patch(
+                                    `/api/businesses/updateInternalAdminNotes/${selectedBusiness._id}`,
+                                    { internalAdminNotes: null }
+                                  );
+                                  
+                                  if (response.data.success) {
+                                    const updatedBusiness = response.data.data;
+                                    
+                                    // Update businesses list
+                                    const updatedBusinesses = businesses.map(item => {
+                                      if (item._id === selectedBusiness._id) {
+                                        return { ...item, internalAdminNotes: null };
+                                      }
+                                      return item;
+                                    });
+                                    setBusinesses(updatedBusinesses);
+                                    
+                                    // Update selected business
+                                    setSelectedBusiness(updatedBusiness);
+                                    
+                                    // Clear textarea
+                                    setAdminNotes('');
+                                    
+                                    toast.success('All internal notes deleted');
+                                  }
+                                } catch (error) {
+                                  console.error('Error clearing notes:', error);
+                                  toast.error('Failed to clear notes');
+                                }
+                              }
+                            }}
+                            title="Delete all notes permanently"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        <div className="saved-notes-content">
+                          {selectedBusiness.internalAdminNotes}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <form onSubmit={handleSubmitNotes} className="admin-notes-form">
                       <textarea
-                        className="compact-textarea"
-                        placeholder="Add notes or comments about this business listing..."
+                        className="admin-notes-textarea"
+                        placeholder="Add a new note... (e.g., 'Called owner', 'Approved documents', 'Needs follow-up')"
                         value={adminNotes}
                         onChange={(e) => setAdminNotes(e.target.value)}
+                        rows={4}
                       ></textarea>
-                      <div className="notes-actions">
+                      
+                      <div className="admin-notes-footer">
+                        <div className="notes-char-count">
+                          {adminNotes.length} characters
+                        </div>
                         <button 
                           type="submit" 
-                          className="save-notes-btn"
-                          disabled={!adminNotes.trim()}
+                          className="save-notes-btn-new"
                         >
-                          <FaCheck /> Save Notes
+                          <FaCheck /> Add Note
                         </button>
                       </div>
                     </form>

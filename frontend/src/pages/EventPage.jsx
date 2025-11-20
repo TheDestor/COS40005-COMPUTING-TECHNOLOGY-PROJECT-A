@@ -27,6 +27,19 @@ function EventPage () {
   });
   const [showLoading, setShowLoading] = useState(true); 
   const [showScrollTop, setShowScrollTop] = useState(false);
+  // Track which event cards are expanded (by id)
+  const [expandedCards, setExpandedCards] = useState({});
+  const MAX_DESC_CHARS = 160;
+
+  const getDisplayDescription = (desc, isExpanded) => {
+    const text = String(desc || '');
+    if (isExpanded || text.length <= MAX_DESC_CHARS) return text;
+    return `${text.slice(0, MAX_DESC_CHARS).trim()}...`;
+  };
+
+  const toggleCardExpansion = (id) => {
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const toYMD = (d) => {
     const year = d.getFullYear();
@@ -552,11 +565,40 @@ function EventPage () {
                       </span>
                     </div>
                     
-                    {/* Description moved above event details */}
+                    {/* Description with Show more/less toggle */}
                     <div className="description-area">
-                      <p>{item.desc}</p>
+                      {(() => {
+                        const isExpanded = !!expandedCards[item.id];
+                        const displayText = getDisplayDescription(item.desc, isExpanded);
+                        const isTruncated = !isExpanded && String(item.desc || '').length > MAX_DESC_CHARS;
+                        return (
+                          <>
+                            <p style={{ marginBottom: '6px' }}>{displayText}</p>
+                            {String(item.desc || '').length > MAX_DESC_CHARS && (
+                              <button
+                                type="button"
+                                onClick={() => toggleCardExpansion(item.id)}
+                                className="ep-show-toggle"
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#007bff',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  fontSize: '0.9rem',
+                                  textDecoration: 'underline'
+                                }}
+                                aria-expanded={isExpanded}
+                                aria-label={isExpanded ? 'Show less description' : 'Show more description'}
+                                title={isExpanded ? 'Show less' : 'Show more'}
+                              >
+                                {isExpanded ? 'Show less' : (isTruncated ? 'Show more' : '')}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
-
                     {/* Event Details Section (Time row with inline button) */}
                     <div className="event-details">
                       <div className="event-detail-item">

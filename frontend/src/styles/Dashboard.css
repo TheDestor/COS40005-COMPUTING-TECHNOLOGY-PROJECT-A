@@ -560,38 +560,33 @@ svg {
   .dashboard-content {
     padding: 15px;
   }
-  
-  .dashboard-header {
-    margin-bottom: 20px;
-  }
-  
-  .greeting h3 {
-    font-size: 24px;
-    text-align: center;
+
+  /* Force legend to stack vertically on mobile */
+  .legend-mobile g {
+    display: block !important;
   }
 
-  .greeting p {
-    text-align: center;
-  }
-  
-  .stat-cards-container {
-    flex-direction: column;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 15px !important;
-  }
-  
-  .stat-card {
-    width: 100%;
-    padding: 15px !important;
+  .legend-mobile {
+    right: auto !important;
+    left: 50px !important;
+    top: -60px !important;
   }
 
-  .stat-value {
-    text-align: center;
-    font-size: 1.5rem !important;
+  /* Adjust each legend item to stack vertically */
+  svg .legend-mobile g:nth-child(1) {
+    transform: translateY(0px) !important;
   }
 
-  .stat-label {
-    font-size: 0.75rem !important;
+  svg .legend-mobile g:nth-child(2) {
+    transform: translateY(18px) !important;
+  }
+
+  svg .legend-mobile g:nth-child(3) {
+    transform: translateY(36px) !important;
+  }
+
+  svg .legend-mobile g:nth-child(4) {
+    transform: translateY(54px) !important;
   }
 
   /* CRITICAL: Visualization cards responsive fix */

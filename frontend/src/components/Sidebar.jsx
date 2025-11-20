@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fa';
 import { LuPanelLeftClose } from 'react-icons/lu';
 import '../styles/Sidebar.css';
-import cbtImage from '../assets/cbt.png';
+import cbtImage from '../assets/Kuching.png';
 import { toast } from 'sonner';
 
 const Sidebar = () => {
@@ -24,9 +24,17 @@ const Sidebar = () => {
     return savedState === null ? true : JSON.parse(savedState);
   });
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 992);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
+  // Use consts to compute avatar source and track failures
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const avatarSrc = avatarFailed ? cbtImage : (user?.avatarUrl || cbtImage);
+
+  useEffect(() => {
+    // Reset fallback when avatarUrl changes so new avatar can try loading
+    setAvatarFailed(false);
+  }, [user?.avatarUrl]);
   useEffect(() => {
     localStorage.setItem('sidebarState', JSON.stringify(isSidebarOpen));
   }, [isSidebarOpen]);
@@ -78,7 +86,12 @@ const Sidebar = () => {
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-container">
-            <img src={cbtImage} alt="CBT Logo" className="logo-img" />
+            <img
+              src={avatarSrc}
+              alt={user ? `${user.firstName} ${user.lastName}` : 'CBT Logo'}
+              className="logo-img"
+              onError={() => setAvatarFailed(true)}
+            />
             <h2 className="sidebar-name">CBT Admin</h2>
           </div>
           {/* Close button inside sidebar header for mobile - always visible when sidebar is open in mobile view */}

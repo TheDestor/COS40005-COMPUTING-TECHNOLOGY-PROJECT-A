@@ -310,7 +310,9 @@ function ManageBusiness() {
   const validators = {
     name: (v) => countNonSpace(v) < 1 ? 'Name is required.' : '',
     description: (v) => {
-      if (!v) return '';
+      if (!v || v.trim().length === 0) return 'Description is required.';
+      if (v.length < 50) return `Description must be at least 50 characters. (Currently: ${v.length})`;
+      if (v.length > 500) return `Description must be less than 500 characters. (Currently: ${v.length})`;
       return hasConsecutiveNonSpaceRun(v, 30)
         ? 'Description must not contain a sequence of 30+ non-space characters.'
         : '';
@@ -585,17 +587,26 @@ function ManageBusiness() {
         }
         let msg = 'Failed to submit update.';
         try {
-            const errorBody = await err.response?.json();
+          const errorBody = await err.response?.json();
+      
+          // 👇 NEW: Show specific validation errors
+          if (errorBody.errors && Array.isArray(errorBody.errors)) {
+            msg = errorBody.errors.join('\n');
+            toast.error(msg, { duration: 7000 });
+          } else {
             msg = errorBody?.message || err.message;
+            toast.error(msg);
+          }
         } catch (parseError) {
-            msg = err.message;
+          msg = err.message;
+          toast.error(msg);
         }
+        
         setError(msg);
-        toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
+      } finally {
+        setSaving(false);
+      }
+    };
 
   const handleSubmitClick = (e) => {
     e.preventDefault();
@@ -709,6 +720,25 @@ function ManageBusiness() {
                 }
               >
                 <div className="mb-compact-layout">
+                 {/*  NEW: Admin Feedback Section - Show if there are admin notes */}
+                 {selected?.adminNotes && (
+                      <div className="admin-feedback-section" style={{ gridColumn: '1 / -1', marginBottom: '16px' }}>
+                        <div className="admin-feedback-header">
+                          <h4>
+                            {selected.status === 'rejected' ? '⚠️ Feedback from Admin' : '✅ Admin Notes'}
+                          </h4>
+                        </div>
+                        <div className={`admin-feedback-content ${selected.status === 'rejected' ? 'feedback-warning' : 'feedback-info'}`}>
+                          <p>{selected.adminNotes}</p>
+                        </div>
+                        {selected.status === 'rejected' && (
+                          <div className="feedback-action-hint">
+                            💡 Please review the feedback above and update your business details accordingly before resubmitting.
+                          </div>
+                        )}
+                      </div>
+                    )} 
+
                   <div className="mb-compact-grid">
                     {/* Map Section */}
                     <div className="mb-map-section">
@@ -870,8 +900,15 @@ function ManageBusiness() {
                             disabled={saving} 
                           />
                           <label>Description</label>
-                          <div className="mb-hint">{countNonSpace(form.description)} / 500</div>
-                          {formErrors.description && <div className="mb-field-error">{formErrors.description}</div>}
+                          <div className="mb-hint" style={{ 
+                            color: form.description?.length < 50 ? '#dc2626' : '#6b7280' 
+                          }}>
+                            {form.description?.length || 0} / 500 (minimum 50)
+                          </div>
+                          
+                          {formErrors.description && (
+                            <div className="mb-field-error">{formErrors.description}</div>
+                          )}
                         </div>
                         
                         <div className="mb-field">

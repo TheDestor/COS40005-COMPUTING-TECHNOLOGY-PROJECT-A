@@ -791,17 +791,21 @@ const ViewInquiry = () => {
                 <FaSync className={loading ? 'spinning' : ''} />
               </button>
               <div className="notification-wrapper" ref={notificationRef}>
-                <div 
-                  className="icon-wrapper notification-icon"
-                  onClick={() => setShowNotifications(!showNotifications)}
-                >
+              <div 
+                className="icon-wrapper notification-icon"
+                onClick={() => {
+                  setShowNotifications(!showNotifications);
+                  setShowFilterMenu(false); // Close filter
+                  setShowPrintOptions(false); // Close print
+                }}
+              >
                   <FaBell className="action-icon" />
                   {unreadCount > 0 && (
                     <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
                   )}
                 </div>
                 {showNotifications && (
-                  <div className="notification-dropdown">
+                  <div className="notification-dropdown-vi">
                     <div className="dropdown-header">
                       <h4>Notifications</h4>
                       {unreadCount > 0 && (
@@ -863,16 +867,20 @@ const ViewInquiry = () => {
             </div>
 
             <div className="inquiry-filters">
-              <div className="filter-dropdown-container">
-                <button
-                  className="filter-button"
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                >
+              <div className="filter-dropdown-vi-container">
+              <button
+                className="filter-button"
+                onClick={() => {
+                  setShowFilterMenu(!showFilterMenu);
+                  setShowNotifications(false); // Close notifications
+                  setShowPrintOptions(false); // Close print
+                }}
+              >
                   <FaFilter /> Filter
                 </button>
 
                 {showFilterMenu && (
-                  <div className="filter-dropdown">
+                  <div className="filter-dropdown-vi">
                     <div className="filter-group">
                       <label>Status:</label>
                       <select
@@ -1055,11 +1063,14 @@ const ViewInquiry = () => {
                         <FaCheck /> Resolve
                       </button>
                       <div className="print-options-wrapper" ref={printOptionsRef}>
-                        <button 
-                          className="inquiry-action-btn print-btn"
-                          onClick={() => setShowPrintOptions(!showPrintOptions)}
-                          title="Print options"
-                        >
+                      <button 
+                        className="inquiry-action-btn print-btn"
+                        onClick={() => {
+                          setShowPrintOptions(!showPrintOptions);
+                          setShowNotifications(false); //  Close notifications
+                          setShowFilterMenu(false); //  Close filter
+                        }}
+                      >
                           <FaPrint /> Print
                         </button>
                         <div className={`print-dropdown ${showPrintOptions ? 'active' : ''}`}>
@@ -1508,7 +1519,7 @@ const ViewInquiry = () => {
           overflow: visible !important;
         }
 
-        .notification-dropdown {
+        .notification-dropdown-vi {
           position: absolute;
           top: calc(100% + 10px);
           right: 0;
@@ -1521,7 +1532,7 @@ const ViewInquiry = () => {
           overflow: hidden;
         }
 
-        .notification-dropdown::before {
+        .notification-dropdown-vi::before {
           content: '';
           position: absolute;
           top: -8px;
@@ -1687,7 +1698,7 @@ const ViewInquiry = () => {
             font-size: 0.75rem;
           }
 
-          .notification-dropdown {
+          .notification-dropdown-vi {
             width: 320px;
             left: -280px;
           }
@@ -1783,9 +1794,9 @@ const ViewInquiry = () => {
             flex-shrink: 0;
           }
 
-          .notification-dropdown {
+          .notification-dropdown-vi {
             position: fixed;
-            top: 120px;
+            top: 160px;
             right: 10px;
             left: 10px;
             width: auto;
@@ -1793,29 +1804,9 @@ const ViewInquiry = () => {
             z-index: 9999;
           }
 
-          .notification-dropdown::before {
+          .notification-dropdown-vi::before {
             right: 30px;
           }
-
-          // /* Filter dropdown mobile fix */
-          // .filter-dropdown-container {
-          //   position: relative;
-          //   z-index: 100;
-          // }
-
-          // .filter-dropdown {
-          //   position: fixed;
-          //   top: 50%;
-          //   left: 50%;
-          //   transform: translate(-50%, -50%);
-          //   width: 90%;
-          //   max-width: 300px;
-          //   z-index: 50;
-          // }
-
-          // .filter-dropdown::before {
-          //   display: none;
-          // }
 
           /* Print dropdown mobile fix */
           .print-dropdown {
@@ -1940,14 +1931,14 @@ const ViewInquiry = () => {
             padding: 1px 4px;
           }
 
-          .notification-dropdown {
+          .notification-dropdown-vi {
             width: calc(100vw - 20px);
             right: -10px;
           }
 
-          .notification-dropdown {
+          .notification-dropdown-vi {
             position: fixed;
-            top: 100px;
+            top: 200px;
             right: 10px;
             left: 10px;
             width: auto;
@@ -1956,14 +1947,13 @@ const ViewInquiry = () => {
           }
 
           /* Filter dropdown mobile fix */
-          .filter-dropdown-container {
+          .filter-dropdown-vi-container {
             position: relative;
-            z-index: 50;
           }
 
-          .filter-dropdown {
+          .filter-dropdown-vi {
             position: fixed;
-            top: 50%;
+            top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 85%;
@@ -1971,7 +1961,7 @@ const ViewInquiry = () => {
             z-index: 9999;
           }
 
-          .filter-dropdown::before {
+          .filter-dropdown-vi::before {
             display: none;
           }
 

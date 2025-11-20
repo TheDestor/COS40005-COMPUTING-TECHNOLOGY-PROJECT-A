@@ -14,7 +14,7 @@ import {
 
 } from 'react-icons/fa';
 import { LuPanelLeftClose } from 'react-icons/lu';
-import cbtImage from '../assets/cbt.png';
+import cbtImage from '../assets/Kuching.png';
 import { toast } from 'sonner';
 
 const SystemAdminSidebar = () => {
@@ -23,9 +23,16 @@ const SystemAdminSidebar = () => {
     return savedState === null ? true : JSON.parse(savedState);
   });
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 992);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
+  // Avatar state and computed src (consts only)
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const avatarSrc = avatarFailed ? cbtImage : (user?.avatarUrl || cbtImage);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [user?.avatarUrl]);
   useEffect(() => {
     localStorage.setItem('sidebarState', JSON.stringify(isSidebarOpen));
   }, [isSidebarOpen]);
@@ -77,7 +84,12 @@ return (
     <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="logo-container">
-          <img src={cbtImage} alt="Admin Logo" className="logo-img" />
+          <img
+            src={avatarSrc}
+            alt={user ? `${user.firstName} ${user.lastName}` : 'Admin Logo'}
+            className="logo-img"
+            onError={() => setAvatarFailed(true)}
+          />
           <h2 className="username">System Admin</h2>
         </div>
         {/* Close button inside sidebar header for mobile - always visible when sidebar is open in mobile view */}

@@ -15,7 +15,8 @@ import {
     getAllApprovedBusinesses,
     getBusinessesByOwner,
     getMySubmissions,
-    getApprovedBusinessesByCategory
+    getApprovedBusinessesByCategory,
+    updateInternalAdminNotes
 } from "../controllers/BusinessController.js";
 
 const businessRouter = Router();
@@ -58,5 +59,7 @@ businessRouter.get("/getBusinessesByStatus/:status", verifyJWT, checkRole(['cbt_
 businessRouter.patch("/updateBusinessStatus/:id", verifyJWT, checkRole(['cbt_admin']), updateBusinessStatus);
 businessRouter.put("/updateBusinessDetails/:id", verifyJWT, checkRole(['cbt_admin']), businessUpload, updateBusinessDetails);
 businessRouter.delete("/deleteBusiness/:id", verifyJWT, checkRole(['cbt_admin']), deleteBusiness);
+businessRouter.patch("/updateInternalAdminNotes/:id", verifyJWT, checkRole(['cbt_admin']), updateInternalAdminNotes);
+
 
 export default businessRouter;

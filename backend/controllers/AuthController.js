@@ -230,7 +230,8 @@ export const googleLogin = async (req, res) => {
                     "role": user.role,
                     "nationality": user.nationality,
                     "avatarUrl": user.avatarUrl,
-                    "authProvider": 'google'
+                    "authProvider": 'google',
+                    "notifications": user.notifications
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
@@ -340,7 +341,8 @@ export const login = async (req, res) => {
             phoneNumber: user.phoneNumber,
             nationality: user.nationality,
             avatarUrl: user.avatarUrl,
-            authProvider: 'password'
+            authProvider: 'password',
+            notifications: user.notifications
         };
 
         const accessToken = jwt.sign(
@@ -424,7 +426,8 @@ export const refresh = async (req, res) => {
                                 "role": user.role,
                                 "nationality": user.nationality,
                                 "avatarUrl": user.avatarUrl,
-                                "authProvider": user.authProvider || 'password'
+                                "authProvider": user.authProvider || 'password',
+                                "notifications": user.notifications
                             }
                         },
                         process.env.ACCESS_TOKEN_SECRET,

@@ -155,19 +155,20 @@ const DashboardPage = () => {
   // Initialize D3 charts after data is loaded
   useEffect(() => {
     if (locationData && businessParticipationChartRef.current) {
-      createLocationBreakdownChart();
+      setTimeout(() => createLocationBreakdownChart(), 50);
     }
   }, [locationData, isMobile]);
 
   useEffect(() => {
     if (monthlyTrendsData && userEngagementChartRef.current) {
-      createMonthlyTrendsChart();
+      setTimeout(() => createMonthlyTrendsChart(), 50);
     }
   }, [monthlyTrendsData, isMobile]);
 
   // Window resize handler
   useEffect(() => {
     const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
       if (locationData && businessParticipationChartRef.current) {
         createLocationBreakdownChart();
       }
@@ -178,7 +179,7 @@ const DashboardPage = () => {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [locationData, monthlyTrendsData]);
+  }, [locationData, monthlyTrendsData, isMobile]);
 
   // Location Breakdown Chart (Donut Chart)
   const createLocationBreakdownChart = () => {
@@ -789,7 +790,7 @@ const DashboardPage = () => {
 
     const legendContainer = svg
       .append("g")
-      .attr("class", "legend")
+      .attr("class", isMobile ? "legend legend-mobile" : "legend")
       .attr("transform", isMobile ? `translate(10, -40)` : `translate(${width - 350}, -95)`)
       .style("opacity", 0);
 

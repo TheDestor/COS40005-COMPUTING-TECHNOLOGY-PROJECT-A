@@ -744,8 +744,11 @@ function MapComponentTesting({  }) {
 
   // Combine external "fetch locations" with backend nearby and dedup
   const combinedNearbyPlaces = useMemo(() => {
-    return mergeAndDedupNearby(searchNearbyPlaces, backendNearbyPlaces);
-  }, [searchNearbyPlaces, backendNearbyPlaces, mergeAndDedupNearby]);
+    // First combine the map's external fetch list with what the sidebar sends us
+    const externalCombined = mergeAndDedupNearby(searchNearbyPlaces, nearbyPlaces);
+    // Then merge with backend near-anchor results; backend has precedence
+    return mergeAndDedupNearby(externalCombined, backendNearbyPlaces);
+  }, [searchNearbyPlaces, nearbyPlaces, backendNearbyPlaces, mergeAndDedupNearby]);
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [destinationInput, setDestinationInput] = useState('');
@@ -780,7 +783,7 @@ function MapComponentTesting({  }) {
 
   // Updated handleDirectionsClick function
   const handleDirectionsClick = (locationData) => {
-  console.log('Directions clicked for:', locationData);
+  // console.log('Directions clicked for:', locationData);
   
   // Use the ref to call LeftSideBarTesting's internal method
   if (leftSidebarRef.current && leftSidebarRef.current.setDestinationFromExternal) {
@@ -1129,7 +1132,6 @@ function MapComponentTesting({  }) {
 
   // Robust category matcher (Restaurants, Toilets, Pharmacies)
   const matchesCategory = useCallback((place, cat) => {
-    if (!cat || cat === 'all') return true;
     const tokens = [
       (place.category || ''),
       (place.type || ''),
@@ -1142,15 +1144,22 @@ function MapComponentTesting({  }) {
       .filter(Boolean)
       .map((s) => String(s).toLowerCase());
 
+    const isToilet = tokens.some((s) =>
+      s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
+    );
+
+    if (!cat || cat === 'all') {
+      // Include everything in "All"
+      return true;
+    }
+
     if (cat === 'restaurant') {
       return tokens.some((s) =>
         s.includes('restaurant') || s.includes('food') || s.includes('cafe') || s.includes('eat')
       );
     }
     if (cat === 'toilet') {
-      return tokens.some((s) =>
-        s.includes('toilet') || s.includes('restroom') || s.includes('washroom') || s === 'wc'
-      );
+      return isToilet;
     }
     if (cat === 'pharmacy') {
       return tokens.some((s) =>
@@ -1167,8 +1176,41 @@ function MapComponentTesting({  }) {
 
   // Filter nearby places around the search location by selected category (use combined)
   const filteredNearbyPlaces = useMemo(() => {
-    return (combinedNearbyPlaces || []).filter((p) => matchesCategory(p, nearbyFilterCategory));
-  }, [combinedNearbyPlaces, nearbyFilterCategory, matchesCategory]);
+    const anchor = selectedSearchBarPlace || activeSearchLocation;
+    const aLat = anchor?.coordinates?.latitude ?? anchor?.latitude ?? anchor?.lat;
+    const aLng = anchor?.coordinates?.longitude ?? anchor?.longitude ?? anchor?.lng ?? anchor?.lon;
+
+    const toRad = (v) => (v * Math.PI) / 180;
+    // Increase default radius to 5km
+    const withinRadius = (plat, plng, radiusM = 5000) => {
+      if (!Number.isFinite(aLat) || !Number.isFinite(aLng)) return true;
+      if (!Number.isFinite(plat) || !Number.isFinite(plng)) return false;
+      const R = 6371000;
+      const dLat = toRad(plat - aLat);
+      const dLon = toRad(plng - aLng);
+      const lat1 = toRad(aLat);
+      const lat2 = toRad(plat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+      const d = 2 * R * Math.asin(Math.sqrt(h));
+      return d <= radiusM;
+    };
+
+    return (combinedNearbyPlaces || [])
+      .filter((p) => matchesCategory(p, nearbyFilterCategory))
+      .filter((p) => {
+        if (nearbyFilterCategory !== 'all') return true;
+        const plat =
+          typeof p?.geometry?.location?.lat === 'function'
+            ? p.geometry.location.lat()
+            : p?.geometry?.location?.lat ?? p.latitude;
+        const plng =
+          typeof p?.geometry?.location?.lng === 'function'
+            ? p.geometry.location.lng()
+            : p?.geometry?.location?.lng ?? p.longitude;
+        // Use 5km radius for "All"
+        return withinRadius(plat, plng, 5000);
+      });
+  }, [combinedNearbyPlaces, nearbyFilterCategory, matchesCategory, selectedSearchBarPlace, activeSearchLocation]);
 
   const handleRouteInfoChange = useCallback((info) => {
     setRouteInfo(info);
@@ -1273,11 +1315,11 @@ function MapComponentTesting({  }) {
             division = closestLocation.division || '';
             dataFound = true;
             
-            console.log('Found matching backend location data');
+            // console.log('Found matching backend location data');
           }
         }
       } catch (locationError) {
-        console.log('Backend location API not available');
+        // console.log('Backend location API not available');
       }
 
       // Step 2: If no location data found, check business locations
@@ -1318,12 +1360,12 @@ function MapComponentTesting({  }) {
                 division = closestBusiness.division || '';
                 dataFound = true;
                 
-                console.log('Found matching business data');
+                // console.log('Found matching business data');
               }
             }
           }
         } catch (businessError) {
-          console.log('Backend business API not available');
+          // console.log('Backend business API not available');
         }
       }
 
@@ -1374,12 +1416,12 @@ function MapComponentTesting({  }) {
                 division = closestEvent.division || '';
                 dataFound = true;
                 
-                console.log('Found matching event data');
+                // console.log('Found matching event data');
               }
             }
           }
         } catch (eventError) {
-          console.log('Backend event API not available');
+          // console.log('Backend event API not available');
         }
       }
 
@@ -1391,7 +1433,7 @@ function MapComponentTesting({  }) {
       }
 
     } catch (error) {
-      console.log('Enhanced data fetching failed, using coordinates only');
+      // console.log('Enhanced data fetching failed, using coordinates only');
     }
     
     return {
