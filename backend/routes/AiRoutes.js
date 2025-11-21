@@ -69,7 +69,9 @@ router.post('/chat', aiChatLimiter, async (req, res) => {
     }
 
     const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-    const siteUrl = process.env.SITE_PRODUCTION_URL || req.headers.origin || 'http://localhost:5050';
+    const forwardedHost = req.headers['x-forwarded-host'] ? `https://${req.headers['x-forwarded-host']}` : null;
+    const originHeader = req.headers.origin || null;
+    const siteUrl = process.env.SITE_PRODUCTION_URL || originHeader || forwardedHost || 'http://localhost:5050';
     const siteTitle = process.env.SITE_TITLE || 'Sarawak Explorer';
 
     // Primary and fallback model selection
@@ -97,11 +99,11 @@ router.post('/chat', aiChatLimiter, async (req, res) => {
             'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
             'HTTP-Referer': siteUrl,
             'X-Title': siteTitle,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           body: JSON.stringify(makePayload(mdl))
         });
-
         const rawText = await r.text();
 
         if (r.ok) {
@@ -144,6 +146,17 @@ router.post('/chat', aiChatLimiter, async (req, res) => {
 
       let asJson = null;
       try { asJson = JSON.parse(fallbackRes.text); } catch {}
+      // Surface clearer guidance on upstream 401 auth failures
+      if (fallbackRes.status === 401) {
+        return res.status(401).json({
+          success: false,
+          code: 'UPSTREAM_AUTH_ERROR',
+          message: (asJson?.error?.message || asJson?.message || 'Upstream authentication error'),
+          status: 401,
+          hint: 'Verify OPENROUTER_API_KEY and account status on the backend.',
+          source: 'UPSTREAM',
+        });
+      }
       const payloadErr = asJson || {
         success: false,
         code: 'UPSTREAM_ERROR',
