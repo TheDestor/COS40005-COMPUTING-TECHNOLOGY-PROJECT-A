@@ -7,11 +7,35 @@ import { put, del } from "@vercel/blob";
 export const getAllLocations = async (req, res) => {
   try {
     const { type } = req.query;
+    const { excludeTerms } = req.query;
 
     const filter = {};
     if (type && type !== "All") {
       // case-insensitive exact match
       filter.type = new RegExp(`^${type}$`, "i");
+    }
+
+    // Optional: exclude specific terms in name (case-insensitive)
+    // Used by CategoryDetailsPage to filter out "Pharmacy" and "Toilet"
+    if (excludeTerms) {
+      try {
+        const terms = String(excludeTerms)
+          .split(",")
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean);
+
+        // For requested terms, match simple variations with \w*
+        // We expand known stems for better coverage: "pharm" and "toilet"
+        const expandedStems = terms
+          .map((t) => (t.startsWith("pharm") ? "pharm\\w*" : t.startsWith("toilet") ? "toilet\\w*" : `${t}\\w*`))
+          .join("|");
+
+        const regex = new RegExp(`\\b(?:${expandedStems})\\b`, "i");
+        filter.name = { $not: regex };
+      } catch (regexErr) {
+        console.error("excludeTerms regex build failed:", regexErr);
+        // If filter construction fails, skip server-side exclusion gracefully
+      }
     }
 
     const locations = await locationModel

@@ -169,6 +169,24 @@ const DEFAULT_VIDEO = [
   }
 ];
 
+// Filtering requirements for Major Attractions carousel:
+// - Exclude any locations with names containing "Pharmacy" or "Toilet"
+// - Case-insensitive matching, handle simple variations (e.g., "pharmacies", "toilets", "pharma", "toilette")
+// - Apply on client-side before displaying cards; also request API to exclude if supported
+// - Must not affect performance or existing valid cards
+export const shouldExcludeByName = (name) => {
+  try {
+    const text = String(name || "").toLowerCase();
+    // Match variations: pharm*, toilet*
+    // Examples matched: "pharmacy", "pharmacies", "pharma center", "toilet", "toilets", "toilette"
+    return /\b(?:pharm\w*|toilet\w*)\b/i.test(text);
+  } catch (err) {
+    // If filtering fails for any reason, do not exclude and log an error
+    console.error('Name filtering failed:', err);
+    return false;
+  }
+};
+
 const CategoryDetailsPage = () => {
   const [townData, setTownData] = useState(null);
   const [divisionItems, setDivisionItems] = useState([]);
@@ -209,7 +227,8 @@ const CategoryDetailsPage = () => {
         setLoading(true);
         const divisionName = passedTown?.division || slug;
         
-        const response = await fetch(`/api/locations`);
+        // Request server-side filtering if available
+        const response = await fetch(`/api/locations?excludeTerms=pharmacy,toilet`);
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
 
@@ -218,10 +237,18 @@ const CategoryDetailsPage = () => {
           item.division.toLowerCase() === divisionName.toLowerCase()
         ) || data[0];
 
-        const otherItems = data.filter(item => 
+        // Apply client-side filtering as a safety net
+        let otherItems = data.filter(item => 
           item._id !== townInfo?._id && 
           item.division.toLowerCase() === divisionName.toLowerCase()
         );
+
+        try {
+          otherItems = otherItems.filter(item => !shouldExcludeByName(item?.name));
+        } catch (filterErr) {
+          console.error('Client-side filtering error:', filterErr);
+          // Non-fatal: keep otherItems unfiltered to avoid breaking UI
+        }
 
         setTownData({
           name: townInfo?.division,
@@ -307,6 +334,9 @@ const CategoryDetailsPage = () => {
   }
 
   const filteredItems = divisionItems.filter(item => {
+    // Safety check: apply exclude filter again at display-time (defensive)
+    if (shouldExcludeByName(item?.name)) return false;
+
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.type === selectedCategory;
     return matchesSearch && matchesCategory;
