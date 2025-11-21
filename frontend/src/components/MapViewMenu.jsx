@@ -14,6 +14,137 @@ import { useAuth } from '../context/AuthProvider';
 const RADIUS_KM = 10;
 const DEFAULT_CENTER = { lat: 1.5533, lng: 110.3592 };
 
+// Location sampling configuration (defaulting to 100 locations)
+// You can override via localStorage keys:
+// - 'mapview_max_locations' (number)
+// - 'mapview_sampling_strategy' ('grid' | 'farthest')
+const DEFAULT_LOCATION_SAMPLE_COUNT = 100;
+const DEFAULT_SAMPLING_STRATEGY = 'grid';
+
+const getSamplingConfig = () => {
+  if (typeof window !== 'undefined') {
+    const rawCount = Number(localStorage.getItem('mapview_max_locations'));
+    const rawStrategy = localStorage.getItem('mapview_sampling_strategy');
+    const maxLocations = Number.isFinite(rawCount) && rawCount > 0 ? rawCount : DEFAULT_LOCATION_SAMPLE_COUNT;
+    const strategy = rawStrategy === 'farthest' ? 'farthest' : DEFAULT_SAMPLING_STRATEGY;
+    return { maxLocations, strategy };
+  }
+  return { maxLocations: DEFAULT_LOCATION_SAMPLE_COUNT, strategy: DEFAULT_SAMPLING_STRATEGY };
+};
+
+// Haversine distance for geospatial calculations (meters)
+const haversineDistanceMeters = (lat1, lon1, lat2, lon2) => {
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371000; // meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Geospatial stratified sampling: selects representative points across a grid
+// Ensures adequate coverage while reducing to desiredCount points.
+// Strategy options:
+// - 'grid' (default): divide bounding box into sqrt(N) x sqrt(N) cells and pick 1 per cell
+// - 'farthest' (optional): greedy farthest-point sampling for spread (slower)
+const sampleLocations = (locations, desiredCount = DEFAULT_LOCATION_SAMPLE_COUNT, strategy = DEFAULT_SAMPLING_STRATEGY) => {
+  const points = Array.isArray(locations) ? locations.filter(p => p && typeof p.latitude === 'number' && typeof p.longitude === 'number') : [];
+  if (points.length <= desiredCount) return points;
+
+  if (strategy === 'farthest') {
+    // Greedy farthest-point sampling (approximate, O(n * k))
+    const selected = [];
+    // Seed: pick the median point by latitude
+    const sortedByLat = [...points].sort((a, b) => a.latitude - b.latitude);
+    selected.push(sortedByLat[Math.floor(sortedByLat.length / 2)]);
+    const remaining = new Set(points);
+    remaining.delete(selected[0]);
+
+    while (selected.length < desiredCount && remaining.size > 0) {
+      let bestPoint = null;
+      let bestScore = -Infinity;
+      for (const pt of remaining) {
+        // distance to nearest selected
+        let minDist = Infinity;
+        for (const sel of selected) {
+          const d = haversineDistanceMeters(pt.latitude, pt.longitude, sel.latitude, sel.longitude);
+          if (d < minDist) minDist = d;
+        }
+        if (minDist > bestScore) {
+          bestScore = minDist;
+          bestPoint = pt;
+        }
+      }
+      if (!bestPoint) break;
+      selected.push(bestPoint);
+      remaining.delete(bestPoint);
+    }
+    return selected;
+  }
+
+  // Default: grid-based stratified sampling
+  let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+  for (const p of points) {
+    if (p.latitude < minLat) minLat = p.latitude;
+    if (p.latitude > maxLat) maxLat = p.latitude;
+    if (p.longitude < minLon) minLon = p.longitude;
+    if (p.longitude > maxLon) maxLon = p.longitude;
+  }
+
+  // Handle degenerate bounds by random sampling
+  if (!isFinite(minLat) || !isFinite(maxLat) || !isFinite(minLon) || !isFinite(maxLon) || minLat === maxLat || minLon === maxLon) {
+    return points.slice(0, desiredCount);
+  }
+
+  const gridSize = Math.max(1, Math.ceil(Math.sqrt(desiredCount))); // e.g., 10x10 for 100
+  const latStep = (maxLat - minLat) / gridSize;
+  const lonStep = (maxLon - minLon) / gridSize;
+  const cells = new Map();
+
+  // Bucket points into grid cells
+  for (const p of points) {
+    const i = Math.min(gridSize - 1, Math.max(0, Math.floor((p.latitude - minLat) / latStep)));
+    const j = Math.min(gridSize - 1, Math.max(0, Math.floor((p.longitude - minLon) / lonStep)));
+    const key = `${i}:${j}`;
+    if (!cells.has(key)) cells.set(key, []);
+    cells.get(key).push(p);
+  }
+
+  const selected = [];
+  // Pick representative per cell: closest to cell center
+  for (const [key, bucket] of cells.entries()) {
+    if (selected.length >= desiredCount) break;
+    const [iStr, jStr] = key.split(':');
+    const i = Number(iStr), j = Number(jStr);
+    const centerLat = minLat + (i + 0.5) * latStep;
+    const centerLon = minLon + (j + 0.5) * lonStep;
+    let best = null, bestDist = Infinity;
+    for (const p of bucket) {
+      const d = haversineDistanceMeters(p.latitude, p.longitude, centerLat, centerLon);
+      if (d < bestDist) {
+        best = p;
+        bestDist = d;
+      }
+    }
+    if (best) selected.push(best);
+  }
+
+  // If we still need more points (few populated cells), fill remainder from unsampled pool
+  if (selected.length < desiredCount) {
+    const selectedSet = new Set(selected);
+    for (const p of points) {
+      if (selected.length >= desiredCount) break;
+      if (!selectedSet.has(p)) selected.push(p);
+    }
+  }
+
+  return selected.slice(0, desiredCount);
+};
+
 // Static town coordinates for fallback
 const townCoordinates = {
   'Kuching': { lat: 1.5533, lon: 110.3592 },
@@ -366,10 +497,9 @@ const startBackgroundRefresh = () => {
             if (rules) {
               globalCache.rateLimiter.recordRequest(category);
               
-              const ql = buildOverpassQL(rules, currentPos, 10000);
-              const data = await fetchOverpassWithFallback(ql);
+              const data = await fetchOverpassViaProxy(rules, currentPos, 10000, getSamplingConfig().maxLocations);
               
-              const elements = (data.elements || []).map(el => {
+              let elements = (data.elements || []).map(el => {
                 const isWayOrRel = el.type !== 'node';
                 const lat2 = isWayOrRel ? el.center?.lat : el.lat;
                 const lon2 = isWayOrRel ? el.center?.lon : el.lon;
@@ -383,7 +513,11 @@ const startBackgroundRefresh = () => {
                   type: category,
                   source: 'overpass'
                 };
-              }).filter(Boolean).slice(0, 500);
+              }).filter(Boolean);
+
+              // Apply stratified sampling to reduce to configured count
+              const { maxLocations, strategy } = getSamplingConfig();
+              elements = sampleLocations(elements, maxLocations, strategy);
 
               const newKey = `overpass_${category}_${currentPos.lat.toFixed(4)}_${currentPos.lng.toFixed(4)}_10000`;
               globalCache.set(newKey, elements);
@@ -636,10 +770,9 @@ const useParallelPreload = () => {
     try {
       const rules = menuToOverpassMap[category.toLowerCase()];
       if (rules) {
-        const ql = buildOverpassQL(rules, currentPos, 10000);
-        const data = await fetchOverpassWithFallback(ql);
+        const data = await fetchOverpassViaProxy(rules, currentPos, 10000, getSamplingConfig().maxLocations);
         
-        const elements = (data.elements || []).map(el => {
+        let elements = (data.elements || []).map(el => {
           const isWayOrRel = el.type !== 'node';
           const lat2 = isWayOrRel ? el.center?.lat : el.lat;
           const lon2 = isWayOrRel ? el.center?.lon : el.lon;
@@ -653,7 +786,11 @@ const useParallelPreload = () => {
             type: category,
             source: 'overpass'
           };
-        }).filter(Boolean).slice(0, 500);
+        }).filter(Boolean);
+
+        // Apply stratified sampling to reduce to configured count
+        const { maxLocations, strategy } = getSamplingConfig();
+        elements = sampleLocations(elements, maxLocations, strategy);
 
         const key = `overpass_${category}_${currentPos.lat.toFixed(4)}_${currentPos.lng.toFixed(4)}_10000`;
         globalCache.set(key, elements);
@@ -701,6 +838,28 @@ const OVERPASS_URLS = [
   'https://overpass.openstreetmap.fr/api/interpreter'
 ];
 
+// Prefer proxy: fetch Overpass via backend when available
+const fetchOverpassViaProxy = async (rules, center, radiusMeters, maxResults) => {
+  try {
+    const payload = { rules, center, radiusMeters, maxResults };
+    const data = await fetchWithOptimizedTimeout('/api/overpass/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // Expect { elements: [...] }
+    return data || { elements: [] };
+  } catch (e) {
+    // Fallback to direct Overpass if proxy fails
+    try {
+      const ql = buildOverpassQL(rules, center, radiusMeters);
+      return await fetchOverpassWithFallback(ql);
+    } catch {
+      return { elements: [] };
+    }
+  }
+};
+
 // Keep existing buildOverpassQL for nearby locations
 const buildOverpassQL = (rules, center, radiusMeters) => {
   const { lat, lng } = center;
@@ -712,12 +871,14 @@ const buildOverpassQL = (rules, center, radiusMeters) => {
     `)
   ).join('\n');
 
+  const { maxLocations } = getSamplingConfig();
+
   return `
     [out:json][timeout:15];
     (
       ${blocks}
     );
-    out center 300;
+    out center ${Math.max(1, Math.floor(maxLocations))};
   `;
 };
 
@@ -1330,13 +1491,13 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
     }
 
     // console.log(`📍 Fetching fresh Overpass data for ${categoryName}...`);
-    const ql = buildOverpassQL(rules, center, Math.max(5000, Math.min(radiusMeters, 10000)));
+    const __radius = Math.max(5000, Math.min(radiusMeters, 10000));
 
     try {
       globalCache.rateLimiter.recordRequest(categoryName);
 
-      const data = await fetchOverpassWithFallback(ql);
-      const elements = (data.elements || []).map(el => {
+      const data = await fetchOverpassViaProxy(rules, center, __radius, getSamplingConfig().maxLocations);
+      let elements = (data.elements || []).map(el => {
         const isWayOrRel = el.type !== 'node';
         const lat2 = isWayOrRel ? el.center?.lat : el.lat;
         const lon2 = isWayOrRel ? el.center?.lon : el.lon;
@@ -1350,7 +1511,11 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
           type: categoryName,
           source: 'overpass'
         };
-      }).filter(Boolean).slice(0, 500);
+      }).filter(Boolean);
+
+      // Apply stratified sampling to reduce to configured count
+      const { maxLocations, strategy } = getSamplingConfig();
+      elements = sampleLocations(elements, maxLocations, strategy);
 
       dataCacheRef.current.set(key, elements);
       // console.log(`💾 Cached Overpass data for ${categoryName}: ${elements.length} items`);
@@ -1358,7 +1523,9 @@ const MapViewMenu = React.memo(({ onSelect, activeOption, onSelectCategory, onZo
       return elements;
     } catch (e) {
       console.error('Overpass error:', e);
-      return [];
+      const fallbackKey = `overpass_${categoryName}_${DEFAULT_CENTER.lat.toFixed(4)}_${DEFAULT_CENTER.lng.toFixed(4)}_10000`;
+      // Provide cached fallback to maintain user experience under rate limits
+      return globalCache.get(fallbackKey) || [];
     }
   }, [menuToOverpass]);
 

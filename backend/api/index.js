@@ -1,26 +1,27 @@
-import express from "express";
-import mongoose from "mongoose";
-import cookieParser from "cookie-parser";
-import cors from "cors";
-import authRouter from "../routes/AuthRoutes.js";
-import userRouter from "../routes/UserRoutes.js";
-import locationRouter from "../routes/LocationRoutes.js";
-import inquiryRouter from "../routes/InquiryRoutes.js";
-import eventRouter from "../routes/EventRoutes.js";
-import businessRouter from "../routes/BusinessRoutes.js";
-import notificationRouter from "../routes/NotificationRoutes.js";
-import path from "path";
-import { fileURLToPath } from "url";
-import aiRouter from "../routes/AiRoutes.js";
-import graphHopperRouter from "../routes/GraphHopperRoutes.js";
-import geoapifyRouter from "../routes/geoapifyRoutes.js";
-import newsletterRouter from "../routes/newsletterRoutes.js";
-import dashboardRouter from "../routes/DashboardRoutes.js";
-import metricsRouter from "../routes/MetricsRoutes.js";
-import adminMetricsRouter from "../routes/AdminMetricsRoutes.js";
-import backupRouter from "../routes/BackupRoutes.js";
-import UserManagementRouter from "../routes/UserManagementRoutes.js";
-import { nominatimLimiter } from "../middleware/rateLimiter.js";
+import express from 'express';
+import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import authRouter from '../routes/AuthRoutes.js';
+import userRouter from '../routes/UserRoutes.js';
+import locationRouter from '../routes/LocationRoutes.js';
+import inquiryRouter from '../routes/InquiryRoutes.js';
+import eventRouter from '../routes/EventRoutes.js';
+import businessRouter from '../routes/BusinessRoutes.js';
+import notificationRouter from '../routes/NotificationRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import aiRouter from '../routes/AiRoutes.js';
+import graphHopperRouter from '../routes/GraphHopperRoutes.js';
+import geoapifyRouter from '../routes/geoapifyRoutes.js';
+import newsletterRouter from '../routes/newsletterRoutes.js';
+import dashboardRouter from '../routes/DashboardRoutes.js';
+import metricsRouter from '../routes/MetricsRoutes.js';
+import adminMetricsRouter from '../routes/AdminMetricsRoutes.js';
+import backupRouter from '../routes/BackupRoutes.js';
+import UserManagementRouter from '../routes/UserManagementRoutes.js';
+import { nominatimLimiter } from '../middleware/rateLimiter.js';
+import OverpassRoutes from '../routes/OverpassRoutes.js';
 
 // Get directory name (required for ES modules)
 const __filename = fileURLToPath(import.meta.url);
@@ -111,6 +112,7 @@ app.use("/api/metrics", metricsRouter);
 app.use("/api/admin/metrics", adminMetricsRouter);
 app.use("/api/admin/backup", backupRouter);
 app.use("/api/geoapify", geoapifyRouter);
+app.use('/api/overpass', OverpassRoutes);
 
 // In your backend routes
 app.get("/api/nominatim/search", nominatimLimiter, async (req, res) => {
