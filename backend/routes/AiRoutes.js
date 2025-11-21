@@ -69,7 +69,7 @@ router.post('/chat', aiChatLimiter, async (req, res) => {
     }
 
     const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-    const siteUrl = process.env.SITE_URL || req.headers.origin || 'http://localhost:5050';
+    const siteUrl = process.env.SITE_PRODUCTION_URL || req.headers.origin || 'http://localhost:5050';
     const siteTitle = process.env.SITE_TITLE || 'Sarawak Explorer';
 
     // Primary and fallback model selection
