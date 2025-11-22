@@ -570,7 +570,7 @@ export default function AiChatbot({ visibleByDefault = false }) {
 
                         {error && (
                             <div className="error-message">
-                                <p>{error}</p>
+                                <p>Oops something went wrong!</p>
                                 {errorDetail && (
                                     <div className="error-reason">
                                         {(() => {
@@ -600,8 +600,8 @@ export default function AiChatbot({ visibleByDefault = false }) {
                                                     <p>{providerCode ? `Reason: ${providerCode}` : 'Reason: Unknown'}</p>
                                                     {status && <p>{`Status: ${status}`}</p>}
                                                     {retry !== null && <p>{`Retry after: ${retry}s`}</p>}
-                                                    {providerName && <p>{`Upstream: ${providerName}`}</p>}
-                                                    {providerMsg && <p>{`Details: ${providerMsg}`}</p>}
+                                                    {/* {providerName && <p>{`Upstream: ${providerName}`}</p>} */}
+                                                    {/* {providerMsg && <p>{`Details: ${providerMsg}`}</p>} */}
                                                 </>
                                             );
                                         })()}
