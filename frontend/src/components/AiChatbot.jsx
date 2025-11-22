@@ -467,7 +467,6 @@ export default function AiChatbot({ visibleByDefault = false }) {
                 <div className={`ai-panel ${entered ? 'entered' : 'closing'}`}>
                     <div className="ai-header">
                         <div className="ai-header-title">
-                            {/* <RiRobot2Fill className="ai-header-icon" /> */}
                             <div className="ai-header-text">
                                 <span className="ai-header-title-main">Welcome to Sarawak</span>
                                 <span className="ai-header-sub">Tourism AI Assistant</span>
@@ -527,9 +526,26 @@ export default function AiChatbot({ visibleByDefault = false }) {
                         )}
 
                         {error && (
-                            // <div className="ai-error shake-on-error">{error}</div>
                             <div className="error-message">
                                 <p>Oops something went wrong</p>
+                                {errorDetail && (
+                                    <div className="error-reason">
+                                        {(() => {
+                                            const code = errorDetail?.error?.code || errorDetail?.code;
+                                            const msg = errorDetail?.error?.message || errorDetail?.message || errorDetail?.raw;
+                                            const status = errorDetail?.status;
+                                            const retry = typeof errorDetail?.retryAfterSeconds === 'number' ? errorDetail.retryAfterSeconds : null;
+                                            return (
+                                                <>
+                                                    {/* <p>{code ? `Reason: ${code}` : 'Reason: Unknown'}</p> */}
+                                                    {status && <p>{`Status: ${status}`}</p>}
+                                                    {retry !== null && <p>{`Retry after: ${retry}s`}</p>}
+                                                    {msg && <p>{`Details: ${msg}`}</p>}
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -543,6 +559,7 @@ export default function AiChatbot({ visibleByDefault = false }) {
                         </button>
                     </div>
 
+                    {/* input and suggestions area unchanged */}
                     <div className="ai-suggestions-nav">
                         <div
                             className={`ai-suggestions ${showScrollbar ? 'show-scrollbar' : 'hide-scrollbar'}`}
