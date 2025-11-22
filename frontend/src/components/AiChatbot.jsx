@@ -203,9 +203,17 @@ export default function AiChatbot({ visibleByDefault = false }) {
 
 	// Minimal, safe-ish markdown (bold, italic, #/##/### heading, line breaks)
 	const mdToHtmlLite = (text) => {
-        const esc = escapeHtml(normalizeModelOutput(text));
-        const lines = esc.split('\n');
-    
+        // Normalize + escape
+        let esc = escapeHtml(normalizeModelOutput(text));
+
+        // 1) Strip fenced code blocks: keep inner text, remove backticks and optional language
+        esc = esc.replace(/```(?:[\w+-]+\n)?([\s\S]*?)```/g, '$1');
+
+        // 2) Strip inline code ticks: keep inner text
+        esc = esc.replace(/`([^`]+)`/g, '$1');
+
+        const rawLines = esc.split('\n');
+
         let res = [];
         let inOl = false;
         let inUl = false;
@@ -213,9 +221,7 @@ export default function AiChatbot({ visibleByDefault = false }) {
     
         const inline = (s) => {
             let h = s;
-            // bold
             h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            // italic (avoid bold inner)
             h = h.replace(/(^|[\s(])\*(?!\s)([^*]+?)\*(?=[\s).,;!?]|$)/g, '$1<em>$2</em>');
             return h;
         };
@@ -232,13 +238,50 @@ export default function AiChatbot({ visibleByDefault = false }) {
             if (inUl) { res.push('</ul>'); inUl = false; }
         };
     
-        for (const raw of lines) {
+        // Helper: detect table separator line like |---|---|
+        const isTableSep = (s) => /^\s*\|?\s*[-:]+(?:\s*\|\s*[-:]+)+\s*\|?\s*$/.test(s.trim());
+        const isTableRow = (s) => /^\s*\|.*\|\s*$/.test(s.trim());
+    
+        for (let i = 0; i < rawLines.length; i++) {
+            const raw = rawLines[i];
             const line = raw.trim();
     
             // blank line → paragraph/list boundary
             if (!line) {
                 flushPara();
                 closeLists();
+                continue;
+            }
+    
+            // 3) Convert markdown tables to bullet lists (no table rendering)
+            if (isTableRow(raw)) {
+                flushPara();
+                closeLists();
+    
+                // Parse header cells from first table row
+                const headerCells = raw.split('|').map(c => c.trim()).filter(Boolean);
+    
+                // Optional separator row
+                let j = i + 1;
+                if (j < rawLines.length && isTableSep(rawLines[j])) j++;
+    
+                // Accumulate subsequent table rows
+                let items = [];
+                while (j < rawLines.length && isTableRow(rawLines[j])) {
+                    const cells = rawLines[j].split('|').map(c => c.trim()).filter(Boolean);
+                    const pairs = cells.map((v, idx) => {
+                        const key = headerCells[idx] || `Col ${idx + 1}`;
+                        return `${key}: ${inline(v)}`;
+                    });
+                    items.push(`<li>${pairs.join(' — ')}</li>`);
+                    j++;
+                }
+    
+                // Emit as a normal bullet list
+                if (items.length) res.push('<ul>' + items.join('') + '</ul>');
+    
+                // Skip the lines we consumed
+                i = j - 1;
                 continue;
             }
     
@@ -527,20 +570,38 @@ export default function AiChatbot({ visibleByDefault = false }) {
 
                         {error && (
                             <div className="error-message">
-                                <p>Oops something went wrong</p>
+                                <p>{error}</p>
                                 {errorDetail && (
                                     <div className="error-reason">
                                         {(() => {
                                             const code = errorDetail?.error?.code || errorDetail?.code;
-                                            const msg = errorDetail?.error?.message || errorDetail?.message || errorDetail?.raw;
                                             const status = errorDetail?.status;
                                             const retry = typeof errorDetail?.retryAfterSeconds === 'number' ? errorDetail.retryAfterSeconds : null;
+                                            const providerName = errorDetail?.error?.metadata?.provider_name || errorDetail?.metadata?.provider_name;
+
+                                            // Try to parse nested provider raw JSON if present
+                                            const metaRawStr = errorDetail?.error?.metadata?.raw || errorDetail?.metadata?.raw;
+                                            let providerMsg = errorDetail?.error?.message || errorDetail?.message || errorDetail?.raw;
+                                            let providerCode = code;
+
+                                            if (metaRawStr && typeof metaRawStr === 'string') {
+                                                try {
+                                                    const rawObj = JSON.parse(metaRawStr);
+                                                    const innerErr = rawObj?.error;
+                                                    if (innerErr?.message) providerMsg = innerErr.message;
+                                                    if (innerErr?.code) providerCode = innerErr.code;
+                                                } catch {
+                                                    // ignore parse errors; fall back to existing fields
+                                                }
+                                            }
+
                                             return (
                                                 <>
-                                                    {/* <p>{code ? `Reason: ${code}` : 'Reason: Unknown'}</p> */}
+                                                    <p>{providerCode ? `Reason: ${providerCode}` : 'Reason: Unknown'}</p>
                                                     {status && <p>{`Status: ${status}`}</p>}
                                                     {retry !== null && <p>{`Retry after: ${retry}s`}</p>}
-                                                    {msg && <p>{`Details: ${msg}`}</p>}
+                                                    {providerName && <p>{`Upstream: ${providerName}`}</p>}
+                                                    {providerMsg && <p>{`Details: ${providerMsg}`}</p>}
                                                 </>
                                             );
                                         })()}

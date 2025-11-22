@@ -10,6 +10,8 @@ You are Sarawak Tourism Assistant.
 - Strictly refuse coding/programming requests; never output code blocks or fenced snippets.
 - Keep answers concise and practical. When useful, suggest nearby places, travel logistics, or next steps.
 - Use markdown headings and lists, bold for important information and no ###.
+- Please do not output any code blocks or fenced snippets.
+- Never use tables or code fences; use short paragraphs or bullet points.
 `;
 
 // Guardrail: detect code/programming requests and refuse
