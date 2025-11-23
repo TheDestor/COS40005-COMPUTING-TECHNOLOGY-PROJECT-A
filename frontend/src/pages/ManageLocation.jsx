@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import * as turf from "@turf/turf";
-import sarawakGeo from "../geo/Sarawak.json";
-
+import sarawakOriginal from "../geo/Sarawak.json";
+import sarawakOSM from "../geo/Sarawak_osm.json";
+import sarawakWaterAreas from "../geo/sarawak_rivers_bbox.json";
 import {
   FaSearch,
   FaChevronUp,
@@ -48,6 +49,8 @@ import {
 import "leaflet/dist/leaflet.css";
 import { toast } from "sonner";
 
+const ACTIVE_SARAWAK = sarawakOriginal;
+
 // Define Sarawak geographic boundaries and helpers
 const SARAWAK_BOUNDS = {
   minLat: 0.85,
@@ -61,92 +64,96 @@ const SARAWAK_RECT_BOUNDS = [
   [SARAWAK_BOUNDS.maxLat, SARAWAK_BOUNDS.maxLng],
 ];
 
-// Define water body boundaries (approximate coordinates for major water bodies in Sarawak)
-const WATER_BODIES = [
-  // South China Sea (eastern coast)
-  {
-    name: "South China Sea",
-    bounds: {
-      minLat: 2.0,
-      maxLat: 5.5,
-      minLng: 110.0,
-      maxLng: 115.6,
-    },
-  },
-  // Major rivers (approximate boundaries)
-  {
-    name: "Rajang River Basin",
-    bounds: {
-      minLat: 1.8,
-      maxLat: 3.5,
-      minLng: 111.0,
-      maxLng: 113.5,
-    },
-  },
-  {
-    name: "Lupar River Basin",
-    bounds: {
-      minLat: 1.0,
-      maxLat: 2.0,
-      minLng: 110.5,
-      maxLng: 111.5,
-    },
-  },
-  {
-    name: "Sarawak River Basin",
-    bounds: {
-      minLat: 1.3,
-      maxLat: 2.0,
-      minLng: 110.0,
-      maxLng: 110.8,
-    },
-  },
-  // Batang Ai Reservoir
-  {
-    name: "Batang Ai Reservoir",
-    bounds: {
-      minLat: 1.1,
-      maxLat: 1.3,
-      minLng: 111.8,
-      maxLng: 112.2,
-    },
-  },
-  // Bakun Reservoir
-  {
-    name: "Bakun Reservoir",
-    bounds: {
-      minLat: 2.5,
-      maxLat: 3.0,
-      minLng: 113.8,
-      maxLng: 114.5,
-    },
-  },
-];
-
-// Helper to extract a usable Polygon/MultiPolygon geometry
 const getSarawakPolygon = () => {
-  if (!sarawakGeo) return null;
+  const geo = ACTIVE_SARAWAK;
 
-  // Case 1: FeatureCollection -> use first feature's geometry
-  if (sarawakGeo.type === "FeatureCollection") {
-    const first = sarawakGeo.features && sarawakGeo.features[0];
-    return first && first.geometry ? first.geometry : null;
+  if (!geo) return null;
+
+  // FeatureCollection
+  if (geo.type === "FeatureCollection") {
+    const feature =
+      geo.features?.find((f) => f.properties?.name === "Sarawak") ||
+      geo.features?.[0];
+
+    return feature?.geometry || null;
   }
 
-  // Case 2: Single Feature
-  if (sarawakGeo.type === "Feature") {
-    return sarawakGeo.geometry || null;
+  // Single Feature
+  if (geo.type === "Feature") {
+    return geo.geometry;
   }
 
-  // Case 3: Already a geometry (Polygon / MultiPolygon)
-  if (sarawakGeo.type === "Polygon" || sarawakGeo.type === "MultiPolygon") {
-    return sarawakGeo;
+  // Geometry
+  if (geo.type === "Polygon" || geo.type === "MultiPolygon") {
+    return geo;
   }
 
   return null;
 };
 
 const SARAWAK_POLYGON = getSarawakPolygon();
+
+// Pre-extract water area features
+// Pre-extract *polygon* water area features only
+// Split sarawakWaterAreas into polygons and line-based rivers/streams
+const RAW_WATER_FEATURES =
+  sarawakWaterAreas && sarawakWaterAreas.features
+    ? sarawakWaterAreas.features.filter((f) => f && f.geometry)
+    : [];
+
+// Polygons (lakes, reservoirs, wide riverbanks etc.)
+const WATER_AREA_FEATURES = RAW_WATER_FEATURES.filter(
+  (f) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"
+);
+
+// Line-based waterways (rivers, streams, canals)
+const WATER_LINE_BUFFERED_FEATURES = RAW_WATER_FEATURES.filter(
+  (f) =>
+    f.geometry.type === "LineString" || f.geometry.type === "MultiLineString"
+)
+  .map((f) => {
+    try {
+      // Buffer the river line by ~30 meters so clicks near the river count as water
+      return turf.buffer(f, 10, { units: "meters" });
+    } catch (err) {
+      console.error("Buffer failed for a water line feature, skipping", err);
+      return null;
+    }
+  })
+  .filter(Boolean);
+
+const isInWaterArea = (lat, lng) => {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return false;
+  }
+
+  const point = turf.point([lng, lat]);
+
+  // 1) Check polygon water areas (lakes, reservoirs, wide rivers)
+  for (const feature of WATER_AREA_FEATURES) {
+    try {
+      if (turf.booleanPointInPolygon(point, feature)) {
+        return true;
+      }
+    } catch (err) {
+      // Skip any bad geometry
+      continue;
+    }
+  }
+
+  // 2) Check buffered river/stream lines
+  for (const feature of WATER_LINE_BUFFERED_FEATURES) {
+    try {
+      if (turf.booleanPointInPolygon(point, feature)) {
+        return true;
+      }
+    } catch (err) {
+      continue;
+    }
+  }
+
+  return false;
+};
 
 const isWithinSarawak = (lat, lng) => {
   // 0. Basic sanity check
@@ -177,7 +184,6 @@ const isWithinSarawak = (lat, lng) => {
   return inBox;
 };
 
-// Get validation error message
 const getCoordinateValidationMessage = (lat, lng) => {
   if (typeof lat !== "number" || typeof lng !== "number") {
     return "Invalid coordinates. Please enter valid numbers.";
@@ -193,17 +199,9 @@ const getCoordinateValidationMessage = (lat, lng) => {
     return `Coordinates are outside Sarawak boundaries. Valid range: Lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, Lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`;
   }
 
-  // Check if in water bodies
-  const waterBody = WATER_BODIES.find(
-    (water) =>
-      lat >= water.bounds.minLat &&
-      lat <= water.bounds.maxLat &&
-      lng >= water.bounds.minLng &&
-      lng <= water.bounds.maxLng
-  );
-
-  if (waterBody) {
-    return `Coordinates are in ${waterBody.name}. Please select a location on land.`;
+  // Block if inside any water polygon from sarawakWaterAreas
+  if (isInWaterArea(lat, lng)) {
+    return "Coordinates are in a water area. Please select a location on land.";
   }
 
   return null; // No error
@@ -328,15 +326,15 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
     useMapEvents({
       click: (e) => {
         const { lat, lng } = e.latlng;
-        if (!isWithinSarawak(lat, lng)) {
-          toast.error("Selected coordinates are outside Sarawak.", {
-            description:
-              `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}. ` +
-              `Valid lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, ` +
-              `lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`,
+
+        const msg = getCoordinateValidationMessage(lat, lng);
+        if (msg) {
+          toast.error("Invalid coordinates", {
+            description: msg,
           });
-          return; // do not update marker outside bounds
+          return; // ❌ do not update marker
         }
+
         onChange(lat, lng);
       },
     });
@@ -361,15 +359,15 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
 
   const handleMarkerDragEnd = (e) => {
     const { lat, lng } = e.target.getLatLng();
-    if (!isWithinSarawak(lat, lng)) {
-      toast.error("Selected coordinates are outside Sarawak.", {
-        description:
-          `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}. ` +
-          `Valid lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, ` +
-          `lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`,
+
+    const msg = getCoordinateValidationMessage(lat, lng);
+    if (msg) {
+      toast.error("Invalid coordinates", {
+        description: msg,
       });
-      return; // keep marker at last valid position
+      return; // ❌ keep marker at last valid position
     }
+
     onChange(lat, lng);
   };
 
@@ -413,8 +411,16 @@ const MapPreview = ({ latitude, longitude, onChange }) => {
         />
 
         <GeoJSON
-          data={sarawakGeo}
+          data={ACTIVE_SARAWAK}
           style={{ color: "#10b981", weight: 2, fillOpacity: 0.05 }}
+        />
+        <GeoJSON
+          data={sarawakWaterAreas}
+          style={{
+            color: "#0ea5e9", // outline of water area
+            weight: 1,
+            fillOpacity: 0.3, // light fill to show water
+          }}
         />
 
         <MapEventsHandler />
@@ -635,24 +641,18 @@ const ManageLocation = () => {
   });
 
   const handleCoordinatesChange = (lat, lng) => {
-    // keep state in sync; map handlers already prevent invalid changes
     setEditingLocation((prev) => ({
       ...prev,
       latitude: lat,
       longitude: lng,
     }));
 
-    const valid = isWithinSarawak(lat, lng);
+    const msg = getCoordinateValidationMessage(lat, lng);
     setValidationErrors((prev) => {
       const next = { ...prev };
       const key = "editing.coordinates";
-      if (!valid) {
-        next[key] =
-          `Coordinates (${lat.toFixed(6)}, ${lng.toFixed(
-            6
-          )}) are outside Sarawak. ` +
-          `Valid lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, ` +
-          `lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`;
+      if (msg) {
+        next[key] = msg; // outside Sarawak OR in water
       } else {
         delete next[key];
       }
@@ -946,23 +946,19 @@ const ManageLocation = () => {
     updatedLocations[index] = updatedLocation;
     setEditingLocations(updatedLocations);
 
-    // Manual entry validation
     if (
       typeof updatedLocation.latitude === "number" &&
       typeof updatedLocation.longitude === "number"
     ) {
-      const valid = isWithinSarawak(
+      const msg = getCoordinateValidationMessage(
         updatedLocation.latitude,
         updatedLocation.longitude
       );
       setValidationErrors((prev) => {
         const next = { ...prev };
         const key = `locations[${index}].coordinates`;
-        if (!valid) {
-          next[key] =
-            "Coordinates are outside Sarawak. " +
-            `Valid lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, ` +
-            `lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`;
+        if (msg) {
+          next[key] = msg; // outside Sarawak OR in water
         } else {
           delete next[key];
         }
@@ -970,6 +966,7 @@ const ManageLocation = () => {
       });
     }
   };
+
   const handleSaveAllLocations = async () => {
     try {
       // 1. Validate all locations before sending
@@ -996,14 +993,11 @@ const ManageLocation = () => {
           errors.url = "URL cannot contain spaces.";
         }
 
-        // Coordinates must be within Sarawak bounds
         const lat = parseFloat(location.latitude);
         const lon = parseFloat(location.longitude);
-        if (!isWithinSarawak(lat, lon)) {
-          errors.coordinates =
-            `Coordinates must be within Sarawak. ` +
-            `Lat ${SARAWAK_BOUNDS.minLat}–${SARAWAK_BOUNDS.maxLat}, ` +
-            `Lng ${SARAWAK_BOUNDS.minLng}–${SARAWAK_BOUNDS.maxLng}.`;
+        const coordMsg = getCoordinateValidationMessage(lat, lon);
+        if (coordMsg) {
+          errors.coordinates = coordMsg; // outside Sarawak OR in water
         }
 
         return { index, errors };
@@ -2700,24 +2694,28 @@ const ManageLocation = () => {
                               onChange={(e) => {
                                 const lon = parseFloat(e.target.value) || 0;
                                 const lat = location.latitude ?? 0;
+
                                 handleLocationChange(index, {
                                   ...location,
                                   longitude: lon,
                                 });
-                                if (!isWithinSarawakBounds(lat, lon)) {
-                                  setValidationErrors((prev) => ({
-                                    ...prev,
-                                    [`locations[${index}].longitude`]:
-                                      "Location is outside Sarawak boundary.",
-                                  }));
-                                } else {
-                                  clearValidationError(
-                                    `locations[${index}].longitude`
-                                  );
-                                  clearValidationError(
-                                    `locations[${index}].latitude`
-                                  );
-                                }
+
+                                const msg = getCoordinateValidationMessage(
+                                  lat,
+                                  lon
+                                );
+                                setValidationErrors((prev) => {
+                                  const next = { ...prev };
+                                  if (msg) {
+                                    next[`locations[${index}].longitude`] = msg;
+                                  } else {
+                                    delete next[
+                                      `locations[${index}].longitude`
+                                    ];
+                                    delete next[`locations[${index}].latitude`];
+                                  }
+                                  return next;
+                                });
                               }}
                               placeholder="Longitude"
                               className={`form-input ${
